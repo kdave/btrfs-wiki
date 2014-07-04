@@ -1,0 +1,132 @@
+=== Seed-device use example ===
+The original filesystem and devices are included as a readonly starting point to the new FS. All modifications go onto different devices and the COW machinery makes sure the original is unchanged.
+
+ # dd if=/dev/zero of=/mnt/gentoo/btrfs-test-1 count=2 bs=1G
+ # dd if=/dev/zero of=/mnt/gentoo/btrfs-test-2 count=2 bs=1G
+
+ # losetup /dev/loop0 /mnt/gentoo/btrfs-test-1
+ # losetup /dev/loop1 /mnt/gentoo/btrfs-test-2
+
+ # mkfs.btrfs /dev/loop0
+
+ # mount /dev/loop0 /mnt/test/
+ # echo a > /mnt/test/a
+ # echo b > /mnt/test/b
+
+ # umount /mnt/test
+
+Now we will use this filesystem as a seed device:
+
+ # [[Btrfstune|btrfstune]] -S 1 /dev/loop0
+
+ # mount /dev/loop0 /mnt/test
+ mount: block device /dev/loop0 is write-protected, mounting read-only
+ # btrfs device add /dev/loop1 /mnt/test
+ # ls /mnt/test
+ a  b
+ # echo c > /mnt/test/c
+ bash: c: Read-only file system
+
+ # mount -o remount,rw /mnt/test
+ OR
+ # umount /mnt/test
+ # mount /dev/loop1 /mnt/test
+
+ # echo c > /mnt/test/c
+ # echo d > /mnt/test/d
+ # umount /mnt/test
+
+ # mount /dev/loop0 /mnt/test
+ mount: block device /dev/loop0 is write-protected, mounting read-only
+ # ls /mnt/test
+ a  b
+ # umount /mnt/test
+ # mount /dev/loop1 /mnt/test
+ # ls /mnt/test
+ a  b  c  d
+ # cat /mnt/test/c
+ c
+
+It's also worth noting that seed devices can be recursive (Tested on 3.3 with the btrfs/for-linus branch that went into 3.4-final merged in):
+
+ # dd if=/dev/zero of=seed1.img bs=1 seek=1G count=1
+ 1+0 records in
+ 1+0 records out
+ 1 byte (1 B) copied, 7.4136e-05 s, 13.5 kB/s
+ 
+ # dd if=/dev/zero of=seed2.img bs=1 seek=1G count=1
+ 1+0 records in
+ 1+0 records out
+ 1 byte (1 B) copied, 5.8166e-05 s, 17.2 kB/s
+ 
+ # dd if=/dev/zero of=seed3.img bs=1 seek=1G count=1
+ 1+0 records in
+ 1+0 records out
+ 1 byte (1 B) copied, 8.4253e-05 s, 11.9 kB/s
+ 
+ # sudo losetup /dev/loop0 seed1.img
+ 
+ # sudo losetup /dev/loop1 seed2.img
+ 
+ # sudo losetup /dev/loop2 seed3.img
+ 
+ # sudo mkdir /mnt/btrseed
+ 
+ # sudo mkfs.btrfs -d single -m single /dev/loop0
+ 
+ WARNING! - Btrfs Btrfs v0.19-dirty IS EXPERIMENTAL
+ WARNING! - see http://btrfs.wiki.kernel.org before using
+ 
+ fs created label (null) on /dev/loop0
+         nodesize 4096 leafsize 4096 sectorsize 4096 size 1.00GB
+ Btrfs Btrfs v0.19-dirty
+ 
+ # sudo mount /dev/loop0 /mnt/btrseed
+ 
+ # sudo touch /mnt/btrseed/seed1
+ 
+ # sudo umount /mnt/btrseed
+ 
+ # sudo btrfstune -S 1 /dev/loop0
+ 
+ # sudo mount /dev/loop0 /mnt/btrseed
+ mount: block device /dev/loop0 is write-protected, mounting read-only
+ 
+ # sudo btrfs dev add /dev/loop1 /mnt/btrseed
+ 
+ # sudo mount -o remount,rw /mnt/btrseed
+ 
+ # sudo touch /mnt/btrseed/seed2
+ 
+ # ls /mnt/btrseed
+ seed1  seed2
+ 
+ # sudo umount /mnt/btrseed
+ 
+ # sudo btrfstune -S 1 /dev/loop1
+ 
+ # sudo mount /dev/loop1 /mnt/btrseed
+ mount: block device /dev/loop1 is write-protected, mounting read-only
+ 
+ # sudo btrfs dev add /dev/loop2 /mnt/btrseed
+ 
+ # sudo mount -o remount,rw /mnt/btrseed
+ 
+ # sudo touch /mnt/btrseed/seed3
+ 
+ # ls /mnt/btrseed
+ seed1  seed2  seed3
+ 
+ # sudo umount /mnt/btrseed
+ 
+ # sudo mount /dev/loop1 /mnt/btrseed
+ mount: block device /dev/loop1 is write-protected, mounting read-only
+ 
+ # ls /mnt/btrseed
+ seed1  seed2
+ 
+ # sudo mount /dev/loop0 /mnt/btrseed
+ mount: block device /dev/loop0 is write-protected, mounting read-only
+ 
+ # ls /mnt/btrseed
+ seed1

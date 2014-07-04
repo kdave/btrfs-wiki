@@ -1,0 +1,103 @@
+This is a short collection of possible cleanups, that would make the code easier to read and to maintain. '''Please note''' that cleanups may interfere with patches in-flight doing some real work and merging may be postponed or you may be asked to refresh them on top of other changes.
+
+'''Please note''' that '''pure whitespace and style reformatting changes''' are '''not''' really necessary at this phase of development. They get fixed along regular changes. Possibly once upon in a while a patch that fixes many if not all whitespace errors could work, but otherwise it's considered a noise.
+
+== Pass fs_info instead of root ==
+
+Lots of functions get a root passed, but only need the fs_info part of it. This is confusing, as it is unclear if a specific root is needed or if any root will do.
+
+== Move nodesize/leafsize/sectorsize/stripesize to fs_info ==
+
+Patches: http://www.spinics.net/lists/linux-btrfs/msg14560.html
+
+There are some items in btrfs_root (and others) that are unnecessarily duplicated but one definition is enough.
+
+Move from btrfs_root to btrfs_fs_info:
+* nodesize, sectorsize, stripesize
+
+Other:
+* kill leafsize and unify usage to just nodesize, eg. btrfs_level_size
+* ''struct btrfs_block_group_cache'' also duplicates sectorsize, replace it with fs_info::sectorsize
+
+== Use the kernel code in user mode ==
+
+The user mode utilities have a local copy of the kernel code, with some small adjustments for running in user mode. The fork of the sources was quite a while ago, so many kernel features are now missing in user mode. Also maintaining two copies is burdensome. Expand the wrappers instead so the true kernel code can be used.
+
+''Note: Eric Sandeen has started working on this (Apr 2013)''
+
+== Helpers for tree enumeration ==
+
+Writing tree enumeration code requires deep knowledge of the underlying functions and makes some assumption about possible results. Build some generic helpers or enumeration functions instead, to make the code shorter and more readable, and easier to write.
+
+These helpers could also generically make use of the upcoming readahead API.
+
+== Find open-coded helpers or macros ==
+
+Patches: http://www.spinics.net/lists/linux-btrfs/msg12747.html
+
+Substitute open-coded expressions doing eg. alignment, rounding, bit masking etc.
+
+For example:
+
+ bytes = (bytes + root-&gt;sectorsize - 1) &amp; ~((u64)root-&gt;sectorsize - 1);
+
+is a hidden ALIGN(byte, root-&gt;sectorsize) from include/linux/kernel.h and the real meaning open-coded variant may not be clear (though correct) for everyone. Although over time one is able to understand such expressions instantly, it consumes some brainpower and may distract during code review. Unneeded open-coding also shows ''how'' it's done instead of ''what''.
+
+Other ideas:
+
+* use PAGE_CACHE_MASK in place of eg.
+
+ start &amp; ((u64)PAGE_CACHE_SIZE - 1)
+ size_t zero_offset = isize &amp; (PAGE_CACHE_SIZE - 1)
+ unsigned long offset = (*start) &amp; (PAGE_CACHE_SIZE - 1)
+
+* can be seen when counting pages (ie. where d == PAGE_CACHE_SIZE):
+
+ #define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
+ 
+
+fs/btrfs/compression.c:
+
+         nr_pages = (compressed_len + PAGE_CACHE_SIZE - 1) /
+                                 PAGE_CACHE_SIZE;
+
+there are more like this, and the division may be obscured by shifting by PAGE_CACHE_SHIFT. Changes like this are best done by tools, eg. by this [http://coccinelle.lip6.fr/ coccinelle] semantic patch:
+
+ @rule_page@
+ expression E;
+ @@
+ (
+ - (E + PAGE_SIZE - 1) &gt;&gt; PAGE_SHIFT
+ + DIV_ROUND_UP(E, PAGE_SIZE)
+ |
+ - (E + PAGE_CACHE_SIZE - 1) &gt;&gt; PAGE_CACHE_SHIFT
+ + DIV_ROUND_UP(E, PAGE_CACHE_SIZE)
+ )
+
+== Remove unused parameters (in general) ==
+
+Eg. like this [http://git.kernel.org/linus/b3b4aa74b58bded92 [1]] or [http://git.kernel.org/linus/ba14419264684b [2]] . To find more, enable -Wunused-parameter in scripts/Makefile.build and run
+
+ make W=1 fs/btrfs/
+
+The output is noisy, you can comment out the other warnings or grep is your friend.
+
+== Remove ioctl.h in btrfs and btrfs-progs world, create include/linux/btrfs.h with those definitions ==
+
+Currently it is a source for errors to have the ioctl definitions duplicated. And it is not the regular way to do it.
+
+== Make less functions inline to help identifying them on the stack ==
+
+http://permalink.gmane.org/gmane.comp.file-systems.btrfs/15134 (at the end)
+<blockquote>
+''As an aside, this is why XFS use noinline for most of it's static functions - so that stack traces are accurate when a problem occurs. Debuggability of complex code paths is far more important than the small speed improvement automatic inlining of static functions gives...''
+</blockquote>
+
+Good candidates appear when one tries to analyze a stacktrace, doest not see a function being called although it appears on stack. Then it's needed to look into all such functions (and maybe repeating the whole exercise from there).
+Short wrappers or small simple helpers are not good candidates.
+
+The functions should be tagged with <code>noinline_for_stack</code>.
+
+== Move rcu_string out of btrfs to lib/ ==
+
+<tt>rcu-string.h</tt> implements helpers and wrappers around RCU-friendly strings. This is a generic piece of code and should live in the generic library (''linux.git/lib/''). The task involves documenting API and pushing through lkml and updating according to the feedback.

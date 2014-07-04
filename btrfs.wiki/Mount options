@@ -1,0 +1,207 @@
+Here is a list of the current mount options in btrfs, version they first appeared and an explanation of what they do.
+
+== List of options ==
+
+{{MountOption
+|name=alloc_start=''number''
+|desc=Set where in the disk we start allocations.
+}}
+{{MountOption
+|name=autodefrag
+|appeared=3.0
+|desc=Will detect random writes into existing files and kick off background defragging. It is well suited to bdb or sqlite databases, but not virtualization images or big databases (yet). Once the developers make sure it doesn't defrag files over and over again, they'll move this toward the default.
+}}
+{{MountOption
+|name=check_int
+|appeared=3.3
+|desc=Switch on integrity checker for metadata (if compiled in) '''Note: this is a debugging-only option, and will slow down your filesystem massively.'''
+}}
+{{MountOption
+|name=check_int_data
+|appeared=3.3
+|desc=Switch on integrity checker for data and metadata (if compiled in) '''Note: this is a debugging-only option, and will slow down your filesystem massively.'''
+}}
+{{MountOption
+|name=check_int_print_mask=''number''
+|appeared=3.3
+|desc=Number representing mask of events to print.
+}}
+{{MountOption
+|name=clear_cache
+|appeared=2.6.37
+|desc=Clear all the free space caches during mount. This is a safe option, but will trigger rebuilding of the space cache, so leave the filesystem mounted for some time and let the rebuild process finish. If the process ''btrfs-freespace'' is actively doing some IO, it's probably not finished yet. This mount option is intended to be used one time and only after you notice some problems with free space.
+}}
+{{MountOption
+|name=commit=''number''
+|appeared=3.12
+|desc=Set the interval of periodic commit, 30 seconds by default. Higher values defer data being synced to permanent storage with obvious consequences when the system crashes. The upper bound is not forced, but a warning is printed if it's more than 300 seconds (5 minutes).
+}}
+{{MountOption
+|name=compress,compress-force
+|desc=Enable compression. Starting with kernel 2.6.38 you can choose the algorithm for compression:
+* compress=zlib - Better compression ratio. It's the default and safe for olders kernels.
+* compress=lzo - Faster compression.
+* compress=no - Disables compression (starting with kernel 3.6).
+
+compress-force=<method> - Enable compression even for files that don't compress well, like videos and dd images of disks. The options compress-force=zlib and compress-force=lzo works for kernels &gt;2.6.38.
+
+Note that old (before 2012) btrfs-progs versions will probably fail some operations (e.g. fsck) on filesystems with LZO compression.
+}}
+{{MountOption
+|name=degraded
+|desc=This is used for multi-device filesystem, when raid levels require certain number of devices for successful mount. If some of the devices does not exist/has failed/has been replaced, you can mount the filesystem with this option and continue updating the device set. 
+}}
+{{MountOption
+|name=device=''/dev/name''
+|desc=Tells btrfs to scan this device for a btrfs volume, does not mean all devices will be added to the fs, ''just scanned''. Non-btrfs devices will cause mount to fail.
+}}
+{{MountOption
+|name=discard
+|desc=Enables discard/TRIM on freed blocks. This can decrease performance on devices that do not support queued TRIM command, like SATA prior to revision 3.1. Alternatively, you can run <tt>fstrim</tt> command periodically.
+}}
+{{MountOption
+|name=enospc_debug
+|desc=Used for debugging problems with "no space left on device". Usually prints more debugging messages to the syslog, otherwise can be used without performance degradation.
+}}
+{{MountOption
+|name=fatal_errors
+|appeared=3.4
+|desc=Action to take when encountering a fatal error
+* fatal_errors=bug - raise a BUG() on fatal error
+* fatal_errors=panic - panic on fatal error
+}}
+{{MountOption
+|name=flushoncommit
+|desc=Turns on ext3 like behaviour, where all outstanding delayed allocations are flushed to disk when we commit the transaction. NOTE: Not needed with recent kernels, as it's the normal mode of operation.
+}}
+{{MountOption
+|name=inode_cache
+|appeared=3.0
+|desc=Enable free inode number caching. Not recommended to use unless files on your filesystem get assigned inode numbers that are approaching 2<sup>64</sup>. Normally, new files in each subvolume get assigned incrementally (plus one from the last time) and are not reused. The mount option turns on caching of the existing inode numbers and reuse of inode numbers of deleted files. 
+
+This option may slow down your system at first run, or after mounting without the option.
+}}
+{{MountOption
+|name=max_inline=''number''
+|desc=Set this maximum amount of space (in bytes) that can be used to inline data within a metadata B-tree leaf. Default is 8192, for 4k pages its limited to ~3900 bytes due to additional headers that have to fit into the leaf.
+}}
+{{MountOption
+|name=metadata_ratio=''number''
+|desc=Sets the number of data chunks that need to be allocated to force a metadata chunk allocation. By default this is set to 8 (meaning that ''data:metadata'' are 1:8).
+}}
+{{MountOption
+|name=noacl
+|desc=Do not enable ACL's.
+}}
+{{MountOption
+|name=nobarrier
+|desc=Do not use device barriers. NOTE: Using this option greatly increases the chances of you experiencing data corruption during a power failure situation. This means full file-system corruption, and not just losing or corrupting data that was being written during a power cut or kernel panic
+}}
+{{MountOption
+|name=nodatacow
+|desc=Do not copy-on-write data for '''newly''' created files, existing files are unaffected. This also turns off checksumming! IOW, ''nodatacow'' implies ''nodatasum''. datacow is used to ensure the user either has access to the old version of a file, or to the newer version of the file. datacow makes sure we never have partially updated files written to disk. nodatacow gives slight performance boost by directly overwriting data (like ext[234]), at the expense of potentially getting partially updated files on system failures. Performance gain is usually &lt; 5% unless the workload is random writes to large database files, where the difference can become very large. NOTE: switches off ''compression'' !
+}}
+{{MountOption
+|name=nodatasum
+|desc=Do not checksum data for newly created files. Means bit flips and bit rot might go undetected, but allows for slightly faster operation since data checksum does not have to be calculated. On most modern CPUs this option does not result in any reasonable performance improvement.
+}}
+{{MountOption
+|name=nospace_cache
+|appeared=3.2
+|desc=Disable free space caching. This may slow down new writes.
+}}
+{{MountOption
+|name=notreelog
+|desc=This disables the tree logging used for fsync. Dangerous option as it may result in inconsistent data after power failure.
+}}
+{{MountOption
+|name=recovery
+|appeared=3.2
+|desc=Enable autorecovery upon mount; currently it scans list of several previous tree roots and tries to use the first readable. The information about the tree root backups is stored by kernels starting with 3.2, older kernels do not and thus no recovery can be done.
+}}
+{{MountOption
+|name=rescan_uuid_tree
+|appeared=3.12
+|desc=Force check and rebuild procedure of the UUID tree. This should never be needed.
+}}
+{{MountOption
+|name=skip_balance
+|appeared=3.3
+|desc=Skip automatic restart of balance operation after mount, eg. interrupted due to unclean shutdown. 
+}}
+{{MountOption
+|name=space_cache
+|appeared=2.6.37
+|desc=Btrfs stores the free space data on-disk to make the caching of a block group much quicker. It's a persistent change and is safe to boot into old kernels.
+}}
+{{MountOption
+|name=ssd
+|desc=Turn on some of the SSD optimized behaviour within btrfs. This is enabled automatically by checking /sys/block/sdX/queue/rotational to be zero. This does not enable discard/TRIM!
+}}
+{{MountOption
+|name=ssd_spread
+|desc=Mount ''-o ssd_spread'' is more strict about finding a large unused region of the disk for new allocations, which tends to fragment the free space more over time. It is often faster on the less expensive SSD devices.
+}}
+{{MountOption
+|name=subvol=/path/to/subvolume
+|desc=Mount a subvolume instead of the root subvolume. The subvolume path is relative to the toplevel subvolume.
+
+Note: until kernels 3.2 the subvolume had to be in the toplevel subvolume. There was a bandaid to specify the parent subvolume instead of the toplevel via ''subvolrootid''.
+}}
+{{MountOption
+|name=subvolid=''objectid''
+|desc=Mount a subvolume by ID number. This allows mounting subvolmes which are not in the root of the filesystem. You can use ''btrfs subvolume list'' to see the ID numbers or ''btrfs inspect-internal rootid path'' to find ID of the enclosing subvolume of ''path''.
+}}
+{{MountOption
+|name=subvolrootid=''objectid''
+|desc=''(Deprecated)'' Temporary until ''subvol'' supported full path of a subvolume. See above.
+}}
+{{MountOption
+|name=thread_pool=''number''
+|desc=The number of worker threads to allocate.
+}}
+{{MountOption
+|name=user_subvol_rm_allowed
+|appeared=3.0
+|desc=Subvolumes may be deleted by a non-root user. Use with caution. 
+}}
+
+== Options by category ==
+
+Options grouped by subsystem or area they affect, one option may appear in more than one group.
+
+=== Space cache control ===
+
+* space_cache
+* nospace_cache
+* clear_cache
+
+=== Allocator ===
+
+* ssd
+* ssd_spread
+
+=== Reliability ===
+
+* commit
+* nodatasum
+* notreelog
+
+=== Recovery ===
+
+* recovery
+* skip_balance
+* degraded
+
+=== Device specific ===
+
+=== Performance ===
+
+* noatime - as discussed in the mailing list ''noatime'' mount option might speed up your file system, especially in case you have lots of snapshots. Each read access to a file is supposed to update its unix access time. COW will happen and will make even more writes. Default is now ''relatime'' which updates access times less often (see: http://kerneltrap.org/node/14148).
+
+Note that ''noatime'' will break some applications like the venerable mutt (unless you use Maildir mailboxes).
+
+=== Debugging ===
+
+* enospc_debug
+* check_int

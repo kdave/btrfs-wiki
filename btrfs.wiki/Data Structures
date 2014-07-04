@@ -1,0 +1,265 @@
+This page lists the main on-disk data structures, and how they link with each other (and via which trees). It doesn't document every single field of every structure. Instead, it concentrates on the cross-links between items in the on-disk data structures.
+
+See also: [[Btree Items]], [[On-disk_Format]]
+
+
+= Structure references =
+
+<!-- [[File~Disk-data-structures.svg|[[Image:660px-Disk-data-structures.svg.png|660px|Disk-data-structures.svg]]]] -->
+[[File:References.png]]
+
+= btrfs_block_group_item =
+
+; used 
+: The space used in this block group
+; chunk_objectid 
+: (?)
+; flags 
+: Type of data in this block group, and replication strategy (RAID level)
+: 1 Data
+: 2 System
+: 4 Metadata
+: 8 Striped (RAID-0)
+: 16 Mirrored (RAID-1)
+: 32 Duplicated (DUP)
+: 64 Striped and mirrored (RAID-10)
+
+= btrfs_chunk =
+
+References, via the array of struct btrfs_stripes, the dev_extents which make up this block group.
+
+; length 
+: Length of chunk (amount of space used, not the total storage available)
+; owner 
+: only set, not used?
+; stripe_len 
+:
+; type 
+:
+; io_align, io_width, sector_size 
+: Optimal alignment parameters for block I/O
+; num_stripes 
+: Number of stripes in this chunk
+; sub_stripes 
+: Number of sub-stripes (RAID-10 only)
+; stripe 
+: First element of an array of stripes
+: See [[Data_Structures#btrfs stripe|btrfs_stripe]]
+
+= btrfs_csum_item =
+
+No external references
+
+; csum 
+: Start of a variable-length sequence of [currently 4-byte] checksums, one for each 4k of data, starting at the '''offset''' field of the key.
+
+= btrfs_dev_extent =
+
+Maps a physical extent of storage (e.g. a range of bytes on a storage device) into a chunk.
+
+; chunk_tree 
+: Unused? -- Expansion to allow for multiple chunk trees?
+; chunk_objectid, chunk_offset 
+: References chunk_tree/(chunk_objectid, BTRFS_CHUNK_ITEM_KEY, chunk_offset) → [[#btrfs chunk|struct btrfs_chunk]]
+: Note that the chunk_objectid will (currently) always be BTRFS_FIRST_CHUNK_TREE_OBJECTID == 256ULL
+; chunk_tree_uuid 
+: Double-check for which tree we're referring to
+
+= btrfs_dev_item =
+
+Represents a complete block device.
+
+; devid 
+: Matches the devid in the filesystem's list of struct btrfs_devices.
+
+= btrfs_dir_item =
+
+Represents an entry in a directory, or a named xattr.
+
+; location 
+: key pointing at item's inode data
+: (0, UNKNOWN, 0) for objects with no data outside the btrfs_dir_item
+; data_len 
+: Length of embedded data
+; name_len 
+: Length of item name
+; type
+: 0 == unknown
+: 1 == file
+: 2 == directory
+: 3 == char device
+: 4 == block device
+: 5 == fifo
+: 6 == socket
+: 7 == symlink
+: 8 == xattr
+
+= btrfs_dir_log_item =
+
+= btrfs_extent_data_ref =
+
+Not indexed independently in any tree. Follows a [[#btrfs extent inline ref|struct btrfs_extent_inline_ref]].
+
+This struct references an extent of a file.
+
+; root 
+: Subvolume tree objectid.
+; objectid 
+: inode number of the file referenced
+; offset 
+: position within the file for the start of this extent data
+; count 
+: (?)
+
+= btrfs_extent_inline_ref =
+
+Header for a sequence of inline extent references.
+
+Not indexed independently in any tree. May follow a [[#btrfs extent item|struct btrfs_extent_item]] of type BTRFS_EXTENT_FLAG_DATA.
+
+; type
+: BTRFS_TREE_BLOCK_REF_KEY == 176: The extent is a tree block in a single tree.
+;; offset
+:: location of the root of the tree that the block lives in.
+: BTRFS_EXTENT_DATA_REF_KEY == 178: The extent is part of some file, or files.
+;; offset
+:: not used: is actually the first 8 bytes of the first [[#btrfs extent data ref|struct btrfs_extent_data_ref]] following this struct. Multiple such structs may follow, one for each file.
+: BTRFS_SHARED_BLOCK_REF_KEY == 182: The extent is a shared tree block in many trees.
+;; offset
+:: location of the block's parent (presumably also shared).
+: BTRFS_SHARED_DATA_REF_KEY == 184: The extent is file data shared among multiple files. Followed by a number of [[#btrfs shared data ref|struct btrfs_shared_data_refs]]. Multiple such structs may follow, one for each file.
+;; offset
+:: address of the parent object (?)
+
+= btrfs_extent_item =
+
+Counts the number of references to a particular extent range, and keeps track of which extents are for data and which for metadata (tree blocks).
+
+This structure may be followed directly by a [[#btrfs extent inline ref|struct btrfs_extent_inline_ref]], or by a [[#btrfs tree block info|struct btrfs_tree_block_info]].
+
+; refs 
+: The number of references to this extent range
+; flags
+: BTRFS_EXTENT_FLAG_DATA == 1
+: BTRFS_EXTENT_FLAG_TREE_BLOCK == 2
+
+= btrfs_extent_ref_v0 =
+
+= btrfs_file_extent_item =
+
+Represents a chunk of data on disk belonging to a file. In the fs-trees, the corresponding key is ''(<inum> EXTENT_DATA <logical offset>)''. The ''<logical offset>'' is in (uncompressed) bytes within the file belonging to inode ''<inum>''.
+
+; generation 
+: transaction id that created this extent
+; ram_bytes 
+: Upper bound on the number of bytes of file content represented (without compression). Is not always lowered when it could be.
+ 	btrfs_file_extent_ram_bytes()
+; compression
+; encryption
+; type
+: BTRFS_FILE_EXTENT_INLINE == 0
+: BTRFS_FILE_EXTENT_REG == 1
+: BTRFS_FILE_EXTENT_PREALLOC == 2
+
+For inline extents the file contents immediately follow the type byte. The length of the inline data block equals ''ram_bytes'', alternatively it can be read from the inode or computed as the size stored in the corresponding btrfs_item-structure less the (partial) size of the btrfs_file_extent_item-structure.
+
+For regular extents the structure contains several fields more:
+
+; disk_bytenr 
+: Logical address for the start of the extent data. Note: This is the key.''objectid'' for the corresponding EXTENT_ITEM.
+ 	btrfs_file_extent_disk_bytenr()
+; disk_num_bytes 
+: Number of on-disk bytes of the extent (compressed). Note: This is the key.''offset'' for the corresponding EXTENT_ITEM.
+ 	btrfs_file_extent_disk_num_bytes()
+; offset 
+: Offset into the extent item. Number of bytes to skip at the beginning (uncompressed).
+ 	btrfs_file_extent_offset()
+; num_bytes 
+: Number of valid bytes within the file extent item (uncompressed)
+ 	btrfs_file_extent_num_bytes()
+
+= btrfs_file_extent_item_v0 =
+
+= btrfs_free_space_entry =
+
+= btrfs_free_space_header =
+
+= btrfs_inode_item =
+
+; block_group 
+: offset of chunk (in chunk tree) that the inode lives in
+
+= btrfs_inode_ref =
+
+Indexed by (inode_number, BTRFS_INODE_REF_ITEM, parent_inode). Allows you to find the [[#btrfs dir item|btrfs_dir_item]] entries for a given inode. There is one of these for each hard-linked copy of a file.
+
+; index 
+: directory index number in parent directory (given by '''parent_inode''' in key)
+; name_len 
+: length of subsequent name record
+
+= btrfs_header =
+
+Every tree block (leaf or node) starts with this header.
+
+; bytenr 
+: virtual address of block 
+; owner 
+: the object id of the tree this block belongs to, for example BTRFS_ROOT_TREE_OBJECTID
+
+= btrfs_root_item =
+
+Holds information on the root of a btree
+
+; root_dirid
+: (For subvolumes) the inode number of the root dir of the filesystem (always 256?)
+: 0 for any other tree root
+; bytenr 
+: The address of the root of the tree
+; drop_progress 
+: Progress marker for dropping subvolume trees (?)
+
+= btrfs_root_ref =
+
+References a subvolume fs tree root. Used for both forward and backward root refs.
+
+; dirid 
+: subtree ID
+; sequence 
+: directory sequence number of subtree entry
+; name 
+: name of subtree
+
+= btrfs_shared_data_ref =
+
+Not indexed independently in any tree, but instead follows a [[#btrfs extent inline ref|struct btrfs_extent_inline_ref]].
+
+Contains a count of the number of references to this extent.
+
+= btrfs_stripe =
+
+; devid 
+: Device ID
+; offset 
+: Offset on device
+; dev_uuid 
+: UUID of device
+
+References the [[#btrfs dev item|btrfs_dev_item]] at device_tree/(devid, BTRFS_DEV_ITEM_KEY, offset)
+
+= btrfs_super_block =
+
+= btrfs_timespec =
+
+= btrfs_tree_block_info =
+
+Not indexed directly. Follows a [[#btrfs extent item|struct btrfs_extent_item]] of type BTRFS_EXTENT_FLAG_TREE_BLOCK. May be followed by one or more [[#btrfs extent inline ref|struct btrfs_extent_inline_refs]].
+
+Holds the key that references this block.
+
+; key 
+: Key that indexes this block.
+; level 
+: Depth within the tree of the key
+
+[[Category:CodeDoc]]

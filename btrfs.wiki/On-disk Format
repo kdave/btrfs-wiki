@@ -1,0 +1,988 @@
+This document describes the Btrfs on‐disk format.
+
+
+== Overview ==
+
+Aside from the superblock, Btrfs consists entirely of several trees. The trees use copy-on-write.
+
+Btrfs makes a distinction between logical and physical addresses. Logical addresses are used in the filesystem structures, while physical addresses are simply byte offsets on a disk. One logical address may correspond to physical addresses on any number of disks, depending on RAID settings. The chunk tree is used to convert from logical addresses to physical addresses; the dev tree can be used for the reverse. For bootstrapping purposes, the superblock contains a subset of the chunk tree.
+
+Subvolumes and snapshots.
+
+== Basic Structures ==
+
+Note that the fields are unsigned, so object ID −1 will be treated as ffffffffffffffff and sorted to the end of the tree. Since Btrfs uses little‐endian, a simple byte‐by‐byte comparison of KEYs will not work.
+
+{| class="wikitable" border="1"
+|+  KEY
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 8
+| UINT
+| Object ID. Each tree has its own set of Object IDs.
+|-
+| align="right" | 8
+| align="right" | 1
+| UINT
+|
+[[#Item Types|Item type]].
+|-
+| align="right" | 9
+| align="right" | 8
+| UINT
+| Offset. The meaning depends on the item type.
+|-
+| colspan="4" | 11
+|}
+
+Btrfs uses [http://en.wikipedia.org/wiki/Unix_time Unix time].
+
+{| class="wikitable" border="1"
+|+  TIME
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 8
+| SINT
+| Number of seconds since 1970-01-01T00:00:00Z.
+|-
+| align="right" | 8
+| align="right" | 4
+| UINT
+| Number of nanoseconds since the beginning of the second.
+|-
+| colspan="4" | c
+|}
+
+=== Superblock ===
+
+The primary superblock is located at 0x1 0000 (6410 KiB). Mirror copies of the superblock are located at physical addresses 0x400 0000 (6410 MiB), 0x40 0000 0000 (25610 GiB), and 0x4 0000 0000 0000 (1 PiB), if these locations are valid. btrfs normally updates all superblocks, but in SSD mode it will update only one at a time. The superblock with the highest generation is used when reading.
+
+Note that btrfs only recognizes disks with a valid 0x1 0000 superblock; otherwise, there would be confusion with other filesystems.
+
+TODO
+
+{| class="wikitable" border="1"
+|+  Superblock
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 20
+| CSUM
+| Checksum of everything past this field (from 20 to 1000)
+|-
+| align="right" | 20
+| align="right" | 10
+| UUID
+| FS UUID
+|-
+| align="right" | 30
+| align="right" | 8
+| UINT
+| physical address of this block (different for mirrors)
+|-
+| align="right" | 38
+| align="right" | 8
+|
+| flags
+|-
+| align="right" | 40
+| align="right" | 8
+| ASCII
+| magic ("_BHRfS_M")
+|-
+| align="right" | 48
+| align="right" | 8
+|
+| generation
+|-
+| align="right" | 50
+| align="right" | 8
+|
+| logical address of the root tree root
+|-
+| align="right" | 58
+| align="right" | 8
+|
+|
+logical address of the [[#Chunk tree .283.29|chunk tree]] root
+|-
+| align="right" | 60
+| align="right" | 8
+|
+| logical address of the log tree root
+|-
+| align="right" | 68
+| align="right" | 8
+|
+| log_root_transid
+|-
+| align="right" | 70
+| align="right" | 8
+|
+| total_bytes
+|-
+| align="right" | 78
+| align="right" | 8
+|
+| bytes_used
+|-
+| align="right" | 80
+| align="right" | 8
+|
+| root_dir_objectid (usually 6)
+|-
+| align="right" | 88
+| align="right" | 8
+|
+| num_devices
+|-
+| align="right" | 90
+| align="right" | 4
+|
+| sectorsize
+|-
+| align="right" | 94
+| align="right" | 4
+|
+| nodesize
+|-
+| align="right" | 98
+| align="right" | 4
+|
+| leafsize
+|-
+| align="right" | 9c
+| align="right" | 4
+|
+| stripesize
+|-
+| align="right" | a0
+| align="right" | 4
+|
+| ''n''
+|-
+| align="right" | a4
+| align="right" | 8
+|
+| chunk_root_generation
+|-
+| align="right" | ac
+| align="right" | 8
+|
+| compat_flags
+|-
+| align="right" | b4
+| align="right" | 8
+|
+| compat_ro_flags - only implementations that support the flags can write to the filesystem
+|-
+| align="right" | bc
+| align="right" | 8
+|
+| incompat_flags - only implementations that support the flags can use the filesystem
+|-
+| align="right" | c4
+| align="right" | 2
+|
+| csum_type - Btrfs currently uses the CRC32c little-endian hash function with seed -1.
+|-
+| align="right" | c6
+| align="right" | 1
+|
+| root_level
+|-
+| align="right" | c7
+| align="right" | 1
+|
+| chunk_root_level
+|-
+| align="right" | c8
+| align="right" | 1
+|
+| log_root_level
+|-
+| align="right" | c9
+| align="right" | 62
+|
+|
+[[#DEV ITEM .28d8.29|DEV_ITEM]] data for this device
+|-
+| align="right" | 12b
+| align="right" | 100
+|
+| label (may not contain '/' or '\\')
+|-
+| align="right" | 22b
+| align="right" | 100
+|
+| reserved
+|-
+| align="right" | 32b
+| align="right" | 800
+|
+|
+(''n'' bytes valid) Contains (KEY, [[#CHUNK ITEM .28e4.29|CHUNK_ITEM]]) pairs for all SYSTEM chunks. This is needed to bootstrap the mapping from logical addresses to physical.
+|-
+| align="right" | b2b
+| align="right" | 4d5
+|
+| Currently unused
+|-
+| colspan="4" | 1000
+|}
+
+=== Header ===
+
+TODO
+
+{| class="wikitable" border="1"
+|+  Header
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 20
+| CSUM
+| Checksum of everything after this field (from 20 to the end of the node)
+|-
+| align="right" | 20
+| align="right" | 10
+| UUID
+| FS UUID
+|-
+| align="right" | 30
+| align="right" | 8
+| UINT
+| Logical address of this node
+|-
+| align="right" | 38
+| align="right" | 7
+| FIELD
+| Flags
+|-
+| align="right" | 3f
+| align="right" | 1
+| UINT
+| Backref. Rev.: always 1 (MIXED) for new filesystems; 0 (OLD) indicates an old filesystem.
+|-
+| align="right" | 40
+| align="right" | 10
+| UUID
+| Chunk tree UUID
+|-
+| align="right" | 50
+| align="right" | 8
+| UINT
+| Generation
+|-
+| align="right" | 58
+| align="right" | 8
+| UINT
+| The ID of the tree that contains this node
+|-
+| align="right" | 60
+| align="right" | 4
+| UINT
+| Number of items
+|-
+| align="right" | 64
+| align="right" | 1
+| UINT
+| Level (0 for leaf nodes)
+|-
+| colspan="4" | 65
+|}
+
+=== Internal Node ===
+
+In internal nodes, the node header is followed by a number of key pointers.
+
+{| class="wikitable" border="1"
+|+  Key Pointer
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 11
+| KEY
+| key
+|-
+| align="right" | 11
+| align="right" | 8
+| UINT
+| block number
+|-
+| align="right" | 19
+| align="right" | 8
+| UINT
+| generation
+|-
+| colspan="4" | 21
+|}
+
+{| border="1"
+|+  Internal Node Layout
+|-
+| header
+| key ptr
+| key ptr
+| key ptr
+| ...
+| free space
+|}
+
+=== Leaf Node ===
+
+In leaf nodes, the node header is followed by a number of items. The items' data is stored at the end of the node.
+
+{| class="wikitable" border="1"
+|+  Item
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 11
+| KEY
+| key
+|-
+| align="right" | 11
+| align="right" | 4
+| UINT
+| data offset relative to end of header (65)
+|-
+| align="right" | 15
+| align="right" | 4
+| UINT
+| data size
+|-
+| colspan="4" | 19
+|}
+
+{| border="1"
+|+  Leaf Node Layout
+|-
+| header
+| item 0
+| item 1
+| ...
+| item N
+| free space
+| data N
+| ...
+| data 1
+| data 0
+|}
+
+== Object Types ==
+
+TODO
+
+== Objects ==
+
+=== Root tree (1) ===
+
+The root tree holds ROOT_ITEMs, ROOT_REFs, and ROOT_BACKREFs for every tree other than itself. It is used to find the other trees and to determine the subvolume structure. It also holds the items for the [[#Root tree directory|root tree directory]]. The logical address of the root tree is stored in the [[#Superblock|superblock]].
+
+=== EXTENT tree (2) ===
+
+TODO
+
+* Holds EXTENT_ITEMs, BLOCK_GROUP_ITEMs
+* Pointed to by ROOT
+
+=== EMPTY_SUBVOL dir (2) ===
+
+TODO
+
+=== Chunk tree (3) ===
+
+The chunk tree holds all [[#DEV ITEM .28d8.29|DEV_ITEMs]] and [[#CHUNK ITEM .28e4.29|CHUNK_ITEMs]], making it possible to determine the device(s) and physical address(es) corresponding to a given logical address. It is therefore crucial for access to the contents of the filesystem.
+
+The chunk tree resides entirely in SYSTEM block groups, and will therefore be accessible from the [[#CHUNK ITEM .28e4.29|CHUNK_ITEM]] array in the [[#Superblock|Superblock]]. It also has an entry in the ROOT tree.
+
+=== Dev tree (4) ===
+
+The dev tree holds all [[#DEV EXTENT .28cc.29|DEV_EXTENTs]], making it possible to determine the logical address corresponding to a given physical address. This is necessary when shrinking or removing devices. The dev tree has an entry in the [[#Root tree .281.29|root tree]].
+
+=== FS tree (5) ===
+
+TODO
+
+* Holds INODE_ITEMs, INODE_REFs, DIR_ITEMs, DIR_INDEXen, XATTR_ITEMs, EXTENT_DATAs for a filesystem
+* Pointed to by ROOT
+* TODO: ".."
+
+=== Root tree directory ===
+
+The root tree directory is stored in the [[#Root tree .281.29|root tree]]. It has an INODE_ITEM and a DIR_ITEM with name "default" pointing to the FS tree. There is also a corresponding INODE_REF, but no DIR_INDEX. The objectid of the root tree directory is stored in the [[#Superblock|superblock]], but is currently always 6.
+
+=== Checksum tree (7) ===
+
+The checksum tree contains all the EXTENT_CSUMs. It has an entry in the [[#Root tree .281.29|root tree]].
+
+=== ORPHAN (-5) ===
+
+TODO
+
+=== TREE_LOG (-6) ===
+
+TODO
+
+=== TREE_LOG_FIXUP (-7) ===
+
+TODO
+
+=== TREE_RELOC (-8) ===
+
+TODO
+
+* Just a copy of another tree
+
+=== DATA_RELOC tree (-9) ===
+
+TODO
+
+* Holds 100 INODE_ITEM 0
+* Holds 100 INODE_REF 100 0:'..'
+* Pointed to by ROOT
+
+=== EXTENT_CSUM (-a) ===
+
+TODO
+
+=== MULTIPLE_OBJECTIDS (-100) ===
+
+TODO
+
+== Item Types ==
+
+=== INODE_ITEM (01) ===
+
+(objectid, 01, 0)
+
+Contains the stat information for an inode; see [http://linux.die.net/man/2/stat stat(2)].
+
+{| class="wikitable" border="1"
+|+
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 8
+| UINT
+| generation (TODO)
+|-
+| align="right" | 8
+| align="right" | 8
+| UINT
+| transid that last touched this (TODO)
+|-
+| align="right" | 10
+| align="right" | 8
+| UINT
+| st_size. For a directory, this is twice the total number of characters in all the entries' filenames.
+|-
+| align="right" | 18
+| align="right" | 8
+| UINT
+| st_blocks, but in bytes. This is the sum of the offset fields of all EXTENT_DATA items for this inode. For a directory, this is 0.
+|-
+| align="right" | 20
+| align="right" | 8
+|
+| Block group (TODO)
+|-
+| align="right" | 28
+| align="right" | 4
+| UINT
+| st_nlink. This is the number of INODE_REF entries for the inode. For trees and other objects with no INODE_REFs, this is 1.
+|-
+| align="right" | 2c
+| align="right" | 4
+| UINT
+| st_uid
+|-
+| align="right" | 30
+| align="right" | 4
+| UINT
+| st_gid
+|-
+| align="right" | 34
+| align="right" | 4
+| UINT
+| st_mode
+|-
+| align="right" | 38
+| align="right" | 8
+| UINT
+| st_rdev. The lower 20 bits are the minor number, and the higher 44 bits are the major number.
+|-
+| align="right" | 40
+| align="right" | 8
+| UINT
+| Flags (TODO)
+|-
+| align="right" | 48
+| align="right" | 8
+| UINT
+| Sequence (for NFS compatibility): starts at 0 and increments whenever st_mtime is updated.
+|-
+| align="right" | 50
+| align="right" | 20
+|
+| Reserved
+|-
+| align="right" | 70
+| align="right" | c
+| TIME
+| st_atime
+|-
+| align="right" | 7c
+| align="right" | c
+| TIME
+| st_ctime. Also updated when xattrs change.
+|-
+| align="right" | 88
+| align="right" | c
+| TIME
+| st_mtime
+|-
+| align="right" | 94
+| align="right" | c
+| TIME
+| "otime" (reserved)
+|-
+| colspan="4" | a0
+|}
+
+=== INODE_REF (0c) ===
+
+(inode_id, directory_id) TODO
+
+    From an inode to a name in a directory.
+     0  8 UINT   index in the directory
+     8  2 UINT   name length
+     a    ASCII  name in the directory
+    This structure can be repeated...?
+
+=== XATTR_ITEM (18) ===
+
+(inode_id, hash of xattr name) TODO
+
+    From an inode to extended attribute(s) by name. Same contents as DIR_ITEM;
+    the name and data are the xattr name and data, and location is NULL.
+
+=== ORPHAN_ITEM (30) ===
+
+(-5, objid of orphan inode) TODO
+
+    Empty.
+
+=== DIR_LOG_ITEM (3c) ===
+
+(directory_id, first offset) TODO
+
+    The log is considered authoritative for ([first offset, end offset)]
+     0  8 UINT   end offset
+
+=== DIR_LOG_INDEX (48) ===
+
+(directory_id, first offset) TODO
+
+    Same as DIR_LOG_ITEM.
+
+=== DIR_ITEM (54) ===
+
+(parent objectid, 54, hash of name)
+
+Allows looking up a directory item by name.
+
+{| class="wikitable" border="1"
+|+
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 11
+| KEY
+| location of child
+|-
+| align="right" | 11
+| align="right" | 8
+| UInt
+| transid
+|-
+| align="right" | 19
+| align="right" | 2
+| UInt
+| (''m'')
+|-
+| align="right" | 1b
+| align="right" | 2
+| UInt
+| (''n'')
+|-
+| align="right" | 1d
+| align="right" | 1
+| UInt
+| type of child (0=Unknown, 1=Regular File, 2=Directory, 3=character device, 4=block device, 5=FIFO, 6=socket, 7=symbolic link, 8=extended attribute)
+|-
+| align="right" | 1e
+| align="right" | ''n''
+| Text
+| name of item in directory
+|-
+| align="right" |
+| align="right" | ''m''
+|
+| data of item in directory (empty for normal directory items)
+|-
+| colspan="4" | 1e+''n''+''m''
+|}
+
+This structure can be repeated multiple times within one DIR_ITEM if multiple items have the same hash.
+
+=== DIR_INDEX (60) ===
+
+(parent objectid, 60, index in parent)
+
+Allows looking up an item in a directory by index. Indices start at 2 (because of "." and ".."); removed files can cause "holes" in the index space. DIR_INDEXen have the same contents as [[#DIR ITEM .2854.29|DIR_ITEMs]], but may contain only one entry.
+
+=== EXTENT_DATA (6c) ===
+
+(inode id, 6c, offset in file) TODO
+
+The contents of a file.
+
+{| class="wikitable" border="1"
+|+
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 8
+| UINT
+| generation
+|-
+| align="right" | 8
+| align="right" | 8
+| UINT
+| (''n'') size of decoded extent
+|-
+| align="right" | 10
+| align="right" | 1
+| UINT
+| compression (0=none, 1=zlib)
+|-
+| align="right" | 11
+| align="right" | 1
+| UINT
+| encryption (0=none)
+|-
+| align="right" | 12
+| align="right" | 2
+| UINT
+| other encoding (0=none)
+|-
+| align="right" | 14
+| align="right" | 1
+| UINT
+| type (0=inline, 1=regular, 2=prealloc)
+|-
+| colspan="4" | 15
+|}
+
+If the extent is inline, ''n'' bytes of data follow. Otherwise, the structure continues:
+
+{| class="wikitable" border="1"
+|+
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 15
+| align="right" | 8
+| UINT
+| (''ea'') logical address of extent. If this is zero, the extent is sparse and consists of all zeroes.
+|-
+| align="right" | 1d
+| align="right" | 8
+| UINT
+| (''es'') size of extent
+|-
+| align="right" | 25
+| align="right" | 8
+| UINT
+| (''o'') offset within the extent
+|-
+| align="right" | 2d
+| align="right" | 8
+| UINT
+| (''s'') logical number of bytes in file
+|-
+| colspan="4" | 35
+|}
+
+''ea'' and ''es'' must exactly match an EXTENT_ITEM. If the ''es'' bytes of data at logical address ''ea'' are decoded, ''n'' bytes will result. The file's data contains the ''s'' bytes at offset ''o'' within the decoded bytes. In the simplest, uncompressed case, ''o''=0 and ''n''=''es''=''s'', so the file's data simply contains the ''n'' bytes at logical address ''ea''.
+
+=== EXTENT_CSUM (80) ===
+
+(-a, logical address?) TODO
+
+    Contains one or more checksums of the type in the superblock for adjacent
+    blocks starting at logical address (blocksize).
+
+=== ROOT_ITEM (84) ===
+
+(?, transaction id) TODO
+
+           or (-7, -7) for LOG tree
+     0 a0 INODE_ITEM (gen=1 size=3 nlink=1 nbytes=leafsize mode=40755 other
+                      fields 0)
+    a0  8 UINT   expected generation
+    a8  8 UINT   Object ID in this tree of this tree's root directory (always
+                     100)
+    b0  8 UINT   block number of the root node
+    b8  8 UINT   byte_limit (always 0)
+    c0  8 UINT   bytes_used (can be negative?)
+    c8  8 UINT   The last generation a snapshot was taken of (0 for none)
+    d0  8 UINT   flags (can be negative?)
+    d8  4 UINT   Number of references
+    dc 11 KEY    drop_progress (always 0:00:0)
+    ed  1 UINT   drop_level (always 0)
+    ee  1 UINT   Level of the root of the tree
+
+=== ROOT_BACKREF (90) ===
+
+(subtree id, 90, tree id) TODO
+
+Same content as [[#ROOT REF .289c.29|ROOT_REF]].
+
+=== ROOT_REF (9c) ===
+
+(tree id, subtree id) TODO
+
+     0  8 UINT   ID of directory in [tree id] that contains the subtree
+     8  8 UINT   Sequence (index in tree) (even, starting at 2?)
+    10  2 UINT   (n)
+    12  n ASCII  name
+
+=== EXTENT_ITEM (a8) ===
+
+(logical address, a8, size in bytes) TODO
+
+    Maps logical extents to their contents.
+     0  8 UINT   reference count
+     8  8 UINT   generation
+    10  8 UINT   flags (1=DATA, 2=TREE_BLOCK)
+    18 11 KEY    key of first entry in tree? (TREE_BLOCK only)
+    29  1 UINT   level of node (TREE_BLOCK only)
+    Then inline refs (one for each in reference count) sorted as they would be
+    in a tree (by type, then for example by EXTENT_DATA_REF's hash):
+      0  1 UINT   type (must be TREE_BLOCK_REF, EXTENT_DATA_REF,
+                      SHARED_BLOCK_REF, or SHARED_DATA_REF)
+      1           contents
+
+=== TREE_BLOCK_REF (b0) ===
+
+(logical address, b0, root object id) TODO
+
+     0   8 UINT   offset (the object ID of the tree)
+
+=== EXTENT_DATA_REF (b2) ===
+
+(logical address, b2, hash of first three fields) TODO
+
+     0   8 UINT   root objectid (id of tree contained in)
+     8   8 UINT   object id (owner)
+    10   8 UINT   offset (in the file data)
+    18   4 UINT   count (always 1?)
+
+=== EXTENT_REF_V0 (b4) ===
+
+TODO
+
+=== SHARED_BLOCK_REF (b6) ===
+
+(logical address, b6, parent) TODO
+
+{| class="wikitable" border="1"
+|+
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 8
+| UINT
+| offset
+|-
+| colspan="4" | 8
+|}
+
+=== SHARED_DATA_REF (b8) ===
+
+(logical address, b8, parent) TODO
+
+{| class="wikitable" border="1"
+|+
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 8
+| UINT
+| offset
+|-
+| align="right" | 8
+| align="right" | 4
+| UINT
+| count (always 1?)
+|-
+| colspan="4" | c
+|}
+
+=== BLOCK_GROUP_ITEM (c0) ===
+
+(logical address, c0, size in bytes)
+
+A block group: an allocated area of disk containing EXTENT_ITEMs. Block groups are oriented towards one single type of content (e.g. metadata). Found in the EXTENT tree.
+
+{| class="wikitable" border="1"
+|+
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 8
+| UINT
+| Used amount: the total size in bytes of EXTENT_ITEMs in this block group.
+|-
+| align="right" | 8
+| align="right" | 8
+| OBJID
+| chunk tree id (always 100)
+|-
+| align="right" | 10
+| align="right" | 8
+| FIELD
+|
+flags
+
+  1: DATA oriented
+  2: SYSTEM oriented (the beginning of the disk, the superblock, and everything in tree 3)
+  4: METADATA oriented
+  8: RAID0
+ 10: RAID1 (only exactly 2 disks)
+ 20: has a duplicate (exactly 2 copies, not possible with RAID1)
+ 40: RAID10
+|-
+| colspan="4" | 18
+|}
+
+=== DEV_EXTENT (cc) ===
+
+(device id, cc, physical address) TODO
+
+    Maps from physical address to logical.
+     0  8 UINT   chunk tree (always 3)
+     8  8 OBJID  chunk oid (always 100)
+    10  8 UINT   logical address
+    18  8 UINT   size in bytes
+    20 10 UUID   chunk tree UUID
+    30
+
+=== DEV_ITEM (d8) ===
+
+(1, device id) TODO
+
+    Contains information about one device.
+     0  8 UINT   device id
+     8  8 UINT   number of bytes
+    10  8 UINT   number of bytes used
+    18  4 UINT   optimal I/O align
+    1c  4 UINT   optimal I/O width
+    20  4 UINT   minimal I/O size (sector size)
+    24  8 UINT   type
+    2c  8 UINT   generation
+    34  8 UINT   start offset
+    3c  4 UINT   dev group
+    40  1 UINT   seek speed
+    41  1 UINT   bandwidth
+    42 10 UUID   device UUID
+    52 10 UUID   FS UUID
+    62
+
+=== CHUNK_ITEM (e4) ===
+
+(100, logical address) TODO
+
+    Maps logical address to physical.
+     0  8 UINT   size of chunk (bytes)
+     8  8 OBJID  root referencing this chunk (2)
+    10  8 UINT   stripe length
+    18  8 UINT   type (same as flags for block group?)
+    20  4 UINT   optimal io alignment
+    24  4 UINT   optimal io width
+    28  4 UINT   minimal io size (sector size)
+    2c  2 UINT   number of stripes
+    2e  2 UINT   sub stripes
+    30
+ 
+    Stripes follow (for each number of stripes):
+     0  8 OBJID  device id
+     8  8 UINT   offset
+    10 10 UUID   device UUID
+    20
+
+=== STRING_ITEM (fd) ===
+
+(anything, 0)
+
+Contains a string; used for testing only.
+
+(Page contents used to be on user page, moved to own during 2012 migration.)
+
+[[Category:CodeDoc]]

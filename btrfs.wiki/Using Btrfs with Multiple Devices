@@ -1,0 +1,144 @@
+== Multiple devices ==
+
+A Btrfs filesystem can be created on top of many devices, and more devices can be added after the FS has been created.
+
+By default, metadata will be mirrored across two devices and data will be striped across all of the devices present.
+
+If only one device is present, metadata will be duplicated on that one device.
+
+=== Current status ===
+
+Btrfs can add and remove devices online, and freely convert between RAID levels after the FS has been created.
+
+Btrfs supports raid0, raid1, raid10, raid5 and raid6 (but see the section below about raid5/6), and it can also duplicate metadata on a single spindle. When blocks are read in, checksums are verified. If there are any errors, Btrfs tries to read from an alternate copy and will repair the broken copy if the alternative copy succeeds.
+
+See the [[Gotchas]] page for some current issues when using btrfs with multiple volumes of differing sizes in a RAID1 style setup.
+
+=== Raid 5 and Raid6 ===
+
+{{warning|Parity RAID (RAID 5 and RAID 6) are not currently complete, and have significant problems with recovery from the loss of a device. They should not be used for anything other than testing purposes.}}
+
+Please see the separate page with details for those: [[RAID56]].
+
+=== Filesystem creation ===
+
+mkfs.btrfs will accept more than one device on the command line. It has options to control the raid configuration for data (-d) and metadata (-m). Valid choices are raid0, raid1, raid10 and single. The option ''-m single'' means that no duplication of metadata is done, which may be desired when using hardware raid.
+
+Raid10 requires at least 4 devices.
+
+ # Create a filesystem across four drives (metadata mirrored, linear data allocation)
+ mkfs.btrfs /dev/sdb /dev/sdc /dev/sdd /dev/sde
+ 
+ # Stripe the data without mirroring
+ mkfs.btrfs -d raid0 /dev/sdb /dev/sdc
+ 
+ # Use raid10 for both data and metadata
+ mkfs.btrfs -m raid10 -d raid10 /dev/sdb /dev/sdc /dev/sdd /dev/sde
+ 
+ # Don't duplicate metadata on a single drive (default on single SSDs)
+ mkfs.btrfs -m single /dev/sdb
+
+When you have drives with differing sizes and want to use the full capacity of each drive, you have to use the ''single'' profile for the data blocks, rather than raid0.
+
+ # Use full capacity of multiple drives with different sizes (metadata mirrored, data not mirrored and not striped)
+ mkfs.btrfs -d single /dev/sdb /dev/sdc
+
+Once you create a multi-device filesystem, you can use any device in the FS for the mount command:
+
+ mkfs.btrfs /dev/sdb /dev/sdc /dev/sde
+ mount /dev/sde /mnt
+
+If you want to mount a multi-device filesystem using a loopback device, it's not sufficient to use mount -o loop. Instead, you'll have to set up the loopbacks manually:
+
+ # Create and mount a filesystem made of several disk images
+ mkfs.btrfs img0 img1 img2
+ losetup /dev/loop0 img0
+ losetup /dev/loop1 img1
+ losetup /dev/loop2 img2
+ mount /dev/loop0 /mnt/btrfs
+
+After a reboot or reloading the btrfs module, you'll need to use '''btrfs device scan''' to discover all multi-device filesystems on the machine (see below)
+
+The [[UseCases]] page gives a few quick recipes for filesystem creation.
+
+=== Device scanning ===
+
+'''btrfs device scan''' is used to scan all of the block devices under /dev and probe for Btrfs volumes. This is required after loading the btrfs module if you're running with more than one device in a filesystem.
+
+ # Scan all devices
+ btrfs device scan
+ 
+ # Scan a single device
+ btrfs device scan /dev/sdb
+
+'''btrfs filesystem show''' will print information about all of the btrfs filesystems on the machine.
+
+=== Adding new devices ===
+
+'''btrfs filesystem show''' gives you a list of all the btrfs filesystems on the systems and which devices they include.
+
+'''btrfs device add''' is used to add new devices to a mounted filesystem.
+
+'''btrfs filesystem balance''' can balance (restripe) the allocated extents across all of the existing devices. For example, with an existing filesystem mounted at <code>/mnt</code>, you can add the device <code>/dev/sdc</code> to it with:
+
+ btrfs device add /dev/sdc /mnt
+
+At this point we have a filesystem with two devices, but all of the metadata and data are still stored on the original device(s). The filesystem must be balanced to spread the files across all of the devices.
+
+ btrfs filesystem balance /mnt
+
+The balance operation will take some time. It reads in all of the FS data and metadata and rewrites it across all the available devices.
+
+==== Conversion ====
+
+A non-raid filesystem is converted to raid by adding a device and running a [[Balance Filters|balance filter]] that will change the chunk allocation profile.
+
+For example, to convert an existing single device system (/dev/sdb1) into a 2 device raid1 (to protect against a single disk failure):
+
+ mount /dev/sdb1 /mnt
+ btrfs device add /dev/sdc1 /mnt
+ btrfs balance start -dconvert=raid1 -mconvert=raid1 /mnt
+
+If the metadata is not converted from the single-device default, it remains as DUP, which does not guarantee that copies of block are on separate devices. If data is not converted it does not have any redundant copies at all.
+
+=== Removing devices ===
+
+'''btrfs device delete''' is used to remove devices online. It redistributes the any extents in use on the device being removed to the other devices in the filesystem. Example:
+
+ mkfs.btrfs /dev/sdb /dev/sdc /dev/sdd /dev/sde
+ mount /dev/sdb /mnt
+ # Put some data on the filesystem here
+ btrfs device delete /dev/sdc /mnt
+
+=== Replacing failed devices ===
+
+The example above can be used to remove a failed device if the super block can still be read. But, if a device is missing or the super block has been corrupted, the filesystem will need to be mounted in degraded mode:
+
+ mkfs.btrfs -m raid1 /dev/sdb /dev/sdc /dev/sdd /dev/sde
+ #
+ # sdd is destroyed or removed, use -o degraded to force the mount
+ # to ignore missing devices
+ #
+ mount -o degraded /dev/sdb /mnt
+ #
+ # 'missing' is a special device name
+ #
+ btrfs device delete missing /mnt
+
+'''btrfs device delete missing''' tells btrfs to remove the first device that is described by the filesystem metadata but not present when the FS was mounted.
+
+In case of ''raidXX'' layout, you cannot go below the minimum number of the device required. So before removing a device (even the ''missing'' one) you may need to add a new one. For example if you have a raid1 layout with '''two''' device, and a device fails, you must:
+
+* mount in degraded mode
+* add a new device
+* remove the ''missing'' device
+
+=== Registration in /etc/fstab ===
+
+If you don't have an initrd, or your initrd doesn't perform a btrfs device scan, you can still mount a multi-volume btrfs filesystem by passing ''all'' the devices in the filesystem explicitly to the mount command. A suitable /etc/fstab entry would be:
+ 
+ /dev/sdb     /mnt    btrfs    device=/dev/sdb,device=/dev/sdc,device=/dev/sdd,device=/dev/sde    0 0
+
+device=PARTUUID=… with GPT partition UUIDs will also work and be less fragile (device paths aren't stable).  All these options can also be [https://www.kernel.org/doc/Documentation/kernel-parameters.txt set from the kernel command line], through root=/fstype=/rootflags=.
+
+[[Category:UserDoc]]

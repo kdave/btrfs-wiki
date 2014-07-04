@@ -1,0 +1,109 @@
+btrfs is a '''fast-moving target'''. There are typically a great many bug fixes and enhancements between one kernel release and the next. Therefore:
+
+{{warning|If you have btrfs filesystems, '''run the latest kernel'''.}}
+
+If you are running a kernel two or more versions behind the latest one available from [http://kernel.org kernel.org], the first thing you will be asked to when you report a problem is to upgrade to the latest kernel. Some distributions keep backports of recent kernels to earlier releases -- see the page below for details.
+
+Having the latest user-space tools are also useful, as they contain additional features and tools which may be of use in debugging or recovering your filesystem if something goes wrong.
+
+The status of btrfs was ''experimental'' for a long time, but the the core functionality is considered good enough for daily use. There are new features being implemented and these should be considered experimental for a few releases when the bugs get ironed out when number of brave users help stabilizing it.
+
+While many people use it reliably, there are still problems being found.
+
+{{warning|You should '''keep''' and test '''backups''' of your data, and be prepared to use them.}}
+
+= Reporting problems =
+
+If you have a problem with btrfs, you should report it to either the [[Btrfs mailing list]] or to the [irc://irc.freenode.net:6667/btrfs IRC channel].
+
+= Enterprise distributions with btrfs support =
+
+Since February 2012 there are two vendors who support btrfs in their distributions. They've put additional efforts to make btrfs supportable, so not everything written in the section above necessarily applies and it's recommended to ask the respective vendors about that.
+
+''' SUSE Enterprise Linux '''
+
+With [http://www.suse.com/products/server/features/ SLES11 SP2] comes support of btrfs, read more in the [http://www.suse.com/releasenotes/x86_64/SUSE-SLES/11-SP2/#fate-306585 release notes] section.
+
+''' Unbreakable Enterprise Kernel Release 2 for [http://oracle.com/linux/ Oracle Linux] '''
+
+Available for both Oracle Linux 5 and 6, also available to Oracle Linux Customers from the Oracle [http://linux.oracle.com Unbreakable Linux Network].
+
+* [http://public-yum.oracle.com/ binary packages for UEK2] or [http://oss.oracle.com/git/?p=linux-uek-2.6.39.git;a=summary git source repository].
+
+= Distro support =
+
+Many distros already enable Btrfs support in their kernels and have packages for the Btrfs userspace utilities. Refer to your distro for more documentation about the specifics, like package names or versions available. This wiki is focused on upstream community and for general information.
+
+Btrfs is under active development, the stable kernels receive bugfixes during the development phase of new version and should be safe to use. The distribution kernels do not necesessarily track the most recent kernels but probably backport important fixes.
+
+See also:
+
+* [https://wiki.debian.org/Btrfs Debian support]
+* [https://fedoraproject.org/wiki/Btrfs Fedora support]
+* [https://wiki.gentoo.org/wiki/Btrfs Gentoo support]
+* [https://help.ubuntu.com/community/btrfs Ubuntu support]
+* [https://wiki.archlinux.org/index.php/Btrfs Arch support]
+* [http://www.funtoo.org/BTRFS_Fun Funtoo support]
+* [[OpenSuSE support]]
+
+= Compiling Btrfs from sources =
+
+== Download ==
+
+Download the latest utility programs and modules following [[Btrfs_source_repositories|these instructions]]
+
+For distribution-specific packages of the latest kernel or tools, please see the support links in the table above.
+
+== Compiling the kernel support ==
+
+Btrfs uses libcrc32c in the kernel for file and metadata checksums and zlib to compress data. The necessary options are automatically selected when you select to compile btrfs: CONFIG_LIBCRC32C, CONFIG_ZLIB_INFLATE and CONFIG_ZLIB_DEFLATE.
+
+== Compiling the userspace utilities ==
+
+The Btrfs utility programs require libuuid to build. This can be found in the e2fsprogs sources, and is usually available as libuuid, uuid-dev or e2fsprogs-devel from various distros. You also need the zlib development headers, usually available in a package called zlib-devel or zlib1g-dev.
+
+Building the ext3 conversion tools requires libe2fs (usually available in e2fsprogs-devel or e2fslibs-dev) and libacl (may be available in libacl1-dev).
+
+Building the utilities is just ''make''. If you would also like the ext3 conversion program, type ''make convert''.
+
+''make install'' will copy the programs into /usr/local/bin
+
+= Basic Filesystem Commands =
+
+{{note|the new command '''[[Btrfs(command)|btrfs]]''' has replaced the old '''btrfsctl''' and '''btrfs-vol''' commands.}}
+
+Creating a filesystem of at least 1GiB is recommended.
+
+{{note|Be aware that for that size, it will report full when reaching about 75%.}}
+
+* [[Mkfs.btrfs|mkfs.btrfs]]: create a filesystem
+* [[Btrfs(command)|btrfs]]: control program to create snapshots and subvolumes and scan devices
+** Scan all devices looking for btrfs filesystems, or scan just one partition
+
+   btrfs device scan
+   btrfs device scan /dev/sda
+
+* Snapshots and subvolumes
+** mount -t btrfs /dev/sda2 /mnt/btrfs
+
+   btrfs subvolume create /mnt/btrfs/new_subvol
+   btrfs subvolume snapshot /mnt/btrfs /mnt/btrfs/snapshot_of_root
+
+Now it is possible to mount the subvolumes
+
+   mount -t btrfs -o subvol=new_subvol /dev/sda2 /mnt/new_subvol
+   mount -t btrfs -o subvol=snapshot_of_root /dev/sda2 /mnt/snap
+
+{{note|While subvolumes can be created anywhere in the filesystem tree, in order to be mounted by name a subvolume or snapshot must be in the root of the btrfs filesystem. Mounting by subvolume ID will work regardless of where the subvolume is.}}
+
+* [[Btrfsck|btrfsck]]: do a limited check of the FS extent trees.
+* [[Btrfs-debug-tree| btrfs-debug-tree]]: print all of the FS metadata in text form
+ btrfs-debug-tree /dev/sda2 &gt;&amp; big_output_file
+* If a problem occures you can create an image of the fs with [[Btrfs-image|btrfs-image]] and send it to the devs. (All data will be zeroed, but metadata and the like is preserved.)
+ btrfs-image -c 9 /dev/sda2 /tmp/btrfs_dump.z
+* [[Mount options]] - list of mount options
+
+= Further reading =
+
+* [[SysadminGuide|The Sysadmin's Guide to Btrfs]]
+* [http://marc.merlins.org/perso/btrfs/post_2014-05-21_My-Btrfs-Talk-at-Linuxcon-JP-2014.html Marc MERLIN's Btrfs talk at Linuxcon JP 2014] which gives an overview of Btrfs, best practices, and its more interesting features.

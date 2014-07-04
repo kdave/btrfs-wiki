@@ -1,0 +1,220 @@
+Quota support in BTRFS is implemented at a subvolume level by the use of quota groups or ''qgroup''. Since kernel 3.11[http://lwn.net/Articles/548316/], it is possible to rescan the filesystem so that subvolumes created before quota was enabled gets accounted for.
+
+In the quota system, each subvolume is assigned a quota groups in the form of 0/<subvolume id>. It is possible to create a quota group identified with any number but by default the subvolume ID is used.
+
+== Enabling quota ==
+On a fresh BTRFS filesystem, enabling quota is as simple as typing <code>btrfs quota enable <path></code>
+
+On an existing BTRFS filesystem first enable the quotas and check if <code>btrfs qgroup show <path></code> returns anything, if not, your BTRFS version does not create qgroups automatically. To create the qgroups, you must:
+# Enable the quota system. <code>btrfs quota enable <path></code>
+# Create the basic qgroups. <code>btrfs subvolume list <path> | cut -d' ' -f2 | xargs -I{} -n1 btrfs qgroup create 0/{} <path></code>
+# Rescan the filesystem. <code>btrfs quota rescan <path></code>
+
+== Using limits ==
+Limits on quota groups can be applied either to the total data usage, un-shared data usage, compressed data usage or both. File copy and file deletion may both affect limits since the unshared limit of another qgroup can change if the original volume's files are deleted and only one copy is remaining.
+
+To set a limit, you use the command <code>btrfs qgroup limit</code>, you can apply it to any qgroup and set a total limit, unshared limit (-e) or compressed limit (-c).
+
+=== Commands ===
+ <at BTRFS root>
+ mkdir test
+ cd test
+ btrfs sub create a
+ dd if=/dev/urandom of=a/a1 bs=1M count=10
+ btrfs sub snap a b
+ dd if=/dev/urandom of=a/a2 bs=1M count=10
+ dd if=/dev/urandom of=b/b1 bs=1M count=10
+ btrfs sub snap a c
+ dd if=/dev/urandom of=a/a3 bs=1M count=10
+ dd if=/dev/urandom of=c/c1 bs=1M count=10
+ btrfs sub snap a d
+ dd if=/dev/urandom of=a/a4 bs=1M count=10
+ btrfs sub snap a e
+ rm a/a1
+ rm a/a4
+ sync
+ btrfsQuota.py .. --unit=M
+
+=== Results ===
+<pre>
+subvol						group         total    unshared
+-------------------------------------------------------------------------------
+test/a                                  	0/970	     20.05M       0.05M
+test/b                                  	0/971	     20.05M      10.05M
+test/c                                  	0/972	     30.05M      10.05M
+test/d                                  	0/973	     30.05M       0.05M
+test/e                                  	0/974	     30.05M      10.05M
+</pre>
+==== Explanations ====
+* test/a
+** total of 20M because it has 2 10M files, a2 and a3, a1 was deleted.
+* test/b
+** total of 20M: a1 and b1.
+** unshared of 10M because of b1 which only appears on test/b.
+* test/c
+** total of 20M: a1, a2 and c1.
+** unshared of 10M because of c1 which only appears on test/c.
+* test/d
+** total of 30M because the same files as test/a but without a1 deleted, note that a1 is not unshared since it is part of test/{b,c}.
+* test/e
+** total of 30M: a2, a3, a4.
+** unshared of 10M since a4 has been deleted from test/a and is now only appearing on test/e.
+
+== Parent qgroups ==
+Each quota group can be grouped into a parent qgroup so to share a common limit. Be sure to take note of what qgroup is assigned so you can remove them afterward if you delete the subvolume.
+
+=== Commands ===
+ <at BTRFS root>
+ mkdir test
+ cd test
+ btrfs sub create a
+ btrfs sub create b
+ btrfs qgroup create 1/100 ..
+ btrfs qgroup assign 0/965 1/100 .. # subvolume a taken from btrfsQuota.py output
+ btrfs qgroup assign 0/966 1/100 .. # subvolume b
+ dd if=/dev/urandom of=a/a1 bs=1M count=10
+ dd if=/dev/urandom of=b/b1 bs=1M count=10
+ sync
+ btrfsQuota.py .. --unit=M
+
+=== Results ===
+<pre>
+subvol						group	total	unshared
+------------------------------------------------------------------------
+test/a                                  	0/965	10.04M	10.04M
+test/b                                  	0/966	10.04M	10.04M
+(unknown)                               	1/100	20.07M	20.07M
+</pre>
+
+== Known issues ==
+* To get accurate information, you must issue a ''sync'' before using the qgroup show command.
+* The qgroup show command is missing some information, for example you cannot see which subvolume is part of a parent qgroup.
+* Creating a qgroup from an existing directory will show a 0 usage until a full filesystem quota rescan is issued.
+* Using <code>btrfs subvolume delete</code> will break qgroup unshared space usage.
+* After deleting a subvolume, you must manually delete the associated qgroup.
+
+== /usr/local/bin/btrfsQuota.py ==
+Note only tested on python 2.7
+<pre>
+#!/usr/bin/env python2
+
+import argparse
+import subprocess
+
+parser = argparse.ArgumentParser(
+    description='Gives quotas from a BTRFS filesystem in a readable form'
+)
+parser.add_argument(
+    '--unit', metavar='U', type=str,
+    default='G',
+    help='SI Unit, [B]ytes, K, M, G, T, P',
+)
+parser.add_argument(
+    'mount_point', metavar='PATH', type=str,
+    default='/',
+    help='BTRFS mount point',
+)
+sys_args = parser.parse_args()
+mount_point = sys_args.mount_point
+
+multiplicator_lookup = ['B', 'K', 'M', 'G', 'T', 'P']
+
+subvolume_data = dict()
+cmd = ["btrfs",  "subvolume", "list", mount_point]
+for line in subprocess.check_output(cmd).splitlines():
+    args = line.strip().split(' ')
+    subvolume_data[int(args[1])] = args[-1]
+
+print("subvol\t\t\t\t\t\tgroup         total    unshared")
+print("-" * 79)
+cmd = ["btrfs", "qgroup", "show", mount_point]
+for line in subprocess.check_output(cmd).splitlines():
+    args = [x for x in line.strip().split(' ') if len(x)>0]
+
+    try:
+        subvolume_id = args[0].split('/')[-1]
+        subvolume_name = subvolume_data[int(subvolume_id)]
+    except:
+        subvolume_name = "(unknown)"
+
+    multiplicator = 1024 ** multiplicator_lookup.index(sys_args.unit)
+
+    try:
+        try:
+            total = "%02.2f" % (float(args[1]) / multiplicator)
+            unshared = "%02.2f" % (float(args[2]) / multiplicator)
+        except ValueError:
+            continue
+        print("%s\t%s\t%s%s %s%s" % (
+            subvolume_name.ljust(40),
+            args[0],
+            total.rjust(10), sys_args.unit,
+            unshared.rjust(10), sys_args.unit,
+        ))
+    except IndexError:
+        pass
+</pre>
+
+python3 version, tested on Debian's python3.3 version 3.3.5-1:
+<pre>
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+
+parser = argparse.ArgumentParser(
+    description='Gives quotas from a BTRFS filesystem in a readable form'
+)
+parser.add_argument(
+    '--unit', metavar='U', type=str,
+    default='G',
+    help='SI Unit, [B]ytes, K, M, G, T, P',
+)
+parser.add_argument(
+    'mount_point', metavar='PATH', type=str,
+    default='/',
+    help='BTRFS mount point',
+)
+sys_args = parser.parse_args()
+mount_point = sys_args.mount_point
+
+multiplicator_lookup = ['B', 'K', 'M', 'G', 'T', 'P']
+
+subvolume_data = dict()
+cmd = ["btrfs",  "subvolume", "list", mount_point]
+for line in subprocess.check_output(cmd).splitlines():
+    args = str(line, encoding='utf8').split()
+    subvolume_data[int(args[1])] = args[-1]
+
+print("subvol\t\t\t\t\t\tgroup         total    unshared")
+print("-" * 79)
+cmd = ["btrfs", "qgroup", "show", mount_point]
+for line in subprocess.check_output(cmd).splitlines():
+    args = str(line, encoding='utf8').split()
+
+    try:
+        subvolume_id = args[0].split('/')[-1]
+        subvolume_name = subvolume_data[int(subvolume_id)]
+    except:
+        subvolume_name = "(unknown)"
+
+    multiplicator = 1024 ** multiplicator_lookup.index(sys_args.unit)
+
+    try:
+        try:
+            total = "%02.2f" % (float(args[1]) / multiplicator)
+            unshared = "%02.2f" % (float(args[2]) / multiplicator)
+        except ValueError:
+            continue
+        print("%s\t%s\t%s%s %s%s" % (
+            subvolume_name.ljust(40),
+            args[0],
+            total.rjust(10), sys_args.unit,
+            unshared.rjust(10), sys_args.unit,
+        ))
+    except IndexError:
+        pass
+</pre>
+
+== Documentation ==
+* Original qgroup implementation details: http://sensille.com/qgroups.pdf

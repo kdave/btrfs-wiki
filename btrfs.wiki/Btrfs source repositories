@@ -1,0 +1,121 @@
+Since 2.6.29-rc1, Btrfs has been included in the mainline kernel.
+
+Warning, Btrfs evolves very quickly do not test it unless:
+
+# You have good backups and you have tested the restore capability
+# You have a backup installation that you can switch to when something breaks
+# You are willing to report any issues you find
+# You can apply patches and compile the latest btrfs code against your kernel (quite easy with git and dkms, see below)
+# You acknowledge that btrfs may eat your data
+# Backups! Backups! Backups!
+
+Everyone tests with the latest btrfs code from git. Even the latest Linus kernel probably doesn't have the latest, so if you're really interested in using and testing btrfs, get btrfs from git. Distributions usually offer a way to install a kernel built from git.
+
+= btrfs-progs git repository =
+
+== Official repository ==
+
+The userspace utilities can be downloaded from this repository ([http://git.kernel.org/?p=linux/kernel/git/mason/btrfs-progs.git;a=summary Gitweb access]):
+
+ $ git clone git://git.kernel.org/pub/scm/linux/kernel/git/mason/btrfs-progs.git
+ $ cd btrfs-progs
+
+== Integration repository ==
+
+David Sterba maintains an "integration" branch of patches for the userspace tools ([http://repo.or.cz/w/btrfs-progs-unstable/devel.git Gitweb access]). This is at:
+
+ git://repo.or.cz/btrfs-progs-unstable/devel.git integration-''YYYYMMDD''
+
+where ''YYYMMDD'' is the date of the branch.
+
+To check out this repository, and select the latest branch, use:
+
+ git clone git://repo.or.cz/btrfs-progs-unstable/devel.git
+ cd devel
+ git checkout integration-''YYYYMMDD''
+
+Mirror of the repository is at
+ git://github.com/kdave/btrfs-progs.git
+
+and has the same layout as the previous repository. ''Please note that github pull requests will not be accepted, send patches to the mailinglist instead.''
+
+= btrfs kernel module git repository =
+
+Until October 2012, the latest features and bug fixes hit this repo before going upstream to Linus' kernel tree. Currently it is not up to date. The Linux RCs are more up to date and btrfs-next (see below) is most up to date.
+
+btrfs repository (the command downloads a complete Linux kernel tree, if you have a local instance already, add it as a git remote) ([http://git.kernel.org/?p=linux/kernel/git/mason/linux-btrfs.git;a=summary Gitweb access])
+
+ git clone git://git.kernel.org/pub/scm/linux/kernel/git/mason/linux-btrfs.git
+
+== Integration repository (btrfs-next) ==
+
+Josef Bacik maintains an "integration" branch of all the kernel patches  seen on the mailing list.
+ git clone git://git.kernel.org/pub/scm/linux/kernel/git/josef/btrfs-next.git 
+[http://git.kernel.org/?p=linux/kernel/git/josef/btrfs-next.git;a=summary gitweb access]
+
+This is the code you want to test if you think you've found a bug or want to test the latest features.
+
+"Hello,
+
+In an effort to be a little bit better about reviewing patches sent to the
+mailinglist I've created a btrfs-next git tree kernel.org.  You can get it here
+
+git://git.kernel.org/pub/scm/linux/kernel/git/josef/btrfs-next.git
+
+I'm going to be scraping the mailinglist every day for patches that are sent and
+applying them to this tree in order to get some better testing throughout the
+development cycle and possibly stop being such a lazy bum about reviewing.  If
+you are looking to get patches into the next merge window and you notice I
+haven't included them in this tree please let me know so I can pull them in, I
+did a very casual look through the list to find stuff so I probably missed
+something.  Thanks much,
+
+Josef"
+
+= Patches sent to mailinglist =
+
+A convenient interface to get an overview of patches and the related mail discussions can be found at https://patchwork.kernel.org/project/linux-btrfs/list/ .
+
+It is possible to directly apply a patch by pasting the ''mbox'' link from the patch page to the command
+
+ $ wget -O - '<nowiki>https://patchwork.kernel.org/patch/123456/mbox</nowiki>' | git am -
+
+you may want to add ''--reject'', or decide otherwise what to do with the patch.
+
+= Build =
+== Dependencies ==
+
+Before compiling the userspace tools you'll need to get some dependencies:
+
+=== Fedora ===
+
+ yum install libuuid-devel libattr-devel zlib-devel libacl-devel e2fsprogs-devel libblkid-devel lzo2-devel
+
+Note that some Fedora/Red Hat derived distributions use lzo-devel instead of lzo2-devel.
+
+=== Debian/Ubuntu ===
+
+ sudo apt-get build-dep btrfs-tools
+ -or-
+ sudo apt-get install uuid-dev libattr1-dev zlib1g-dev libacl1-dev e2fslibs-dev libblkid-dev liblzo2-dev
+ sudo apt-get install asciidoc xmlto --no-install-recommends
+
+If you tried the first and get "cannot find llzo2", try the second; your distro has an even older version of btrfs-progs packaged than expected.
+
+=== Arch Linux ===
+
+ pacman -S e2fsprogs
+
+=== openSUSE ===
+
+ zypper in libattr-devel zlib-devel libacl-devel libext2fs-devel libuuid-devel libblkid-devel lzo-devel asciidoc xmlto
+
+== Build ==
+
+Once you have everything in place, you can run 
+
+ make
+
+to build the user-space tools. After that they can be used like this:
+
+ ./btrfs fi show

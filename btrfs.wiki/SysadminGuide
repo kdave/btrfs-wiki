@@ -1,0 +1,133 @@
+This page is intended to give a slightly deeper insight into what the various btrfs features are doing behind the scenes.
+
+= Btrfs introduction in a talk =
+
+If you'd like an overview with pointers to the more useful features and cookbooks, you can try 
+[http://marc.merlins.org/perso/btrfs/post_2014-05-21_My-Btrfs-Talk-at-Linuxcon-JP-2014.html Marc MERLIN's Btrfs talk at Linuxcon JP 2014].
+
+= Data usage and allocation =
+
+Btrfs, at its lowest level, manages a pool of raw storage, from which it allocates space for different internal purposes. This pool is made up of all of the block devices that the filesystem lives on, and the size of the pool is the "total" value reported by the ordinary df command. As the filesystem needs storage to hold file data, or filesystem metadata, it allocates ''chunks'' of this raw storage, typically in 1GiB lumps, for use by the higher levels of the filesystem. The allocation of these chunks is what you see as the output from btrfs filesystem show. Many files may be placed within a chunk, and files may span across more than one chunk. A chunk is simply a piece of storage that btrfs can use to put data on.
+
+== RAID and data replication ==
+
+Btrfs's "RAID" implementation bears only passing resemblance to traditional RAID implementations. Instead, btrfs replicates data on a per-chunk basis. If the filesystem is configured to use "RAID-1", for example, chunks are allocated in pairs, with each chunk of the pair being taken from a different block device. Data written to such a chunk pair will be duplicated across both chunks.
+
+Stripe-based "RAID" levels (RAID-0, RAID-10) work in a similar way, allocating as many chunks as can fit across the drives with free space, and then perform striping of data at a level smaller than a chunk. So, for a RAID-10 filesystem on 4 disks, data may be stored like this:
+
+ Storing file: 01234567...89
+ 
+ Block devices:  /dev/sda   /dev/sdb   /dev/sdc   /dev/sdd
+ 
+ Chunks:          +-A1-+  +-A2-+  +-A3-+  +-A4-+
+                  | 0  |  | 1  |  | 0  |  | 1  | }
+                  | 2  |  | 3  |  | 2  |  | 3  | } stripes within a chunk
+                  | 4  |  | 5  |  | 4  |  | 5  | }
+                  | 6  |  | 7  |  | 6  |  | 7  | }
+                  |... |  |... |  |... |  |... | }
+                  +----+  +----+  +----+  +----+
+ 
+                  +-B3-+  +-B2-+  +-B4-+  +-B1-+   a second set of chunks may be needed for large files.
+                  | 8  |  | 9  |  | 9  |  | 8  |
+                  +----+  +----+  +----+  +----+
+
+Note that chunks within a RAID grouping are not necessarily always allocated to the same devices (B1-B4 are reordered in the example above). This allows btrfs to do data duplication on block devices with varying sizes, and still use as much of the raw space as possible. With RAID-1 and RAID-10, only two copies of each byte of data are written, regardless of how many block devices are actually in use on the filesystem.
+
+== Balancing ==
+
+A btrfs balance operation rewrites things at the level of chunks. It runs through all chunks on the filesystem, and writes them out again, discarding and freeing up the original chunks when the new copies have been written. This has the effect that if data is missing a replication copy (e.g. from a missing/dead disk), new replicas are created. The balance operation also has the effect of re-running the allocation process for all of the data on the filesystem, thus more effectively "balancing" the data allocation over the underlying disk storage.
+
+'''Q''' - what kernel threads do this operation?
+
+= Copy on Write =
+
+(Sorry, haven't got round to writing this yet)
+
+= Subvolumes =
+
+A subvolume in btrfs is ''not'' the same as an LVM logical volume, or a ZFS subvolume. With LVM, a logical volume is a block device in its own right; this is not the case with btrfs. A btrfs subvolume is not a block device, and cannot be treated as one.
+
+Instead, a btrfs subvolume can be thought of as a POSIX file namespace. This namespace can be accessed via the top-level subvolume of the filesystem, or it can be mounted in its own right. So, given a filesystem structure like this:
+
+ toplevel
+   `--- dir_a                * just a normal directory
+   |         `--- p
+   |         `--- q
+   `--- subvol_z             * a subvolume
+             `--- r
+             `--- s
+
+the root of the filesystem can be mounted, and the full filesystem structure will be seen at the mount point; alternatively the subvolume can be mounted (with the mount option subvol=subvol_z), and only the files r and s will be visible at the mount point.
+
+A btrfs filesystem has a ''default subvolume'', which is initially set to be the top-level subvolume. It is the default subvolume which is mounted if no subvol or subvolid option is passed to mount.
+
+Changing the default subvolume with btrfs subvolume default will make the top level of the filesystem inaccessible, except by use of the subvolid=0 mount option.
+
+== Snapshots ==
+
+A snapshot is simply a subvolume that shares its data (and metadata) with some other subvolume, using btrfs's COW capabilities. Once a [writable] snapshot is made, there is no difference in status between the original subvolume, and the new snapshot subvolume. To roll back to a snapshot, unmount the modified original subvolume, and mount the snapshot in its place. At this point, the original subvolume may be deleted if wished. Since a snapshot is a subvolume, snapshots of snapshots are also possible.
+
+== Managing snapshots ==
+
+One possible structure for managing snapshots (particularly on a root filesystem) is to leave the top level of the filesystem empty, except for subvolumes, and to set a default subvolume. The top level can then be mounted temporarily while subvolume operations are being done, and unmounted again afterwards:
+
+/etc/fstab:
+
+ LABEL=btr_pool      /                btrfs   defaults                     0 0
+ LABEL=btr_pool      /home            btrfs   defaults,subvol=home         0 0
+ LABEL=btr_pool      /media/btrfs     btrfs   defaults,noauto,subvolid=0   0 0
+
+Filesystem layout:
+
+ /
+  `--- root             * default subvolume
+  |       `--- bin
+  |       `--- etc
+  |       `--- usr
+  |            ...
+  `--- root_snapshot_2011_01_09
+  |       `--- bin
+  |       `--- etc
+  |       `--- usr
+  |       `--- ...
+  `--- root_snapshot_2011_01_10
+  |       ...
+  `--- home
+  |       ...
+  `--- home_snapshot_A
+          ...
+
+Creating a snapshot:
+
+ # mount /media/btrfs
+ # cd /media/btrfs
+ # btrfs subvolume snapshot root root_snapshot_2011_01_11
+ # cd ~
+ # umount /media/btrfs
+ 
+
+Rolling back a snapshot:
+
+ # mount /media/btrfs
+ # umount /home
+ # mount -o defaults,subvol=home_snapshot_A /dev/sda /home
+ # btrfs subvolume delete /media/btrfs/home                   # optional; this is so the
+ # mv /media/btrfs/home_snapshot_A /media/btrfs/home          # /etc/fstab need not change.
+ # umount /media/btrfs
+
+= btrfs on top of dmcrypt =
+
+As of linux kernel 3.2, it is now considered safe to have btrfs on top of dmcrypt (before that, there are risks of corruption during unclean shutdowns).
+
+With multi-device setups, [https://github.com/gebi/keyctl_keyscript decrypt_keyctl] may be used to unlock all disks at once. You can also look at this [http://marc.merlins.org/perso/btrfs/post_2014-04-27_Btrfs-Multi-Device-Dmcrypt.html start-btrfs-dmcrypt from Marc MERLIN] that shows you how to manually bring up a btrfs dmcrypted array.
+
+The following page shows benchmarks of btrfs vs ext4 on top of dmcrypt or with ecryptfs: http://www.mayrhofer.eu.org/ssd-linux-benchmark . The summary is that btrfs with lzo compression enabled on top top of dmcrypt is either slightly faster or slightly slower than ext4 and encryption only creates a slowdown in the 5% range on an SSD (likely even less on a spinning drive).
+
+ # mkfs.ext4 /dev/sda3
+ # /home/ubuntu/wiper.sh --commit /dev/sda3
+ # cryptsetup -c aes-xts-plain -s 256 luksFormat /dev/sda3
+ # cryptsetup luksOpen /dev/sda3 luksroot
+ # mkfs.btrfs /dev/mapper/luksroot
+ # mount -o noatime,ssd,compress=lzo /dev/mapper/luksroot /mnt
+
+[[Category:UserDoc]]

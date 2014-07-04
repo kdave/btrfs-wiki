@@ -1,0 +1,17 @@
+(this page is very incomplete, please add to it)
+
+
+The following companies use or Btrfs in production:
+* Facebook (testing in production as of 2014/04)
+* Jolla (smartphone)
+* Tripadvisor (mid term log storage)
+
+These companies are currently working on adding Btrfs to production products:
+* Netgear (ReadyNAS products)
+* Ohio Gravure Technologies
+
+As of 2014, most Linux distributions offer Btrfs as an option.
+* openSUSE 13.2 offers/will [http://www.phoronix.com/scan.php?page=news_item&px=MTYzNjA|offer btrfs by default]
+
+
+You may also want to see a [[Contributors|list of contributing companies]]

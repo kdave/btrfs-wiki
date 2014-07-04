@@ -1,0 +1,18 @@
+This tool can convert ext2 to Btrfs. For a greater detail of how the algorithm works, please see the [[Conversion from Ext3]] page.
+
+{{note|This program must be build seperately by "make convert" and might not work or even build.}}
+
+== Usage ==
+
+ btrfs-convert [-d] [-i] [-n] [-r] &lt;device&gt;
+
+=== Description of parameters ===
+
+* ''-d'' disable computing data checksums, this will speed up the operation
+* ''-i'' ignore xattrs and ACLs
+* ''-n'' disable packing of small files
+* ''-r'' roll back to ext2/3/4 filesystem
+
+The original filesystem image is accessible as from separate subvolume named ''ext2_subvol'' as file ''image''.
+
+[[Category:Tools]]

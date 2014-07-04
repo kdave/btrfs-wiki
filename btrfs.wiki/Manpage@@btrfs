@@ -1,0 +1,66 @@
+
+=btrfs(8) Manual Page=
+{{GeneratedManpage}}
+
+
+==NAME==
+
+btrfs - control a btrfs filesystem
+
+==SYNOPSIS==
+
+'''btrfs''' &lt;command&gt; [&lt;args&gt;]
+
+==DESCRIPTION==
+
+'''btrfs''' is used to control the filesystem and the files and directories stored. It is the tool to create or destroy a snapshot or a subvolume for the filesystem, to defrag a file or a directory, flush the data to the disk, to resize the filesystem, to scan the device.
+
+It is possible to abbreviate the commands unless the commands are ambiguous. For example: it is possible to run '''btrfs sub snaps''' instead of '''btrfs subvolume snapshot'''. But '''btrfs file s''' is not allowed, because '''file s''' may be interpreted both as '''filesystem show''' and as '''filesystem sync'''.
+
+If a command is terminated by '''--help''', the detailed help is showed. If the passed command matches more commands, detailed help of all the matched commands is showed. For example '''btrfs dev --help''' shows the help of all '''device'''* commands.
+
+==COMMANDS==
+
+; '''subvolume'''
+: Create/delete/list/manage btrfs subvolume.<br /> See [[Manpage/btrfs-subvolume|btrfs-subvolume(8)]] for details.
+; '''filesystem'''
+: Manage a btrfs filesystem, including label setting/sync and so on.<br /> See [[Manpage/btrfs-filesystem|btrfs-filesystem(8)]] for details.
+; '''[filesystem] balance'''
+: Balance btrfs filesystem chunks across single or several devices.<br /> See [[Manpage/btrfs-balance|btrfs-balance(8)]] for details.
+; '''device'''
+: Manage devices managed by btrfs, including add/delete/scan and so on.<br /> See [[Manpage/btrfs-device|btrfs-device(8)]] for details.
+; '''scrub'''
+: Scrub a btrfs filesystem.<br /> See [[Manpage/btrfs-scrub|btrfs-scrub(8)]] for details.
+; '''check'''
+: Do off-line check on a btrfs filesystem.<br /> See [[Manpage/btrfs-check|btrfs-check(8)]] for details.
+; '''rescue'''
+: Try to rescue damaged btrfs filesystem.<br /> See [[Manpage/btrfs-rescue|btrfs-rescue(8)]] for details.
+; '''restore'''
+: Manage a btrfs filesystem, including label setting/sync and so on.<br /> See [[Manpage/btrfs-restore|btrfs-restore(8)]] for details.
+; '''inspect-internal'''
+: Debug tools for developers/hackers.<br /> See [[Manpage/btrfs-inspect-internal|btrfs-inspect-internal(8)]] for details.
+; '''send'''
+: Send subvolume data to stdout/file for backup and etc.<br /> See [[Manpage/btrfs-send|btrfs-send(8)]] for details.
+; '''receive'''
+: Receive subvolume data from stdin/file for restore and etc.<br /> See [[Manpage/btrfs-receive|btrfs-receive(8)]] for details.
+; '''quota'''
+: Manage quota on btrfs filesystem like enabling/rescan and etc.<br /> See [[Manpage/btrfs-quota|btrfs-quota(8)]] and [[Manpage/btrfs-qgroup|btrfs-qgroup(8)]] for details.
+; '''qgroup'''
+: Manage quota group(qgroup) for btrfs filesystem.<br /> See [[Manpage/btrfs-qgroup|btrfs-qgroup(8)]] for details.
+; '''replace'''
+: Replace btrfs devices.<br /> See [[Manpage/btrfs-replace|btrfs-replace(8)]] for details.
+
+==EXIT STATUS==
+
+'''btrfs''' returns a zero exist status if it succeeds. Non zero is returned in case of failure.
+
+==AVAILABILITY==
+
+'''btrfs''' is part of btrfs-progs. Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for further details.
+
+==SEE ALSO==
+
+[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [http://man7.org/linux/man-pages/man1/ionice.1.html ionice(1)], [[Manpage/btrfs-subvolume|btrfs-subvolume(8)]], [[Manpage/btrfs-filesystem|btrfs-filesystem(8)]], [[Manpage/btrfs-balance|btrfs-balance(8)]], [[Manpage/btrfs-device|btrfs-device(8)]], [[Manpage/btrfs-scrub|btrfs-scrub(8)]], [[Manpage/btrfs-check|btrfs-check(8)]], [[Manpage/btrfs-rescue|btrfs-rescue(8)]], [[Manpage/btrfs-restore|btrfs-restore(8)]], [[Manpage/btrfs-inspect-internal|btrfs-inspect-internal(8)]], [[Manpage/btrfs-send|btrfs-send(8)]], [[Manpage/btrfs-receive|btrfs-receive(8)]], [[Manpage/btrfs-quota|btrfs-quota(8)]], [[Manpage/btrfs-qgroup|btrfs-qgroup(8)]], [[Manpage/btrfs-replace|btrfs-replace(8)]],
+
+
+[[Category:Manpage]]

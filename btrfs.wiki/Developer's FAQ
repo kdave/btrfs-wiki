@@ -1,0 +1,244 @@
+= Contributor's FAQ =
+
+The term ''contributor'' is broader and does not only mean contribution of
+code. The documentation is a significant part and this where non-technical
+people add value.  The user's POV brings different questions than the
+developers' and explaining things in human language is a good thing.
+
+Sending patches to documentation follows the same practices as for the code.
+
+The documentation referred here is of the userspace tools (btrfs-progs), the
+manual pages or the documentation that's part of the tool help strings.
+
+The fixes range from rewording unclear sections, fixing formatting,
+spelling, or adding more examples.
+
+Documentation patches have high chance of getting merged and released quickly.
+
+= Developer's FAQ =
+
+By the term ''developer'' is meant somebody who's working on the code.
+
+This section assumes basics of working with ''git'', sending patches via mail
+and aims to cover the current practices.
+
+== Patch tags ==
+
+The practice of tagging patches in linux kernel community is documented in
+[https://www.kernel.org/doc/Documentation/SubmittingPatches
+kernel.org:SubmittingPatches], we'll hilight the most frequently used tags and
+their expected meaning. This only briefly mentions the commonly used tags.
+You're encouraged to read the whole document and get familiar with it.
+
+=== Signed-off-by: ===
+
+This tag may appear multiple times, the first one denotes the patch author.
+(The common abbreviation in free text is S-O-B or just sob line.) The patch
+author is also recorded in git log history.
+
+Then, each maintainer that processed the patch adds his sob line.
+
+''Reference:'' Section 12 of SubmittingPatches
+
+''Do'': Always send a patch with at least one such line with your name and
+email. If more people contributed to the patch, add their names and addresses too.
+
+''Don't'': Add a sob line under patch that you have no authoring relation to,
+eg. as a reply to the mailinglist after you've reviewed a patch. See below.
+
+=== Reviewed-by: ===
+
+The patch has been reviewed and the singed person is putting his hand into
+fire. If there's a bug found in this patch, the person is usually a good
+candidate for a CC: of the bugreport.
+
+''Reference:'' Section 14 of SubmittingPatches
+
+''Do'': talk to the maintainer if he forgot to add this tag to the final patch.
+Reviews do take time and the patches land in various branches early after
+they're sent to the mailingslist for testing, but the reviews are always
+welcome.
+
+=== Acked-by: ===
+
+A more lightweight form of ''Reviewed-by'', acknowledging that the patch is going
+the right direction, but that the person has not done a deeper examination of
+the patch. Asking for an ACK can be expressed by a ''CC:'' tag in the patch.
+
+=== Tested-by: ===
+
+Indicates that the patch has been successfully tested in some environment,
+usually follows a proposed fix and closes the feedback loop.
+
+''Reference:'' Section 14 of SubmittingPatches
+
+''Do'': or rather you're encouraged to add this tag to a patch that you've
+tested.
+
+=== CC: ===
+
+Add this tag to the patch if you feel that the person should be aware of the
+patch.
+
+== Patch flow ==
+
+=== Simple patch ===
+
+# developer works on the patch, self-reviews, tests, adds the formal tags, writes changelog
+# patch lands in the mailinglist
+# patch is commented, reviewed
+#* several iterations of updates may follow
+# maintainer adds the patch into a branch
+# when the right time comes, a branch with selected patches is pushed up the merge chain
+# a release milestone that contains the patch is released, everybody is happy
+
+=== Controversial changes ===
+
+This happens, not every patch gets merged. In the worst case there are not even
+any comments under the patch and it's silently ignored. This depends on many
+factors, most notably <nowiki>*cough*time*cough*</nowiki>. Examining potential
+drawbacks or forseeing disasters is not an easy job.
+
+Let's be more positive, you manage to attract the attention of some developer
+and he says, he does not like the approach of the patch(es). Better than
+nothing, isn't it? Depending on the feedback, try to understand the objections
+and try to find a solution or insist on your approach but possibly back it by
+good arguments (performance gain, expected usecase) or a better explanation
+''why'' the change is needed.
+
+=== Repeated submissions ===
+
+If you got feedback for a patch that pointed out changes that should be done
+before the patch can be merged, please do apply the changes or give a reason
+why they're wrong or not needed. (You can try to pinkie-swear to implement
+them later, but do not try this too often.)
+
+For the next iteration, add a short description of the changes made, under the
+first '''---''' (tripple dash) marker in the patch. For example:
+
+ ---
+ V3: renamed variable
+ V2: fixed typo
+
+Keep all previous changelogs. Larger patchsets should contain the incremental
+changelogs in the cover letter.
+
+== Patch completeness, RFC ==
+
+A patch does not necessarily have to implement the whole feature or idea. You
+can send an early version, use a ''[RFC]'' string somewhere in the subject. This
+means ''request for comments''. Be prepared to get comments.
+
+Please describe the level of completeness, eg. what tests it does or does not
+pass or what type of usecases is not yet implemented. The purpose is to get
+feedback from other developers about the direction or implementation approach.
+This may save you hours of coding.
+
+== Patchsets ==
+
+=== Related patches, patch dependency ===
+
+Group the patches by feature or by topic. Implementing a particular feature may need
+to prepare other parts of the code for the main patch. Applying the patches
+out of order will not succeed, so it's pointless to send them as unrelated and
+separate mails. The git tool is helpful here, see ''git-format-patch''.
+
+An example of grouping by topic is cleanups, or small bugfixes that are quite
+independent but it would be better to processes them in one go.
+
+Sometimes a patch from a series is self-contained enough that it might get applied
+ahead of the whole series. You may also submit it separately as this will decrease
+the work needed to keep the patch series up to date with the moving development
+base.
+
+''Do:'' make sure that each patch compiles and does not deliberately introduce a bug,
+this is a good practice that makes ''bisecting'' go smooth
+
+== Good practices, contribution hints ==
+
+* if you feel that you understand some area of code enough to stick your ''Reviewed-by'' to submitted patches, please do. Even for small patches.
+* don't hesitate to be vocal if you see that a wrong patch has been committed
+* be patient if your patch is not accepted immediatelly, try to send a gentle ping if there's a significant time without any action
+* if you want to start contributing but are not sure about how to do that, lurk in the mailingist or on the IRC channel
+* every patch should implement one thing -- this is vaguely defined, you may receive comments about patch splitting or merging with other
+* every patch must be compilable when applied, possibly with all related CONFIG_ variable values
+* send a new patch as a new mail, not within another thread, it might get missed
+* use ''git-format-patch'' and ''git-send-email''
+
+== Sample patches ==
+
+There are some formalities expected, like subject line formatting, or the tags.
+Although you may find them annoying at first, they help to classify the patches
+among the rest of mails.
+
+=== Subject: ===
+
+For kernel patches add the prefix '''btrfs: '''<br>
+for userspace tools add '''btrfs-progs:'''
+
+=== Example 1 ===
+
+ From: John Doe <john@doe.org>
+ Subject: [PATCH] btrfs: merge common code into a helper
+ 
+ The code for creating a new tree is open-coded in a few places, add a helper
+ and remove the duplicate code.
+ 
+ Signed-off-by: John Doe <john@doe.org>
+ ---
+ fs/btrfs/volumes.c |    5 +++--
+ 1 files changed, 3 insertions(+), 2 deletions(-)
+ 
+ diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
+ index e138af710de2..3f0cc12ec488 100644
+ --- a/fs/btrfs/volumes.c
+ +++ b/fs/btrfs/volumes.c
+ (rest of the patch)
+
+=== Example 2 ===
+
+ From: Jane Doe <jane@doe.org>
+ Subject: [PATCH] btrfs-progs: enhance documentation of balance
+ 
+ Add examples of typical balance use, common problems and how to resolve them.
+ 
+ Signed-off-by: Jane Doe <jane@doe.org>
+ ---
+ Documentation/btrfs-balance.txt |    20 +++++++++++++++++++-
+ 1 files changed, 3 insertions(+), 2 deletions(-)
+ 
+ diff --git a/Documentation/btrfs-balance.txt b/Documentation/btrfs-balance.txt
+ index e138af710de2..3f0cc12ec488 100644
+ --- a/Documentation/btrfs-balance.txt
+ +++ b/Documentation/btrfs-balance.txt
+ (rest of the patch)
+
+=== Example 3 ===
+
+ From: John Doe <john@doe.org>
+ Subject: [PATCH v3] btrfs: merge common code into a helper
+ 
+ The code for creating a new tree is open-coded in a few places, add a helper
+ and remove the duplicate code.
+ 
+ Signed-off-by: John Doe <john@doe.org>
+ ---
+ V3: add helper prototype into header file
+ V2: found one more open-coded instance
+ 
+ fs/btrfs/ctree.h   |    1 +
+ fs/btrfs/volumes.c |    5 +++--
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+ 
+ diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
+ index e138af710de2..3f0cc12ec488 100644
+ --- a/fs/btrfs/volumes.c
+ +++ b/fs/btrfs/volumes.c
+ (rest of the patch)
+
+= References =
+
+* https://www.kernel.org/doc/Documentation/SubmittingPatches (must read)
+* https://www.kernel.org/doc/Documentation/CodingStyle (must read)
+* Pro Git by Scott Chacon http://progit.org/book/
+* Git project main page http://git-scm.com

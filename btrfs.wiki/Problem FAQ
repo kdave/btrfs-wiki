@@ -1,0 +1,256 @@
+== How do I report bugs and issues? ==
+
+Please '''report bugs on [https://bugzilla.kernel.org/ Bugzilla on kernel.org]''' (requires [https://bugzilla.kernel.org/createaccount.cgi registration]) setting the component to Btrfs, and '''report bugs and issues to the [[Btrfs mailing list|mailing list]]''' ([mailto:linux-btrfs@vger.kernel.org linux-btrfs@vger.kernel.org]; you are ''not'' required to subscribe). For quick questions you may want to join the IRC ''#btrfs'' channel on freenode (and stay around for some time in case you do not get the answer right away).
+
+''Never'' use the Bugzilla on "original" Btrfs project page at Oracle.
+
+If you include kernel log backtraces in bug reports sent to the mailing list, please ''disable word wrapping'' in your mail user agent to keep the kernel log in a readable format.
+
+Please attach files (like logs or dumps) directly to the bug and don't use pastebin-like services.
+
+* [https://bugzilla.kernel.org/enter_bug.cgi?product=File%20System&component=btrfs Report a bug]
+* [https://bugzilla.kernel.org/buglist.cgi?component=btrfs&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED List open Bugzilla issues]
+* [https://bugzilla.kernel.org/buglist.cgi?component=btrfs List all Bugzilla issues]
+* [http://marc.info/?l=linux-btrfs&m=136733749808576&w=2 Josef's request to use bugzilla.kernel.org]
+
+== I can't mount my filesystem, and I get a kernel oops! ==
+
+First, update your kernel to the latest one available and try mounting again. If you have your kernel on a btrfs filesystem, then you will probably have to find a recovery disk with a recent kernel on it.
+
+Second, try mounting with options '''-o recovery''' or '''-o ro''' or '''-o recovery,ro''' (using the new kernel). One of these may work successfully.
+
+Finally, '''if and only if''' the kernel oops in your logs has something like this in the middle of it, then it's probably fixable easily:
+
+ ? replay_one_dir_item+0xb5/0xb5 [btrfs]
+ ? walk_log_tree+0x9c/0x19d [btrfs]
+ ? btrfs_read_fs_root_no_radix+0x169/0x1a1 [btrfs]
+ ? btrfs_recover_log_trees+0x195/0x29c [btrfs]
+ ? replay_one_dir_item+0xb5/0xb5 [btrfs]
+ ? btree_read_extent_buffer_pages+0x76/0xbc [btrfs]
+ ? open_ctree+0xff6/0x132c [btrfs]
+
+But things are more complicated, the oops on your screen may say RIP btrfs_num_copies, and the real log replay error will not be visible unless you have a serial console, or netconsole setup. See http://www.spinics.net/lists/linux-btrfs/msg21257.html
+
+If you have errors like this, then your log tree is probably corrupt, and removing it will allow you to mount the filesystem again. The common case where this happened has been fixed a long time ago, so it is unlikely that you will see this particular problem. You will lose the last few seconds of activity on the filesystem from before your original corruption (up to 30 seconds), but you will at least have a mountable FS. If you are not sure whether you have a situation that these instructions apply to, please ask on the mailing list or on IRC.
+
+You will need to build and run the btrfs-zero-log tool: get a [[Btrfs_source_repositories|recent copy of the user-space tools]], and build them:
+
+ $ make
+ $ make btrfs-zero-log
+
+Then, run it as root, but BEFORE YOU DO THIS, PLEASE RUN btrfs-image
+  gandalfthegreat:~# btrfs-image -c 9 -t 8 /dev/mapper/root /var/tmp/fs_image 
+  gandalfthegreat:~# btrfs-zero-log /dev/mapper/root                                                        
+  Check tree block failed, want=4268204032, have=2075122916315869932                                        
+  Check tree block failed, want=4268204032, have=2075122916315869932                                        
+  Check tree block failed, want=4268204032, have=12746175583536274708                                       
+  Check tree block failed, want=4268204032, have=2075122916315869932                                        
+  Check tree block failed, want=4268204032, have=2075122916315869932                                        
+  read block failed check_tree_block                                                                        
+  gandalfthegreat:~# btrfs-zero-log /dev/mapper/root                                                        
+  gandalfthegreat:~#    
+
+(replacing /dev/mapper/root with whatever device(s) your FS resides on). Please Email the btrfs list, explain the problem, and offer your filesystem image to a developer.
+
+'''Running btrfs-zero-log on a filesystem with any other kind of mount problem will most likely not fix it, and may make recovering it harder. If in doubt, check with the developers on IRC or the mailing list first.'''
+
+== Filesystem can't be mounted by label ==
+
+See the next section.
+
+== Only one disk of a multi-volume filesystem will mount ==
+
+If you have labelled your filesystem and put it in /etc/fstab, but you get:
+
+ # mount LABEL=foo
+ mount: wrong fs type, bad option, bad superblock on /dev/sdd2,
+       missing codepage or helper program, or other error
+       In some cases useful info is found in syslog - try
+       dmesg | tail  or so
+ 
+
+or if one volume of a multi-volume filesystem fails when mounting, but the other succeeds:
+
+ # mount /dev/sda1 /mnt/fs
+ mount: wrong fs type, bad option, bad superblock on /dev/sdd2,
+       missing codepage or helper program, or other error
+       In some cases useful info is found in syslog - try
+       dmesg | tail  or so
+ # mount /dev/sdb1 /mnt/fs
+ #
+ 
+
+Then you need to ensure that you run a btrfs device scan first:
+
+ # btrfs device scan
+ 
+
+This ''should'' be in many distributions' startup scripts (and initrd images, if your root filesystem is btrfs), but you may have to add it yourself.
+
+== My filesystem won't mount and none of the above helped.  Is there any hope for my data? ==
+
+Maybe.  Any number of things might be wrong.  The [[Restore|restore tool]] is a non-destructive way to dump data to a backup drive and may be able to recover some or all of your data, even if we can't save the existing filesystem.
+
+== Defragmenting a directory doesn't work ==
+
+Running this:
+
+ # btrfs filesystem defragment ~/stuff
+ 
+
+does not defragment the contents of the directory.
+
+This is by design. '''btrfs fi defrag''' operates on the single filesystem object passed to it. This means that the command defragments just the metadata held by the directory object, and not the contents of the directory. If you want to defragment recursively, see [[UseCases#How_do_I_defragment_many_files.3F | recursive defragmentation]] (possibly use <code>-maxdepth 1</code> if you don't want further recursion).
+
+== Compression doesn't work / poor compression ratios ==
+
+First of all make sure you have passed "compress" mount option in fstab or mount command. If yes, and ratios are unsatisfactory, then you might try "compress-force" option. This way you make the btrfs to compress everything. The reason why "compress" ratios are so low is because btrfs very easily backs out of compress decision. (Probably not to waste too much CPU time on bad compressing data).
+
+== Copy-on-write doesn't work ==
+
+You've just copied a large file, but still it consumed free space. Try:
+
+ # cp --reflink=always file1 file2
+ 
+
+== I get the message "failed to open /dev/btrfs-control skipping device registration" from "btrfs dev scan" ==
+
+You are missing the /dev/btrfs-control device node. This is usually set up by udev. However, if you are not using udev, you will need to create it yourself:
+
+ # mknod /dev/btrfs-control c 10 234
+ 
+
+You might also want to report to your distribution that their configuration without udev is missing this device.
+
+[[Category:UserDoc]]
+
+== How to clean up old superblock ? ==
+
+The preferred way is to use the ''wipefs'' utility that is part of the ''util-linux'' package. Running the command with the device will not destroy the data, just list the detected filesystems:
+
+ # wipefs /dev/sda
+ offset               type
+ ----------------------------------------------------------------
+ 0x10040              btrfs   [filesystem]
+                      UUID:  7760469b-1704-487e-9b96-7d7a57d218a5
+
+To actually remove the filesystem use:
+
+ # wipefs -o 0x10040 /dev/sda
+ 8 bytes [5f 42 48 52 66 53 5f 4d] erased at offset 0x10040 (btrfs)
+
+ie. copy the offset number to the commandline parameter.
+
+{{note|The process is reversible, if the 8 bytes are written back, the device is recognized again.}}
+{{note|wipefs clears only the first superblock. If the first superblock is further invalidated the other ones could "resurrect" the filesystem.
+}}
+
+Related problem:
+
+'''Long time ago I created btrfs on /dev/sda. After some changes btrfs moved to /dev/sda1.'''
+
+Use ''wipefs'' as well, it deletes only a small portion of ''sda'' that will not interfere with the next partition data.
+
+=== What if I don't have wipefs at hand? ===
+There are three superblocks: the first one is located at 64K, the second one at 64M, the third one at 256GB. The following lines reset the '''magic string''' on all the three superblocks
+
+ # dd if=/dev/zero bs=1 count=8 of=/dev/sda seek=$((64*1024+64))
+ # dd if=/dev/zero bs=1 count=8 of=/dev/sda seek=$((64*1024*1024+64))
+ # dd if=/dev/zero bs=1 count=8 of=/dev/sda seek=$((256*1024*1024*1024+64))
+
+If you want to restore the superblocks '''magic string''', 
+
+ # echo "_BHRfS_M" | dd bs=1 count=8 of=/dev/sda seek=$((64*1024+64))
+ # echo "_BHRfS_M" | dd bs=1 count=8 of=/dev/sda seek=$((64*1024*1024+64))
+ # echo "_BHRfS_M" | dd bs=1 count=8 of=/dev/sda seek=$((256*1024*1024*1024+64))
+
+== I get "No space left on device" errors, but df says I've got lots of space ==
+
+First, check how much space has been allocated on your filesystem:
+
+ $ sudo btrfs fi show
+ Label: 'media'  uuid: 3993e50e-a926-48a4-867f-36b53d924c35
+ 	Total devices 1 FS bytes used 61.61GB
+ 	devid    1 size 133.04GB used 133.04GB path /dev/sdf
+
+Note that in this case, all of the devices (the only device) in the filesystem are fully utilised. This is your first clue.
+
+Next, check how much of your metadata allocation has been used up:
+
+ $ sudo btrfs fi df /mount/point
+ Data: total=127.01GB, used=56.97GB
+ System, DUP: total=8.00MB, used=20.00KB
+ System: total=4.00MB, used=0.00
+ Metadata, DUP: total=3.00GB, used=2.32GB
+ Metadata: total=8.00MB, used=0.00
+
+Note that the '''Metadata used''' value is fairly close (75% or more) to the '''Metadata total''' value, but there's lots of '''Data''' space left. What has happened is that the filesystem has allocated all of the available space to either data or metadata, and then one of those has filled up (usually, it's the metadata space that does this). For now, a workaround is to run a partial balance:
+
+ $ sudo btrfs fi balance start -dusage=5 /mount/point
+
+Note that there should be no space between the '''-d''' and the '''usage'''. This command will attempt to relocate data in empty or near-empty data chunks (at most 5% used, in this example), allowing the space to be reclaimed and reassigned to metadata.
+
+If the balance command ends with "Done, had to relocate 0 out of XX chunks", then you need to increase the "dusage" percentage parameter till at least one chunk is relocated.
+More information is available elsewhere in this wiki, if you want to know [[FAQ#What_does_.22balance.22_do.3F|what a balance does]], or [[Balance Filters|what options are available]] for the balance command.
+
+== btrfs scrub will not start nor cancel ==
+As per [http://marc.merlins.org/perso/btrfs/post_2014-04-26_Btrfs-Tips_-Cancel-A-Btrfs-Scrub-That-Is-Already-Stopped.html Marc's blog on how to fix btrfs cancel]:
+Problem:
+ gargamel:~# btrfs scrub start -d /dev/mapper/dshelf1
+ ERROR: scrub is already running.
+ To cancel use 'btrfs scrub cancel /dev/mapper/dshelf1'.
+ gargamel:~# btrfs scrub status  /dev/mapper/dshelf1
+ scrub status for 6358304a-2234-4243-b02d-4944c9af47d7
+         scrub started at Tue Apr  8 08:36:18 2014, running for 46347 seconds
+         total bytes scrubbed: 5.70TiB with 0 errors
+ gargamel:~# btrfs scrub cancel  /dev/mapper/dshelf1
+ ERROR: scrub cancel failed on /dev/mapper/dshelf1: not running
+ 
+Fix:
+ gargamel:~# perl -pi -e 's/finished:0/finished:1/' /var/lib/btrfs/*
+ 
+Verification:
+ gargamel:~# btrfs scrub status  /dev/mapper/dshelf1
+ scrub status for 6358304a-2234-4243-b02d-4944c9af47d7
+         scrub started at Tue Apr  8 08:36:18 2014 and finished after 46347 seconds
+         total bytes scrubbed: 5.70TiB with 0 errors
+ gargamel:~# btrfs scrub start -d /dev/mapper/dshelf1
+ scrub started on /dev/mapper/dshelf1, fsid 6358304a-2234-4243-b02d-4944c9af47d7 (pid=24196)
+
+== I cannot delete an empty directory ==
+
+First case, if you get:
+
+* '''rmdir: failed to remove ‘emptydir’: Operation not permitted'''
+
+then this is probably because "emptydir" is actually a subvolume.
+
+You can check whether this is the case with:
+
+ # btrfs subvolume list -a /mountpoint
+To delete the subvolume you'll have to run:
+ # btrfs subvolume delete emptydir
+
+Second case, if you get:
+
+* '''rmdir: failed to remove ‘emptydir’: Directory not empty'''
+
+then you may have an empty directory with a non-zero i_size.
+
+You can check whether this is the case with:
+
+ # stat -c %s emptydir
+ 3196         <-- unexpected non-zero size
+
+Running [[Btrfsck|"btrfs check"]] on that (unmounted) filesystem will confirm the issue and list other problematic directories (if any).
+
+You will get a similar output (excerpt):
+
+ checking fs roots
+ root 5 inode 557772 errors 200, dir isize wrong
+ root 266 inode 24021 errors 200, dir isize wrong
+ ...
+
+Such errors should be fixable with "btrfs check --repair" provided you run a recent enough version of [[Changelog#By_version_.28btrfs-progs.29|btrfs-progs]].
+
+''Note that "btrfs check --repair" should not be used lightly as in some cases it can make a problem worse instead of fixing anything.''

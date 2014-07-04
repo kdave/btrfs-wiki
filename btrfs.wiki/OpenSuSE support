@@ -1,0 +1,8 @@
+This is a stub page, until someone who knows more can fill in the details.
+
+= Latest stable kernel builds =
+
+Repository that tracks the latest stable kernels:
+
+* the OBS project: https://build.opensuse.org/project/show/Kernel:stable
+* repository URL: http://download.opensuse.org/repositories/Kernel:/stable/standard/

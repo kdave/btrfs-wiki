@@ -1,0 +1,94 @@
+== Introduction ==
+
+This document explains how to debug Btrfs with GDB on UML(User Mode Linux) for beginners.
+
+These are strategies for the beginners of debugging Btrfs:
+
+* Use a loop device to setup Btrfs filesystem without cost: You don't have to purchase a hard drive.
+* Use Btrfs userland commands to trigger ioctl execution, which enables you to easily break the execution of the kernel, for the first attempt.
+
+Of course, after you grabbed the ideas described here, you can create another strategies to fit your needs :D
+
+== Building UML Kernel ==
+
+First of all, get the Linux Kernel source code.
+
+  git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
+  cd linux-2.6
+
+Do make defconfig for UML.
+
+  make defconfig ARCH=um
+
+Enable Btrfs by selecting File systems -&gt; Btrfs filesystem (EXPERIMENTAL) Unstable disk format.
+
+  make menuconfig ARCH=um
+
+Build the UML kernel.
+
+  make ARCH=um
+
+Now you can set break points at the Btrfs functions (btrfs_*) built in the kernel.
+
+  gdb ./linux
+  (gdb) b btrfs_ (hit tab key to completion)
+  Display all 716 possibilities? (y or n) y
+  btrfs_acl_chmod                            btrfs_lookup_block_group
+  btrfs_add_block_group_cache                btrfs_lookup_csum
+  btrfs_add_dead_root                        btrfs_lookup_csums_range
+  btrfs_add_delayed_data_ref                 btrfs_lookup_dentry
+  btrfs_add_delayed_extent_op                btrfs_lookup_dir_index_item
+  (snip)
+
+== Building Btrfs Userland Commands ==
+
+On Ubuntu, you can use apt-get to setup tools required for building the Btrfs userland commands. Execute the following command on your UML guest:
+
+  apt-get install build-essential git-core uuid-dev libattr1-dev zlib1g-dev libacl1-dev e2fslibs-dev
+
+Next, get the code and build it in your UML guest.
+
+  git clone git://git.kernel.org/pub/scm/linux/kernel/git/mason/btrfs-progs.git
+  cd btrfs-progs
+  make
+
+== Preparing a Loop Device ==
+
+Prepare a loop device for Btrfs. You must provide image file size at least 256 MB. Execute the following commands on your UML guest:
+
+  dd if=/dev/zero of=btrfs.img bs=4k count=100000
+  mkfs.btrfs btrfs.img
+  losetup /dev/loop0 btrfs.img
+  mount -t btrfs /dev/loop0 /mnt
+
+== Running the Kernel and Setting a Break Point ==
+
+Run the UML kernel and attach the kernel with GDB. And then, set a break point. For example, if you want to stop the execution of the kernel when a subvolume is being created, do like that:
+
+  (gdb) b btrfs_ioctl
+  Breakpoint 1 at 0x816b3a2: file fs/btrfs/ctree.h, line 1988.
+  (gdb) c
+  Continuing.
+
+== Executing Userland Command ==
+
+Run the userland command. For example, if you want to break the execution where you set the break point previously, run like this:
+
+  btrfs-progs-unstable/btrfs sub create /mnt/subvol
+
+Breaks it. Now, you can investigate with GDB.
+
+  Breakpoint 1, btrfs_ioctl (file=0x9fc7da0, cmd=1342215182, arg=3213134472)
+      at fs/btrfs/ctree.h:1988
+  1988            return file-&gt;f_path.dentry;
+  (gdb) bt
+  #0  btrfs_ioctl (file=0x9fc7da0, cmd=1342215182, arg=3213134472) at fs/btrfs/ctree.h:1988
+  #1  0x080bfcc1 in vfs_ioctl (filp=0x9fc7da0, cmd=1342215182, arg=3213134472)
+      at fs/ioctl.c:44
+  #2  0x080c032e in do_vfs_ioctl (filp=0x9fc7da0, fd=3, cmd=1342215182, arg=3213134472)
+      at fs/ioctl.c:597
+  #3  0x080c0397 in sys_ioctl (fd=3, cmd=1342215182, arg=3213134472) at fs/ioctl.c:617
+  #4  0x0805ab18 in handle_syscall (r=0x9f08260) at arch/um/kernel/skas/syscall.c:35
+  #5  0x0806832d in userspace (regs=0x9f08260) at arch/um/os-Linux/skas/process.c:201
+  #6  0x08058964 in fork_handler () at arch/um/kernel/process.c:181
+  #7  0x00000000 in ?? ()

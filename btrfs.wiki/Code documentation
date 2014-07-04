@@ -1,0 +1,308 @@
+== Kernel and Utilities ==
+
+As much as possible, code is shared between the kernel and the utility programs. The major place they differ is the code used to start and track IO. Any new projects inside of Btrfs should try to keep the kernel and the utilities up to date, and try to keep the code common between them.
+
+A crucial part of understanding Btrfs is understanding how keys and items interact, and how data is formatted for each type of item. The [[Btrfs-debug-tree|btrfs-debug-tree]] command can be used to print the btree structure in ascii form, and can be very helpful when trying to see how the data is laid out on disk.
+
+See the [[Glossary]] for a definition of terms used.
+
+== Main Source Files ==
+
+* '''ctree.c''' Core btree manipulation code
+* '''ctree.h''' Defines keys and most of the data structures used for metadata
+* '''dir-item.c''' Helpers to create and use directory items
+* '''disk-io.c''' Metadata IO operations as well as FS open/close routines
+* '''extent-tree.c''' Tracks and space used by btree blocks and file data extents
+* '''extent_io.c''' Keeps track of state (locked, writeback etc) and implements extent_buffers
+* '''extent_map.c''' Maps logical offset in a file to blocks on logical address on disk
+* '''file-item.c''' Helpers to insert and remove file extents and data checksums
+* '''file.c''' File write routines (kernel only)
+* '''inode-item.c''' Helpers to allocate inode structures in the btree
+* '''inode.c''' Most file and directory operations for the kernel
+* '''ordered-data.c''' Maintains lists of inodes for data=ordered
+* '''print-tree.c''' Walks a btree and prints the items it finds
+* '''root-tree.c''' Helpers to manage the items in the tree of tree roots
+* '''struct-funcs.c''' Macro magic to instantiate all of the metadata set/get functions
+* '''super.c''' Kernel super block and related functions
+* '''transaction.c''' Handles transaction commits
+* '''volumes.c''' All of the multi-device aware code
+* '''tree-log.c''' Handles logging of tree items for fast fsync
+* '''compression.c''' zlib compression support routines
+
+== Using Extent Buffers ==
+
+Extent buffers are containers that provide read/write access to memory spanning multiple pages. They give Btrfs the ability to have tree blocks larger than a single page and also abstract away kmap calls so that metadata can live in high memory.
+
+In order to maintain type safety in the code, Btrfs has macros that cast offsets into the extent buffers as a specific type, and macros that do set/get operations for each field in the data structure. These macros including caching to lower then number of times kmap must be called while looping.
+
+The macros are declared in ctree.h (look for BTRFS_SETGET_FUNCS), but because they are rather large, they are instantiated in struct-funcs.c. Example usage can be found in the algorithm sections below.
+
+== Tree Searching ==
+
+ 
+ int btrfs_search_slot(struct btrfs_trans_handle *trans, struct btrfs_root *root,
+                       struct btrfs_key *key, struct btrfs_path *p, int ins_len,
+                       int cow);
+
+Tree searching is done based on keys, and the result of the search is a ''struct btrfs_path''. The path gives you access to all of the tree blocks from the root down to the leaf:
+
+ 
+ struct btrfs_path {
+         struct extent_buffer *nodes[BTRFS_MAX_LEVEL];
+         int slots[BTRFS_MAX_LEVEL];
+         int reada;
+         int lowest_level;
+ };
+
+path-&gt;nodes[0] is always the leaf, and path-&gt;nodes[1] is the btree node pointing to the leaf. The slots array indicates which key or item in the btree block was used. path-&gt;slots[1] tells us which block pointer in path-&gt;nodes[1] was used to find the leaf. path-&gt;slots[0] tells us which item in path-&gt;nodes[0] we found.
+
+The ''ins_len'' parameter tells btrfs_search_slot to prepare the tree for either inserting an item (ins_len &gt; 0) or removing an item (ins_len &lt; 0). In the insertion case, btrfs_search_slot makes sure the leaf has enough room for an item that is ins_len in size. For removing items, btrfs_search_slot makes sure higher nodes are balanced properly.
+
+The ''cow'' parameter tells btrfs_search_slot that you intended to change one or more buffers in the path. In this case, it properly does cow operations on all the buffers from the root down to the leaf.
+
+''btrfs_search_slot'' returns &lt; 0 on error, 0 if it found the key you were looking for or 1 if the key was not found. If the key was not found, the path points to the location where the key should be inserted (even if ins_len is zero). This allows you to easily walk the items in the tree that are close to a given key.
+
+Searching for key (0, 0, 0) will result in a path pointing to the very first item in the tree.
+
+Search for key ((u64)-1, (u8)-1, (u64)-1) will result in a return value of 1 and a path pointing one past the very last item in the tree (assuming that key doesn't already exist, which it shouldn't).
+
+''btrfs_previous_item()'' can be used to find the previous item of a given type based on a path
+
+''btrfs_next_leaf()'' can be used to find the next leaf in the tree based on a path
+
+''btrfs_prev_leaf()'' can be used to find the previous leaf in the tree based on a path
+
+== Sample Search Code ==
+
+volumes.c:find_next_chunk() is a very simple routine that finds the starting point for a new logical disk chunk. It finds the highest key in the chunk btree and returns a key that is one larger. Keys in the chunk tree have the following form:
+
+ 
+ key.objectid = logical byte offset
+ key.type = BTRFS_CHUNK_ITEM_KEY
+ key.offset = number of bytes in this chunk
+
+ 
+ static int find_next_chunk(struct btrfs_root *root, u64 *objectid)
+ {
+ 	struct btrfs_path *path;
+ 	int ret;
+ 	struct btrfs_key key;
+ 	struct btrfs_key found_key;
+ 
+ 	path = btrfs_alloc_path();
+ 
+ 	key.objectid = (u64)-1;
+ 	key.offset = (u64)-1;
+ 	key.type = BTRFS_CHUNK_ITEM_KEY;
+ 
+ 	ret = btrfs_search_slot(NULL, root, &amp;key, path, 0, 0);
+
+This tree search is a read only operation, so btrfs_search_slot does not need a transaction handle, and both the ins_len and cow parameters are 0. A path is allocated to hold the result of the search and the key is setup to search for the highest possible BTRFS_CHUNK_ITEM_KEY in the tree.
+
+
+
+ 
+ 	if (ret &lt; 0)
+ 		goto error;
+ 
+ 	BUG_ON(ret == 0);
+
+We expect the search to return 1, it shouldn't be possible to have a chunk starting at logical offset 2^64.
+
+ 
+ 	ret = btrfs_previous_item(root, path, 0, BTRFS_CHUNK_ITEM_KEY);
+
+''btrfs_previous_item'' is used to walk backward in the tree until it sees a key with type BTRFS_CHUNK_ITEM_KEY. If it returns nonzero, it could not find anything. If required, btrfs_previous_item will do IO to read in the previous leaf in the tree, which it finds by walking the parent pointers.
+
+ 
+ 	if (ret) {
+ 		*objectid = 0;
+ 	} else {
+ 		btrfs_item_key_to_cpu(path-&gt;nodes[0], &amp;found_key,
+ 				      path-&gt;slots[0]);
+ 		*objectid = found_key.objectid + found_key.offset;
+ 	}
+
+After ''btrfs_previous_item'' the path points to the last item in the tree with type == BTRFS_CHUNK_ITEM_KEY. ''btrfs_item_key_to_cpu'' copies the key out of the extent_buffer and does endian conversion to get it into cpu byte order, storing the result in ''found_key.'' We return the starting byte of the new chunk in *objectid.
+
+ 
+ 	ret = 0;
+ error:
+ 	btrfs_free_path(path);
+ 	return ret;
+ }
+
+The last step is to free the path and return.
+
+== Sample Item Insertion ==
+
+Internally, item insertion is just a search followed by making room in the leaf, followed by copying the item into the appropriate place. The example below comes from volumes.c:btrfs_add_device(). It adds information including total size, type of device, bytes used, optimal IO parameters about each device into the chunk tree.
+
+Keys for device items have the following form:
+
+ 
+ key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
+ key.type = BTRFS_DEV_ITEM_KEY;
+ key.offset = device id
+
+The device items share the same tree that does logical-&gt;physical device mapping. Their keys all have the same objectid and type field, only the offset is used to differentiate one device item from another. The ''device'' parameter passed into btrfs_add_device has all of the data used to fill in the metadata on disk.
+
+ 
+ int btrfs_add_device(struct btrfs_trans_handle *trans,
+ 		     struct btrfs_root *root,
+ 		     struct btrfs_device *device)
+ {
+ 	int ret;
+ 	struct btrfs_path *path;
+ 	struct btrfs_dev_item *dev_item;
+ 	struct extent_buffer *leaf;
+ 	struct btrfs_key key;
+ 	unsigned long ptr;
+ 	u64 free_devid;
+ 
+ 	root = root-&gt;fs_info-&gt;chunk_root;
+ 
+ 	path = btrfs_alloc_path();
+ 	if (!path)
+ 		return -ENOMEM;
+ 
+ 	ret = find_next_devid(root, path, &amp;free_devid);
+ 	if (ret)
+ 		goto out;
+ 
+
+''find_next_devid'' finds an unused device id in the tree by finding the highest id and adding one.
+
+ 
+ 
+ 	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
+ 	key.type = BTRFS_DEV_ITEM_KEY;
+ 	key.offset = free_devid;
+ 
+ 	ret = btrfs_insert_empty_item(trans, root, path, &amp;key,
+ 				      sizeof(*dev_item));
+ 	if (ret)
+ 		goto out;
+ 
+
+''btrfs_insert_empty_item'' does all of the COW and btree work required to make room in the tree for the new item. If it returns zero, the ''path'' can be used to fill in the data.
+
+ 
+ 	leaf = path-&gt;nodes[0];
+ 	dev_item = btrfs_item_ptr(leaf, path-&gt;slots[0], struct btrfs_dev_item);
+ 
+
+''btrfs_item_ptr'' casts an offset in the extent buffer ''leaf'' to a struct btrfs_dev_item. The leaf and the slot in the tree come from ''path''. The code below then uses the set/get functions to fill in the metadata.
+
+ 
+ 	device-&gt;devid = free_devid;
+ 	btrfs_set_device_id(leaf, dev_item, device-&gt;devid);
+ 	btrfs_set_device_type(leaf, dev_item, device-&gt;type);
+ 	btrfs_set_device_io_align(leaf, dev_item, device-&gt;io_align);
+ 	btrfs_set_device_io_width(leaf, dev_item, device-&gt;io_width);
+ 	btrfs_set_device_sector_size(leaf, dev_item, device-&gt;sector_size);
+ 	btrfs_set_device_total_bytes(leaf, dev_item, device-&gt;total_bytes);
+ 	btrfs_set_device_bytes_used(leaf, dev_item, device-&gt;bytes_used);
+ 
+ 	ptr = (unsigned long)btrfs_device_uuid(dev_item);
+ 	write_extent_buffer(leaf, device-&gt;uuid, ptr, BTRFS_DEV_UUID_SIZE);
+ 
+
+''btrfs_device_uuid'' is used to find the offset of the uuid field of the device item. ''write_extent_buffer'' uses this offset as the destination for a memcpy operation into the leaf pages.
+
+ 
+ 	btrfs_mark_buffer_dirty(leaf);
+ 	ret = 0;
+ 
+ out:
+ 	btrfs_free_path(path);
+ 	return ret;
+ }
+ 
+
+The last steps are marking the buffer dirty so that it is written to disk by either pdflush or transaction commit, and then freeing the path.
+
+== Sample Item Removal ==
+
+Removing items is done by searching for the item and then calling btrfs_del_item. The code below comes from xattr.c:btrfs_delete_xattrs(), and it deletes all of the xattrs for a given inode. A more efficient version of this kind of loop can be found in inode.c:btrfs_truncate_inode_items()
+
+The basic structure is to loop searching for the last item with a type of BTRFS_XATTR_ITEM_KEY and deleting it. The loop stops when you find something that isn't a BTRFS_XATTR_ITEM_KEY or you find something that belongs to a different objectid.
+
+xattr keys have the form:
+
+ 
+ key.objectid = objectid of the inode owning the xattr
+ key.type = BTRFS_XATTR_ITEM_KEY
+ key.offset = hash of xattr name
+
+ 
+ int btrfs_delete_xattrs(struct btrfs_trans_handle *trans,
+ 			struct btrfs_root *root, struct inode *inode)
+ {
+ 	struct btrfs_path *path;
+ 	struct btrfs_key key, found_key;
+ 	struct extent_buffer *leaf;
+ 	int ret;
+ 
+ 	path = btrfs_alloc_path();
+ 	if (!path)
+ 		return -ENOMEM;
+ 	path-&gt;reada = -1;
+
+''path-&gt;reada = -1'' tells the readahead code that you're walking backwards through the tree.
+
+ 
+ 	key.objectid = inode-&gt;i_ino;
+ 	btrfs_set_key_type(&amp;key, BTRFS_XATTR_ITEM_KEY);
+ 	key.offset = (u64)-1;
+ 
+ 	while(1) {
+ 		/* look for our next xattr */
+ 		ret = btrfs_search_slot(trans, root, &amp;key, path, -1, 1);
+ 
+
+For ''btrfs_search_slot'', ''ins_len'' is -1 because we are deleting an item. ''COW'' is 1 because the tree will be modified. We expect the search to return 1, and after the search the path will point to the location in the tree suitable for inserting ''key''. If we go back one slot from that location, we'll find the last xattr item for this inode or an item of a completely different type or objectid.
+
+ 
+ 		if (ret &lt; 0)
+ 			goto out;
+ 		BUG_ON(ret == 0);
+ 
+ 		if (path-&gt;slots[0] == 0)
+ 			break;
+ 
+ 		path-&gt;slots[0]--;
+ 		leaf = path-&gt;nodes[0];
+ 
+ 		btrfs_item_key_to_cpu(leaf, &amp;found_key, path-&gt;slots[0]);
+ 
+ 		if (found_key.objectid != key.objectid)
+ 			break;
+ 		if (btrfs_key_type(&amp;found_key) != BTRFS_XATTR_ITEM_KEY)
+ 			break;
+ 
+ 		ret = btrfs_del_item(trans, root, path);
+ 		BUG_ON(ret);
+ 		btrfs_release_path(root, path);
+
+After confirming the item found has the type and objectid we were looking for, ''btrfs_del_item'' is called to remove that item from the btree. ''btrfs_release_path'' drops references on all of the extent_buffers in the path so that ''btrfs_search_slot'' can be called again. After the while loop stops, the last step is to free the path and return.
+
+ 
+ 
+ 	}
+ 	ret = 0;
+ out:
+ 	btrfs_free_path(path);
+ 
+ 	return ret;
+ }
+
+== Block Reserves ==
+
+Block reserves (struct btrfs_block_rsv) are a means to make sure no operation runs out of space after it started. They obey to the following rules:
+
+# Every operation has to reserve upfront every single byte it needs to complete its operation fully.
+# If an operation cannot determine how much space it will need, it has to be able to cope with running out of space. Normally it does it by inserting an orphan item, doing its work in multiple transactions, and removing the orphan item. The commits in between normally free up enough space to continue the operation.
+# All other ENOSPC situations are errors in program logic and should result in BUG_ON.
+
+[[Category:CodeDoc]]

@@ -1,0 +1,52 @@
+
+=btrfs-send(8) Manual Page=
+{{GeneratedManpage}}
+
+
+==NAME==
+
+btrfs-send - send data of subvolume(s) to stdout/file.
+
+==SYNOPSIS==
+
+'''btrfs send''' [-ve] [-p &lt;parent&gt;] [-c &lt;clone-src&gt;] [-f &lt;outfile&gt;] &lt;subvol&gt; [&lt;subvol&gt;…]
+
+==DESCRIPTION==
+
+Sends the subvolume(s) specified by &lt;subvol&gt; to stdout.
+
+By default, this will send the whole subvolume. To do an incremental send, use '''-p &lt;parent&gt;'''.
+
+If you want to allow btrfs to clone from any additional local snapshots, use '''-c &lt;clone-src&gt;''' (multiple times where applicable).
+
+You must not specify clone sources unless you guarantee that these snapshots are exactly in the same state on both sides, the sender and the receiver.
+
+It is allowed to omit the '''-p &lt;parent&gt;''' option when '''-c &lt;clone-src&gt;''' options are given, in which case '''btrfs send''' will determine a suitable parent among the clone sources itself.
+
+<code>Options</code>
+
+; -v
+: Enable verbose debug output. Each occurrence of this option increases the verbose level more.
+; -e
+: If sending multiple subvols at once, use the new format and omit the &lt;end cmd&gt; between the subvols.
+; -p &lt;parent&gt;
+: Send an incremental stream from &lt;parent&gt; to &lt;subvol&gt;.
+; -c &lt;clone-src&gt;
+: Use this snapshot as a clone source for an incremental send (multiple allowed).
+; -f &lt;outfile&gt;
+: Output is normally written to stdout. To write to a file, use this option. An alternative would be to use pipes.
+
+==EXIT STATUS==
+
+'''btrfs send''' returns a zero exist status if it succeeds. Non zero is returned in case of failure.
+
+==AVAILABILITY==
+
+'''btrfs''' is part of btrfs-progs. Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for further details.
+
+==SEE ALSO==
+
+[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-receive|btrfs-receive(8)]]
+
+
+[[Category:Manpage]]

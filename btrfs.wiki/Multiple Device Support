@@ -1,0 +1,60 @@
+== Btrfs Volumes ==
+
+Btrfs makes it easy to manage multiple devices at the filesystem level, giving the administrator the flexibility to allocate storage on demand.
+
+=== The Btrfs requirements for multi-device support ===
+
+* Mirrored metadata, configurable up to N mirrors (where N &gt; 2)
+* Mirrored metadata, even in single device configurations
+* Mirrored data extents
+* Checksum failure resolution by using a mirrored copy
+* Striped data extents
+* Mixed mirror policies on a single device
+* Efficient migration of data from one device to another
+* Efficient reconfiguration of storage
+* Dynamic allocation of space to each subvolume
+* Full back references recording the users of any allocated space
+
+If Btrfs were to rely on device mapper or MD for mirroring, it would not be able to resolve checksum failures by checking the mirrored copy. The lower layers don't know the checksum or granularity of the filesystem blocks, and so they are not able to verify the data they return.
+
+If Btrfs were to rely on device mapper for aggregating all of the physical devices into a single big address space, it would not have sufficient information to allocate mirrored copies on different devices. Keeping this information in sync between Btrfs and the device mapper would be difficult and error prone.
+
+Because different Btrfs subvolumes may have different allocation policies, the management of multiple devices needs to be very flexible. Metadata mirroring is enabled by default even in single spindle configurations, and so it is not sufficient to mirror between two devices of identical size.
+
+=== Storage Chunks ===
+
+Chunks are sections of storage with a logical address. All extent pointers reference chunks instead of physical blocks on a drive. The super block has a bootstrapping section that maps the chunks used by the chunk tree. This allows all parts of the filesystem, including the chunking code, to use the chunking code for extent address lookup.
+
+Each chunk has space allocated to it from one or more devices, and may be set to mirror or stripe IO to those physical devices. Normal sizes for a chunk are at least 256MB and average 1% of the size of the device.
+
+Each chunk is owned by a single extent allocation tree, and has a back reference to that tree.
+
+=== Addressing and Resolving Chunks ===
+
+Each device added to the filesystem is given a 64 bit device id and full uuid. Information about each chunk is stored in a btree identified by a 64 bit device id. Each btree root in the filesystem is tied to one and only one chunk tree for block translation lookups. The ID of this lookup tree is duplicated in each btree block so that lookups can be safely done during repair.
+
+=== Allocating Chunks ===
+
+Each device added to the filesystem has an allocation tree recording which portions of the device are currently allocated to a chunk. Back references in this tree record which chunk is allocating which part of the device. Because there are relatively few device extents per device, this allocation tree can be shared between many devices.
+
+Chunks are assigned to an extent allocation tree, and used to satisfy extent allocations for metadata and data. As space usage grows, more chunks are added to the allocation tree dynamically. The extent allocation tree will do sub-chunk sized allocations, track free space inside the chunk, and track back references to the extents allocated out of the chunk.
+
+=== Chunk Management ===
+
+Logical addressing allows efficient chunk relocation. The extent allocation tree that owns the chunk can be consulted to see which parts of the chunk are in use, and it is then copied in bulk from source to destination.
+
+Devices in the filesystem can be removed or balanced by relocating chunks. If new devices are added, chunks can either be individually restriped or the new device can be placed into the pool for new allocations only.
+
+Rebuilding mirrors is done by consulting the allocation tree for the dead drive and following back references to the chunks allocated to it. Each chunk is repaired individually, optionally following back references to limit the repair to areas of the chunk that were actually in use.
+
+=== Resolving Device IDs ===
+
+IDs of phyiscal devices are stored in the device super block. These are scanned from userland to construct a list of all the devices contributing to a given Btrfs uuid. The chunk trees also carry information about each of the devices, so things can be verified at mount time.
+
+=== High Level Overview ===
+
+This graphic gives a high level view of the components involved with recording space usage, and details which trees reference each other:
+
+[[File:Chunks-overview.png|[[Image:Chunks-overview.png|800px|Chunks-overview.png]]]]
+
+[[Category:CodeDoc]]

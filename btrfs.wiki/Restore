@@ -1,0 +1,102 @@
+The btrfs restore utility is a non-destructive method for attempting to recover data from an unmountable filesystem.  It makes no attempt to repair the filesystem, which means that you cannot cause further damage by running it.  It is available as part of btrfs-progs.
+
+Before v0.20-rc1-179-g1b1e071 (Feb 2013), it was a separate command, named btrfs-restore.
+
+For best results, use btrfs-progs no older than v3.12.
+
+== How to Run ==
+
+Suppose that your device is /dev/sda and you want to restore files to /mnt/restore.  If you're ''really'' lucky, this might be enough:
+
+ # ./btrfs restore /dev/sda /mnt/restore
+
+You're here though, so chances are you aren't that lucky.  Here are the options for restore that might help you.
+* -s: Also restore snapshots.  Without this option snapshots will not be restored.
+* -x: Get extended attributes. Without this option, extented attributes will not be retrieved.
+* -v: Increase verbosity.  May be given multiple times.
+* -i: Ignore errors.  Normally the restore tool exits immediately for any error.  This option forces it to keep going if it can, usually this results in some missing data.
+* -o: Overwrite existing files.  If files exist at the output location with the same name, normally the restore utility will skip restoring that file.  This option will overwrite the existing files instead.
+* -t: Tree location. The location of the tree of tree roots.
+* -f: Filesystem location.  The byte number given will be used as the root of the filesystem, instead of the location specified by the superblock.  This can be useful if your superblocks are inconsistent.
+* -u: Superblock mirror.  Valid values are 0,1,2.  Specifies an alternate superblock copy to use.  This may be useful if your 0th superblock is damaged.
+* -d: ???
+* -r: Root objectid.  The objectid given will be used as the root of the filesystem, instead of the location specified by the superblock.  This may assist in recovery of subvolumes where the real root is damaged.
+* -c: Case insensitive regex matching.
+* --path-regex: Regex for files to restore.  In order to restore only a single folder somewhere in the btrfs tree, it is unfortunately necessary to construct a slightly nontrivial regex, e.g.: '^/(|home(|/username(|/Desktop(|/.*))))$'
+
+== Advanced usage ==
+
+If you're unlucky, the above command won't work directly, so you will have to look for a better set of trees. You can do this with the <code>find-root</code> command:
+
+ # btrfs-find-root /dev/sda
+ Super thinks the tree root is at 11518584545280, chunk root 11517998731264
+ Generation: 86342 Root bytenr: 11516718059520 Root objectid: 2
+ Generation: 86342 Root bytenr: 11516684206080 Root objectid: 4
+ Generation: 86342 Root bytenr: 11516531044352 Root objectid: 5
+ Generation: 86342 Root bytenr: 11516745494528 Root objectid: 7
+ Generation: 86342 Root bytenr: 11516670337024 Root objectid: 256
+ Generation: 86342 Root bytenr: 11516708732928 Root objectid: 257
+ Generation: 86342 Root bytenr: 11516668190720 Root objectid: 258
+ Generation: 86342 Root bytenr: 11516747653120 Root objectid: 259
+ Generation: 86342 Root bytenr: 11516745490432 Root objectid: 18446744073709551607
+ Generation: 86342 Root bytenr: 11516787425280 Root objectid: 18446744073709551608
+ Generation: 86342 Root bytenr: 11516790636544 Root objectid: 18446744073709551608
+ Generation: 86342 Root bytenr: 11516666884096 Root objectid: 18446744073709551608
+ Well block 11516667301888 seems great, but generation doesn't match, have=86342, want=97081
+ parent transid verify failed on 11516795387904 wanted 86343 found 86395
+ parent transid verify failed on 11516795387904 wanted 86343 found 86395
+ Ignoring transid failure
+ Generation: 86343 Root bytenr: 11516741079040 Root objectid: 256
+ Generation: 86343 Root bytenr: 11516708732928 Root objectid: 257
+ Generation: 86343 Root bytenr: 11516664311808 Root objectid: 258
+ Generation: 86343 Root bytenr: 11516756590592 Root objectid: 259
+ Generation: 86343 Root bytenr: 11516745490432 Root objectid: 18446744073709551607
+ Well block 11516668403712 seems great, but generation doesn't match, have=86343, want=97081
+ Generation: 86834 Root bytenr: 11516809551872 Root objectid: 2
+ Generation: 86834 Root bytenr: 11516796518400 Root objectid: 4
+ Generation: 86834 Root bytenr: 11516531044352 Root objectid: 5
+ Generation: 86834 Root bytenr: 11516857962496 Root objectid: 7
+ Generation: 86834 Root bytenr: 11516795076608 Root objectid: 256
+ Generation: 86834 Root bytenr: 11516874358784 Root objectid: 257
+ Generation: 86834 Root bytenr: 11516792197120 Root objectid: 258
+ Generation: 86834 Root bytenr: 11516793417728 Root objectid: 259
+ Generation: 86834 Root bytenr: 11516792254464 Root objectid: 18446744073709551607
+ Generation: 86834 Root bytenr: 11516920897536 Root objectid: 18446744073709551608
+ Generation: 86834 Root bytenr: 11516924145664 Root objectid: 18446744073709551608
+ Generation: 86834 Root bytenr: 11516923265024 Root objectid: 18446744073709551608
+ Generation: 86834 Root bytenr: 11516792332288 Root objectid: 18446744073709551608
+ Well block 11516792369152 seems great, but generation doesn't match, have=86834, want=97081
+ parent transid verify failed on 11516931006464 wanted 86835 found 86900
+ parent transid verify failed on 11516931006464 wanted 86835 found 86900
+ Ignoring transid failure
+ Generation: 86835 Root bytenr: 11516904058880 Root objectid: 256
+ Generation: 86835 Root bytenr: 11516793458688 Root objectid: 257
+ Generation: 86835 Root bytenr: 11516881551360 Root objectid: 258
+ Generation: 86835 Root bytenr: 11516909461504 Root objectid: 259
+ Generation: 86835 Root bytenr: 11516792254464 Root objectid: 18446744073709551607
+ Well block 11516806926336 seems great, but generation doesn't match, have=86835, want=97081
+ parent transid verify failed on 11517063524352 wanted 87005 found 87011
+ parent transid verify failed on 11517063524352 wanted 87005 found 87011
+ Ignoring transid failure
+ Generation: 87005 Root bytenr: 11517018542080 Root objectid: 256
+ Generation: 87005 Root bytenr: 11516931522560 Root objectid: 257
+ Generation: 87005 Root bytenr: 11517003816960 Root objectid: 258
+ Generation: 87005 Root bytenr: 11517035986944 Root objectid: 259
+ Generation: 87005 Root bytenr: 11517045526528 Root objectid: 18446744073709551607
+ Generation: 87005 Root bytenr: 11517056528384 Root objectid: 18446744073709551608
+ Generation: 87005 Root bytenr: 11517054459904 Root objectid: 18446744073709551608
+ Generation: 87005 Root bytenr: 11517059162112 Root objectid: 18446744073709551608
+ Generation: 87005 Root bytenr: 11516930707456 Root objectid: 18446744073709551608
+ Well block 11516930760704 seems great, but generation doesn't match, have=87005, 
+ [...]
+
+What this is is a listing of all of the tree roots that have been found. For each generation (transid) that a root tree is found for, the set of available trees is listed (these are the lines starting "<code>Generation</code>"), followed by the block number of the tree root (the lines starting "<code>Well block ''n'' seems great</code>...").
+
+You should pick the latest tree root (i.e. with the largest transid) which has all, or as many as possible, of the filesystem trees in it. If you see objectids 2, 4, 5, 7, then you will have all the base FS trees. Objectids from 256 upwards are your subvolumes. Once you have decided which tree root to use, note down the block number for it from the corresponding "<code>Well block ''n'' seems great</code>..." line, and then run
+
+ # ./btrfs restore -t ''n'' /dev/sda /mnt/restore
+
+You can extract files from just a subvolume with the <code>-r</code> switch, which takes the objectid of the subvolume you want to restore from.
+
+== I need more help! ==
+For now, most of the information exists in people's heads.  We're trying to get a brain dump to this wiki page, but until we get this fleshed out more your best bet is the #btrfs channel on freenode.

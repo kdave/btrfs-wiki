@@ -1,0 +1,13 @@
+This program is used to dump the whole tree of the given device. This is may be useful for analyzing filesystem state or inconsistencies and has a positive educational effect on understanding the internal structure.
+
+== Usage ==
+
+{{note|btrfs-debug-tree should be used only on unmounted filesystems. If used on a mounted filesystem, the data may be inconsistent, and btrfs-debug-tree may crash.}}
+
+ btrfs-debug-tree [-e] &lt;device&gt;
+
+=== Description of parameters ===
+
+* "-e": print extents only.
+
+[[Category:Tools]]

@@ -1,0 +1,209 @@
+Btrfs is a new copy on write (CoW) filesystem for Linux aimed at implementing advanced features while focusing on fault tolerance, repair and easy administration. Jointly developed at [[Contributors|multiple companies]], Btrfs is licensed under the GPL and open for contribution from anyone.
+Not too many companies have said that they are using Btrfs in production, but we welcome those who can say so on the [[Production_Users|production users]] page.
+
+== Stability status ==
+The filesystem [[On-disk_Format|disk format]] is no longer unstable, and it's not expected to change unless there are strong reasons to do so. If there is a format change, file systems with a unchanged format will continue to be mountable and usable by newer kernels.
+
+The Btrfs code base is under heavy development. Every effort is being made to keep it stable and fast. Due to the fast development speed, the state of development of the filesystem improves noticeably with every new Linux version, so it's recommended to run the most modern kernel possible.
+
+For benchmarks, it's recommended to test the latest stable Linux version, and not any older. If possible, it's also recommendable to test the latest Linux development version. Also, it's recommended to test the [[Mount_options|different options]], f.e. different compression options.
+
+If you have any bug, problems, performance issues or questions while using Btrfs, please email the [[Btrfs mailing list]] (no subscription required). Please report bugs also on [[Problem_FAQ#How_do_I_report_bugs_and_issues.3F|Bugzilla]].
+
+== Features ==
+
+Linux has a wealth of filesystems from which to choose, but we are facing a number of challenges with scaling to the large storage subsystems that are becoming common in today's data centers. Filesystems need to scale in their ability to address and manage large storage, and also in their ability to detect, repair and tolerate errors in the data stored on disk.
+
+'''The main Btrfs features available at the moment include:'''
+
+* Extent based file storage
+* 2^64 byte == 16 EiB maximum file size
+* Space-efficient packing of small files
+* Space-efficient indexed directories
+* Dynamic inode allocation
+* Writable snapshots, read-only snapshots
+* Subvolumes (separate internal filesystem roots)
+* Checksums on data and metadata (crc32c)
+* [[Compression]] (zlib and LZO)
+* Integrated multiple device support
+** File Striping, File Mirroring, File Striping+Mirroring, Striping with Single and Dual Parity implementations
+* SSD (Flash storage) awareness (TRIM/Discard for reporting free blocks for reuse) and optimizations (e.g. avoiding unnecessary seek optimizations, sending writes in clusters, even if they are from unrelated files. This results in larger write operations and faster write throughput)
+* Efficient [[Incremental Backup]]
+* Background scrub process for finding and fixing errors on files with redundant copies
+* Online filesystem defragmentation
+* [[btrfsck|Offline filesystem check]]
+* [[Conversion_from_Ext3|Conversion]] of existing ext3/4 file systems
+* [[Seed-device|Seed devices]]. Create a (readonly) filesystem that acts as a template to seed other Btrfs filesystems. The original filesystem and devices are included as a readonly starting point for the new filesystem. Using copy on write, all modifications are stored on different devices; the original is unchanged.
+* Subvolume-aware [[quota support]]
+* Send/receive of subvolume changes
+** Efficient incremental filesystem mirroring
+* Batch, or out-of-band [[deduplication]] (happens after writes, not during)
+
+'''Additional features in development, or planned, include:'''
+
+* Very fast offline filesystem check
+* Object-level mirroring and striping
+* Alternative checksum algorithms
+* Online filesystem check
+* Other compression methods (snappy, [[Project_ideas#Compression_enhancements|LZ4]])
+* Hot data tracking and moving to faster devices (currently being pushed as a generic feature available through VFS)
+* In-band [[deduplication]] (happens during writes)
+
+'''Roadmap'''
+
+See also the [[Roadmap]] for a list of what features the main developers are currently working on.
+
+== News ==
+
+<!--
+-->
+
+'''Wiki update: manual pages (Jul 2014)'''
+* [[:Category:Manpage]] links to manual pages, generated from git sources
+
+'''Linux v3.16 (highlights or user visible changes)'''
+* ''O_TMPFILE'' support [http://kernelnewbies.org/Linux_3.11#head-8be09d59438b31c2a724547838f234cb33c40357]
+* reworked qgroup accounting, to fix negative numbers after subvol deletion
+* SEARCH_TREE ioctl v2, extended for retrieving more data [http://www.spinics.net/lists/linux-btrfs/msg31213.html]
+* new balance filter ''limit'' for more finegrained balancing [http://www.spinics.net/lists/linux-btrfs/msg33872.html]
+* ioctl FS_INFO and it's sysfs counterpart export information about ''nodesize'', ''sectorsize'' and ''clone_alignment''
+* snapshots are protected during send
+
+'''Linux v3.15 (Jun 2014)'''
+* pile of ''send'' fixes (stability, speed)
+* worker threads now use kernel workqueues
+
+'''btrfs-progs 3.14.2 (May 2014)'''
+* documentation is now written in asciidoc and there are manpages for each subcommand
+* misc bugfixes
+
+Read about past releases in the [[Changelog]]
+
+== Articles, presentations, podcasts ==
+* '''Article:''' [http://arstechnica.com/information-technology/2014/01/bitrot-and-atomic-cows-inside-next-gen-filesystems Bitrot and atomic COWs: Inside “next-gen” filesystems] (ars technica, 2014/01)
+* '''Article:''' [https://lwn.net/Articles/579009/ Btrfs: Subvolumes and snapshots] (LWN.net, 2014/01)
+* '''Article:''' [https://lwn.net/Articles/577961/ Btrfs: Working with multiple devices] (LWN.net, 2013/12)
+* '''Article:''' [http://lwn.net/Articles/577218/ Btrfs: Getting started] (LWN.net, 2013/12)
+* '''Article:''' [http://www.zdnet.com/btrfs-hands-on-an-extremely-cool-file-system-7000023734 Btrfs hands on: An extremely cool file system] (ZDNet, 2013/11)
+* '''Technical report:''' [http://domino.watson.ibm.com/library/cyberdig.nsf/1e4115aea78b6e7c85256b360066f0d4/9e29fdded06e5de785257c1d005e7e9e!OpenDocument Visualizating Block IO Workloads]. Section six shows a visual comparison of the IO patterns for BTRFS, XFS, and EXT4. Submitted to ACM Transactions on Storage, November 2013.
+* '''Paper:''' [http://dl.acm.org/citation.cfm?id=2501623 BTRFS: The Linux B-Tree Filesystem] describing the overall concepts and architecture, appeared in ACM Transactions on Storage, August 2013. Includes a detailed comparison with ZFS. There is a free ACM authorized link, from O. Rodeh's [http://researcher.watson.ibm.com/researcher/view_pubs.php?person=us-orodeh&t=1 publications] page. Otherwise, you need a subscription for the ACM library.
+* '''Article:''' [http://www.howtoforge.com/a-beginners-guide-to-btrfs A Beginner's Guide To Btrfs] (2012-11-26)
+* '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/advanced-btrfs-1734952.html How I Use the Advanced Capabilities of Btrfs] by Margaret Bierman with Lenz Grimmer (2012-08-11)
+* '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/gettingstarted-btrfs-1695246.html How I Got Started with the Btrfs File System for Oracle Linux] by Margaret Bierman with Lenz Grimmer (2012-07-11)
+* '''Article:''' [http://www.funtoo.org/wiki/BTRFS_Fun Btrfs Fun] Wiki page on funtoo.org (2012-05)
+* '''Video:''' [http://video.linux.com/videos/btrfs-filesystem-status-and-new-features Btrfs Filesystem: Status and New Features] by Chris Mason at the 2012 Linux Foundation Collaboration Summit (2012-04-05)
+* '''Article''' [http://static.usenix.org/publications/login/2012-02/openpdfs/Bacik.pdf Btrfs - The Swiss Army Knife Of Storage] by Josef Bacik (2012-02)
+* '''Video:''' [http://www.youtube.com/watch?v=hxWuaozpe2I I Can't Believe This is Butter! A tour of btrfs] by Avi Miller at linux.conf.au (2012-01-18)
+* '''Article:''' [http://lwn.net/Articles/465160/ A btrfs update at LinuxCon Europe] on lwn.net (2011-11-02)
+* '''Podcast:''' [http://feedproxy.google.com/~r/OracleLinux/~3/kRqpaCdTlLg/10491325_Btrfs_071311.mp3 Podcast with Chris Mason: Btrfs overview and status update] (2011-07-13)
+
+== Documentation ==
+
+=== Guides and usage information ===
+
+* [[Getting started]] — first steps, distributions with btrfs support
+** [[Mount options]]
+* [[FAQ]] — About the btrfs project and filesystem
+* [[UseCases]] — Recipes for how to do stuff with btrfs
+* [[SysadminGuide]] — A more in-depth guide to btrfs's concepts and a bit of its internals, to answer all those "but what ''is'' a subvolume?" kind of questions.
+* [[Using Btrfs with Multiple Devices|Multiple devices]] – A guide to the RAID features of Btrfs
+* [[Conversion_from_Ext3|Conversion from Ext3 and Ext4]]
+* [[Problem FAQ]] — Commonly-encountered problems and solutions.
+** [[Gotchas]] — lists known bugs and issues, but not necessarily solutions.
+
+=== External Btrfs Documentation / Guides ===
+
+Links to Btrfs documentation of various Linux distributions:
+
+* "[https://docs.oracle.com/cd/E37670_01/E37355/html/ol_btrfs.html The Btrfs File System]" chapter in the [https://docs.oracle.com/cd/E37670_01/E37355/html/index.html Oracle Linux 6 Administrator's Solutions Guide]
+* Oracle Linux [https://wikis.oracle.com/display/oraclelinux/Hands-on+lab+-+Storage+Management+with+Btrfs Hands-on lab - Storage Management with Btrfs]
+* [https://www.suse.com/documentation/sles11/stor_admin/data/sec_filesystems_major.html Major File Systems in Linux] chapter in the [https://www.suse.com/documentation/sles11/stor_admin/data/bookinfo.html SLES 11 Storage Administration Guide]
+* [https://access.redhat.com/site/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Storage_Administration_Guide/ch-btrfs.html Btrfs] chapter in the [https://access.redhat.com/site/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Storage_Administration_Guide/ Red Hat Enterprise Linux 6 Storage Administration Guide]
+* [https://help.ubuntu.com/community/btrfs Btrfs Wiki page] on the [https://help.ubuntu.com/community Ubuntu Community Help Wiki]
+* [https://wiki.archlinux.org/index.php/Btrfs Btrfs Wiki page] on the [https://wiki.archlinux.org/ Arch Linux Wiki]
+* [http://www.funtoo.org/BTRFS_Fun BTRFS Fun Wiki page] on the [http://www.funtoo.org/ Funtoo Wiki]
+* [http://marc.merlins.org/perso/btrfs/post_2014-05-21_My-Btrfs-Talk-at-Linuxcon-JP-2014.html Marc MERLIN's Btrfs talk at Linuxcon JP 2014] which gives an overview of Btrfs, best practices, and its more interesting features.
+
+=== Project information/Contact ===
+
+* [[Changelog]] — history of changes in linux kernel wrt btrfs
+** [[Changelog#By_feature | features added by release]]
+* [[Glossary]]
+* Contact information:
+** [[Btrfs mailing list]]
+** [http://en.wikipedia.org/wiki/Internet_Relay_Chat IRC] on freenode.net in the channel [irc://irc.freenode.net:6667/btrfs #btrfs]
+** Reporting bugs: see [[Problem_FAQ#How_do_I_report_bugs_and_issues.3F | the Bugzilla FAQ]] for reporting and finding bugs. Quick tip: use product ''File System'' and component ''btrfs''.
+* [[Project ideas]]
+* [[Cleanup ideas]]
+
+=== Using the built-in tools ===
+
+* Manual pages generated from git ([[:Category:Manpage|complete list]]):
+** [[Manpage/btrfs|btrfs]] — main administration tool
+** [[Manpage/mkfs.btrfs|mkfs.btrfs]] — creating the filesystem
+** [[Manpage/btrfs-check|btrfs check]] — repairing file systems
+** [[Manpage/btrfs-convert|btrfs-convert]] — tool to convert in-place from ext2/3/4 filesystems to btrfs. For a greater detail of how the algorithm works, please see the [[Conversion from Ext3]] page.
+
+* Original wiki documenation (obsolete, will be removed)
+** [[Restore|restore and find-root]] — utilities to find and restore data from an unmountable filesystem
+
+=== Developer documentation ===
+
+* [[Developer's FAQ]] — hints and answers for contributors and developers
+* [[Code documentation]] — trees, source files, sample code for manipulating trees
+* [[Data Structures]] — detailed on-disk data structures
+* [[Trees]] — detailed in-tree representation of files and directories
+
+* [[Btrfs design]] — design notes (possibly out of date in places)
+* [[Multiple Device Support]] — design notes
+* [[ENOSPC]] — Current ENOSPC design issues
+* [[Design_notes_on_Send/Receive]] — notes from initial impelentation, protocol V2 updates draft
+
+* [[Debugging Btrfs with GDB]]
+* [[Writing patch for btrfs]]
+
+==== Source code download ====
+
+* [[Btrfs source repositories]]
+* [http://git.kernel.org/?p=linux/kernel/git/mason/linux-btrfs.git;a=tree;f=fs/btrfs;hb=HEAD Gitweb source viewer] of the main kernel repository
+
+== Benchmarking ==
+
+* '''2012-10''' [http://www.ilsistemista.net/index.php/linux-a-unix/36-btrfs-mount-options-and-virtual-machines-an-in-depth-look.html BTRFS, mount options and virtual machines: an in-depth look] (Ilsistemista.net)
+* '''2012-06''' [http://www.ilsistemista.net/index.php/linux-a-unix/34-btrfs-ext3-ext4-xfs-and-kvm-virtual-machine-a-host-side-filesystem-comparison.html BTRFS EXT3 EXT4 XFS and KVM virtual machine: a host-side filesystem comparison] (Ilsistemista.net)
+* '''2012-06''' [http://www.ilsistemista.net/index.php/linux-a-unix/33-btrfs-vs-ext3-vs-ext4-vs-xfs-performance-on-fedora-17.html BTRFS vs EXT3 vs EXT4 vs XFS performance on Fedora 17] (Ilsistemista.net)
+* '''2012-05''' [http://www.phoronix.com/scan.php?page=article&item=linux_34_fs&num=1 XFS, Btrfs, EXT4 Battle It Out On Linux 3.4] (Phoronix.com)
+* '''2012-05''' [http://cd34.com/blog/scalability/ext4-xfs-and-btrfs-benchmark-redux/ Ext4, XFS and Btrfs benchmark redux]
+* '''2012-03''' [http://www.phoronix.com/scan.php?page=article&item=linux_btrfs_options&num=1 Testing Out The Btrfs Mount Options On Linux 3.2] (Phoronix.com)
+* '''2012-03''' [http://www.phoronix.com/scan.php?page=article&item=ubuntu_1204_fs&num=1 Ubuntu 12.04 LTS - Benchmarking All The Linux File-Systems] (Phoronix.com)
+
+== Historical resources ==
+
+Links to old or obsolete documentation, articles. Kept for historical reasons. Stuff that's more than 3 years old.
+
+=== Articles, presentations, podcasts ===
+
+* '''Video:''' [http://vimeo.com/15325851 The Story So Far] by Josef Bacik at LinuxCon Brazil (2010-08-31)
+* '''Article:''' [http://www.linux.com/learn/tutorials/371623-weekend-project-get-started-with-btrfs Linux.com Weekend Project: Get Started with Btrfs] (2010-10-15)
+* '''Webcast:''' [https://event.on24.com/eventRegistration/EventLobbyServlet?target=registration.jsp&eventid=233161&sessionid=1&key=D0B1D3285FA444C5745C344A1C859CE0&partnerref=banner&sourcepage=register State of "Btrfs" File System for Linux by Chris Mason] (2010-08-26) [email registration and flash required]
+* '''Article:''' [http://lwn.net/Articles/342892/ Valerie Aurora: A short history of btrfs] (2009-07-22)
+
+=== Benchmarks ===
+* '''2011-12''' [http://btrfs.boxacle.net Btrfs Performance Analysis]
+* '''2011-11''' [http://www.phoronix.com/vr.php?view=16773 Testing The "Pretty Beefy" Btrfs Changes In Linux 3.2] (Phoronix.com)
+* '''2011-10''' [http://www.ilsistemista.net/index.php/linux-a-unix/21-ext3-ext4-xfs-and-btrfs-filesystems-comparison-on-linux-kernel-300.html EXT3 vs EXT4 vs XFS vs BTRFS - filesystems comparison on Linux kernel 3.0.0] (Ilsistemista.net)
+* '''2011-09''' [http://www.phoronix.com/scan.php?page=article&item=btrfs_linux31_ssd&num=1 Testing EXT4 & Btrfs On A Serial ATA 3.0 SSD] (Phoronix.com)
+* '''2011-05''' [http://www.phoronix.com/scan.php?page=article&item=linux_2639_fs&num=1 Linux 2.6.39: XFS Speeds-Up, EXT4 &amp; Btrfs Unchanged] (Phoronix.com)
+* '''2011-03''' [http://www.phoronix.com/scan.php?page=article&item=btrfs_lzo_2638&num=1 Btrfs LZO Compression Performance] (Phoronix.com)
+* '''2010-12''' [http://www.phoronix.com/scan.php?page=article&item=btrfs_space_cache&num=1 Benchmarks Of The Btrfs Space Cache Option] (Phoronix.com) Comparing the performance of Btrfs using the default mount options, using the space_cache mount option, using the compress mount option for Btrfs file compression, and lastly using both the space_cache and compression mount options to benefit from the free space caching and Zlib compression.
+* '''2010''' [http://www.mayrhofer.eu.org/ssd-linux-benchmark SSD Linux benchmarking: Comparing filesystems and encryption method]
+* '''2010-11''' [http://www.ilsistemista.net/index.php/linux-a-unix/6-linux-filesystems-benchmarked-ext3-vs-ext4-vs-xfs-vs-btrfs.html EXT3 vs EXT4 vs XFS vs BTRFS linux filesystems benchmark] (Ilsistemista.net)
+* '''2010-11''' [http://www.phoronix.com/scan.php?page=article&item=linux_2637_ext4btrfs&num=1 Phoronix: The Linux 2.6.37 Kernel With EXT4 &amp; Btrfs] (Phoronix.com) Comparison between Btrfs and Ext4.
+* '''2010-10''' [http://www.linux-mag.com/id/7876 One Billion Files] Btrfs performs well in comparison to other filesystems, when there are a billion files in the filesystem.
+* '''2009-05''' [http://www.phoronix.com/scan.php?page=article&item=btrfs_ssd_mode&num=1 Phoronix Test With SSD Mode] (Phoronix.com) This test show that btrfs is slower with ssd option activated. Ssd code has been updated during 2.6.30-rc and is expected to be faster.
+* '''2009-04''' [http://www.phoronix.com/scan.php?page=article&item=btrfs_benchmarks&num=1 Phoronix Performance Test on Fedora 11 Preview] (Phoronix.com) The phoronix workload is mostly CPU based, but they do have a few filesystem benchmarks. Btrfs performs well, but you can see the checksumming and metadata duplication show up on their single disk streaming write workload. dbench in general measures lots of different caching effects, and is not a great measure of everyday performance.
+* '''2008-10''' [http://btrfs.boxacle.net Btrfs performance analysis by Steven Pratt and IBM] The benchmarks from IBM demonstrate some bottlenecks we have in the extent recording on large workloads. We're working on fixes for these.
+* '''2008-04''' [[Multi-device Benchmarks]]
+
+=== Original COW B-tree ===
+* Source code in C that implements the COW B-tree algorithms [https://github.com/orodeh/bt repository]. Written by Ohad Rodeh at IBM Research in 2006, and released under a BSD license. This is a reference implementation, that works in user space.

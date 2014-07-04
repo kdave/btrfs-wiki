@@ -1,0 +1,46 @@
+== Status ==
+
+Raid 5 and Raid6 are mostly working as of 3.9, but the recovery and rebuild code isn't bulletproof or complete yet.
+
+If you'd like to learn btrfs raid5/6 and rebuilds by example (based on kernel 3.14), you can look at [http://marc.merlins.org/perso/btrfs/post_2014-03-23_Btrfs-Raid5-Status.html Marc MERLIN's page about btrfs raid 5/6].
+
+The first drop of the code, in experimental form, is in the 3.9 kernel. This is currently only suitable for testing, as it is known to not be crash-safe, and many important (or even vital) features are missing. The current status (summarised from the [http://marc.info/?l=linux-btrfs&m=135982104620329&w=2 announcement mail]) is:
+
+* Parity may be inconsistent after a crash
+
+* RAID-5 (many devices, one parity)
+* RAID-6 (many devices, two parity)
+* The algorithm uses as many devices as are available (see note, below)
+
+* No scrub support for fixing checksum errors
+* No support in btrfs-progs for forcing parity rebuild (see note #2, below)
+* No support for discard
+* No support yet for n-way mirroring
+* No support for a fixed-width stripe (see note, below)
+
+
+
+== Parity Rebuilds and Advanced Disk Replacement ==
+
+Parity rebuilds can be done by either (1) removing a working drive with device delete. This will force btrfs to lay all data on all drives available (either it will shrink your raid, or if you added a new drive, it will rewrite the stripes on the new drive).
+If you are in degraded mode and you add a drive, doing a balance will force all data to be rewritten and therefore restripped over all drives. 
+This is explained in more details on [http://marc.merlins.org/perso/btrfs/post_2014-03-23_Btrfs-Raid5-Status.html Marc MERLIN's page about btrfs raid 5/6].
+
+
+== Note ==
+
+
+Using as many devices as are available means that there will be a performance issue for filesystems with large numbers of devices. It also means that filesystems with different-sized devices will end up with differing-width stripes as the filesystem fills up, and some space may be wasted when the smaller devices are full. Both of these issues can be addressed by specifying a fixed-width stripe, always running over exactly the same number of devices.
+
+
+
+== The history ==
+
+RAID-5 was [http://marc.info/?l=linux-btrfs&m=133855691115496&w=2 due to arrive in 3.5], but didn't make it in time because of a serious bug. The feature also [http://marc.info/?l=linux-btrfs&m=134333725309451&w=2 missed 3.6], because two other large and important features also had to go in, and there wasn't time to complete the full testing programme for all three features before the 3.6 merge window. 
+
+(From the 3.7 [http://marc.info/?l=linux-btrfs&m=134987008202744&w=2 pull request]):
+:"I'm cooking more unrelated RAID code, but I wanted to make sure <nowiki>[the rest of the pull request]</nowiki> makes it in. The largest updates here are relatively old and have been in testing for some time."
+
+(From the 3.8 [http://marc.info/?l=linux-btrfs&m=135578070809380&w=2 pull request]):
+:"raid5/6 is being rebased against the device replacement code. I'll have it posted this Friday along with a nice series of benchmarks."
+::-- It didn't make it into the pull for 3.8.

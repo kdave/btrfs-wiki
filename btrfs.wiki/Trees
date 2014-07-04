@@ -1,0 +1,38 @@
+This page describes in more detail than the [[Data Structures]] page how the various trees are put together, and how to navigate around their data.
+
+
+= FS Tree =
+
+Btrfs supports many filesystem trees, with each tree corresponding to a subvolume. Trees are numbered 5, 256, 257, ..., with the top-level subvolume having ID 5; the first-created subvolume 256, and so forth. Within an FS tree, objects have their own inode numbers, and are indexed by inode number (starting from 257). Each object stored in the FS tree has many keys associated with its inode number. Every object has, at minimum, an INODE_ITEM and an INODE_REF key, and, depending on the type of the object, none or more additional keys containing further information about it.
+
+== Keys common to all objects ==
+
+The INODE_ITEM stores the basic properties of the object: size, permissions, major/minor numbers, flags, and a count of the number of links to the object (as appropriate: not all types of object will have all of these set). The key for an INODE_ITEM is (inode, INODE_ITEM, 0).
+
+Next, there is an INODE_REF item. This stores simply an index number, and a string. The string is the name of the object, and the index number is its position within the directory (see DIR_ITEM, below, for a discussion of directory indices). The offset part of the key for this item type is the inode of the parent directory. Each hardlink to a file will have a separate INODE_REF item, giving the parent directory of the object (in the offset field of the key), and the index and name of the object within that directory. Since directories cannot be hardlinked (due to POSIX semantics), each directory object will have precisely one INODE_REF item. The key for an INODE_REF item is (inode, INODE_REF, parent_dir_inode).
+
+== Files ==
+
+A file's additional keys consist of one or more EXTENT_DATA_REF items. Taken in sequence, these describe where the data of the file can be found on the disk. The offset field of the key in each case is the offset of the extent within the file. An extent item may map any contiguous sequence of bytes in the file to any other contiguous sequence of bytes stored in a data chunk.
+
+== Directories and subvolumes ==
+
+A directory's keys simply list all of the files contained within the directory, twice. The first list consists of a sequence of DIR_ITEM keys, ordered by the hash of the item's name (this is stored in the offset of the key). The second list consists of a sequence of DIR_INDEX keys, ordered by the "natural" order of the directory (typically in creation order). Both key types store the same structure, which references the key of this object's inode, and holds the full name of the object within this directory. The referenced key will be either of type INODE_ITEM, in which case it is an ordinary POSIX filesystem object and can be looked up in this tree; or it will be of type ROOT_ITEM, in which case it's a subvolume, and the subvolume objectid should be looked up in the tree of tree roots to find the corresponding FS tree.
+
+== Example ==
+
+The diagram below shows a simple subvolume structure, and the relationships between the different sets of keys (grouped here by inode number). Note that the files /incoming and /project/mailbox have been hardlinked together (with ln /incoming /project/mailbox, and that the files /vmbase and /vmimage were made by use of cp --reflink vmbase vmimage. The /vmimage file has been subsequently modified, and the last part of the file rewritten.
+
+Note that in the diagram, the links from DIR_ITEM keys to their respective inodes and links from INODE_REF keys to DIR_INDEX keys are not shown, for clarity.
+
+[[File:Directory-structure.png]]
+
+= Extent tree =
+
+The extent tree contains extents: contiguous chunks of storage allocated for use in some way. It stores two distinct types of extent: block group extents, and data extents.
+
+Block group extents are the fundamental building blocks within the virtual address space of the filesystem, and indicate which virtual addresses are valid (i.e. have physical storage underlying them). A block group extent's key in the extent tree is (start, BLOCK_GROUP_ITEM, length), and the associated data item contains the objectid of the chunk (which can then be looked up in the chunk tree).
+
+Data extents are always allocated from within block group extents, and represent the sequences of bytes that contain data (or metadata) managed by the filesystem. As with block group extents, data extents are keyed by their start position in the filesystem's virtual address space, and their length is the "offset" field of the key.
+
+[[Category:CodeDoc]]

@@ -1,0 +1,97 @@
+
+=btrfs-subvolume(8) Manual Page=
+{{GeneratedManpage}}
+
+
+==NAME==
+
+btrfs-subvolume - control btrfs subvolume(s)
+
+==SYNOPSIS==
+
+'''btrfs subvolume''' &lt;subcommand&gt; [&lt;args&gt;]
+
+==DESCRIPTION==
+
+'''btrfs subvolume''' is used to control the filesystem to create/delete/list/show subvolumes and snapshots.
+
+==SUBVOLUME AND SNAPSHOT==
+
+A subvolume in btrfs is not like an LVM logical volume, which is quite independent from each other, a btrfs subvolume has its hierarchy and relations between other subvolumes.
+
+A subvolume in btrfs can be accessed in two ways.
+
+# From the parent subvolume<br /> When accessing from the parent subvolume, the subvolume can be used just like a directory. It can have child subvolumes and its own files/directories.
+# Separate mounted filesystem<br /> When [http://man7.org/linux/man-pages/man8/mount.8.html mount(8)] using '''subvol''' or '''subvolid''' mount option, one can access files/directories/subvolumes inside it, but nothing in parent subvolumes.
+
+Also every btrfs filesystem has a default subvolume as its initially top-level subvolume, whose subvolume id is 5(FS_TREE).
+
+A btrfs snapshot is much like a subvolume, but shares its data(and metadata) with other subvolume/snapshot. Due to the capabilities of COW, modifications inside a snapshot will only show in a snapshot but not in its source subvolume.
+
+Although in btrfs, subvolumes/snapshots are treated as directories, only subvolume/snapshot can be the source of a snapshot, snapshot can not be made from normal directories.
+
+==SUBCOMMAND==
+
+; '''create''' [-i &lt;qgroupid&gt;] [&lt;dest&gt;]&lt;name&gt;
+: Create a subvolume &lt;name&gt; in &lt;dest&gt;. <br /> If &lt;dest&gt; is not given, subvolume &lt;name&gt; will be created in the currently directory. <br /><code>Options</code><br />
+:; -i &lt;qgroupid&gt;
+:: Add the newly created subvolume to a qgroup. This option can be given multiple times.
+; '''delete''' [options] &lt;subvolume&gt; [&lt;subvolume&gt;…]
+: Delete the subvolume(s) from the filesystem. <br /> If &lt;subvolume&gt; is not a subvolume, btrfs returns an error but continues if there are more arguments to process. <br /> The corresponding directory is removed instantly but the data blocks are removed later. The deletion does not involve full commit by default due to performance reasons (as a consequence, the subvolume may appear again after a crash). Use one of the '''--commit''' options to wait until the operation is safely stored on the media. <br /><code>Options</code><br />
+:; -c|--commit-after
+:: wait for transaction commit at the end of the operation <br />
+:; -C|--commit-each
+:: wait for transaction commit after delet each subvolume
+; '''list''' [options] [-G [+|-]&lt;value&gt;] [-C [+|-]&lt;value&gt;] [--sort=rootid,gen,ogen,path] &lt;path&gt;
+: List the subvolumes present in the filesystem &lt;path&gt;. <br /> For every subvolume the following information is shown by default.<br /> ID &lt;ID&gt; top level &lt;ID&gt; path &lt;path&gt;<br /> where path is the relative path of the subvolume to the top level subvolume. The subvolume’s ID may be used by the subvolume set-default command, or at mount time via the subvolid= option. If <code>-p</code> is given, then parent &lt;ID&gt; is added to the output between ID and top level. The parent’s ID may be used at mount time via the <code>subvolrootid=</code> option. <br /><code>Options</code><br />
+:; -p
+:: print parent ID.
+:; -a
+:: print all the subvolumes in the filesystem and distinguish between absolute and relative path with respect to the given &lt;path&gt;.
+:; -c
+:: print the ogeneration of the subvolume, aliases: ogen or origin generation.
+:; -g
+:: print the generation of the subvolume.
+:; -o
+:: print only subvolumes bellow specified &lt;path&gt;.
+:; -u
+:: print the UUID of the subvolume.
+:; -q
+:: print the parent uuid of subvolumes (and snapshots).
+:; -t
+:: print the result as a table.
+:; -s
+:: only snapshot subvolumes in the filesystem will be listed.
+:; -r
+:: only readonly subvolumes in the filesystem will be listed.
+:; -G [+|-]&lt;value&gt;
+:: list subvolumes in the filesystem that its generation is &gt;=, &lt;= or = value. '+' means &gt;= value, '-' means &lt;= value, If there is neither '+' nor '-', it means = value.
+:; -C [+|-]&lt;value&gt;
+:: list subvolumes in the filesystem that its ogeneration is &gt;=, &lt;= or = value. The usage is the same to '''-g''' option.
+:; --sort=rootid,gen,ogen,path
+:: list subvolumes in order by specified items. you can add '+' or '-' in front of each items, '+' means ascending, '-' means descending. The default is ascending. <br /> for --sort you can combine some items together by ',', just like -sort=+ogen,-gen,path,rootid.
+; '''snapshot''' [-r] &lt;source&gt; &lt;dest&gt;|[&lt;dest&gt;/]&lt;name&gt;
+: Create a writable/readonly snapshot of the subvolume &lt;source&gt; with the name &lt;name&gt; in the &lt;dest&gt; directory. <br /> If only &lt;dest&gt; is given, the subvolume will be named the basename of &lt;source&gt;. If &lt;source&gt; is not a subvolume, btrfs returns an error. If '''-r''' is given, the snapshot will be readonly.
+; '''get-default''' &lt;path&gt;
+: Get the default subvolume of the filesystem &lt;path&gt;. <br /> The output format is similar to '''subvolume list''' command.
+; '''set-default''' &lt;id&gt; &lt;path&gt;
+: Set the subvolume of the filesystem &lt;path&gt; which is mounted as default. <br /> The subvolume is identified by &lt;id&gt;, which is returned by the '''subvolume list''' command.
+; '''find-new''' &lt;subvolume&gt; &lt;last_gen&gt;
+: List the recently modified files in a subvolume, after &lt;last_gen&gt; ID.
+; '''show''' &lt;path&gt;
+: Show information of a given subvolume in the &lt;path&gt;.
+
+==EXIT STATUS==
+
+'''btrfs subvolume''' returns a zero exist status if it succeeds. Non zero is returned in case of failure.
+
+==AVAILABILITY==
+
+'''btrfs''' is part of btrfs-progs. Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for further details.
+
+==SEE ALSO==
+
+[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-subvolume|btrfs-subvolume(8)]], [[Manpage/btrfs-quota|btrfs-quota(8)]], [[Manpage/btrfs-qgroup|btrfs-qgroup(8)]],
+
+
+[[Category:Manpage]]

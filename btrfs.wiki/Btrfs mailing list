@@ -1,0 +1,23 @@
+The Btrfs mailing list is hosted on vger.kernel.org. The email address is [mailto:linux-btrfs@vger.kernel.org linux-btrfs@vger.kernel.org]. You can find details on how to subscribe here (subscription is not required to send mail):
+
+http://vger.kernel.org/vger-lists.html#linux-btrfs
+
+Mailing list archives are available from gmane:
+
+http://dir.gmane.org/gmane.comp.file-systems.btrfs
+
+The mailing list server utilizes [https://en.wikipedia.org/wiki/Greylisting greylisting] (i.e. the server may delay mails) and [http://vger.kernel.org/majordomo-info.html#taboo discards emails that are in HTML format or that exceed 100,000 bytes]. And please disable word wrapping in the mail client for sent mails that include kernel log backtraces.
+
+The old mailing lists on oss.oracle.com are no longer active, but the gmane archives do include the old list as well.
+
+== What information to provide when asking a support question ==
+
+When reporting errors or asking for support always supply the output of the following commands:
+
+   uname -a
+   btrfs --version
+   btrfs fi show
+   btrfs fi df /home # Replace /home with the mount point of your btrfs-filesystem 
+   dmesg > dmesg.log
+
+A lot of debug information can be retrieved from dmesg. If the relevant log information is very large, supply the output as an attachment in the mail instead of in the message body.

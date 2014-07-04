@@ -1,0 +1,96 @@
+From kernel 3.3 onwards, ''btrfs balance'' can limit its action to a subset of the full filesystem, and can be used to change the replication configuration (e.g. moving data from single to RAID-1). This functionality is accessed through the '''-d''', '''-m''' or '''-s''' options to ''btrfs balance start'', which filter on data, metadata and system blocks respectively.
+
+A filter has the following stucture:
+
+:''type'''''='''''params''[''','''''type'''''='''...]
+
+The available types are:
+
+;profiles
+:Balances only block groups with the given replication profiles. Parameters are a list of profile names separated by '''|'''.
+
+;usage
+:Balances only block groups with usage under the given percentage. The value of 0 is allowed and will clean up completely unused block groups, this should not require any new space allocated. You may want to use ''usage=0'' in case balance is returnin ENOSPC and your filesystem is not too full.
+
+;devid
+:Balances only block groups which have at least one chunk on the given device (by btrfs device ID -- use '''btrfs fi show''' to list device IDs)
+
+;drange
+:Balances only block groups which overlap with the given byte range on any device. (Use in conjunction with "devid" to filter on a specific device). The parameter is a range specified as ''start'''''..'''''end''
+
+;vrange
+:Balances only block groups which overlap with the given byte range in the filesystem's internal virtual address space. This is the address space that most reports from btrfs in the kernel log use. The parameter is a range specified as ''start'''''..'''''end''
+
+;convert
+:Convert each selected block group to the given profile name.
+
+;soft
+:Takes no parameters. Only has meaning when converting between profiles.
+:When doing convert from one profile to another and soft mode is on, restriper won't touch chunks that already have the target profile.  This is useful if e.g. half of the FS was converted earlier.
+:The soft mode switch is (like every other filter) per-type.  This means that we can convert for example meta chunks the "hard" way while converting data chunks selectively with soft switch.
+
+Profile names, used in '''profiles''' and '''convert''' are one of: '''raid0''', '''raid1''', '''raid10''', '''raid5''', '''raid6''', '''dup''', '''single'''.
+
+== Balancing to fix filesystem full errors ==
+
+This is explained in more details on [http://marc.merlins.org/perso/btrfs/post_2014-05-04_Fixing-Btrfs-Filesystem-Full-Problems.html Marc's Blog on Fixing Btrfs Filesystem Full Problems], but basically there are times when btrfs will need rebalancing to fix issues with chunks being misbalanced.
+
+Keys points:
+* If you are getting out of space errors due to metadata being full, try 
+ btrfs balance start -v -dusage=0 /mnt/btrfs
+
+* If your data chunks are misbalanced, look at how much space is really used in percentage and feed that to -dusage, asking btrfs to rebalance all chunks that are not at that threshold (bigger number means more work):
+ btrfs balance start -dusage=55 /mnt/btrfs
+
+== Other Examples ==
+
+'''Convert data to raid1 after mkfs with defaults'''
+
+You want to increase redundancy for data as well, with at least 2 devices you can do:
+
+ $ mkfs.btrfs /dev/sda1 /dev/sdb1
+ $ mount /dev/sda1 /mnt
+ [...]
+ $ btrfs fi df /mnt
+
+output:
+ Data, RAID0: total=409.50MB, used=0.00
+ Data: total=8.00MB, used=0.00
+ System, RAID1: total=8.00MB, used=4.00KB
+ System: total=4.00MB, used=0.00
+ Metadata, RAID1: total=204.75MB, used=24.00KB
+ Metadata: total=8.00MB, used=0.00
+
+ $ btrfs fi balance start -dconvert=raid1 /mnt
+ $ btrfs fi df /mnt
+
+output:
+ Data, RAID1: total=819.12MB, used=128.00KB
+ System, RAID1: total=8.00MB, used=4.00KB
+ System: total=4.00MB, used=0.00
+ Metadata, RAID1: total=460.75MB, used=24.00KB
+ Metadata: total=8.00MB, used=0.00
+
+'''Convert data and metadata to raid1 after mkfs with defaults'''
+
+The above example won't give you an actual RAID1 configuration if you haven't already mirrored your metadata, as it only mirrors data. You can see this if your output after running the above commands looks like the following:
+
+ Data, RAID1: total=819.12MB, used=128.00KB
+ System, DUP: total=8.00MB, used=4.00KB
+ System: total=4.00MB, used=0.00
+ Metadata, DUP: total=460.75MB, used=24.00KB
+ Metadata: total=8.00MB, used=0.00
+
+You can also see it didn't work out the way you might have wanted to because 
+
+ $ btrfs fi show 
+
+will report an unbalanced amount of space used on your devices.
+
+To actually get RAID1 where you are left with a working copy of the filesystem after you lose one of your devices, you must specify the following to rebalance to RAID1:
+
+ $ btrfs balance start -dconvert=raid1 -mconvert=raid1 /mnt
+ $ btrfs fi df /mnt
+
+
+For more examples read this email: [http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg14365.html patch]

@@ -1,0 +1,14 @@
+Program displays blocks in an image.
+
+== Usage ==
+<pre>btrfs-show-blocks [-d <device>] [-i <tree-file>] [-o <file>] [-z <zoom>] [--data-only] [--meta-only]</pre>
+
+=== Description of parameters ===
+* "--device" or "-d": Device to show.
+* "--input-file" or "-i": debug-tree data.
+* "--output" or "-o": Output image, defaults to "blocks.png".
+* "--zoom" or "-z": Zooms.
+* "--data-only": Only print data blocks
+* "--meta-only", Only print metadata blocks
+
+[[Category:Tools]]

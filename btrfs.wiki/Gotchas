@@ -1,0 +1,22 @@
+This page lists problems one might face when trying btrfs, some of these are not really bugs, but rather inconveniences about things not yet implemented, or yet undocumented design decisions.
+
+Please add new things below, don't forget to add a comment on which version you observed this.
+
+= Issues =
+
+* There were problems found with the ''snapshot-aware defrag'' that has been turned off in the following kernels:
+** '''3.10.31''', '''3.12.12''', '''3.13.4'''
+** all newer than 3.14
+* '''bcache''' + btrfs does not seem to be stable yet
+** http://thread.gmane.org/gmane.comp.file-systems.btrfs/31018 user report (2013/12)
+* Files with a lot of random writes can become heavily fragmented (10000+ extents) causing trashing on HDDs and excessive multi-second spikes of CPU load on systems with an SSD or large amount a RAM.
+** On servers and workstations this affects databases and virtual machine images.
+*** The nodatacow [[Mount_options|mount option]] may be of use here, with associated gotchas.
+** On desktops this primarily affects application databases (including Firefox and Chromium profiles, GNOME Zeitgeist, Ubuntu Desktop Couch, Banshee, and Evolution's datastore.)
+*** Workarounds include manually defragmenting your home directory using btrfs fi defragment. Auto-defragment (mount option autodefrag) should solve this problem in 3.0.
+** Symptoms include btrfs-transacti and btrfs-endio-wri taking up a lot of CPU time (in spikes, possibly triggered by syncs). You can use filefrag to locate heavily fragmented files.
+
+* On a multi device btrfs filesystem, mistakingly re-adding a block device that is already part of the btrfs fs with btrfs device add results in an error, and brings btrfs in an inconsistent state. In striping mode, this causes data loss and kernel oops. The btrfs userland tools need to do more checking to prevent these easy mistakes. (2.6.35, btrfs v0.19)
+* Raid5/6 support is not yet fully implemented. See [[RAID56]]
+
+[[Category:UserDoc]]

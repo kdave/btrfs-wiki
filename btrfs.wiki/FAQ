@@ -1,0 +1,605 @@
+= Important Questions =
+
+== I have a problem with my btrfs filesystem! ==
+
+See the [[Problem FAQ]] for commonly-encountered problems and solutions.
+
+If that page doesn't help you, try asking on [irc://irc.freenode.net:6667/btrfs IRC] or the [[Btrfs mailing list]].
+
+Explicitly said: please '''report bugs and issues to the mailing list''' (you are ''not'' required to subscribe).
+
+Then '''use [[Problem_FAQ#How_do_I_report_bugs_and_issues.3F | Bugzilla]]''' which will ensure traceability.
+
+== I see a warning in dmesg about barriers being disabled when mounting my filesystem. What does that mean? ==
+
+Your hard drive has been detected as not supporting barriers. This is a severe condition, which can result in full file-system corruption, not just losing or corrupting data that was being written at the time of the power cut or crash. There is only one certain way to work around this:
+
+{{note|Disable the write cache on each drive by running hdparm -W0 /dev/sda against each drive on '''every''' boot.}}
+
+Failure to perform this can result in massive and possibly irrecoverable corruption (especially in the case of encrypted filesystems).
+
+== Help! I ran out of disk space! ==
+
+== Help! Btrfs claims I'm out of space, but it looks like I should have lots left! ==
+
+Free space is a tricky concept in Btrfs. This is especially apparent when running low on it. Read "Why is there so many ways to check the amount of free space" below for the blow-by-blow.
+
+=== if you're on 2.6.32 or older ===
+
+You should upgrade your kernel, '''right now'''. The error behaviour of Btrfs has significantly improved, such that you get a nice proper ENOSPC instead of an OOPS or worse. There may be backports of Btrfs eventually, but it currently relies on infrastructure and patches outside of the fs tree which make a backport trickier to manage without compromising the stability of your stable kernel.
+
+=== if your device is small ===
+
+i.e., a 4GiB flash card: your main problem is the large block allocation size, which doesn't allow for much breathing room. A ''btrfs fi'' balance may get you working again, but it's probably only a short term fix, as the metadata to data ratio probably won't match the block allocations.
+
+If you can afford to delete files, you can clobber a file via 
+
+ echo &gt; /path/to/file
+
+which will recover that space without requiring a new metadata allocation (which would otherwise ENOSPC again).
+
+You might consider remounting with ''-o compress'', and either rewrite particular files in-place, or run a [[UseCases#How_do_I_defragment_many_files.3F | recursive defragmentation]] which (if an explicit flag is given, or if the filesystem is mounted with compression enabled) will also recompress everything.  This may take a while.
+
+Next, depending on whether your metadata block group or the data block group is filled up, you can recreate your filesystem and mount it with ''metadata_ratio='', setting the value up or down from the default of 8 (i.e., 4 if metadata ran out first, 12 if data ran out first). This can be changed at any time by remounting, but will only affect new block allocations.
+
+Finally, the best solution is to upgrade to at least 2.6.37 (or the latest stable kernel) and recreate the filesystem to take advantage of mixed block groups, which avoid effectively-fixed allocation sizes on small devices. Note that this incurs a fragmentation overhead, and currently cannot be converted back to normal split metadata/data groups without recreating the partition. Using mixed block groups is recommended for filesystems of 1GiB or smaller and ''mkfs.btrfs'' will force mixed block groups automatically in that case.
+
+=== if your device is large (&gt;16GiB) ===
+
+ # btrfs fi show /dev/device
+
+(as root) should show no free space on any drive.
+
+It may show unallocated space if you're using raid1 with two drives of different sizes, and possibly similar with larger drives. This is normal in itself, as Btrfs will not write both copies to the same device, but you still have an ENOSPC condition.
+
+ $ btrfs fi df /mountpoint
+
+will probably report available space in both metadata and data. The problem here is that one particular 256MiB or 1GiB block is full, and wants to allocate another whole block. The easy fix is to run, as root:
+
+ # btrfs fi balance /mountpoint -dusage=5
+
+This may take a while (although the system is otherwise usable during this time), but when completed, you should be able to use most of the remaining space. We know this isn't ideal, and there are plans to improve the behavior. Running close to empty is rarely the ideal case, but we can get far closer to full than we do.
+
+In a more time-critical situation, you can reclaim space by clobbering a file via 
+
+ $ true &gt; /path/to/file
+
+This will delete the contents, allowing the space to be reclaimed, but without requiring a metadata allocation. Get out of the tight spot, and then balance as above.
+
+If the echo does not work, mount with the [[mount options|'nodatacow' option]], and try again (tried with [[Ubuntu_support#Ubuntu Linux 12.04 (Precise Pangolin)|3.2.20 kernel for Ubuntu Precise)]]. The reason behind that is that in some case the file is already snapshotted in a no obvious way (like a file of a converted ext4 filesystem). Using 'nodatacow' you are sure to not allocate new metadata when the file is overwritten.
+
+Significant improvements in the way that btrfs handles ENOSPC are incorporated in most new kernel releases, so you should also upgrade to the latest kernel if you are not already using it.
+
+* Note:
+If you've tried ''btrfs fi balance /mountpoint -dusage=5'', and it takes an abnormal amount of time (normal time is 20 hours for 1 TB) it may never end, if you try the [[mount options|'nodatacow' option]] it also does not work, you have to use the mount with [[mount options|'skip_balance' option]] and  [[mount options|'nodatacow' option]], after that you should try te method described before.
+
+== Are btrfs changes backported to stable kernel releases? ==
+
+The stable kernel releases do not receive regular btrfs backports unless it's a serious bugfix.
+
+= Performance vs Correctness =
+
+== Does Btrfs have data=ordered mode like Ext3? ==
+
+In v0.16, Btrfs waits until data extents are on disk before updating metadata. This ensures that stale data isn't exposed after a crash, and that file data is consistent with the checksums stored in the btree after a crash.
+
+Note that you may get zero-length files after a crash, see the next questions for more info.
+
+Btrfs does not force all dirty data to disk on every fsync or O_SYNC operation, fsync is designed to be fast.
+
+== What are the crash guarantees of overwrite-by-rename? ==
+
+Overwriting an existing file using a rename is atomic. That means that either the old content of the file is there or the new content. A sequence like this:
+
+ echo "oldcontent" &gt; file
+ 
+ # make sure oldcontent is on disk
+ sync
+ 
+ echo "newcontent" &gt; file.tmp
+ mv -f file.tmp file
+ 
+ # *crash*
+
+
+Will give either
+
+# file contains "newcontent"; file.tmp does not exist
+# file contains "oldcontent"; file.tmp may contain "newcontent", be zero-length or not exists at all.
+
+
+== Why I experience poor performance during file access on filesystem?  ==
+
+By default the file system is mounted with relatime flag, which means it must update files' metadata during first access on each day. Since updates to metadata are done as COW, if one visits a lot o files, it results in massive and scattered write operations on the underlying media.
+
+You need to mount file system with noatime flag to prevent this from happening.
+
+More details are in [[Mount_options#Performance]]
+
+== What are the crash guarantees of rename? ==
+
+Renames NOT overwriting existing files do not give additional guarantees. This means, a sequence like
+
+ echo "content" &gt; file.tmp
+ mv file.tmp file
+ 
+ # *crash*
+
+will most likely give you a zero-length "file". The sequence can give you either
+
+# Neither file nor file.tmp exists
+# Either file.tmp or file exists and is 0-size or contains "content"
+
+For more info see this thread: http://thread.gmane.org/gmane.comp.file-systems.btrfs/5599/focus=5623
+
+== Can the data=ordered mode be turned off in Btrfs? ==
+
+No, it is an important part of keeping data and checksums consistent. The Btrfs data=ordered mode is very fast and turning it off is not required for good performance.
+
+== What checksum function does Btrfs use? ==
+
+Currently Btrfs uses crc32c for data and metadata. The disk format has room for 256bits of checksum for metadata and up to a full leaf block (roughly 4k or more) for data blocks. Over time we'll add support for more checksum alternatives.
+
+== Can data checksumming be turned off? ==
+
+Yes, you can disable it by mounting with <tt>-o nodatasum</tt>. Please note that checksumming is also turned off when the filesystem is mounted with <tt>nodatacow</tt>.
+
+== Can copy-on-write be turned off for data blocks? ==
+
+Yes, there are several ways how to do that.
+
+Disable it by mounting with ''nodatacow''. This implies ''nodatasum'' as well. COW may still happen if a snapshot is taken. However COW will still be maintained for existing files, because the COW status can be modified only for empty or newly created files.
+
+For an empty file, add the NOCOW file attribute (use ''chattr'' utility with +C), or you create a new file in a directory with the NOCOW attribute set (then the new file will inherit this attribute).
+
+Now copy the original data into the pre-created file, delete original and rename back.
+
+There is a script you can use to do this [https://github.com/stsquad/scripts/blob/master/uncow.py].
+
+Shell commands may look like this:
+
+ touch vm-image.raw
+ chattr +C vm-image.raw
+ fallocate -l10g vm-image.raw
+
+will produce file suitable for a raw VM image -- the blocks will be updated in-place and are preallocated.
+
+= Features =
+
+(See also the [[Project ideas]] page)
+
+== When will Btrfs have a fsck like tool? ==
+
+It does!
+
+The first detailed report on [http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg11836.html what comprises "btrfsck"]
+
+[[Btrfsck]] has its own page, go check it out.
+
+Note that in many cases, you '''don't want to run fsck'''. Btrfs is fairly self healing, but when needed check and recovery can be done several ways. [http://marc.merlins.org/perso/btrfs/post_2014-03-19_Btrfs-Tips_-Btrfs-Scrub-and-Btrfs-Filesystem-Repair.html Marc MERLIN has written a page that explains the different ways to check and fix a btrfs filesystem].
+
+The [[btrfsck]] tool in the git master branch for btrfs-progs is now capable of repairing some types of filesystem breakage. It is not well-tested in real-life situations yet. If you have a broken filesystem, it is probably better to use btrfsck with advice from one of the btrfs developers, just in case something goes wrong. (But even if it does go badly wrong, you've still got your backups, right?)
+
+Note that there is also a [[Restore|recovery tool]] in the btrfs-progs git repository which can often be used to copy essential files out of broken filesystems.
+
+=== What's the difference between btrfsck and fsck.btrfs ===
+
+* ''btrfsck'' is the actual utility that is able to check and repair a filesystem<br>
+* ''fsck.btrfs'' is a utility that should exist for any filesystem type and is called during system setup when the corresponding ''/etc/fstab'' entries contain non-zero value for ''fs_passno''. (See [http://linux.die.net/man/5/fstab fstab(5)] for more.)
+
+Traditional filesystems need to run their respective fsck utility in case the filesystem was not unmounted cleanly and the log needs to be replayed before mount. This is not needed for btrfs. You should set ''fs_passno'' to 0.
+
+Note, if the ''fsck.btrfs'' utility is in fact ''btrfsck'', then the filesystem is unnecessarily checked upon every boot and slows down the whole operation. It is safe to and recommended to turn ''fsck.btrfs'' into a no-op, eg. by <tt>cp /bin/true /sbin/fsck.btrfs</tt>.
+
+== Can I use RAID[56] on my Btrfs filesystem? ==
+
+Yes, with 3.9 and above, but it's still experimental.
+Please see [[RAID56]]
+
+== Is Btrfs optimized for SSD? ==
+
+There are some optimizations for SSD drives, and you can enable them by mounting with -o ssd. As of 2.6.31-rc1, this mount option will be enabled if Btrfs is able to detect non-rotating storage. SSD is going to be a big part of future storage, and the Btrfs developers plan on tuning for it heavily. Note that -o ssd will not enable TRIM/discard.
+
+== Does Btrfs support TRIM/discard? ==
+
+There are two ways how to apply the discard:
+
+* during normal operation on any space that's going to be freed, enabled by mount option ''discard''
+* on demand via the command ''fstrim''
+
+"-o discard" can have some negative consequences on performance on some SSDs or at least whether it adds worthwhile performance is up for debate depending on who you ask, and makes undeletion/recovery near impossible while being a security problem if you use dm-crypt underneath (see http://asalor.blogspot.com/2011/08/trim-dm-crypt-problems.html ), therefore it is not enabled by default. You are welcome to run your own benchmarks and post them here, with the caveat that they'll be very SSD firmware specific.
+
+The ''fstrim'' way is more flexible as it allows to apply trim on a specific block range, or can be scheduled to time when the filesystem perfomace drop is not critical.
+
+== Does btrfs support encryption? ==
+
+There are several different ways in which a filesystem can interoperate with encryption to keep your data secure:
+
+* It can operate on top of an encrypted partition ([http://en.wikipedia.org/wiki/Dm-crypt dm-crypt] / [http://en.wikipedia.org/wiki/Linux_Unified_Key_Setup LUKS]) scheme.
+* It can be used as a component of a stacked approach (eg. [http://en.wikipedia.org/wiki/ECryptfs ecryptfs]) where a layer above the filesystem transparently provides the encryption.
+* It can natively attempt to encrypt file data and associated information such as the file name.
+
+There are advantages and disadvantages to each method, and care should be taken to make sure that the encryption protects against the right threat.  In some situations, more than one approach may be needed.
+
+Typically, partition (or entire disk) encryption is used to protect data in case a computer is stolen.  This sort of method requires a password for the computer to boot, but the system operates normally after that.  All data (except the boot loader and kernel) is encrypted.  Btrfs works safely with partition encryption (luks/dm-crypt) since Linux 3.2.  Earlier kernels will start up in this mode, but are known to be unsafe and may corrupt due to problems with dm-crypt write barrier support.
+
+Partition encryption does not protect data accessed by a running system -- after boot, a user sees the computer normally, without having to enter extra passwords.  There may also be some performance impact since all IO must be encrypted, not just important files.  For this reason, it's often preferable to encrypt individual files or folders, so that important files can't be accessed without the right password while the system is online.  If the computer might also be stolen, it may be preferable to use partition encryption as well as file encryption.
+
+Btrfs does not support native file encryption (yet), and there's nobody actively working on it.  It could conceivably be added in the future.
+
+As an alternative, it is possible to use a stacked filesystem (eg. [http://en.wikipedia.org/wiki/ECryptfs ecryptfs]) with btrfs.  In this mode, the stacked encryption layer is mounted over a portion of a btrfs volume and transparently applies the security before the data is sent to btrfs.  Another similar option is to use the [http://fuse.sourceforge.net/ fuse]-based filesystem [http://en.wikipedia.org/wiki/EncFS encfs] as a encrypting layer on top of btrfs.
+
+Note that a stacked encryption layer (especially using fuse) may be slow, and because the encryption happens before btrfs sees the data, btrfs compression won't save space (encrypted data is too scrambled).  From the point of view of btrfs, the user is just writing files full of noise.
+
+Also keep in mind that if you use partition level encryption and btrfs RAID on top of multiple encrypted partitions, the partition encryption will have to individually encrypt each copy.  This may result in somewhat reduced performance compared to a traditional RAID setup where the encryption might be done on top of RAID.  Whether the encryption has a significant impact depends on the workload, and note that many newer CPUs have hardware encryption support.
+
+== Does Btrfs work on top of dm-crypt? ==
+
+This is [http://permalink.gmane.org/gmane.comp.file-systems.btrfs/15564 deemed safe since 3.2 kernels]. Corruption has been reported before that, so you want a recent kernel. The reason was improper passing of device barriers that are a requirement of the filesystem to guarantee consistency.
+
+If you are trying to mount a btrfs filesystem based on multiple dm-crypted devices, you can see an example script on Marc's btrfs blog: [http://marc.merlins.org/perso/btrfs/post_2014-04-27_Btrfs-Multi-Device-Dmcrypt.html start-btrfs-dmcrypt].
+
+== Does btrfs support deduplication? ==
+
+Deduplication is supported, with some limitations. See [[Deduplication]].
+
+== Does btrfs support swap files? ==
+
+Currently no. Just making a file NOCOW does not help, swap file support relies on one function that btrfs intentionally does not implement due to potential corruptions. The swap implementation used to rely on some assumptions which may not hold in btrfs, like block numbers in the swap file while btrfs has a different block number mapping in case of multiple devices. There is a new API that could be used to port swap to btrfs; for more details have a look at [[project ideas#Swap file support]].
+
+A workaround, albeit with poor performance, is to mount a swap file via a loop device.
+
+== Does grub support btrfs? ==
+
+In most cases. Grub 2 supports many btrfs configurations (including zlib and lzo compression, and RAID0/1/10 multi-dev filesystems).
+If your distribution only provides older versions of GRUB, you'll have to build it for yourself.
+
+grubenv write support (used to track failed boot entries) is lacking, grub needs btrfs to support a reserved area.
+
+References:
+* LZO support http://bzr.savannah.gnu.org/lh/grub/trunk/grub/revision/3436
+
+== Is it possible to boot to btrfs without an initramfs? ==
+
+With multiple devices, btrfs normally needs an initramfs to perform a device scan. It may be necessary to modprobe (and then rmmod) scsi-wait-scan to work around a race condition. See [[using Btrfs with Multiple Devices|using Btrfs with multiple devices]].
+
+With grub and a single disk, you might not need an initramfs.  Grub generates a root=UUID=… command line that the kernel should handle on its own.  Some people have also used GPT and root=PARTUUID= specs instead [https://archives.gentoo.org/gentoo-user/msg_35eb3187ef8be8a23cdec253b66b5a59.xml].
+
+== Compression support in btrfs ==
+
+There's a separate page for compression related questions, [[Compression]].
+
+=== Will btrfs support LZ4? ===
+
+Maybe, if there is a clear benefit compared to existing compression support. Technically there are no obstacles, but supporing a new algorithm has impact on the the userpace tools or bootloader that has to be justified. There's a project idea [[Project_ideas#Compression_enhancements|Compression enhancements]] that targets more than just adding LZ4.
+
+Reasons against adding simple LZ4 support are stated [http://thread.gmane.org/gmane.comp.file-systems.btrfs/35642 here] and [http://thread.gmane.org/gmane.comp.file-systems.btrfs/35667 here]. Similar holds for ''snappy'' compression algorithm, but it performs worse than LZ4 and is not considered anymore.
+
+= Common questions =
+
+== How do I do...? ==
+
+See also the [[UseCases]] page.
+
+== Is btrfs stable? ==
+
+'''Short answer''': No, it's still considered experimental.
+
+'''Long answer''': Nobody is going to magically stick a label on the btrfs code and say "yes, this is now stable and bug-free". Different people have different concepts of stability: a home user who wants to keep their ripped CDs on it will have a different requirement for stability than a large financial institution running their trading system on it. If you are concerned about stability in commercial production use, you should test btrfs on a testbed system under production workloads to see if it will do what you want of it. In any case, you should join the mailing list (and hang out in IRC) and read through problem reports and follow them to their conclusion to give yourself a good idea of the types of issues that come up, and the degree to which they can be dealt with. Whatever you do, we recommend keeping good, tested, off-system (and off-site) backups.
+
+'''Pragmatic answer''': (2012-12-19) Many of the developers and testers run btrfs as their primary filesystem for day-to-day usage, or with various forms of "real" data. With reliable hardware and up-to-date kernels, we see very few unrecoverable problems showing up. As always, keep backups, test them, and be prepared to use them.
+
+== What version of btrfs-progs should I use for my kernel? ==
+
+Simply use the latest version.
+
+The userspace tools versions roughly match the kernel releases and should contain support for features introduced in the respective kernel release. The minor versions are bugfix releases or independent updates (eg. documentation, tests).
+
+== I have converted my ext4 partition into Btrfs, how do I delete the ext2_saved folder? ==
+
+The folder is a normal btrfs subvolume and you can delete it with the command
+
+ btrfs subvolume delete ''/path/to/btrfs/ext2_saved''
+
+== Why does df show incorrect free space for my RAID volume? ==
+
+== Aaargh! My filesystem is full, and I've put almost nothing into it! ==
+
+== Why are there so many ways to check the amount of free space? ==
+
+Free space in Btrfs is a tricky concept from a traditional viewpoint, owing partly to the features it provides and partly to the difficulty in making too many assumptions about the exact information you need to know at the time. We will eventually figure out a more intuitive solution.
+
+To understand the different ways that btrfs's tools report filesystem usage and free space, you need to know how it allocates and uses space.
+
+=== Raw disk usage ===
+
+Btrfs starts with a pool of raw storage. This is what you see when you run <code>btrfs fi show</code>:
+
+ $ sudo btrfs fi show /dev/sda1
+ Label: none  uuid: 12345678-1234-5678-1234-1234567890ab
+ 	Total devices 2 FS bytes used 304.48GB
+ 	devid    1 size 427.24GB used 197.01GB path /dev/sda1
+ 	devid    2 size 465.76GB used 197.01GB path /dev/sdc1
+
+The "devid" lines show the total raw bytes available and allocated on each disk, whether containing redundant data or not. As the filesystem needs space for data or metadata, it allocates chunks of raw storage from the disks, typically 1GB (data) and 256MB (metadata) at a time. This allocation of data is known as a <em>block group</em>.
+
+The way that the above allocation occurs depends on the RAID/replication in use, and the type of information it is attempting to store:
+* single - data usage matches the raw block group usage on a single device (data = raw; 1GB of data requires 1GB of disk)
+* DUP - data is duplicated across a single disk, mostly used for metadata (data * 2 = raw; 1GB of data requires 2GB of disk)
+* RAID-1 - data usage will match with two equal chunks on two different devices (data * 2 = raw; 1GB of data requires 2GB of disk)
+* RAID-10 - as with RAID-1 however will require four devices (data * 2 = raw; 1GB of data requires 2GB of disk)
+* RAID-0 - data usage matches the raw data usage on multiple devices (data = raw; 1GB of data requires 1GB of disk)
+* RAID-5 - similar to RAID-0 but with one extra raw block reserved for parity (where you have <em>n</em> disks: data * n = raw * (n-1) ; 6 disks, 5GB of data requires 6GB of disk)
+* RAID-6 - as with RAID-5 except with two blocks reserved for "parity" (where you have <em>n</em> disks: data * n = raw * (n-2) ; 8 disks, 6 GB of data requires 8GB of disk)
+
+In the above example 304.48GB of storage has been used for data and metadata within the filesystem, however sda1 and sdc1 each have 197.01GB of "raw" disk allocated. Due to the differing replication schemes (single/DUP/RAID-x) above and that storage is often allocated but unused, these two numbers will always have a discrepancy, in this case 304.48GB vs 2x 197.01GB (384.02GB).
+
+=== Actual data ===
+
+When allocating new block groups, for example with a new empty btrfs file system using RAID-1 for data, it will allocate two chunks of 1GiB each, which between them have 1GiB of storage capacity. You will see 2GiB of raw space used in "btrfs fi show", 1GiB from each of two devices. You will also see 1GiB of free space appear in "btrfs fi df" as "Data, RAID1". As you write files to it, that 1GiB will get used up at the rate you'd expect (i.e., write 1MiB to it, and 1MiB gets used -- in "btrfs fi df" output). When that 1GiB is used up, another 1GiB is allocated and used.
+
+The total space allocated from the raw pool is shown with <code>btrfs fi show</code>. If you want to see the types and quantities of space allocated, and what they can store, the command is <code>btrfs fi df &lt;mountpoint&gt;</code>:
+
+ $ btrfs fi df /
+ Metadata: total=18.00GB, used=6.10GB
+ Data: total=358.00GB, used=298.37GB
+ System: total=12.00MB, used=40.00KB
+
+This shows how much data has been allocated for each data type and replication type, and how much has been used. The values shown are <em>data</em> rather than <em>raw bytes</em>, so if you're using RAID-1 or RAID-10, the amount of raw storage used is double the values you can see here.
+
+== Why is free space so complicated? ==
+
+You might think, "My whole disk is RAID-1, so why can't you just divide everything by 2 and give me a sensible value in <code>df</code>?".
+
+<em><strong>If</strong></em> everything is RAID-1 (or RAID-0, or in general all the same RAID level), then yes, we could give a sane and consistent value from <code>df</code>. <em><strong>However</strong></em>, we have plans to allow per-subvolume and per-file RAID levels. In this case, it becomes impossible to give a sensible estimate as to how much space there is left.
+
+For example, if you have one subvolume as "single", and one as RAID-1, then the first subvolume will consume raw storage at the rate of one byte for each byte of data written. The second subvolume will take two bytes of raw data for each byte of data written. So, if we have 30GiB of raw space available, we could store 30GiB of data on the first subvolume, or 15GiB of data on the second, <em>and there is no way of knowing which it will be until the user writes that data</em>.
+
+So, in general, it is impossible to give an accurate estimate of the amount of free space on any btrfs filesystem. <strong>Yes, this sucks.</strong> If you have a really good idea for how to make it simple for users to understand how much space they've got left, please do let us know, but also please be aware that the finest minds in btrfs development have been thinking about this problem for at least a couple of years, and we haven't found a simple solution yet.
+
+== Why is there so much space overhead? ==
+
+There are several things meant by this. One is the out-of-space issues discussed above; this is a known deficiency, which can be worked around, and will eventually be worked around properly. The other meaning is the size of the metadata block group, compared to the data block group. Note that you shouldn't compare the size of the '''allocations''', but rather the used space '''in''' the allocations.
+
+There are several considerations:
+
+* The default raid level for the metadata group is dup on single drive systems, and raid1 on multi drive systems. The meaning is the same in both cases: there's two copies of everything in that group. This can be disabled at mkfs time, and it will eventually be possible to migrate raid levels online.
+* There an overhead to maintaining the checksums (approximately 0.1% – 4 bytes for each 4k block)
+* Small files are also written inline into the metadata group. If you have several gigabytes of very small files, this will add up.
+
+[incomplete; disabling features, etc]
+
+== How much space will I get with my multi-device configuration? ==
+
+There is an [http://carfax.org.uk/btrfs-usage/index.html online tool] which can calculate the usable space from your drive configuration. For more details about RAID-1 mode, see the question below.
+
+== How much space do I get with unequal devices in RAID-1 mode? ==
+
+For a specific configuration, you can use the [http://carfax.org.uk/btrfs-usage/index.html online tool] to see what will happen.
+
+The general rule of thumb is if your largest device is bigger than all of the others put together, then you will get as much space as all the smaller devices added together. Otherwise, you get half of the space of all of your devices added together.
+
+For example, if you have disks of size 3TB, 1TB, 1TB, your largest disk is 3TB and the sum of the rest is 2TB. In this case, your largest disk is bigger than the sum of the rest, and you will get 2TB of usable space.
+
+If you have disks of size 3TB, 2TB, 2TB, then your largest disk is 3TB and the sum of the rest of 4TB. In this case, your largest disk is smaller than the sum of the rest, and you will get (3+2+2)/2 = 3.5TB of usable space.
+
+If the smaller disks are not the same size, the above holds true for the first case (largest device is bigger than all the others combined), but might not be true if the sum of the rest is larger. In this case, you can apply the rule multiple times.
+
+For example, if you have disks of size 2TB, 1.5TB, 1TB, then the largest disk is 2TB and the sum is 2.5TB, but the smaller devices aren't equal, so we'll apply the rule of thumb twice. First, consider the 2TB and the 1.5TB. This set will give us 1.5TB usable and 500GB left over. Now consider the 500GB left over with the 1TB. This set will give us 500GB usable and 500GB left over. Our total set (2TB, 1.5TB, 1TB) will thus yield 2TB usable.
+
+Another example is 3TB, 2TB, 1TB, 1TB. In this, the largest is 3TB and the sum of the rest is 4TB. Applying the rule of thumb twice, we consider the 3TB and the 2TB and get 2TB usable with 1TB left over. We then consider the 1TB left over with the 1TB and the 1TB and get 1.5TB usable with nothing left over. Our total is 3.5TB of usable space.
+
+== What does "balance" do? ==
+
+''btrfs filesystem balance'' is an operation which simply takes all of the data and metadata on the filesystem, and re-writes it in a different place on the disks, passing it through the allocator algorithm on the way. It was originally designed for multi-device filesystems, to spread data more evenly across the devices (i.e. to "balance" their usage). This is particularly useful when adding new devices to a nearly-full filesystem.
+
+Due to the way that balance works, it also has some useful side-effects:
+
+* If there is a lot of allocated but unused data or metadata chunks, a balance may reclaim some of that allocated space. This is the main reason for running a balance on a single-device filesystem.
+* On a filesystem with damaged replication (e.g. a RAID-1 FS with a dead and removed disk), it will force the FS to rebuild the missing copy of the data on one of the currently active devices, restoring the RAID-1 capability of the filesystem.
+
+'''Until at least 3.14, balance is sometimes needed to fix filesystem full issues'''. See [[Balance_Filters]].
+
+== Does a balance operation make the internal B-trees better/faster? ==
+
+No, balance has nothing at all to do with the B-trees used for storing all of btrfs's metadata. The B-tree implementation used in btrfs is effectively self-balancing, and won't lead to imbalanced trees. See the question above for what balance does (and why it's called "balance").
+
+== Does a balance operation recompress files? ==
+
+No. Balance moves entire file extents and does not change their contents. If you want to recompress files, use <tt>btrfs filesystem defrag</tt> with the ''-c'' option.
+
+Balance does a defragmentation, but not on a file level rather on the block group level. It can move data from less used block groups to the remaining ones, eg. using the ''usage'' balance filter.
+
+== Do I need to run a balance regularly? ==
+
+In general usage, no. A full unfiltered balance typically takes a long time, and will rewrite huge amounts of data unnecessarily. You may wish to run a balance on metadata only (see [[Balance_Filters]]) if you find you have very large amounts of metadata space allocated but unused, but this should be a last resort. At some point, this kind of clean-up will be made an automatic background process.
+
+== What is the difference between mount -o ssd and mount -o ssd_spread? ==
+
+Mount -o ssd_spread is more strict about finding a large unused region of the disk for new allocations, which tends to fragment the free space more over time. Mount -o ssd_spread is often faster on the less expensive SSD devices. The default for autodetected SSD devices is mount -o ssd.
+
+== Will Btrfs be in the mainline Linux Kernel? ==
+
+Btrfs is already in the mainline Linux kernel. It was [http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=73d59314e6ed268d6f322ae1bdd723b23fa5a4ed merged] on 9th January 2009, and was available in the Linux 2.6.29 release.
+
+== Does Btrfs run with older kernels? ==
+
+v0.16 of (out-of-tree) Btrfs maintains compatibility with kernels back to 2.6.18. Kernels older than that will not work.
+
+btrfs made it into mainline in 2.6.29, and development and bugfixes since then have gone directly into the main kernel. Backporting btrfs from a newer kernel to an earlier one may be a difficult process due to changes in the VFS or block layer APIs; there are no known projects or people doing this on a regular basis.
+
+We strongly recommend that you keep up-to-date with the latest released kernels from kernel.org -- we try to maintain a list of sources that make that task easier for [[Getting_started#Distro_support|most major distributions]].
+
+== How long will the Btrfs disk format keep changing? ==
+
+The Btrfs disk format is not finalized, but it won't change unless a critical bug is found and no workarounds are possible. Not all the features have been implemented, but the current format is extensible enough to add those features later without requiring users to reformat.
+
+== How do I upgrade to the 2.6.31 format? ==
+
+The 2.6.31 kernel can read and write Btrfs filesystems created by older kernels, but it writes a slightly different format for the extent allocation trees. Once you have mounted with 2.6.31, the stock Btrfs in 2.6.30 and older kernels will not be able to mount your filesystem.
+
+We don't want to force people into 2.6.31 only, and so the newformat code is available against 2.6.30 as well. All fixes will also be maintained against 2.6.30. For details on downloading, see the [[Btrfs source repositories]].
+
+== Can I find out compression ratio of a file? ==
+
+Currently no. There's a patch https://patchwork.kernel.org/patch/117782/ adding the kernel part (ioctl). However, the size obtained by this ioctl is not exact and is rounded up to block size (4KB). The real amount of compressed bytes is not reported and recorded by the filesystem (only the block count) in it's structures. It is saved in the disk blocks but solely processed by the compression code.
+
+== Can I change metadata block size without recreating the filesytem? ==
+
+No, the value passed to ''mkfs.btrfs -n SIZE'' cannot be changed once the filesystem is created. A backup/restore is needed.<br>
+Note, that this will likely never be implemented because it would require major updates to the core functionality.
+
+= Subvolumes =
+
+== What is a subvolume? ==
+
+A subvolume is like a directory - it has a name, there's nothing on it when it is created, and it can hold files and other directories. There's at least one subvolume in every Btrfs filesystem, the <em>top-level</em> subvolume.
+
+The equivalent in Ext4 would be a filesystem. Each subvolume behaves as a individual filesystem. The difference is that in Ext4 you create each filesystem in a partition, in Btrfs however all the storage is in the 'pool', and subvolumes are created from the pool, you don't need to partition anything. You can create as many subvolumes as you want, as long as you have storage capacity.
+
+== How do I find out which subvolume is mounted? ==
+
+A specific subvolume can be mounted by ''-o subvol=/path/to/subvol'' option, but currently it's not implemented to read that path directly from ''/proc/mounts''. If the filesystem is mounted via a ''/etc/fstab'' entry, then output of ''mount'' command will show the subvol path, as it reads it from ''/etc/mtab''.
+
+Generally working way to read the path, like for bind mounts, is from ''/proc/self/mountinfo''
+
+ 27 21 0:19 /subv1 /mnt/ker rw,relatime - btrfs /dev/loop0 rw,space_cache
+            ^^^^^^
+
+== What is a snapshot? ==
+
+A snapshot is a frozen image of all the files and directories of a '''subvolume'''. For example, if you have two files ("a" and "b") in a subvolume, you take a snapshot and you delete "b", the file you just deleted is still available in the snapshot you took. The great thing about Btrfs snapshots is you can operate on any files or directories vs lvm when it is the whole logical volume.
+
+''Note that '''a snapshot is not a backup''':'' Snapshots work by use of btrfs's copy-on-write behaviour. A snapshot and the original it was taken from initially share all of the same data blocks. If that data is damaged in some way (cosmic rays, bad disk sector, accident with dd to the disk), then the snapshot and the original will both be damaged. Snapshots are useful to have local online "copies" of the filesystem that can be referred back to, or to implement a form of deduplication, or to fix the state of a filesystem for making a full backup without anything changing underneath it. They do not in themselves make your data any safer.
+
+=== snapshot example ===
+
+Since backup from tape are a pain here is the thoughts of a lazy sysadm that create a home directory as a Btrfs file system for their users, lets try some fancy net attached storage ideas.
+
+* /home
+** Then there could be a snaphot every 6 hours via cron
+*** /home_today_00,/home_today_06,/home_today_12,/home_today_18,
+
+The logic would look something like this for rolling 3 day rotation that would use cron @ midnight
+
+* rename /home_today_00, /home_backday_1
+* create a symbolic link for /home_backDay_00 that points to real dir of /home_backday_1
+* rename /home_today_06, /home_backDay_06 , Need to do this for all hours (06..18)
+* /home_backday_1,/home_backday_2,/home_backday_3
+** delete the /home_backday_3
+** rename /home_backday_2 to /home_backday_3 day
+** rename /home_backday_1 to /home_backday_2 day
+
+'''Automated rolling snapshots''' are easily done with a script like [http://marc.merlins.org/perso/btrfs/post_2014-03-21_Btrfs-Tips_-How-To-Setup-Netapp-Style-Snapshots.html Marc MERLIN's btrfs-snaps script]
+
+== Can I mount subvolumes with different mount options? ==
+
+The generic mount options can be different for each subvolume, see the list below. Btrfs-specific mount options cannot be specified per-subvolume, but this will be possible in the future (a work in progress).
+
+Generic mount options:
+* ''nodev'', ''nosuid'', ''ro'', ''rw'', and probably more. See section ''FILESYSTEM INDEPENDENT MOUNT OPTIONS'' of man page mount(8).
+
+Yes for btrfs-specific options:
+* ''subvol'' or ''subvolid''
+
+Planned:
+* ''compress''/''compress-force'', ''autodefrag'', ''inode_cache'', ...
+
+No:
+* the options affecting the whole filesystem like ''space_cache'', ''discard'', ''ssd'', ...
+
+= Interaction with partitions, device managers and logical volumes =
+
+== Btrfs has subvolumes, does this mean I don't need a logical volume manager and I can create a big Btrfs filesystem on a raw partition? ==
+
+There is not a single answer to this question.  Here are the issues to think about when you choose raw partitions or LVM:
+
+* Performance
+** raw partitions are slightly faster than logical volumes
+** btrfs does write optimisation (sequential writes) across a filesystem
+*** subvolume write performance will benefit from this algorithm
+*** creating multiple btrfs filesystems, each on a different LV, means that the algorithm can be ineffective (although the kernel will still perform some optimization at the block device level)
+* Online resizing and relocating the filesystem across devices:
+** the pvmove command from LVM allows filesystems to move between devices while online
+** raw partitions can only be moved to a different starting cylinder while offline
+** raw partitions can only be made bigger if there is free space after the partition, while LVM can expand an LV onto free space anywhere in the volume group - and it can do the resize online
+* subvolume/logical volume size constraints
+** LVM is convenient for creating fixed size logical volumes (e.g. 10MB for each user, 20GB for each virtual machine image, etc)
+** subvolumes don't currently enforce such rigid size constraints, although the upcoming qgroups feature will address this issue
+
+Based on the above, all of the following are valid strategies, depending upon whether your priority is performance or flexibility:
+
+* create a raw partition on each device, and create btrfs on top of the partition (or combine several such partitions into btrfs raid1)
+** create subvolumes within btrfs (e.g. for /home/user1, /home/user2, /home/media, /home/software)
+** in this case, any one subvolume could grow to use up all the space, leaving none for other subvolumes
+* create a single volume group, with two logical volumes (LVs), each backed by separate devices
+** create a btrfs raid1 across the two LVs
+** create subvolumes within btrfs (e.g. for /home/user1, /home/user2, /home/media, /home/software)
+** in this case, any one subvolume could grow to use up all the space, leaving none for other subvolumes
+** however, it performs well and is convenient
+* create a single volume group, create several pairs of logical volumes
+** create several btrfs raid1 filesystems, each spanning a pair of LVs
+** mount each filesystem on a distinct mount point (e.g. for /home/user1, /home/user2, /home/media, /home/software)
+** in this case, each mount point has a fixed size, so one user can't use up all the space
+
+== Does the Btrfs multi-device support make it a "rampant layering violation"? ==
+
+Yes and no. Device management is a complex subject, and there are many different opinions about the best way to do it. Internally, the Btrfs code separates out components that deal with device management and maintains its own layers for them. The vast majority of filesystem metadata has no idea there are multiple devices involved.
+
+Many advanced features such as checking alternate mirrors for good copies of a corrupted block are meant to be used with RAID implementations below the FS.
+
+== What are the differences among MD-RAID / device mapper / btrfs raid? ==
+
+Note: ''device'' here means a ''block device'' -- often a partition, but it might also be something like a full disk, or a DRBD network device. It is possible with all of the descriptions below, to construct a RAID-1 array from two or more devices, and have those devices live on the same physical drive. This configuration does '''not''' offer any form of redundancy for your data.
+
+====MD-RAID====
+MD-RAID supports RAID-0, RAID-1, RAID-10, RAID-5, and RAID-6.
+
+MD-RAID operates directly on the devices. RAID-1 is defined as "data duplicated to all devices", so a raid with three 1 TB devices will have 1TB of usable space but there will be 3 copies of the data.
+
+Likewise, RAID-0 is defined as "data striped across all devices", so a raid with three 1 TB devices will have 3 TB usable space, but to read/write a stripe all 3 devices must be written to or read from, as part of the stripe will be on each disk. This offers additional speed on slow devices, but no additional redundancy benefits at all.
+
+RAID-10 requires at least 4 devices, and is constructed as a stripe across 2 mirrors. So a raid with four 1 TB devices yields 2 TB usable and 2 copies of the data. A raid with 6 × 1 TB devices yields 3 TB usable data with 2 copies of all the data (3 mirrors of 1 TB each, striped)
+
+====device mapper====
+
+====btrfs====
+btrfs supports RAID-0, RAID-1, and RAID-10. As of Linux 3.9, btrfs also supports RAID-5 and RAID-6 although that code is still experimental.
+
+btrfs combines all the devices into a storage pool first, and then duplicates the chunks as file data is created. RAID-1 is defined currently as "2 copies of all the data on different devices". This differs from MD-RAID and dmraid, in that those make exactly n copies for n devices. In a btrfs RAID-1 on three 1 TB devices we get 1.5 TB of usable data. Because each block is only copied to 2 devices, writing a given block only requires exactly 2 devices to be written to; reading can be made from only one.
+
+RAID-0 is similarly defined, with the stripe split across as many devices as possible. 3 × 1 TB devices yield 3 TB usable space, but offers no redundancy at all.
+
+RAID-10 is built on top of these definitions. Every stripe is split across to exactly 2 RAID-1 sets and those RAID-1 sets are written to exactly 2 devices (hence 4 devices minimum). A btrfs RAID-10 volume with 6 × 1 TB devices will yield 3 TB usable space with 2 copies of all data.
+
+An archive of the btrfs mailing list describes how [http://lwn.net/Articles/536038/ RAID-5/6 is implemented in btrfs].
+
+== Case study: btrfs-raid 5/6 versus MD-RAID 5/6 ==
+''(content comes from [http://comments.gmane.org/gmane.comp.file-systems.btrfs/29291])''
+
+The advantage in btrfs-raid 5/6 is that unlike MD-RAID, btrfs knows what blocks are actually used by data/metadata, and can use that information in a rebuild/recovery situation to only sync/rebuild the actually used blocks on a re-added or replacement device, skipping blocks that were entirely unused/empty in the first place.
+
+MD-RAID can't do that, because it tries to be a filesystem agnostic layer that doesn't know nor care what blocks on the layers above it were
+actually used or empty.  For it to try to track that would be a layering violation and would seriously complicate the code and/or limit usage to only those filesystems or other layers above that it supported/understood/could-properly-track.
+
+A comparable relationship exists between a ramdisk (comparable to MD-RAID) and tmpfs (comparable to btrfs) -- the first is transparent and
+allows the flexibility of putting whatever filesystem or other upper layer on top, while the latter is the filesystem layer itself,
+allowing nothing else above it.  But the ramdisk/tmpfs case deals with memory emulating block device storage, while the MD-RAID/btrfs case deals with multiple block devices emulating a single device.  In both cases each has its purpose, with the strengths of one being the limitations of the other, and you choose the one that best matches your use case.
+
+To learn more about using Raid 5 and Raid 6 with btrfs, see the [[RAID56]] page.
+
+= About the project =
+
+== What is CRFS? Is it related to Btrfs? ==
+
+[[http://en.wikipedia.org/wiki/CRFS CRFS]] is a network file system protocol. It was designed at around the same time as Btrfs. Its wire format uses some Btrfs disk formats and crfsd, a CRFS server implementation, uses Btrfs to store data on disk. More information can be found at http://oss.oracle.com/projects/crfs/ and http://en.wikipedia.org/wiki/CRFS.
+
+== Will Btrfs become a clustered file system ==
+
+No. Btrfs's main goal right now is to be the best non-cluster file system.
+
+If you want a cluster file system, there are many production choices that can be found in the [http://en.wikipedia.org/wiki/Category:Distributed_file_systems Distributed file systems] section on Wikipedia. Keep in mind that each file system has their own benefits or limitations, so find the best fit for your environment.
+
+The closest cluster file system that uses Btrfs as its underlying file system is [http://en.wikipedia.org/wiki/Ceph Ceph]
+
+[[Category:UserDoc]]

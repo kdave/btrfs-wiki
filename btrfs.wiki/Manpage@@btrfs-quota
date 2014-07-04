@@ -1,0 +1,48 @@
+
+=btrfs-quota(8) Manual Page=
+{{GeneratedManpage}}
+
+
+==NAME==
+
+btrfs-quota - control the quota of a btrfs filesystem
+
+==SYNOPSIS==
+
+'''btrfs quota''' &lt;subcommand&gt; &lt;args&gt;
+
+==DESCRIPTION==
+
+'''btrfs quota''' is used to enable/disable or rescan subvolume quota of a btrfs filesystem.
+
+For setting quota or other quota operations on a btrfs filesystem, please see [[Manpage/btrfs-qgroup|btrfs-qgroup(8)]] for details.
+
+'''Warning:''' Quota and qgroup in btrfs filesystem is not stable and impacts performance in mainline kernel yet(v3.14 so far).
+
+==SUBCOMMAND==
+
+; '''enable''' &lt;path&gt;
+: Enable subvolume quota support for a filesystem.
+; '''disable''' &lt;path&gt;
+: Disable subvolume quota support for a filesystem.
+; '''rescan''' [-s] &lt;path&gt;
+: Trash all qgroup numbers and scan the metadata again with the current config. <br /><code>Options</code><br />
+:; -s
+:: show status of a running rescan operation.
+:; -w
+:: wait for rescan operation to finish(can be already in progress).
+
+==EXIT STATUS==
+
+'''btrfs quota''' returns a zero exist status if it succeeds. Non zero is returned in case of failure.
+
+==AVAILABILITY==
+
+'''btrfs''' is part of btrfs-progs. Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for further details.
+
+==SEE ALSO==
+
+[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-subvolume|btrfs-subvolume(8)]], [[Manpage/btrfs-qgroup|btrfs-qgroup(8)]]
+
+
+[[Category:Manpage]]

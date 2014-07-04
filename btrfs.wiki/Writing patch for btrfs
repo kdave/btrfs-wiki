@@ -1,0 +1,394 @@
+== Before you start ==
+
+Before writing a patch you may need to search (the mailing list http://dir.gmane.org/gmane.comp.file-systems.btrfs) if there is already a patch for you intended to write so that it avoids the redundancy and saves your time and effort.
+
+Or come to the IRC channel and ask.
+
+= Getting sources, patching, sending =
+
+== Setup work environment ==
+
+The tool git is used as part of source code maintenance so here below are its commands required to create the patch.
+
+Ensure your workspace is latest, to create a new workspace
+ git clone git://git.kernel.org/pub/scm/linux/kernel/git/mason/linux-btrfs.git for-linus
+
+
+Or you may update your workspace
+
+ git pull git://git.kernel.org/pub/scm/linux/kernel/git/mason/linux-btrfs.git for-linus
+
+Note: Its better to have two workspace one for git purpose only and the other to compile and test so that git doesn't include the compilation files.
+checkout the workspace and code your changes.
+
+ cd for-linus
+ git checkout
+ <edit files>
+
+== Making changes ==
+
+When done with your changes, know your changes before you proceed further.
+(For the example below, lets say I have edited the file super.c.)
+
+<pre>
+git status
+# On branch master
+# Changes not staged for commit:
+#   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+#
+#    modified:   fs/btrfs/super.c
+#
+no changes added to commit (use "git add" and/or "git commit -a")
+</pre>
+
+<pre>
+git diff
+diff --git a/fs/btrfs/super.c b/fs/btrfs/super.c
+index 15634d4..eff5123 100644
+--- a/fs/btrfs/super.c
++++ b/fs/btrfs/super.c
+@@ -1266,7 +1266,7 @@ static int __init init_btrfs_fs(void)
+        if (err)
+                goto unregister_ioctl;
+ 
+-       printk(KERN_INFO "%s loaded\n", BTRFS_BUILD_VERSION);
++       printk(KERN_INFO "Hello World %s loaded\n", BTRFS_BUILD_VERSION);
+        return 0;
+ 
+ unregister_ioctl:
+</pre>
+
+If you are fine with your changes add the modified file so that you can commit.
+<pre>
+git add fs/btrfs/super.c
+git status
+# On branch master
+# Changes to be committed:
+#   (use "git reset HEAD <file>..." to unstage)
+#
+#    modified:   fs/btrfs/super.c
+</pre>
+
+<pre>
+git diff --cached
+diff --git a/fs/btrfs/super.c b/fs/btrfs/super.c
+index 15634d4..eff5123 100644
+--- a/fs/btrfs/super.c
++++ b/fs/btrfs/super.c
+@@ -1266,7 +1266,7 @@ static int __init init_btrfs_fs(void)
+        if (err)
+                goto unregister_ioctl;
+ 
+-       printk(KERN_INFO "%s loaded\n", BTRFS_BUILD_VERSION);
++       printk(KERN_INFO "Hello World %s loaded\n", BTRFS_BUILD_VERSION);
+        return 0;
+ 
+ unregister_ioctl:
+</pre>
+
+git status will show you list of modified files, however it may also show list of file which are not part of git. Well you need to figure out if you want them to be part the git management. Here let me say you have only modified files and no new files which you want to bring into the git repository.
+
+Once you have compiled and tested your changes and if you are satisfied with the changes and confirmed to have added sufficient comments, the next step will be to send out the patch to the btrfs developer community alias. And the following commands will help to achieve the same.
+
+<pre>
+git commit
+</pre>
+
+which will add the above diff, and in the same process add the commit comments as appropriate, note that first line in the commit file will used to as a subject.
+
+<pre>
+git log
+commit f8892b43e4e310f21516911bbd2c6ff71f4fdeae
+Author: John <John@thekerneldeveloper.com>
+Date:   Mon Nov 14 10:54:20 2011 +0800
+
+    Hello World
+        This is only an example.
+</pre>
+
+<pre>
+git status
+# On branch master
+# Your branch is ahead of 'origin/master' by 1 commit.
+nothing to commit (working directory clean)
+</pre>
+
+Before sending out the patch email lets says there is another patch which you want to generate and that depends on your previous patch. So to add the new changes begin with checkout and follow the same steps as above.
+<pre>
+git checkout
+</pre>
+
+Perform your changes.
+<pre>
+git diff
+diff --git a/fs/btrfs/super.c b/fs/btrfs/super.c
+index eff5123..0e2478f 100644
+--- a/fs/btrfs/super.c
++++ b/fs/btrfs/super.c
+@@ -1266,7 +1266,7 @@ static int __init init_btrfs_fs(void)
+        if (err)
+                goto unregister_ioctl;
+ 
+-       printk(KERN_INFO "Hello World %s loaded\n", BTRFS_BUILD_VERSION);
++       printk(KERN_INFO "Hello World again %s loaded\n", BTRFS_BUILD_VERSION);
+        return 0;
+ 
+ unregister_ioctl:
+</pre>
+
+<pre>
+git add super.c
+git status
+# On branch master
+# Your branch is ahead of 'origin/master' by 1 commit.
+#
+# Changes to be committed:
+#   (use "git reset HEAD <file>..." to unstage)
+#
+#    modified:   super.c
+#
+</pre>
+
+<pre>
+# git diff --cached
+diff --git a/fs/btrfs/super.c b/fs/btrfs/super.c
+index eff5123..0e2478f 100644
+--- a/fs/btrfs/super.c
++++ b/fs/btrfs/super.c
+@@ -1266,7 +1266,7 @@ static int __init init_btrfs_fs(void)
+        if (err)
+                goto unregister_ioctl;
+ 
+-       printk(KERN_INFO "Hello World %s loaded\n", BTRFS_BUILD_VERSION);
++       printk(KERN_INFO "Hello World again %s loaded\n", BTRFS_BUILD_VERSION);
+        return 0;
+ 
+ unregister_ioctl:
+
+git commit
+
+git log
+commit 5e689e66d49fcd1cad4255f4773b91f3237ada94
+Author: John <John@thekerneldeveloper.com>
+Date:   Mon Nov 14 11:05:13 2011 +0800
+
+    Hello again
+        This is an example again
+
+commit f8892b43e4e310f21516911bbd2c6ff71f4fdeae
+Author: John <John@thekerneldeveloper.com>
+Date:   Mon Nov 14 10:54:20 2011 +0800
+
+    Hello World
+        This is only an example.
+</pre>
+
+Now you have made all the changes and tested to be working fine. Confirm that you are sending only the changes that you know by reviewing the diff above.
+
+== Prepare to send ==
+
+And now the best part (of git) which is to create the email containing these patches.
+
+Use the following command to generate the patch along with Signed-off-by string:
+<pre>
+git format-patch origin -s --cover-letter -o ../patch
+</pre>
+
+This will place the patch outside the workspace.
+
+Now send out the email containing the patches with a cover letter. This command will ask you to update the cover letter subject which is mandatory, and asks if you want to replay to any email (messages-id). And you are done.
+<pre>
+git send-email --to linux-btrfs@vger.kernel.org --no-chain-reply-to --thread --annotate ../patch/*
+</pre>
+
+Note:
+You may hit the following error message if you are using an old
+
+<pre>
+git: 'send-email' is not a git command. See 'git --help'.
+</pre>
+if you are using an old version of git, the latest 1.7.7 should work.
+
+<pre>
+# git --version
+git version 1.7.7
+</pre>
+
+This command will ask you to update the cover letter subject which is mandatory, and ask you if you want to replay to any email (messages-id).
+And now your done, email has been sent out check your emails.
+
+Email will appear in the following format.
+
+<pre>
+  [PATCH 0/2] Hello world patches
+    |_[PATCH 1/2] Hello World
+    |_[PATCH 2/2] Hello again
+
+
+From: 
+This is a collection of patches to fix so and so bugs.
+
+root (2):
+  Hello World
+  Hello again
+
+ fs/btrfs/super.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+-- 1.7.4.4
+
+From: 
+
+This is only an example.
+
+Signed-off-by: 
+---
+ fs/btrfs/super.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/fs/btrfs/super.c b/fs/btrfs/super.c
+index 15634d4..eff5123 100644
+--- a/fs/btrfs/super.c
++++ b/fs/btrfs/super.c
+@@ -1266,7 +1266,7 @@ static int __init init_btrfs_fs(void)
+     if (err)
+         goto unregister_ioctl;
+ 
+-    printk(KERN_INFO "%s loaded\n", BTRFS_BUILD_VERSION);
++    printk(KERN_INFO "Hello World %s loaded\n", BTRFS_BUILD_VERSION);
+     return 0;
+ 
+ unregister_ioctl:
+-- 1.7.4.4
+
+From: 
+
+This is an example again
+
+Signed-off-by: 
+---
+ fs/btrfs/super.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/fs/btrfs/super.c b/fs/btrfs/super.c
+index eff5123..0e2478f 100644
+--- a/fs/btrfs/super.c
++++ b/fs/btrfs/super.c
+@@ -1266,7 +1266,7 @@ static int __init init_btrfs_fs(void)
+     if (err)
+         goto unregister_ioctl;
+ 
+-    printk(KERN_INFO "Hello World %s loaded\n", BTRFS_BUILD_VERSION);
++    printk(KERN_INFO "Hello World again %s loaded\n", BTRFS_BUILD_VERSION);
+     return 0;
+ 
+ unregister_ioctl:
+-- 1.7.4.4
+</pre>
+
+== Updating patches ==
+
+After sending your patch to the mailing list, you will get review and feedback from the community, which might solicit code changes, commit message changes or adding one or more "Reviewed-by:" tags to your message.
+
+To do this, update your patch in your checkout with as many commits as needed. After you are done, rebase (and/or reorder) all the commits against origin and squash them - this is easy to accomplish with:
+
+<pre>
+# git rebase -i origin/master
+</pre>
+
+In the interface that git will present you, choose the 'squash' and/or 'fixup' operations to turn all those local commits into a single one. You can use this interface too to ammend your commit message, if for example you need to add a "Reviewed-by: John Doe <john.doe@foobar.com" tag.
+
+Note: the "Reviewed-by" tags should appear right after the "Signed-off-by" tag(s).
+
+After the rebasing, squashing and commit message update, produce a new version of your patch with the git format-patch command as described previously. After this, edit the patch file to add a V2 tag to subject line and a describe what changed from the first version of the patch to the second version. This description must come after the first line consisting exclusively of 3 consecutive dashes (right after the Signed-off-by and Reviewed-by lines. Example:
+
+<pre>
+From 5cd691c32e4d23537eb3a42728599f889594d71b Mon Sep 17 00:00:00 2001
+From: John Doe <john@doe.net>
+Date: Wed, 10 Jul 2013 16:25:32 +0100
+Subject: [PATCH v2] Btrfs-progs: fix missing var initialization
+
+The variables ram_size and disk_size were not being initialized
+as they should.
+
+Signed-off-by: John Doe <john@doe.net>
+---
+
+V2: Added initialization for disk_size too.
+
+ cmds-restore.c |   4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/cmds-restore.c b/cmds-restore.c
+index e48df40..9688599 100644
+--- a/cmds-restore.c
++++ b/cmds-restore.c
+@@ -272,6 +272,7 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
+ 	u64 bytenr;
+- 	u64 ram_size;
+- 	u64 disk_size;
++ 	u64 ram_size = 0;
++ 	u64 disk_size = 0;
+ 	u64 length;
+ 	u64 size_left;
+ 	u64 dev_bytenr;
+-- 
+1.7.9.5
+</pre>
+
+After this use git send-email as before to send the new patch file. In this final step don't forget to provide the Message-Id when git asks for it. This is an email header that the first patch email generated and can be consulted in your email client. Example:
+
+<pre>
+# git send-email --to linux-btrfs@vger.kernel.org --no-chain-reply-to --thread --annotate 0001-Btrfs-progs-fix-missing-var initialization.patch
+0001-Btrfs-progs-fix-missing-var initialization.patch
+Who should the emails appear to be from? [John Doe <john@doe.net>] 
+Emails will be sent from: John Doe <john@doe.net>
+Message-ID to be used as In-Reply-To for the first email? <1373473052-22240-1-git-send-email-john@doe.net>
+(mbox) Adding cc: John Doe <john@doe.net> from line 'From: John Doe <john@doe.net>'
+(body) Adding cc: John Doe <john@doe.net> from line 'Signed-off-by: John Doe <john@doe.net>'
+
+From: John Doe <john@doe.net>
+To: linux-btrfs@vger.kernel.org
+Cc: John Doe <john@doe.net>
+Subject: [PATCH v2] Btrfs-progs: fix missing var initialization
+Date: Wed, 10 Jul 2013 17:56:53 +0100
+Message-Id: <1373475413-23563-1-git-send-email-john@doe.net>
+X-Mailer: git-send-email 1.7.9.5
+In-Reply-To: <1373473052-22240-1-git-send-email-john@doe.net>
+References: <1373473052-22240-1-git-send-email-john@doe.net>
+
+    The Cc list above has been expanded by additional
+    addresses found in the patch commit message. By default
+    send-email prompts before sending whenever this occurs.
+    This behavior is controlled by the sendemail.confirm
+    configuration setting.
+
+    For additional information, run 'git send-email --help'.
+    To retain the current behavior, but squelch this message,
+    run 'git config --global sendemail.confirm auto'.
+
+Send this email? ([y]es|[n]o|[q]uit|[a]ll): y
+Password: 
+OK. Log says:
+Server: smtp.doe.net
+MAIL FROM:<john@doe.net>
+RCPT TO:<linux-btrfs@vger.kernel.org>
+RCPT TO:<john@doe.net>
+From: John Doe <john@doe.net>
+To: linux-btrfs@vger.kernel.org
+Cc: John Doe <john@doe.net>
+Subject: [PATCH v2] Btrfs-progs: fix missing var initialization
+Date: Wed, 10 Jul 2013 17:56:53 +0100
+Message-Id: <1373475413-23563-1-git-send-email-john@doe.net>
+X-Mailer: git-send-email 1.7.9.5
+In-Reply-To: <1373473052-22240-1-git-send-email-john@doe.net>
+References: <1373473052-22240-1-git-send-email-john@doe.net>
+
+Result: 250 2.0.0 OK 1373475423 w4sm37297689wia.9 - gsmtp
+</pre>
+
+= References =
+* Version Control with Git by Jon Loeliger
+* Pro Git by Scott Chacon http://progit.org/book/
+* Git project main page http://git-scm.com/

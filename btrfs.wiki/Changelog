@@ -1,0 +1,418 @@
+= By feature =
+
+Major features or significant feature enhancements by kernel version. For more information look below.
+
+{| class="wikitable" border=1
+|-
+! Feature !! Version !! Description
+{{FeatureMerged
+|name=scrub
+|version=3.0
+|text=
+}}
+{{FeatureMerged
+|name=auto raid repair
+|version=3.2
+|text=Automatic repair of broken data from a good copy
+}}
+{{FeatureMerged
+|name=root backups
+|version=3.2
+|text=
+}}
+{{FeatureMerged
+|name=integrity checker
+|version=3.3
+|text=
+}}
+{{FeatureMerged
+|name=backref walking
+|version=3.3
+|text=
+}}
+{{FeatureMerged
+|name=restriper
+|version=3.3
+|text=RAID profiles can be changed on-line, balance filters
+}}
+{{FeatureMerged
+|name=big metadata blocks
+|version=3.4
+|text=Support for metadata blocks larger than page size
+}}
+{{FeatureMerged
+|name=error handling
+|version=3.4
+|text=
+}}
+{{FeatureMerged
+|name=device statistics
+|version=3.5
+|text=Persistent statistics about device errors
+}}
+{{FeatureMerged
+|name=fsync speedup
+|version=3.5
+|text=
+}}
+{{FeatureMerged
+|name=qgroups
+|version=3.6
+|text=Subvolume-aware quotas
+}}
+{{FeatureMerged
+|name=send/receive
+|version=3.6
+|text=
+}}
+{{FeatureMerged
+|name=extrefs
+|version=3.7
+|text=Hardlink count limit is 64k
+}}
+{{FeatureMerged
+|name=hole puching
+|version=3.7
+|text=
+}}
+{{FeatureMerged
+|name=device replace
+|version=3.8
+|text=Efficient replacement of existing device (add/remove in one go)
+}}
+{{FeatureMerged
+|name=raid 5/6 ''(incomplete)''
+|version=3.9
+|text=Basic support for RAD5/6 profiles, no crash resiliency and scrub support
+}}
+{{FeatureMerged
+|name=snapshot-aware defrag
+|version=3.9
+|text=Defrag does not break links between shared extents (snapshots, reflinked files)
+}}
+{{FeatureMerged
+|name=lightweight send
+|version=3.9
+|text=A mode of ''send'' that does not add the actual file data to the stream
+}}
+{{FeatureMerged
+|name=on-line label set/get
+|version=3.9
+|text=Label editable on mounted filesystems
+}}
+{{FeatureMerged
+|name=skinny extents
+|version=3.10
+|text=Reduced metadata size (format change)
+}}
+{{FeatureMerged
+|name=qgroup rescan
+|version=3.10
+|text=Sync qgroups with existing filesystem data
+}}
+{{FeatureMerged
+|name=uuid tree
+|version=3.12
+|text=A map of subvolume/UUID that vastly speeds up send/receive
+}}
+{{FeatureMerged
+|name=out-of-bound dedup
+|version=3.12
+|text=
+}}
+{{FeatureMerged
+|name=no-hole 
+|version=3.14
+|text=no extent representation for file holes (format change)
+}}
+{{FeatureMerged
+|name=feature bits in sysfs
+|version=3.14
+|text=/sys/fs/btrfs exports various bits about filesystem capabilities and feature support
+}}
+|}
+
+= By version (btrfs-progs) =
+
+== btrfs-progs 3.14 (Apr 2014) ==
+* [https://www.kernel.org/pub/linux/kernel/people/mason/btrfs-progs/ tarballs]
+* fsck: fixes and enhancements to --init-extent-tree mode
+* fsck: chunk-recover updates
+* scrub: add force option -f
+* send: check if subvolumes are read-only
+* subvol delete: add options to affect commit behaviour
+* btrfs: add ''property'' command group
+* restore: add dry-run option
+* restore: fix restoring of compressed files
+* mkfs: support for no-holes feature
+* mkfs: option -r deals with hardlinks and relative paths
+* mkfs: discard phase is interruptible
+* documentation updates
+
+'''btrfs-progs 3.14.1 (Apr 2014)'''
+* properties: fix handling of option -t
+* restore: fix reading of compressed extents
+* minor code and doc updates
+
+'''btrfs-progs 3.14.2 (May 2014)'''
+* documentation is now written in asciidoc and there are manpages for each subcommand
+* misc bugfixes
+
+== btrfs-progs 3.12 (Nov 2013) ==
+* [http://thread.gmane.org/gmane.comp.file-systems.btrfs/30403/focus=30423 announcement], [https://www.kernel.org/pub/linux/kernel/people/mason/btrfs-progs/ tarballs]
+* first release after 0.19 (2009/06) with a lot of changes
+
+= By version (linux kernel) =
+
+== v3.15 (Jun 2014) ==
+* pile of ''send'' fixes (stability, speed)
+* worker threads now use kernel workqueues
+
+== v3.14 (Mar 2014) ==
+* optional incompat disk format improvement aiming at speedup, removing file hole representation, named ''no-holes''
+* ioctl to query/change feature bits (e.g. switching on extended refs on-line now possible)
+* export filesystem info through sysfs: features, allocation profiles
+* added pairing mount options (for remount)
+* heap of small performance optimizations
+
+== v3.13 (Jan 2014) ==
+* snapshot-aware defrag was disabled due to problems
+* ''fiemap'' exports information about shared extents
+* bugfix and stability foucsed release
+
+== v3.12 (Nov 2013) ==
+* Major performance improvement for send/receive with large numbers of subvolumes
+* Support for batch [[deduplication]] (userspace tools required)
+* new mount option ''commit'' to set the commit interval
+* Lots of stability and bugfix patches
+
+== v3.11 (Sep 2013) ==
+* extent cloning within one file
+* ioctl to wait for quota rescan completion
+* device deletion returns error code to userspace (not in syslog anymore)
+* usual load of small fixes and improvements
+
+== v3.10 (Jun 2013) ==
+* reduced size of metadata by so-called ''skinny extents'' [http://git.kernel.org/linus/3173a18f70554fe7880bb2d85c7da566e364eb3c]
+* enhanced syslog message format [http://permalink.gmane.org/gmane.comp.file-systems.btrfs/24330]
+* the mount option ''subvolrootid'' is deprecated
+* lots of stability improvements, removed <big>many</big> <small>BUG_ONs</small> <!-- a big thing! -->
+* qgroups are automatically created when quotas are enabled [http://git.kernel.org/linus/7708f029dca5f1b9e9d6ea01ab10cd83e4c74ff2]
+* qgroups are able to ''rescan'' current filesystem and sync the quota state with the existing subvolumes
+* enhanced ''send/recv '' format for multiplexing more data into one stream [http://git.kernel.org/linus/c2c71324ecb471c932bc1ff59e46ffcf82f274fc]
+* various unsorted code cleanups, minor performance updates
+
+== v3.9 (Apr 2013) ==
+* preliminary Raid 5/6 support (details in the [http://www.spinics.net/lists/linux-btrfs/msg22169.html announcement])
+* snapshot-aware defrag
+* a mode of ''send'' to avoid transferring file data
+* direct IO speedup ([https://patchwork.kernel.org/patch/2114921/ numbers])
+* new ''ioctl''s to set/get filesystem label
+* defrag is cancellable
+
+== v3.8 (Feb 2013) ==
+* ability to replace devices at runtime in an effective way ([http://lwn.net/Articles/524589/ description])
+* speed improvements (cumulative effect of many small improvements)
+* a few more bugfixes
+
+== v3.7 (Dec 2012) ==
+* ''fsync'' speedups
+* removed limitation of number of hardlinks in a single directory
+* file hole punching ([http://lwn.net/Articles/415889/ LWN article])
+* per-file ''NOCOW''
+* fixes to send/receive
+
+== v3.6 (Sep 2012) ==
+* subvolume-aware quotas (''qgroups'')
+* support for send/receive between snapshot changes ([http://lwn.net/Articles/506244/ LWN article])
+* ''atime'' is not updated on read-only snapshots ([http://lwn.net/Articles/499293/ LWN article])
+* allowed cross-subvolume file clone (aka. reflink)
+* remount with ''no'' compression possible
+* new ioctl to read device readiness status
+* speed improvement for concurrent multithreaded reads
+
+== v3.5 (Jun 2012) ==
+* collect device statistics (read/write failures, checksum errors, corrupted blocks)
+* integrity checker (3.3+) supports bigblocks (3.4+)
+* more friendly NFS support (native ''i_version'')
+* ''thread_pool'' mount option tunable via remount
+* ''fsync'' speed improvements
+* several fixes related to read-only mounts
+* scrub thread priority lowered to idle
+* preparatory works for 3.6 features (''tree_mod_log'')
+
+== v3.4 (May 2012) ==
+* Allow metadata blocks larger than the page size (4K). This allows metadata blocks up to 64KB in size. In practice 16K and 32K seem to work best. For workloads with lots of metadata, this cuts down the size of the extent allocation tree dramatically and fragments much less. (Chris Mason)
+* Improved error handling (IO errors). This gives Btrfs the ability to abort transactions and go read-only on errors other than internal logic errors and ENOMEM more gracefully instead of crashing. (Jeff Mahoney)
+* Reworked the way in which metadata interacts with the page cache. page->private now points to the btrfs extent_buffer object, which makes everything faster. The code was changed so it now writes a whole extent buffer at a time instead of allowing individual pages to go down. It is now more aggressive about dropping pages for metadata blocks that were freed due to COW. Overall, metadata caching is much faster now. (Josef Bacik)
+
+== v3.3 (Mar 2012) ==
+* restriper - infrastructure to change btrfs raid profiles on the fly via balance
+* optional integrity checker infrastructure ([http://lwn.net/Articles/466493/ details])
+* fixed a few corner cases where TRIM did not process some blocks
+* cluster allocator improvements (less fragmentation, some speedups)
+
+== v3.2 (Jan 2012) ==
+* Log of past roots to aid recovery (option ''recovery'')
+* Subvolumes mountable by full path
+* Added ''nospace_cache'' option
+* Lots of space accounting fixes
+* Improved scrub performance thanks to new read-ahead infrastructure
+* Scrub prints paths of corrupted files
+* ioctl for resolving logical->inode and inode->path
+* Integrated raid-repair (if possible)
+* Data corruption fix for parallel snapshot creation
+* Write barriers for multiple devices were fixed to be more resistant in case of power failure
+
+== v3.1 (Oct 2011) ==
+* Stability fixes (lots of them, really), notably fixing early ENOSPC, improved handling of a few error paths and corner cases, fix for the crash during log replay.
+
+== v3.0 (Jul 2011) ==
+* Filesystem scrub
+* Auto-defragmentation (autodefrag mount option)
+* Improved block allocator
+* Sped up file creation/deletion by delayed operation
+
+== v2.6.39 (May 2011) ==
+
+Per-file compression and NOCOW control. Support for bulk TRIM on SSDs.
+
+== v2.6.38 (March 2011) ==
+
+Added LZO compression method, FIEMAP bugfixes with delalloc, subvol flags get/set ioctl, allow compression during defrag.
+
+== v2.6.37 (January 2011) ==
+
+On-disk free space cache, asynchronous snapshots, unprivileged subvolume deletion, extent buffer switches from a rbtree with spinlocks to a radix tree with RCU. (Explanations of these features are described in [http://www.linux-mag.com/id/7945 this] article [registration needed]).
+
+== v2.6.35 (August 2010) ==
+
+Direct I/O support and -ENOSPC handling of volume management operations, completing the -ENOSPC support.
+
+== v2.6.34 (May 2010) ==
+
+Support for changing the default subvolume, a new userspace tool (btrfs), an ioctl that lists all subvolumes, an ioctl to allow improved df math, and other improvements.
+
+== v2.6.33 (February 2010) ==
+
+Some minor -ENOSPC improvements.
+
+== v2.6.32 (December 2009) ==
+
+=== -ENOSPC ===
+
+Btrfs has not had serious -ENOSPC ("no space") handling, the COW oriented design makes handling such situations more difficult than filesystems that just rewrite the blocks. In this release Josef Bacik (Red Hat) has added the necessary infrastructure to fix that problem. Note: The filesystem may run out of space and still show some free space. That space comes from a data/metadata chunk that can't get filled because there's not space left to create its metadata/data counterpart chunk. This is unrelated to the -ENOSPC handling and will be fixed in the future. Code: [http://git.kernel.org/linus/9ed74f2dba6ebf9f30b80554290bfc73cc3ef083 (commit)]
+
+=== Proper snapshot and subvolume deletion ===
+
+In the last btrfs-progs version you have options that allow to delete snapshots and subvolumes without having to use rm. This is much faster because it does the deletion via btree walking. It's also now possible to rename snapshots and subvols. Work done by Yan Zheng (Oracle). Code: [http://git.kernel.org/linus/4df27c4d5cc1dda54ed7d0a8389347f2df359cf9 (commit 1)], [http://git.kernel.org/linus/76dda93c6ae2c1dc3e6cde34569d6aca26b0c918 2)]
+
+=== Performance improvements ===
+
+Streaming writes on very fast hardware got CPU bound at around 400MB/s, Chris Mason (Oracle) has improved the code so that now it can push over 1GB/s while using the same CPU as XFS (factoring out checksums). There are also improvements for writing large portions of extents, and other workloads. Multidevice setups are also much faster due to the per-BDI writeback changes. fsync() performance has been improved greatly aswell (which fixes a severe slowdown while using yum in Fedora 11)
+
+=== Support for "discard" operation on SSD devices ===
+
+"Discard" support is a way to telling SSD devices which blocks are free so that the underlying firmware knows that it's safe to do some optimizations [http://git.kernel.org/linus/e244a0aeb6a599c19a7c802cda6e2d67c847b154 (commit)], [http://git.kernel.org/linus/0634857488ec6e28fa22920cd0bee3c2ac07ccfd (commit)]
+
+== v0.19 (June 2009) ==
+
+v0.19 is a forward rolling format change, which means that it can read the v0.18 disk format but older kernels and older btrfs-progs code will not be able to read filesystems created with v0.19. The new code changes the way that extent back references are recorded, making them significantly more efficient. In general, v0.19 is a dramatic speed improvement over v0.18 in almost every workload.
+
+The v0.19 utilities are meant for use with kernels 2.6.31-rc1 and higher. Git trees are available with the new format code for 2.6.30 kernels, please see the download section for details.
+
+If you do not wish to roll forward to the new disk format, use the v0.18 utilities.
+
+== v0.18 (January 2009) ==
+
+v0.18 has the same disk format as 0.17, but a bug was found in the ioctl interface shared between 32 bit and 64 bit programs. This was fixed by changing the ioctl interface. Anyone using 2.6.29-rc2 will need to update to v0.18 of the btrfs progs.
+
+There is no need to reformat though, the disk format is still compatible.
+
+== v0.17 (January 2009) ==
+
+=== Btrfs is now in 2.6.29-rc1! ===
+
+v0.17 has a new disk format since v0.16. Future releases will try to maintain backwards compatibility with this new format.
+
+=== Compression ===
+
+Transparent zlib compression of file data is enabled by mount -o compress.
+
+=== Improved block allocation routines (Josef Bacik) ===
+
+Many performance problems in the allocator are addressed in this release
+
+=== Improved block sharing while moving extents (Yan Zheng) ===
+
+The btrfs-vol commands to add, remove and balance space across devices triggers a COW of metadata and data blocks. This release is much better at maintaining shared blocks between snapshots when that COW happens.
+
+=== Seed Device support ===
+
+It is now possible to create a filesystem to seed other Btrfs filesystems. The original filesystem and devices are included as a readonly starting point to the new FS. All modifications go onto different devices and the COW machinery makes sure the original is unchanged.
+
+=== Many bug fixes and performance improvements ===
+
+== v0.16 (August 2008) ==
+
+v0.16 does change the disk format from v0.15, and it includes a long list of performance and stability updates.
+
+=== Fine grained Btree locking ===
+
+Locking is now done in a top down fashion while searching the btree, and higher level locks are freed when they are no longer required. Extent allocations still have a coarse grained lock, but that will be improved in the next release.
+
+=== Improved data=ordered ===
+
+Ordered data mode loosely means any system that prevents garbage or stale data blocks after a crash. It was previously implemented the same way ext3 does it, which is to force pending data writes down before a transaction commits.
+
+The data=ordered code was changed to only modify metadata in the btree after data extents are fully written on disk. This allows a transaction commit to proceed without waiting for all the data writes on the FS to finish.
+
+A single fsync or synchronous write no longer forces all the dirty data on the FS to disk, as it does in ext3 and reiserfsv3.
+
+Although it is not implemented yet, the new data=ordered code would allow atomic writes of almost any size to a single file to be exported to userland.
+
+=== ACL support (Josef Bacik) ===
+
+ACLs are implemented and enabled by default.
+
+=== Lost file prevention (Josef Bacik) ===
+
+The VFS and posix APIs force filesystems allow files to be unlinked from a directory before they are deleted from the FS. If the system crashes between the unlink and the deletion, the file is still consuming space on disk, but not listed in any directory.
+
+Btrfs now tracks these files and makes sure they are reclaimed if the system crashes before they are fully deleted.
+
+=== New directory index format (Josef Bacik) ===
+
+Btrfs indexes directories in two ways. The first index allows fast name lookups, and the second is optimized to return inodes in something close to disk order for readdir. The second index is an important part of good performance for full filesystem backups.
+
+A per-directory sequence number is now used for the second index, removing some worst case conditions around files that are hard linked into the same directory many times.
+
+=== Faster unmount times (Yan Zheng) ===
+
+Btrfs waits for old transactions to be completely removed from the FS before unmount finishes. A new reference count cache was added to make this much less IO intensive, improving FS performance in all workloads.
+
+=== Improved streaming reads and writes ===
+
+The new data=ordered code makes streaming writes much faster. Streaming reads are improved by tuning the thread pools used to process data checksums after the read is done. On machines with sufficient CPU power to keep up with the disks, data checksumming is able to run as fast as nodatasum mounts.
+
+== v0.15 (May 29, 2008) ==
+
+* Metadata back references
+* Online growing and shrinking
+* Conversion program from Ext3
+* data=ordered support
+* COW-free data writes.
+* focus on stability fixes for the multiple device code
+
+== v0.14 (April 30, 2008) ==
+
+* Support for multiple devices
+* raid0, raid1 and raid10, single spindle metadata duplication
+
+== v0.13 and older ==
+
+* Copy on write FS
+* Checksumming
+* Transactions
+* Snapshotting
+* Subvolumes

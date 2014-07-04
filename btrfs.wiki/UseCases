@@ -1,0 +1,279 @@
+There have been quite a few questions about how to accomplish ZFS tasks in Btrfs, as well as just generic "How do I do X in Btrfs?". This page aims to answer those questions. Simply add your question to the "Use Case" section of the table.
+
+
+= RAID =
+
+See [[Using Btrfs with Multiple Devices]] for a guide to the RAID features of Btrfs.
+
+Some high-level concepts are also explained in the [[SysadminGuide]].
+
+== How do I create a RAID1 mirror in Btrfs? ==
+
+For more than one device, simply use
+
+ mkfs.btrfs -m raid1 -d raid1 /dev/sda1 /dev/sdb1
+
+will result in
+
+ btrfs fi df /mount
+ 
+ Data, RAID1: total=1.00GB, used=128.00KB
+ Data: total=8.00MB, used=0.00
+ System, RAID1: total=8.00MB, used=4.00KB
+ System: total=4.00MB, used=0.00
+ Metadata, RAID1: total=1.00GB, used=24.00KB
+ Metadata: total=8.00MB, used=0.00
+
+
+NOTE This does not do the 'usual thing' for 3 or more drives. Until "N-Way" (traditional) RAID-1 is implemented:  Loss of more than one drive might crash the array.  For now, RAID-1 means 'one copy of what's important exists on two of the drives in the array no matter how many drives there may be in it'.
+
+== How do I create a RAID10 striped mirror in Btrfs? ==
+
+  mkfs.btrfs -m RAID10 -d RAID10 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1
+
+== How can I create a RAID-1 filesystem in "degraded mode"? ==
+
+Kernel 3.3 onwards - no need!  Just create a conventional btrfs filesystem, then later when you want to add a second device and convert to RAID1, do this via [[Balance Filters]]
+
+For earlier kernel versions:
+Create a filesystem with a small, empty device, and then remove it:
+
+ dd if=/dev/zero of=/tmp/empty bs=1 count=0 seek=4G
+ losetup /dev/loop1 /tmp/empty
+ mkfs.btrfs -m raid1 -d raid1 /dev/sda1 /dev/loop1
+ losetup -d /dev/loop1
+ rm /tmp/empty
+
+You can add in the real mirror device(s) later:
+
+ mount -odegraded /dev/sda1 /mnt
+ btrfs dev add /dev/sdb1 /mnt
+
+(kernel 2.6.37) Simply creating the filesystem with too few devices will result in a RAID-0 filesystem. (This is probably a bug).
+(kernel 3.2.0-31 [ubuntu] Unfortunately btrfs seems unwilling to allocate additional block groups while mounted in degraded mode; maybe this is changed more recently)
+
+== How do I determine the raid level currently in use? ==
+
+On a 2.6.37 or later kernel, use
+
+ btrfs fi df /mountpoint
+
+The required support was broken accidentally in earlier kernels, but has now been fixed.
+
+== How do I change RAID levels? ==
+
+At the moment (<= 3.2), you can't change the RAID level after a filesystem has been created. Starting with kernel 3.3 it's possible to change raid level of data and metadata by the ''[[Balance Filters|btrfs balance]]'' command (the feature was named restriper originally, but renamed back to balance).
+
+= Snapshots and subvolumes =
+
+== I want to be able to do rollbacks with Btrfs ==
+
+If you use yum you can install the yum-plugin-fs-snapshot plugin and it will take a snapshot before doing any yum transaction. You can also take a snapshot manually by running
+
+ btrfs subvolume snapshot /path/to/subvolume /path/to/subvolume/snapshot_name
+
+then if something goes wrong you can either mount using the mount option subvol=&lt;snapshot name&gt; or the subvolid=&lt;id&gt; option. You can determine the ID of a snapshot by running
+
+ btrfs subvolume list /path/to/subvolume
+
+If you wish to default to mounting from the rollback snapshot you can run either
+
+ btrfs subvolume set-default &lt;id&gt;
+
+using the subvolume ID, or alternatively if you already have the snapshot mounted, you can run
+
+ btrfs subvolume set-default /path/to/snapshot
+
+
+== How can I use btrfs for backups/time-machine? ==
+
+Available tools:
+
+* [http://en.opensuse.org/Portal:Snapper Snapper] — tool for managing btrfs snapshots, with ability to compare snapshot differences or revert changes. Originally developed for openSUSE, nowadays spreads it use among other distros (Debian, Ubuntu, Fedora, Mandriva), available also for enterprise distros (SLES, RHEL, CentOS).
+
+* [https://github.com/jonhiggs/btrfs-time-machine btrfs-time-machine] — save any mounted filesystem to a btrfs filesystem with per-date snapshots. You can configure it to do a temporary source-side snapshot when backing up btrfs filesystems, and you can enable [[deduplication]] on the destination.
+
+* [http://urbackup.org UrBackup] - save backups as btrfs sub-volumes. Incremental backups are created using btrfs snapshots. Blocks which are not changed in files in incremental backups are stored only once using cross-device reflinks. See [http://blog.urbackup.org/83/file-backup-storage-with-btrfs-snapshots File Backup Storage with Btrfs Snapshots] for details.
+
+* [https://github.com/oxplot/rsyncbtrfs rsyncbtrfs] — simple bash script which uses rsync to perform incremental btrfs backup, creating subvolumes automatically
+
+Proposed tools:
+
+* There is a proposal for somehow generic solution, called [[Autosnap]] ([http://thread.gmane.org/gmane.comp.file-systems.btrfs/12603/focus=12605 initial proposal], [http://thread.gmane.org/gmane.comp.file-systems.btrfs/16030 patch]).
+* A simple [http://article.gmane.org/gmane.comp.file-systems.btrfs/12609 script] which could be tuned for your needs.
+* A python script called [[SnapBtr]].
+
+== How do I mount the real root of the filesystem once I've made another subvolume the default? ==
+
+ mount -o subvolid=0 &lt;filesystem&gt; &lt;mount-point&gt;
+
+With kernel 3.2 and newer you can specify ''subvol=/some/PATH'' for the subvolume to mount
+
+ mount -o subvol=/path/to/subvol /dev/sdx /mnt
+
+The PATH is always relative to the toplevel subvolume, ie. independent of currently set default subvolume.
+
+== Can a snapshot be replaced atomically with another snapshot? ==
+
+ btrfs subvolume snapshot first second
+
+creates a snapshot of the subvolume ''first''. After changing ''second'' in some way, I'd like to replace ''first'' with ''second'' e.g. using
+
+ btrfs subvolume snapshot second first
+
+This isn't currently allowed. I would need to delete ''first'' before snapshotting, but this leaves a period of time when there is no directory by that name present, hence the need for atomic replacement á la rename(2).
+
+Is this possible with current btrfs?
+
+* No, and it's going to be pretty much impossible to achieve. You would have to ensure that all users of the volume being replaced have stopped using it before you replaced it. If you're going to do that, you might as well do an unmount/mount.
+
+== Are there a similar commands in BTRFS like ZFS send/receive? ==
+
+btrfs send/receive is currently in development and an experimental version is in preparation.
+
+Previously, there was a note about "btrfs subvolume find-new" here. If you're looking for this as an alternative to real send/receive, you should probably better wait for btrfs send/receive to be finished. The find-new approach has some serious limitations and thus is not really usable for something like send/receive.
+
+== How I can know how much space is used by a volume? ==
+
+This is a complex question. Since snapshots are subvolumes, storage can be shared between subvolumes, so how do you assign ownership of that storage to any specific subvolume?
+
+It does make sense to ask "how much space would be freed if I deleted this subvolume?", but this is expensive to compute (it will take at least as long as "du" to run), and currently there is no code that will do the calculation for you.
+
+== Are there a similar commands in BTRFS like ZFS export/import? ==
+
+Your answer here....
+
+== Can we create virtual block device in BTRFS? ==
+
+No. Btrfs doesn't support the creation of virtual block devices or other non-btrfs filesystems within its managed pool of space.
+
+If you use file-backed storage for virtual machines, set those files nocow with `chattr +C`, see [[FAQ#Can copy-on-write be turned off for data blocks?]].
+Otherwise you will get poor performance and fragmentation[https://bugzilla.redhat.com/show_bug.cgi?id=689127].
+
+== How do we implement quota in BTRFS? ==
+=== Usage ===
+Once a BTRFS has been created, quota must be enabled before any subvolume is added using ''btrfs quota enable <path>''. If quotas weren't enabled, you must first enable them, then create a qgroup (quota group) for each of those subvolume using their subvolume ID and rescan them, for example;
+ btrfs subvolume list <path> | cut -d' ' -f2 | xargs -I{} -n1 btrfs qgroup create 0/{} <path>
+Rescan the subvolumes (added in kernel 3.11)
+ btrfs quota rescan <path>
+Then you can assign a limit to any subvolume using;
+ btrfs qgroup limit 100G <path>/<subvolume>
+You can look at quota usage using
+ btrfs qgroup show <path>
+
+=== Implementation ===
+
+The original document discussing the concepts and implementation is at [http://sensille.com/qgroups.pdf http://sensille.com/qgroups.pdf]
+
+A more descriptive listing of the commands [https://build.opensuse.org/package/view_file?file=0114-btrfs-progs-add-qgroup-commands.patch&package=btrfsprogs&project=devel%3AopenSUSE%3AFactory%3Apatch-license&rev=1a29e4a5d6701f4c3e5b30cbb7a77aa5 is shown in this patch].
+
+A proposal being discussed (2011/06) http://comments.gmane.org/gmane.comp.file-systems.btrfs/11095
+
+Disk structure proposal (2011/07) http://permalink.gmane.org/gmane.comp.file-systems.btrfs/11845
+
+== Can I take a snapshot of a directory? ==
+
+You can't, only subvolumes can be really snapshotted. However, there are ways how to achieve a very similar result, provided that cross-subvolume reflinks are allowed ([http://thread.gmane.org/gmane.comp.file-systems.btrfs/9864 discussion about this feature] -- not in 3.3 as of writing; merged since 3.6 [https://github.com/torvalds/linux/commit/362a20c5e27614739c46707d1c5f55c214d164ce]).
+
+Suppose there's a source directory ''src'', and you want to take a snapshot of this directory named ''dest'', then possibly creating more snapshots of it:
+
+ btrfs subvol create dest
+ cp -ax --reflink=always src/. dest
+
+Note, that the syntax ''src/.'' is important, this will copy contents of ''src'' rather creating the dir ''src'' under ''dest''. Now the directories hold the same files and data, but any change is independent due to nature of reflink.
+
+Speed of the reflink copy is decent. After creating the subvolume, you can use it as any other subvolume, more specifically you can do the real snapshots very quickly now!
+
+= Other questions =
+
+== How do I label a filesystem? ==
+
+The label on a filesystem can be set at creation time, using the <tt>-L</tt> option to ''mkfs.btrfs''.
+
+You can also use ''btrfs'' command. There are currently few limitations:
+* the filesystem has to be unmounted
+* the filesystem should not have more than one device
+
+ btrfs filesystem label <dev> [newlabel]
+
+== How do I resize a partition? (shrink/grow) ==
+
+In order to demonstrate and test the back references, Btrfs devel team has added an online resizer, which can both grow and shrink the filesystem via the [[Btrfs(command)|btrfs]] commands.
+
+First, ensure that your filesystem is mounted. See elsewhere for the full list of btrfs-specific [[Getting_started#Mount Options|mount options]]
+ 
+ mount -t btrfs /dev/xxx /mnt
+
+=== Growing ===
+
+Enlarge the filesystem by 2 GiB:
+ 
+ btrfs filesystem resize +2G /mnt
+
+The parameter "max" can be used instead of (e.g.) "+2G", to grow the filesystem to fill the whole block device.
+
+=== Shrinking ===
+
+To shrink the filesystem by 4 GiB:
+ 
+ btrfs filesystem resize -4g /mnt
+
+=== Set the FS size ===
+
+To set the filesystem to a specific size, omit the leading + or - from the size. For example, to change the filesystem size to 20 GiB:
+ 
+ btrfs filesystem resize 20g /mnt
+
+=== Resize on multi devices filesystem ===
+
+To affect a specific device of a multi devices filesystem add "''devid'':"
+
+ # btrfs filesystem show 
+ Label: 'RootFS'  uuid: c87975a0-a575-425e-9890-d3f7fcfbbd96 
+ 	Total devices 2 FS bytes used 284.98GB 
+ 	devid    2 size 311.82GB used 286.51GB used 286.51GB path /dev/sdb1 
+ 	devid    1 size 897.76GB used 286.51GB path /dev/sda1 
+ 
+ # btrfs filesystem resize 2:max /mnt/RootFS
+ Resize '/mnt/RootFS' of '2:max'
+ 
+ # btrfs filesystem show
+ Label: 'RootFS'  uuid: c87975a0-a575-425e-9890-d3f7fcfbbd96
+ 	Total devices 2 FS bytes used 284.98GB 
+ 	devid    2 size 897.76GB used 286.51GB path /dev/sdb1
+ 	devid    1 size 897.76GB used 286.51GB path /dev/sda1
+
+== How do I defragment many files? ==
+
+Since version v3.12 of btrfs progs it is possible to run a recursive defragmention using:
+
+ sudo btrfs filesystem defragment -r /path/
+
+Prior to this version one would use:
+
+ sudo find [subvol [subvol]…] -xdev -type f -exec btrfs filesystem defragment -- {} +
+
+This won't recurse into subvolumes (-xdev prevents recursion into non-btrfs filesystems but also btrfs subvolumes).
+
+You may also want to set the non-default <code>autodefrag</code> mount option, though the [[mount options]] page mentions caveats.
+
+'''Caveat''': since Linux 3.14-rc2, 3.13.4, 3.12.12 and 3.10.31 (which removed the snapshot-aware defragmentation) defragmenting a file which has a COW copy (either a snapshot copy or one made with ''cp --reflink'' or ''bcp'') would produce two unrelated files. If you defragment a subvolume that had a snapshot, you would roughly double the disk usage, as the snapshot files would no longer be COW images of the originals.
+
+One would get this rather unexpected outcome when using defragment (together with "-c") to compress files with the hope of saving space.
+
+Note that this is the same behaviour as observed with any pre 3.9 kernel (which added snapshot-aware defragmentation).
+
+== ZFS does not need file system entries in /etc/(v)fstab. Is it mandatory in BTRFS to add file system entries in /etc/fstab? ==
+
+ZFS auto-mounts pools and filesystem trees. It does not require entries in /etc/fstab in order to tell the system where subtrees should be mounted.
+
+btrfs does not implement this feature directly. However, since btrfs subvolumes are visible within and navigable from their parent subvolume, you can mount a whole tree containing many embedded subvolumes by simply mounting the top-level tree.
+
+== What is best practice when partitioning a device that holds one or more btr-filesystems ==
+
+Do it the old fashioned way, and create a number of partitions according to your needs?
+Or create one big btrfs partition and use subvolumes where you would normally create different partitions?
+
+What are the considerations for doing it either way?
+
+[[Category:UserDoc]]

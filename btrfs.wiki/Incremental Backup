@@ -1,0 +1,55 @@
+One of the key capabilities of BTRFS is the ability to efficiently difference the changes between two subvolumes which are either snapshots of the same underlying subvolume, or have a parent-child relationship. In this case, we will be using snapshots of a live filesystem to construct an efficient incremental backup that can stream the difference over large filesystems far quicker than e.g. rsync could.
+
+== Status ==
+
+Prerequisite is a fairly modern btrfs toolsuite, version 0.20rc1 seems to be good enough. Earlier versions may fail to list subvolumes when cleaner process is operating, and this could cause random failures during backup.
+
+That said, many fixes have gone in btrfs send/receive and it is recommended to use at least 3.14, or 3.15 when it comes out to have later patches. Similarly, you will want at least btrfs-tools 3.12, or later if available. Note that 32bit btrfs send will not work with a 64bit kernel as of 3.13.
+
+== The Design of the Backup Solution ==
+
+It uses BTRFS's snapshotting capability to atomically freeze changes to a subvolume, and then transfer these snapshots to a backup volume. The atomic freezing provided by BTRFS should allow transactionally operating systems such as database files and raw filesystem images to be repairable to a consistent state from a snapshot. When performing incremental backups, we will be working with two snapshots, one of them representing the time of the earlier backup, and the other representing the current backup. When the backup run completes, we can discard the earlier of the snapshots to prepare for the next incremental run.
+
+Assuming that /home is the BTRFS volume you wish to backup, and backups are to be stored on another BTRFS volume called /backup and directory /backup/home, the procedure goes as follows.
+
+== Using a script to keep track of backups and snapshots for you ==
+
+You can try btrfs-subvolume-backup [http://marc.merlins.org/perso/btrfs/post_2014-03-22_Btrfs-Tips_-Doing-Fast-Incremental-Backups-With-Btrfs-Send-and-Receive.html] by Marc MERLIN.
+
+== Doing it by hand, step by step ==
+=== Initial Bootstrapping ===
+
+We will need to create a read-only snapshot of the volume that serves as the reference for the first backup. I will call this subvolume BACKUP. The subvolume is read-only because "btrfs send" requires read-only subvolumes to operate on. '''NB''': there is currently an issue that the snapshots to be used with "btrfs send" must be physically on the disk, or you may receive a "stale NFS file handle" error. This is accomplished by "sync" after the snapshot:
+
+    btrfs subvolume snapshot -r /home /home/BACKUP
+    sync
+
+Once created, we can distribute the initial copy into existing directory or subvolume /backup/home. The subvolume appears as /backup/home/BACKUP:
+
+    btrfs send /home/BACKUP | btrfs receive /backup/home
+
+Bootstrapping is now done. The subvolume /home/BACKUP is kept around to serve as local reference for the data that has been backed up, and it is needed for constructing the incremental backup for the next step.
+
+=== Incremental Operation ===
+
+During incremental backup, we make a new snapshot:
+
+    btrfs subvolume snapshot -r /home /home/BACKUP-new
+    sync
+
+We can now send the difference between the old and new backup to the backup volume:
+
+    btrfs send -p /home/BACKUP /home/BACKUP-new | btrfs receive /backup/home
+
+Once this command completes, we should have these 4 subvolumes: /home/BACKUP, /home/BACKUP-new, /backup/home/BACKUP and /backup/home/BACKUP-new. We will now need to migrate the new backup as the old one, and do something for the old one. We could keep it around, maybe timestamped with the date of that backup, or just straight out delete it. Here, I am deleting it:
+
+    btrfs subvolume delete /home/BACKUP
+    mv /home/BACKUP-new /home/BACKUP
+    btrfs subvolume delete /backup/home/BACKUP
+    mv /backup/home/BACKUP-new /backup/home/BACKUP
+
+But for instance, if you did want to keep a history of backups, perhaps you would snapshot one of the snapshot directories with something like:
+
+    btrfs subvolume snapshot -r /backup/home/BACKUP /backup/home.$(date +%Y-%m-%d)
+
+This concludes the incremental backup step.

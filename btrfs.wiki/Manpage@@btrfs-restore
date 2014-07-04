@@ -1,0 +1,66 @@
+
+=btrfs-restore(8) Manual Page=
+{{GeneratedManpage}}
+
+
+==NAME==
+
+btrfs-restore - try to restore files from a damaged btrfs filesystem(unmounted)
+
+==SYNOPSIS==
+
+'''btrfs restore''' [options] &lt;device&gt; &lt;path&gt; | -l &lt;device&gt;
+
+==DESCRIPTION==
+
+'''btrfs restore''' is used to try to salvage files from a damaged filesystem and restore them into &lt;path&gt; or just list the tree roots.
+
+Since current [[Manpage/btrfs-check|btrfs-check(8)]] or [[Manpage/btrfs-rescue|btrfs-rescue(8)]] only has very limited usage, '''btrfs restore''' is normally a better choice.
+
+'''Note:''' It is recommended to read the following btrfs wiki page if your data is not salvaged with default option:<br />https://btrfs.wiki.kernel.org/index.php/Restore
+
+==OPTIONS==
+
+; -s
+: get snapshots, btrfs restore skips snapshots in default.
+; -x
+: get extended attributes.
+; -v
+: verbose.
+; -i
+: ignore errors.
+; -o
+: overwrite directories/files in &lt;path&gt;.
+; -t &lt;bytenr&gt;
+: use &lt;bytenr&gt; to read root tree.
+; -f &lt;bytenr&gt;
+: only restore files that are under specified root whose root bytenr is &lt;bytenr&gt;.
+; -u &lt;mirror&gt;
+: use given superblock mirror identified by &lt;mirror&gt;, it can be 0,1,2.
+; -r &lt;rootid&gt;
+: only restore files that are under specified root whose objectid is &lt;rootid&gt;.
+; -d
+: find dir.
+; -l
+: list tree roots.
+; -D|--dry-run
+: dry run (only list files that would be recovered).
+; --path-regex &lt;regex&gt;
+: restore only filenames matching regex, you have to use following syntax (possibly quoted): <br /><code>^/(|home(|/username(|/Desktop(|/.*))))$</code>
+; -c
+: ignore case (--path-regrex only).
+
+==EXIT STATUS==
+
+'''btrfs restore''' returns a zero exist status if it succeeds. Non zero is returned in case of failure.
+
+==AVAILABILITY==
+
+'''btrfs''' is part of btrfs-progs. Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for further details.
+
+==SEE ALSO==
+
+[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-rescue|btrfs-rescue(8)]], [[Manpage/btrfs-check|btrfs-check(8)]]
+
+
+[[Category:Manpage]]

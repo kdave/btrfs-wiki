@@ -1,0 +1,13 @@
+Makes a compressed image of a btrfs partition (zeroed data).
+
+== Usage ==
+
+ btrfs-image [-r] [-c &lt;num&gt;] [-t &lt;num&gt;] &lt;source&gt; &lt;destination&gt;
+
+=== Description of parameters ===
+
+* "-r": Restore a previously made image
+* "-c": Level of compression from 0=none over 1=lowest zlib to 9=highest zlib
+* "-t": Number of threads used 1 to 32 (defaults to number of cpus)
+
+[[Category:Tools]]

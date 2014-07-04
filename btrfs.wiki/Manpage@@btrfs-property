@@ -1,0 +1,42 @@
+
+=btrfs-property(8) Manual Page=
+{{GeneratedManpage}}
+
+
+==NAME==
+
+btrfs-property - get/set/list properties for given btrfs object.
+
+==SYNOPSIS==
+
+'''btrfs property''' &lt;subcommand&gt; &lt;args&gt;
+
+==DESCRIPTION==
+
+'''btrfs property''' is used to get/set/list property, like lable or compression state, for given btrfs object.
+
+'''btrfs property''' provides an unified and user-friendly method to tune different btrfs properties instead of using the traditional method like [http://man7.org/linux/man-pages/man1/chattr.1.html chattr(1)] or [http://man7.org/linux/man-pages/man1/lsattr.1.html lsattr(1)].
+
+==SUBCOMMAND==
+
+; '''get''' [-t &lt;type&gt;] &lt;object&gt; [&lt;name&gt;]
+: Gets a property from a btrfs object. <br /> If no name is specified, all properties for the given object are printed. A filesystem object can be a the filesystem itself, a subvolume, an inode or a device. <br /> The '''-t &lt;type&gt;''' option can be used to explicitly specify what type of object you meant. This is only needed when a property could be set for more then one object type. <br /> Possible types are '''s[ubvol]''', '''f[ilesystem]''', '''i[node]''' and '''d[evice]'''. <br /> The &lt;object&gt; can be path of btrfs device, btrfs mount point, or any directories/files inside btrfs.
+; '''set''' [-t &lt;type&gt;] &lt;object&gt; &lt;name&gt; &lt;value&gt;
+: Sets a property on a btrfs object. <br /> See description of '''get''' subcommand for a description of objects and object types.
+; '''list''' [-t &lt;type&gt;] &lt;object&gt;
+: Lists available properties with their descriptions for the given object. <br /> Please see the help of '''btrfs property get''' for a description of objects and object types.
+
+==EXIT STATUS==
+
+'''btrfs property''' returns a zero exist status if it succeeds. Non zero is returned in case of failure.
+
+==AVAILABILITY==
+
+'''btrfs''' is part of btrfs-progs. Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for further details.
+
+==SEE ALSO==
+
+[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [http://man7.org/linux/man-pages/man1/lsattr.1.html lsattr(1)], [http://man7.org/linux/man-pages/man8/setattr.8.html setattr(8)]
+
+
+[[Category:Manpage]]

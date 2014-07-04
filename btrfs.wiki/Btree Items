@@ -1,0 +1,227 @@
+This table shows the mapping from the [[Btree Keys‏‎|btree key]] type to the type of data stored against that key. In general, the btrfs_item_ptr() macro can be used to retrieve a properly-typed offset value for the data. The btrfs_''datatype''_''membername''() and btrfs_''datatype''_set_''membername''() functions can then be used to retrieve any data from the leaf/slot (which are themselves obtained from the struct path data returned from btrfs_search_slot()).
+
+The "Tree(s)" column indicates which trees items of that type can appear in, and the objectid and offset columns document what the values in the objectid and offset fields should be for the key for this type of object.
+
+'''Note:''' The information in this table is incomplete and has not yet been checked by someone who knows what they're doing.
+
+{| border="1"
+! Type name
+! Value
+! Data type
+! Tree(s)
+! objectid
+! offset
+! Notes
+|-
+| BTRFS_INODE_ITEM_KEY
+| 1
+|
+[[Data_Structures#btrfs inode item|struct btrfs_inode_item]]
+| root, fs, reloc, file
+| inode number
+| 0
+| Use btrfs_iget() and btrfs_iget_locked() to read the inode data as a struct inode.
+|-
+| BTRFS_INODE_REF_KEY
+| 12
+|
+[[Data_Structures#btrfs inode ref|struct btrfs_inode_ref]]
+| root, fs, reloc, file
+| inode number
+| inode number of parent
+|
+|-
+| BTRFS_XATTR_ITEM_KEY
+| 24
+|
+[[Data_Structures#btrfs dir item|struct btrfs_dir_item]]
+| file
+| inode number of object
+| crc32c hash of xattr name
+| Embedded data in btrfs_dir_item is xattr value
+|-
+| BTRFS_ORPHAN_ITEM_KEY
+| 48
+| -
+|
+|
+|
+| Doesn't map to a struct type.
+|-
+| BTRFS_DIR_LOG_ITEM_KEY
+| 60
+| struct btrfs_dir_log_item
+|
+|
+|
+|
+|-
+| BTRFS_DIR_LOG_INDEX_KEY
+| 72
+| (?)
+|
+|
+|
+|
+|-
+| BTRFS_DIR_ITEM_KEY
+| 84
+|
+[[Data_Structures#btrfs dir item|struct btrfs_dir_item]]
+|
+root, [[Trees#FSTree|fs]], file
+| inode number of directory
+| crc32c hash of filename
+| References an item in this directory
+|-
+| BTRFS_DIR_INDEX_KEY
+| 96
+|
+[[Data_Structures#btrfs dir item|struct btrfs_dir_item]]
+|
+[[Trees#FSTree|fs]], file
+| inode number of directory
+| index of item
+| References an item in this directory
+|-
+| BTRFS_EXTENT_DATA_KEY
+| 108
+|
+[[Data_Structures#btrfs file extent item|struct btrfs_file_extent_item]]
+| file
+| inode number
+| offset within file
+|
+|-
+| BTRFS_EXTENT_CSUM_KEY
+| 128
+|
+[[Data_Structures#btrfs csum item|struct btrfs_csum_item]]
+| checksum
+| BTRFS_EXTENT_CSUM_OBJECTID == -10ULL
+| address of start of data
+|
+|-
+| rowspan="5" | BTRFS_ROOT_ITEM_KEY
+| rowspan="5" | 132
+| rowspan="5" |
+[[Data_Structures#btrfs root item|struct btrfs_root_item]] (?)
+| rowspan="5" | root
+| BTRFS_EXTENT_TREE_OBJECTID
+| 0
+|
+|-
+| BTRFS_DEV_TREE_OBJECTID
+| 0
+|
+|-
+| BTRFS_FS_TREE_OBJECTID
+| 0
+| References the base fs tree
+|-
+| BTRFS_CSUM_TREE_OBJECTID
+| 0
+|
+|-
+| id number of subvolume
+| generation of parent when created, or 0 if not a snapshot
+| References a file tree
+|-
+| BTRFS_ROOT_BACKREF_KEY
+| 144
+|
+[[Data_Structures#btrfs root ref|struct btrfs_root_ref]]
+| root
+| child subvolume id
+| parent subvolume id
+|
+|-
+| BTRFS_ROOT_REF_KEY
+| 156
+|
+[[Data_Structures#btrfs root ref|struct btrfs_root_ref]]
+| root
+| parent subvolume id
+| child subvolume id
+|
+|-
+| BTRFS_EXTENT_ITEM_KEY
+| 168
+|
+[[Data_Structures#btrfs extent item|struct btrfs_extent_item]]
+| extent
+| virtual address of extent
+| size of extent
+|
+|-
+| BTRFS_EXTENT_REF_V0_KEY
+| 180
+| struct btrfs_extent_ref_v0
+|
+|
+|
+|
+|-
+| BTRFS_TREE_BLOCK_REF_KEY
+| 176
+| rowspan="4" | -
+| rowspan="4" | extent
+| rowspan="4" colspan="2" | Not directly indexed
+| rowspan="4" |
+See [[Data_Structures#btrfs extent item|struct btrfs_extent_item]] and [[Data_Structures#btrfs extent inline ref|struct btrfs_extent_inline_ref]]
+|-
+| BTRFS_EXTENT_DATA_REF_KEY
+| 178
+|-
+| BTRFS_SHARED_BLOCK_REF_KEY
+| 182
+|-
+| BTRFS_SHARED_DATA_REF_KEY
+| 184
+|-
+| BTRFS_BLOCK_GROUP_ITEM_KEY
+| 192
+|
+[[Data_Structures#btrfs block group item|struct btrfs_block_group_item]]
+| extent
+| address of start of group
+| length of block group
+|
+|-
+| BTRFS_DEV_EXTENT_KEY
+| 204
+|
+[[Data_Structures#btrfs dev extent|struct btrfs_dev_extent]]
+| device
+| device id
+| location on device
+|
+|-
+| BTRFS_DEV_ITEM_KEY
+| 216
+|
+[[Data_Structures#btrfs dev item|struct btrfs_dev_item]]
+| chunk
+| BTRFS_DEV_ITEMS_OBJECTID == 1ULL
+| device id
+|
+|-
+| BTRFS_CHUNK_ITEM_KEY
+| 228
+|
+[[Data_Structures#btrfs chunk|struct btrfs_chunk]]
+| chunk
+| tree id (currently always BTRFS_FIRST_CHUNK_TREE_OBJECTID == 256ULL)
+| virtual address of chunk
+|
+|-
+| BTRFS_STRING_ITEM_KEY
+| 253
+| char[] (?)
+| Any?
+|
+|
+| string items are for debugging. They just store a short string of data in the FS
+|}
+
+[[Category:CodeDoc]]
