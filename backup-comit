@@ -1,0 +1,29 @@
+#!/bin/sh
+
+name=btrfs.wiki
+ts=
+found=false
+foundname=
+for i in $name-*; do
+	echo found $i
+	if $found; then
+		echo "not unique backup set, resolve manually"
+		exit 1
+	fi
+	found=true
+	foundname="$i"
+done
+
+if [ $(git diff|wc -l) = '0' ]; then
+	echo "No changes"
+	#exit 1
+fi
+if [ $(git diff --cached | wc -l) = '0' ]; then
+	echo "No changes --cached"
+	#exit 1
+fi
+
+ts=${foundname#${name}-}
+echo Timestamp $ts
+
+EDITOR=/bin/true git commit -save -m"Update $ts"

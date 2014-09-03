@@ -1,0 +1,95 @@
+#!/usr/bin/python
+
+import os
+import sys
+if os.path.exists('wikitools/wikitools'):
+    sys.path.append('wikitools')
+
+from wikitools import wiki
+from wikitools import category
+from wikitools import api
+from time import strftime
+import codecs
+
+import config
+
+debug=False
+
+query_allpages={'action':'query', 'list':'allpages'}
+query_wikitext_base={'action':'query', 'prop': 'revisions', 'rvprop':'content'}
+
+def message(*args, **kwargs):
+    print '*** '+' '.join(args)
+
+def res_allpages(res):
+    ret=[]
+    for p in res['query']['allpages']:
+        ret.append(p['title'])
+    return ret
+
+def res_to_wikitext(res):
+    pages=res['query']['pages']
+    pageid=pages.keys()[0]
+    return pages[pageid]['revisions'][0]['*']
+
+def get_wikitext(title):
+    message('Get wikitext of '+title)
+    q=query_wikitext_base
+    q['titles']=title
+    return res_to_wikitext(query(q))
+
+def get_allpages():
+    return res_allpages(query(query_allpages))
+
+def query(q):
+    if debug: message('Query: '+str(q))
+    return api.APIRequest(site, q).query()
+
+def escape_title(title):
+    return title.replace('/', '@@')
+
+# main
+message('Start')
+message('URL',config.wiki_api_url())
+site=wiki.Wiki(config.wiki_api_url())
+print site
+
+timestamp=strftime('%Y%m%d')
+out=config.wiki_name+'-'+timestamp
+if not os.path.exists(out):
+    message('Create output '+out)
+    os.mkdir(out)
+
+message('Read all pages')
+if os.path.exists(out+'/_allpages'):
+    message(' using cached')
+    fallpages=open(out+'/_allpages', 'r')
+    allpages=[x.strip() for x in fallpages.readlines()]
+else:
+    message(' read from wiki')
+    fallpages=open(out+'/_allpages', 'w')
+    allpages=get_allpages()
+    for p in allpages:
+        fallpages.write(p+'\n')
+fallpages.close()
+message('Found %d pages' % len(allpages))
+
+message('Start')
+total=len(allpages)
+current=1
+for p in allpages:
+    pfn=escape_title(p)
+    progress='[%d/%d]' % (current, total)
+    if os.path.exists(out+'/'+pfn):
+        message(' page %s done %s' % (p, progress))
+    else:
+        message(' page %s %s' % (p, progress))
+        fn=out+'/'+pfn
+        f=codecs.open(fn+'.part', 'w', 'utf-8')
+        f.truncate(0)
+        f.write(get_wikitext(p))
+        os.fsync(f)
+        f.close()
+        os.rename(fn+'.part', fn)
+        message(' done, %d bytes' % os.stat(fn).st_size)
+    current+=1

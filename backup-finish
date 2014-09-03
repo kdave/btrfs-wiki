@@ -1,0 +1,31 @@
+#!/bin/sh
+
+name=btrfs.wiki
+
+found=false
+foundname=
+for i in $name-*; do
+	echo found $i
+	if $found; then
+		echo "not unique backup set, resolve manually"
+		exit 1
+	fi
+	found=true
+	foundname="$i"
+done
+
+if [ $(git diff|wc -l) != '0' ]; then
+	echo "Git diff not clean"
+	#exit 1
+fi
+if [ $(git diff --cached | wc -l) != '0' ]; then
+	echo "Git diff --cached not clean"
+	#exit 1
+fi
+
+git rm -f $name/*
+mkdir -p $name
+cp $foundname/* $name
+git add $name/*
+
+echo "Git updated, verify and commit"
