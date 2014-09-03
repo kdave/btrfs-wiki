@@ -1,22 +1,30 @@
-One of the key capabilities of BTRFS is the ability to efficiently difference the changes between two subvolumes which are either snapshots of the same underlying subvolume, or have a parent-child relationship. In this case, we will be using snapshots of a live filesystem to construct an efficient incremental backup that can stream the difference over large filesystems far quicker than e.g. rsync could.
+BTRFS has some key capabilities which enable efficient backup solutions:
+; Instant, Atomic COW Snapshots
+: Since the snapshots are atomic, when a snapshot is restored it looks for applications as if a power loss had occured. Thus it is possible to backup databases without stopping them beforehand.
+; Incremental Snapshot Transfer 
+: Efficiently determining and streaming the differences between two snapshots if they are either snapshots of the same underlying subvolume, or have a parent-child relationship. This is far quicker than e.g. rsync could, especially on large file systems.
+
+This page presents some approaches to leverage these capabilites.
 
 == Status ==
 
 Prerequisite is a fairly modern btrfs toolsuite, version 0.20rc1 seems to be good enough. Earlier versions may fail to list subvolumes when cleaner process is operating, and this could cause random failures during backup.
 
-That said, many fixes have gone in btrfs send/receive and it is recommended to use at least 3.14, or 3.15 when it comes out to have later patches. Similarly, you will want at least btrfs-tools 3.12, or later if available. Note that 32bit btrfs send will not work with a 64bit kernel as of 3.13.
+That said, many fixes have gone in btrfs send/receive and it is recommended to use at least a 3.14, or 3.15 kernel to have later patches. Similarly, you will want at least btrfs-tools 3.12, or later if available. Note that 32bit btrfs send will not work with a 64bit kernel as of 3.13.
 
-== The Design of the Backup Solution ==
+== Available Backup Tools ==
 
-It uses BTRFS's snapshotting capability to atomically freeze changes to a subvolume, and then transfer these snapshots to a backup volume. The atomic freezing provided by BTRFS should allow transactionally operating systems such as database files and raw filesystem images to be repairable to a consistent state from a snapshot. When performing incremental backups, we will be working with two snapshots, one of them representing the time of the earlier backup, and the other representing the current backup. When the backup run completes, we can discard the earlier of the snapshots to prepare for the next incremental run.
+; btrfs-subvolume-backup [http://marc.merlins.org/perso/btrfs/post_2014-03-22_Btrfs-Tips_-Doing-Fast-Incremental-Backups-With-Btrfs-Send-and-Receive.html] by Marc MERLIN.
+: Script taking a snapshot and transferring it to another location via SSH. Keeps an configurable number of past snapshots
+
+; BTRBCK [https://github.com/ruediste1/btrbck#btrbck].
+: Backup tool with configurable snapshot retention (for example 1 per week for a month, one per month for a year), restore functionality, synchronization to and from other hosts
+
+== Doing it by hand, step by step ==
+When performing incremental backups, we will be working with two snapshots, one of them representing the time of the earlier backup, and the other representing the current backup. When the backup run completes, we can discard the earlier of the snapshots to prepare for the next incremental run.
 
 Assuming that /home is the BTRFS volume you wish to backup, and backups are to be stored on another BTRFS volume called /backup and directory /backup/home, the procedure goes as follows.
 
-== Using a script to keep track of backups and snapshots for you ==
-
-You can try btrfs-subvolume-backup [http://marc.merlins.org/perso/btrfs/post_2014-03-22_Btrfs-Tips_-Doing-Fast-Incremental-Backups-With-Btrfs-Send-and-Receive.html] by Marc MERLIN.
-
-== Doing it by hand, step by step ==
 === Initial Bootstrapping ===
 
 We will need to create a read-only snapshot of the volume that serves as the reference for the first backup. I will call this subvolume BACKUP. The subvolume is read-only because "btrfs send" requires read-only subvolumes to operate on. '''NB''': there is currently an issue that the snapshots to be used with "btrfs send" must be physically on the disk, or you may receive a "stale NFS file handle" error. This is accomplished by "sync" after the snapshot:

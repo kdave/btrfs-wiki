@@ -66,7 +66,7 @@ Terms in ''italics'' also appear in this glossary.
 : Command line tool in util-linux, and a syscall, that reserves space in the filesystem for a file, without actually writing any file data to the filesystem. First data write will turn the preallocated ''extent''s into regular ones. See <code>man 1 fallocate</code> and <code>man 2 fallocate</code> for more details.
 
 ; '''filefrag'''
-: A tool to show the number of extents in a file, and hence the amount of fragmentation in the file. It is usually part of the e2fsprogs package on most Linux distributions. While initially developed for the ext2 filesystem, it works on Btrfs as well. It uses the ''FIEMAP'' ioctl.
+: A tool to show the number of extents in a file, and hence the amount of fragmentation in the file. It is usually part of the e2fsprogs package on most Linux distributions. While initially developed for the ext2 filesystem, it works on Btrfs as well (but [http://thread.gmane.org/gmane.comp.file-systems.ocfs2.devel/8894/focus=8902 not really with compressed files]). It uses the ''FIEMAP'' ioctl.
 
 ; '''free space cache'''
 : Btrfs doesn't track free space, it only tracks allocated space. Free space is by definition any holes in the allocated space, but finding these holes is actually fairly I/O intensive. The free space cache stores a compressed representation of what is free. It is updated on every ''transaction'' commit.

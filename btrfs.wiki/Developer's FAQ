@@ -59,6 +59,8 @@ Reviews do take time and the patches land in various branches early after
 they're sent to the mailingslist for testing, but the reviews are always
 welcome.
 
+''Do'': collect the Reviewed-by tags for patches that get resent unchanged eg. within a larger patch series
+
 === Acked-by: ===
 
 A more lightweight form of ''Reviewed-by'', acknowledging that the patch is going
@@ -235,6 +237,22 @@ for userspace tools add '''btrfs-progs:'''
  --- a/fs/btrfs/volumes.c
  +++ b/fs/btrfs/volumes.c
  (rest of the patch)
+
+= Misc information and hints =
+
+This section collects random pieces of advice from mailinglist that are given to newcomers.
+
+== How to get started - development ==
+
+* Build and install the latest kernel from Linus's git repo.
+* Read and understand the user documentation ([[Main_Page#Guides_and_usage_information]]).
+* Create one or several btrfs filesystems with different configurations and learn how they work in userspace -- what are the features, what are the problems you see? Actually use at least one of the filesystems you created for real data in daily use (with backups)
+* Build the userspace tools from git
+* Pick up one of the userspace projects from [[Project_ideas#Userspace_tools_projects]] and implement that. If you pick the right one(s), you'll have to learn about some of the internal structures of the FS anyway. Compile and test your patch. If you're adding a new feature, write an automated xfstest for it as well. 
+* Get that patch accepted. This will probably involve a sequence of revisions to it, multiple versions over a period of several weeks or more, with a review process. You should also send your test to xfstests and get that accepted.
+* Do the above again, until you get used to the processes involved, and have demonstrated that you can work well with the other people in the subsystem, and are generally producing useful and sane code. It's all about trust -- can you be trusted to mostly do the right thing?
+* Use the documentation at [[Main_Page#Developer_documentation]], and the output of btrfs-debug-tree to understand the internal structure of the FS
+* Pick up one of the smaller, more self-contained ideas from the projects page [[Project_ideas]] (say, [[Project_ideas#Cancellable_operations]] or [[Project_ideas#Implement_new_FALLOC_FL_.2A_modes]]) and try to implement it. Again: build, write test code, test thoroughly, submit patch for review, modify as suggested by reviewers, and repeat as often as necessary.
 
 = References =
 

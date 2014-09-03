@@ -1,0 +1,56 @@
+'''if and only if''' the kernel oops in your logs has something like this in the middle of it, or you get "open ctree failed" on a newer kernel:
+
+ ? replay_one_dir_item+0xb5/0xb5 [btrfs]
+ ? walk_log_tree+0x9c/0x19d [btrfs]
+ ? btrfs_read_fs_root_no_radix+0x169/0x1a1 [btrfs]
+ ? btrfs_recover_log_trees+0x195/0x29c [btrfs]
+ ? replay_one_dir_item+0xb5/0xb5 [btrfs]
+ ? btree_read_extent_buffer_pages+0x76/0xbc [btrfs]
+ ? open_ctree+0xff6/0x132c [btrfs]
+
+Newer kernels output this instead:
+ BTRFS: failed to read log tree
+ BTRFS: open_ctree failed
+
+But things are more complicated, the oops on your screen may say RIP btrfs_num_copies, and the real log replay error will not be visible unless you have a serial console, or netconsole setup. See http://www.spinics.net/lists/linux-btrfs/msg21257.html
+
+If you have errors like this, then your log tree is probably corrupt, and removing it will allow you to mount the filesystem again. The common case where this happened has been fixed a long time ago, so it is unlikely that you will see this particular problem. You will lose the last few seconds of activity on the filesystem from before your original corruption (up to 30 seconds), but you will at least have a mountable FS. If you are not sure whether you have a situation that these instructions apply to, please ask on the mailing list or on IRC.
+
+You will need to build and run the btrfs-zero-log tool: get a [[Btrfs_source_repositories|recent copy of the user-space tools]], and build them:
+
+ $ make
+ $ make btrfs-zero-log
+
+(btrfs-zero-log is part of btrfs-progs in recent linux distributions)
+
+Then, run it as root, but BEFORE YOU DO THIS, PLEASE RUN btrfs-image in case some developers might need it
+  gandalfthegreat:~# btrfs-image -c 9 -t 8 /dev/mapper/root /var/tmp/fs_image 
+  gandalfthegreat:~# btrfs-zero-log /dev/mapper/root                                                        
+  Check tree block failed, want=4268204032, have=2075122916315869932                                        
+  Check tree block failed, want=4268204032, have=2075122916315869932                                        
+  Check tree block failed, want=4268204032, have=12746175583536274708                                       
+  Check tree block failed, want=4268204032, have=2075122916315869932                                        
+  Check tree block failed, want=4268204032, have=2075122916315869932                                        
+  read block failed check_tree_block                                                                        
+  gandalfthegreat:~# btrfs-zero-log /dev/mapper/root                                                        
+  gandalfthegreat:~#    
+
+(replacing /dev/mapper/root with whatever device(s) your FS resides on). Please Email the btrfs list, explain the problem, and offer your filesystem image to a developer.
+
+Now it is possible that you might see this instead:
+
+ legolas:~# btrfs-zero-log /dev/mapper/disk1
+ Check tree block failed, want=49500766208, have=8622613565695139001
+ Check tree block failed, want=49500766208, have=8622613565695139001
+ Check tree block failed, want=49500766208, have=10955809011958619003
+ Check tree block failed, want=49500766208, have=10955809011958619003
+ Check tree block failed, want=49500766208, have=10955809011958619003
+ read block failed check_tree_block
+ Couldn't setup log root tree
+ legolas:~#
+
+This means that btrfs-zero-log failed a precheck and didn't do the work.
+If you have a version of btrfs pre 3.15, you need to download the source and patch out the check.
+See:  http://www.spinics.net/lists/linux-btrfs/msg36714.html
+
+'''Running btrfs-zero-log on a filesystem with any other kind of mount problem will most likely not fix it, and may make recovering it harder. If in doubt, check with the developers on IRC or the mailing list first.'''

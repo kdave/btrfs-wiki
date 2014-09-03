@@ -77,7 +77,7 @@ Note that old (before 2012) btrfs-progs versions will probably fail some operati
 {{MountOption
 |name=inode_cache
 |appeared=3.0
-|desc=Enable free inode number caching. Not recommended to use unless files on your filesystem get assigned inode numbers that are approaching 2<sup>64</sup>. Normally, new files in each subvolume get assigned incrementally (plus one from the last time) and are not reused. The mount option turns on caching of the existing inode numbers and reuse of inode numbers of deleted files. 
+|desc=Enable free inode number caching. ''Not recommended to use'' unless files on your filesystem get assigned inode numbers that are approaching 2<sup>64</sup>. Normally, new files in each subvolume get assigned incrementally (plus one from the last time) and are not reused. The mount option turns on caching of the existing inode numbers and reuse of inode numbers of deleted files. 
 
 This option may slow down your system at first run, or after mounting without the option.
 }}

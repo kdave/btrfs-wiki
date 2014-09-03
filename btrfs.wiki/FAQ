@@ -75,7 +75,9 @@ If you've tried ''btrfs fi balance /mountpoint -dusage=5'', and it takes an abno
 
 == Are btrfs changes backported to stable kernel releases? ==
 
-The stable kernel releases do not receive regular btrfs backports unless it's a serious bugfix.
+Yes, the obviously critical fixes get to the latest stable kernel and sometimes get also applied to the long-term branches. Please note that there's yet no one appointed and submitting the patches is done on voluntary basis or when the maintainer(s) do that.
+
+Beware that apart from critical fixes, the longterm branches do not receive backports of less important fixes done by the upstream maintainers. You should ask your distro kernel maintainers to do that. A CC of the linux-btrfs mailinglist is a good idea when there are patches selected for a particular longterm kernel and requested for addition to stable trees.
 
 = Performance vs Correctness =
 

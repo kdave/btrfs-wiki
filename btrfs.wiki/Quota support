@@ -93,6 +93,27 @@ test/b                                  	0/966	10.04M	10.04M
 * Using <code>btrfs subvolume delete</code> will break qgroup unshared space usage.
 * After deleting a subvolume, you must manually delete the associated qgroup.
 
+== /usr/local/bin/btrfsQuota.sh ==
+<pre>
+#!/bin/bash
+
+[[ ! -d $1 ]] && { echo Please pass mountpoint as first argument >&2 ;
+exit 1 ; }
+
+while read x i x g x x l x p
+do
+    volName[i]=$p
+done < <(btrfs subvolume list $1)
+
+while read g r e
+do
+    [[ -z $name ]] && echo -e "subvol\tqgroup\ttotal\tunshared"
+    group=${g##*/}
+    [[ ! -z ${volName[group]} ]] && name=${volName[group]} || name='(unknown)'
+    echo $name $g `numfmt --to=iec $r` `numfmt --to=iec $e`
+done < <(btrfs qgroup show $1 | tail -n+3) | column -t
+</pre>
+
 == /usr/local/bin/btrfsQuota.py ==
 Note only tested on python 2.7
 <pre>

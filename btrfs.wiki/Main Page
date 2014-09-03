@@ -8,6 +8,8 @@ The Btrfs code base is under heavy development. Every effort is being made to ke
 
 For benchmarks, it's recommended to test the latest stable Linux version, and not any older. If possible, it's also recommendable to test the latest Linux development version. Also, it's recommended to test the [[Mount_options|different options]], f.e. different compression options.
 
+Newly added features may need a few releases to stabilize.
+
 If you have any bug, problems, performance issues or questions while using Btrfs, please email the [[Btrfs mailing list]] (no subscription required). Please report bugs also on [[Problem_FAQ#How_do_I_report_bugs_and_issues.3F|Bugzilla]].
 
 == Features ==
@@ -55,19 +57,22 @@ See also the [[Roadmap]] for a list of what features the main developers are cur
 
 == News ==
 
-<!--
--->
+'''btrfs-progs 3.16 (Aug 2014)'''
 
-'''Wiki update: manual pages (Jul 2014)'''
-* [[:Category:Manpage]] links to manual pages, generated from git sources
+''Linux v3.17 (highlights or user visible changes)''
+* fixed longstanding bug in qgroups accounting after snapshot deletion [https://git.kernel.org/linus/1152651a081720ef6a8c76bb7da676e8c900ac30]
+* updated (less inaccurate) ''df'' numbers [https://git.kernel.org/linus/ba7b6e62f420f5a8832bc161ab0c7ba767f65b3d]
 
-'''Linux v3.16 (highlights or user visible changes)'''
+'''Linux v3.16 (Aug 2014)'''
 * ''O_TMPFILE'' support [http://kernelnewbies.org/Linux_3.11#head-8be09d59438b31c2a724547838f234cb33c40357]
 * reworked qgroup accounting, to fix negative numbers after subvol deletion
 * SEARCH_TREE ioctl v2, extended for retrieving more data [http://www.spinics.net/lists/linux-btrfs/msg31213.html]
 * new balance filter ''limit'' for more finegrained balancing [http://www.spinics.net/lists/linux-btrfs/msg33872.html]
 * ioctl FS_INFO and it's sysfs counterpart export information about ''nodesize'', ''sectorsize'' and ''clone_alignment''
 * snapshots are protected during send
+
+'''Wiki update: manual pages (Jul 2014)'''
+* [[:Category:Manpage]] links to manual pages, generated from git sources
 
 '''Linux v3.15 (Jun 2014)'''
 * pile of ''send'' fixes (stability, speed)

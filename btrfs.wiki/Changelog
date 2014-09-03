@@ -18,17 +18,17 @@ Major features or significant feature enhancements by kernel version. For more i
 {{FeatureMerged
 |name=root backups
 |version=3.2
-|text=
+|text=Save a few previous versions of the most imporant tree roots at commit time, used by ''-o recovery''
 }}
 {{FeatureMerged
 |name=integrity checker
 |version=3.3
-|text=
+|text=Optional infrastructure to verify integrity of written metadata blocks
 }}
 {{FeatureMerged
 |name=backref walking
 |version=3.3
-|text=
+|text=Groundwork to allow tracking owner of blocks, used via ''inspect-internal''
 }}
 {{FeatureMerged
 |name=restriper
@@ -43,7 +43,7 @@ Major features or significant feature enhancements by kernel version. For more i
 {{FeatureMerged
 |name=error handling
 |version=3.4
-|text=
+|text=Generic infrastructure for graceful error handling (EIO)
 }}
 {{FeatureMerged
 |name=device statistics
@@ -123,16 +123,28 @@ Major features or significant feature enhancements by kernel version. For more i
 {{FeatureMerged
 |name=no-hole 
 |version=3.14
-|text=no extent representation for file holes (format change)
+|text=No extent representation for file holes (format change)
 }}
 {{FeatureMerged
 |name=feature bits in sysfs
 |version=3.14
 |text=/sys/fs/btrfs exports various bits about filesystem capabilities and feature support
 }}
+{{FeatureMerged
+|name=O_TMPFILE
+|version=3.16
+|text=Mode of open() to safely create a temporary file
+}}
+{{FeatureMerged
+|name=search ioctl v2
+|version=3.16
+|text=The extended SEARCH_TREE ioctl able to get more than a 4k data
+}}
 |}
 
 = By version (btrfs-progs) =
+
+== btrfs-progs 3.16 (Aug 2014) ==
 
 == btrfs-progs 3.14 (Apr 2014) ==
 * [https://www.kernel.org/pub/linux/kernel/people/mason/btrfs-progs/ tarballs]

@@ -56,16 +56,21 @@ Or, if you wish to recover the space used by the original Ext3/4 FS and make the
 
 == Before first use ==
 
-Suppos you're satisfied now and do not intend to rollback. Delete the saved subvolume:
+Suppose you're satisfied now and do not intend to rollback. Delete the saved subvolume:
 
  # on a mounted filesystem
  btrfs subvol delete ext2_saved
 
 Wait until all it's fully deleted, this happens on the background. You can check whether there's a ''DELETED'' subvolume in the listing of ''btrfs subvol list -d /mnt''. Now any logical relation to the original filesystem is removed.
 
-But still, the new filesystem inherits the block placement and file data fragmentation. It is highly recommended to do full defragmentation and full rebalance before first use. It's not required, but will have impact on performance.
+The new filesystem inherits the block placement and file data fragmentation. Due to this it is highly recommended to do full defragmentation and full rebalance before "production" use. It is not required for general operation but will impact performance. A notable caveat is that a balance can fail with "ENOSPC" if the defragment is skipped. This is usually due to large extents on ext being larger than the maximum size btrfs normally operates with (1 GB). A defrag of all large files will avoid this:
 
  btrfs fi defrag -r /mnt
+ btrfs balance start /mnt
+
+Alternative to defragment only files larger than 1 GB:
+
+ find /mnt -type f -size +1G -print -exec btrfs fi defrag {} \;
  btrfs balance start /mnt
 
 Please note, that the balance process can take very long, you may want to do it in smaller steps, eg. metadata only, then data. See [[Balance Filters]].

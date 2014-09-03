@@ -1,3 +1,6 @@
+{{Deprecated|The tool btrfsck functionality has been merged to 'btrfs check' command. See [[Manpage/btrfs-check]].}}
+{{Outdated|}}
+
 Check consistency of a btrfs filesystem, and optionally repair some types of breakage. Can only be run on an unmounted FS.
 
 Note that while this tool should be able to repair broken filesystems, it is still relatively new code, and has not seen widespread testing on a large range of real-life breakage. It is possible that it may cause additional damage in the process of repair.
@@ -8,10 +11,9 @@ In a nutshell, you should look at:
 * btrfs scrub to detect issues on live filesystems
 * look at btrfs detected errors in syslog (look at Marc's blog above on how to use sec.pl to do this)
 * mount -o ro,recovery to mount a filesystem with issues
-* btrfs-zero-log might help in specific cases. Go read [[Problem_FAQ#I_can.27t_mount_my_filesystem.2C_and_I_get_a_kernel_oops.21]]
+* btrfs-zero-log might help in specific cases. Go read [[Btrfs-zero-log]]
 * btrfs restore will help you copy data off a broken btrfs filesystem. See its page: [[Restore]]
 * btrfs check --repair, aka btrfsck is your last option if the ones above have not worked.
-
 
 == Usage ==
 
@@ -44,5 +46,3 @@ Note however that instead it could run for 24H or more on a filesystem of a few 
 FIXME: are those real problems or unfortunate real problems that easily happen btrfs filesystems?
 
 FIXME2: I'm also pretty sure these issues didn't show up in a scrub
-
-[[Category:Tools]]

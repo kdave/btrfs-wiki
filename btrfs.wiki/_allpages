@@ -9,6 +9,7 @@ Btrfs-convert
 Btrfs-debug-tree
 Btrfs-image
 Btrfs-show-blocks
+Btrfs-zero-log
 Btrfs design
 Btrfs mailing list
 Btrfs source repositories

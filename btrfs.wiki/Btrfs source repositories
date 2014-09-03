@@ -53,7 +53,19 @@ Josef Bacik maintains an "integration" branch of all the kernel patches  seen on
  git clone git://git.kernel.org/pub/scm/linux/kernel/git/josef/btrfs-next.git 
 [http://git.kernel.org/?p=linux/kernel/git/josef/btrfs-next.git;a=summary gitweb access]
 
-This is the code you want to test if you think you've found a bug or want to test the latest features.
+This is often the code you want to test if you think you've found a bug or want to test the latest features.
+Check the git log for the fs/btrfs to check which is up-to-date - in case one
+tree has fallen behind e.g.
+
+https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/log/fs/btrfs
+
+vs.
+
+https://git.kernel.org/cgit/linux/kernel/git/josef/btrfs-next.git/log/fs/btrfs
+
+vs.
+
+https://git.kernel.org/cgit/linux/kernel/git/mason/linux-btrfs.git/log/fs/btrfs (use the drop-down at the far top-right of this window to check the different branches which Chris maintains - the latest code is normally not on 'master').
 
 "Hello,
 

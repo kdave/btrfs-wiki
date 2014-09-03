@@ -14,7 +14,7 @@ Please add new things below, don't forget to add a comment on which version you 
 *** The nodatacow [[Mount_options|mount option]] may be of use here, with associated gotchas.
 ** On desktops this primarily affects application databases (including Firefox and Chromium profiles, GNOME Zeitgeist, Ubuntu Desktop Couch, Banshee, and Evolution's datastore.)
 *** Workarounds include manually defragmenting your home directory using btrfs fi defragment. Auto-defragment (mount option autodefrag) should solve this problem in 3.0.
-** Symptoms include btrfs-transacti and btrfs-endio-wri taking up a lot of CPU time (in spikes, possibly triggered by syncs). You can use filefrag to locate heavily fragmented files.
+** Symptoms include btrfs-transacti and btrfs-endio-wri taking up a lot of CPU time (in spikes, possibly triggered by syncs). You can use filefrag to locate heavily fragmented files (may not work correctly with compression).
 
 * On a multi device btrfs filesystem, mistakingly re-adding a block device that is already part of the btrfs fs with btrfs device add results in an error, and brings btrfs in an inconsistent state. In striping mode, this causes data loss and kernel oops. The btrfs userland tools need to do more checking to prevent these easy mistakes. (2.6.35, btrfs v0.19)
 * Raid5/6 support is not yet fully implemented. See [[RAID56]]

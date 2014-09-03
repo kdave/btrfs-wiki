@@ -236,9 +236,9 @@ The wrapping keys provided by the user/administrator can be changed at any time 
 
 === block devices 'btrvols' ===
 {{project
-|text=Allow block devices to be allocated from the filesystem. They take advantage of COW, snapshots, etc but can be formatted and used by other filesystems. This is similar to ZFS's zvols. See http://pthree.org/2012/12/21/zfs-administration-part-xiv-zvols/ for an idea.
- 
-}}
+|text='''Likely to be rejected: layering violation, can be replaced by scsi target backed by file'''
+
+Allow block devices to be allocated from the filesystem. They take advantage of COW, snapshots, etc but can be formatted and used by other filesystems. This is similar to ZFS's zvols. See http://pthree.org/2012/12/21/zfs-administration-part-xiv-zvols/ for an idea.}}
 
 === Make helper threads NUMA aware ===
 {{project
@@ -329,6 +329,21 @@ Intial work by Li Zefan.
 See also [http://www.bestbits.at/richacl/ RichACLs project site].
 }}
 
+=== Audit btrfs code in bootloaders ===
+{{project
+|text=The bootloaders do not share the code from linux source tree and usually lack support for new features or the checks that would at least warn that booting could fail, neither regularly backport fixes from linux. The consequences are obvious.
+
+The bootloaders in question:
+* grub2
+* SYSLINUX
+* LILO (maybe)
+
+Things to audit/fix:
+* bugfixes to code touching the core datastructures
+* check that new features like ''skinny-metadata'' or ''no-holes'' are handled properly, or
+* ... add warnings if the bootloader does not understand the incompat bits
+}}
+
 == Userspace tools projects ==
 
 Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
@@ -336,7 +351,8 @@ Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 === btrfs ===
 * show meaning of various error codes, eg. for the incompatibility bits
 * error messages need to be cleaned up: wording, spelling, consistent format, error codes where missing
-* merge functionality of ''btrfstune'', eg. under ''btrfs dev set-seed /dev/'' (discuss the command name though)
+* merge functionality of ''btrfstune''
+** for the reasons stated under [https://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg36259.html], the functionality should be implemented with the ''properties'' rather than a separate subcommand
 * audit code for use of backup superblocks and change it to read only the first unless told otherwise by a command-line option
 * write a ''mount.btrfs'' helper to scan devices on the fly (and use libblkid and libmount for that)
 * introduce subcommand ''debug'' and move there functionality from separate debugging utilities
