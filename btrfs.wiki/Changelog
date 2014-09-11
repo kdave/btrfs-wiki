@@ -145,6 +145,16 @@ Major features or significant feature enhancements by kernel version. For more i
 = By version (btrfs-progs) =
 
 == btrfs-progs 3.16 (Aug 2014) ==
+* mkfs: new option to specify UUID, drop experimental notice 
+* check: new option to verify quotas, reduced memory requirements, new option to print extent sharing 
+* restore: check length before decompression, more error handling, option to loop during restoring 
+* balance: new filter 'limit' 
+* recover: allow to read all sb copies 
+* btrfstune: new option to force dangerous changes 
+* receive: new option to limit number of errors 
+* show-super: skip unrecognized sb, add option to force 
+* debug-tree: print tree by id 
+* documentation updates
 
 == btrfs-progs 3.14 (Apr 2014) ==
 * [https://www.kernel.org/pub/linux/kernel/people/mason/btrfs-progs/ tarballs]
@@ -175,6 +185,14 @@ Major features or significant feature enhancements by kernel version. For more i
 * first release after 0.19 (2009/06) with a lot of changes
 
 = By version (linux kernel) =
+
+== v3.16 (Aug 2014) ==
+* ''O_TMPFILE'' support [http://kernelnewbies.org/Linux_3.11#head-8be09d59438b31c2a724547838f234cb33c40357]
+* reworked qgroup accounting, to fix negative numbers after subvol deletion
+* SEARCH_TREE ioctl v2, extended for retrieving more data [http://www.spinics.net/lists/linux-btrfs/msg31213.html]
+* new balance filter ''limit'' for more finegrained balancing [http://www.spinics.net/lists/linux-btrfs/msg33872.html]
+* ioctl FS_INFO and it's sysfs counterpart export information about ''nodesize'', ''sectorsize'' and ''clone_alignment''
+* snapshots are protected during send
 
 == v3.15 (Jun 2014) ==
 * pile of ''send'' fixes (stability, speed)

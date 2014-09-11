@@ -57,30 +57,30 @@ See also the [[Roadmap]] for a list of what features the main developers are cur
 
 == News ==
 
-'''btrfs-progs 3.16 (Aug 2014)'''
+'''Linux stable v3.16.2'''
+* fix for the infamous deadlock, update recommended
 
-''Linux v3.17 (highlights or user visible changes)''
+'''Linux v3.17 (highlights or user visible changes)'''
+* fix for the infamous deadlock [https://git.kernel.org/linus/9e0af23764344f7f1b68e4eefbe7dc865018b63d]
 * fixed longstanding bug in qgroups accounting after snapshot deletion [https://git.kernel.org/linus/1152651a081720ef6a8c76bb7da676e8c900ac30]
 * updated (less inaccurate) ''df'' numbers [https://git.kernel.org/linus/ba7b6e62f420f5a8832bc161ab0c7ba767f65b3d]
+* speedup for ''rename'' and ''truncate'', less strict flushes [https://git.kernel.org/linus/8d875f95da43c6a8f18f77869f2ef26e9594fecc]
+* updated and fixes to the ''seeding'' feature
 
-'''Linux v3.16 (Aug 2014)'''
-* ''O_TMPFILE'' support [http://kernelnewbies.org/Linux_3.11#head-8be09d59438b31c2a724547838f234cb33c40357]
-* reworked qgroup accounting, to fix negative numbers after subvol deletion
-* SEARCH_TREE ioctl v2, extended for retrieving more data [http://www.spinics.net/lists/linux-btrfs/msg31213.html]
-* new balance filter ''limit'' for more finegrained balancing [http://www.spinics.net/lists/linux-btrfs/msg33872.html]
-* ioctl FS_INFO and it's sysfs counterpart export information about ''nodesize'', ''sectorsize'' and ''clone_alignment''
-* snapshots are protected during send
+'''btrfs-progs 3.16 (Aug 2014)'''
+* mkfs: new option to specify UUID, drop experimental notice
+* check: new option to verify quotas, reduced memory requirements, new option to print extent sharing
+* restore: check length before decompression, more error handling, option to loop during restoring
+* balance: new filter 'limit'
+* recover: allow to read all sb copies
+* btrfstune: new option to force dangerous changes
+* receive: new option to limit number of errors
+* show-super: skip unrecognized sb, add option to force
+* debug-tree: print tree by id
+* documentation updates
 
 '''Wiki update: manual pages (Jul 2014)'''
 * [[:Category:Manpage]] links to manual pages, generated from git sources
-
-'''Linux v3.15 (Jun 2014)'''
-* pile of ''send'' fixes (stability, speed)
-* worker threads now use kernel workqueues
-
-'''btrfs-progs 3.14.2 (May 2014)'''
-* documentation is now written in asciidoc and there are manpages for each subcommand
-* misc bugfixes
 
 Read about past releases in the [[Changelog]]
 

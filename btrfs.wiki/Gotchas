@@ -4,6 +4,7 @@ Please add new things below, don't forget to add a comment on which version you 
 
 = Issues =
 
+* Versions from 3.15 up to 3.16.1 suffer from a deadlock that was observed during heavy rsync workloads with compression on, it's recommended to sue '''3.16.2''' and newer
 * There were problems found with the ''snapshot-aware defrag'' that has been turned off in the following kernels:
 ** '''3.10.31''', '''3.12.12''', '''3.13.4'''
 ** all newer than 3.14

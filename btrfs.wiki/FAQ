@@ -24,6 +24,8 @@ Failure to perform this can result in massive and possibly irrecoverable corrupt
 
 Free space is a tricky concept in Btrfs. This is especially apparent when running low on it. Read "Why is there so many ways to check the amount of free space" below for the blow-by-blow.
 
+You can look at the tips below, and you can also try [http://marc.merlins.org/perso/btrfs/post_2014-05-04_Fixing-Btrfs-Filesystem-Full-Problems.html Marc MERLIN's debugging filesystem full page]
+
 === if you're on 2.6.32 or older ===
 
 You should upgrade your kernel, '''right now'''. The error behaviour of Btrfs has significantly improved, such that you get a nice proper ENOSPC instead of an OOPS or worse. There may be backports of Btrfs eventually, but it currently relies on infrastructure and patches outside of the fs tree which make a backport trickier to manage without compromising the stability of your stable kernel.
