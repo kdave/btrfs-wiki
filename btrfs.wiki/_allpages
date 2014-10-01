@@ -1,5 +1,6 @@
 Autosnap
 Balance Filters
+Balance filters
 Bcp
 Btree Items
 Btrees
@@ -16,12 +17,10 @@ Btrfs source repositories
 Btrfsck
 Btrfstune
 Changelog
-Cleanup ideas
 Code documentation
 Compression
 Contributors
 Conversion from Ext3
-DELETE Btrfs.ko
 Data Structures
 Debug-tree
 Debugging Btrfs with GDB
@@ -72,7 +71,6 @@ Project ideas
 Quota support
 RAID56
 Restore
-Roadmap
 Seed-device
 Show-blocks
 SnapBtr

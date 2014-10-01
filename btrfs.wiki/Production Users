@@ -1,10 +1,11 @@
 (this page is very incomplete, please add to it)
 
 
-The following companies use or Btrfs in production:
+The following companies use Btrfs in production:
 * Facebook (testing in production as of 2014/04)
 * Jolla (smartphone)
 * Tripadvisor (mid term log storage)
+* [http://rockstor.com Rockstor] (BTRFS powered FOSS NAS solution)
 
 These companies are currently working on adding Btrfs to production products:
 * Netgear (ReadyNAS products)

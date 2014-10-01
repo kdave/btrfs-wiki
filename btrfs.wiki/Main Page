@@ -51,11 +51,18 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 * Hot data tracking and moving to faster devices (currently being pushed as a generic feature available through VFS)
 * In-band [[deduplication]] (happens during writes)
 
-'''Roadmap'''
-
-See also the [[Roadmap]] for a list of what features the main developers are currently working on.
-
 == News ==
+
+'''btrfs-progs 3.16.2 (Oct 2014)'''
+* a few fixes in ''fsck'' and ''image'' tools
+
+'''''Coming in coreutils 8.24'''''
+* ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13]
+
+'''btrfs-progs 3.16.1 (Sep 2014)'''
+* print GlobalReserve in ''fi df'' output
+* new option -R in ''subvol list''
+* [https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs new location of the tarballs]
 
 '''Linux stable v3.16.2'''
 * fix for the infamous deadlock, update recommended
@@ -66,18 +73,6 @@ See also the [[Roadmap]] for a list of what features the main developers are cur
 * updated (less inaccurate) ''df'' numbers [https://git.kernel.org/linus/ba7b6e62f420f5a8832bc161ab0c7ba767f65b3d]
 * speedup for ''rename'' and ''truncate'', less strict flushes [https://git.kernel.org/linus/8d875f95da43c6a8f18f77869f2ef26e9594fecc]
 * updated and fixes to the ''seeding'' feature
-
-'''btrfs-progs 3.16 (Aug 2014)'''
-* mkfs: new option to specify UUID, drop experimental notice
-* check: new option to verify quotas, reduced memory requirements, new option to print extent sharing
-* restore: check length before decompression, more error handling, option to loop during restoring
-* balance: new filter 'limit'
-* recover: allow to read all sb copies
-* btrfstune: new option to force dangerous changes
-* receive: new option to limit number of errors
-* show-super: skip unrecognized sb, add option to force
-* debug-tree: print tree by id
-* documentation updates
 
 '''Wiki update: manual pages (Jul 2014)'''
 * [[:Category:Manpage]] links to manual pages, generated from git sources
@@ -139,7 +134,8 @@ Links to Btrfs documentation of various Linux distributions:
 ** [http://en.wikipedia.org/wiki/Internet_Relay_Chat IRC] on freenode.net in the channel [irc://irc.freenode.net:6667/btrfs #btrfs]
 ** Reporting bugs: see [[Problem_FAQ#How_do_I_report_bugs_and_issues.3F | the Bugzilla FAQ]] for reporting and finding bugs. Quick tip: use product ''File System'' and component ''btrfs''.
 * [[Project ideas]]
-* [[Cleanup ideas]]
+* [[Project_ideas#Cleanup_projects|Cleanup ideas]]
+* [[Project_ideas#Userspace_tools_projects|Userspace tools projects]]
 
 === Using the built-in tools ===
 

@@ -144,6 +144,8 @@ Major features or significant feature enhancements by kernel version. For more i
 
 = By version (btrfs-progs) =
 
+Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
+
 == btrfs-progs 3.16 (Aug 2014) ==
 * mkfs: new option to specify UUID, drop experimental notice 
 * check: new option to verify quotas, reduced memory requirements, new option to print extent sharing 
@@ -156,8 +158,14 @@ Major features or significant feature enhancements by kernel version. For more i
 * debug-tree: print tree by id 
 * documentation updates
 
+== btrfs-progs 3.16.1 (Sep 2014) ==
+* print GlobalReserve in ''fi df'' output
+* new option -R in ''subvol list''
+* library version defines
+* static build is fixed
+* build without documentation is possible
+
 == btrfs-progs 3.14 (Apr 2014) ==
-* [https://www.kernel.org/pub/linux/kernel/people/mason/btrfs-progs/ tarballs]
 * fsck: fixes and enhancements to --init-extent-tree mode
 * fsck: chunk-recover updates
 * scrub: add force option -f
