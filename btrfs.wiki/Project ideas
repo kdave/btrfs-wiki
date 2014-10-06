@@ -344,6 +344,32 @@ Things to audit/fix:
 * ... add warnings if the bootloader does not understand the incompat bits
 }}
 
+=== Filesystem UUID change - on-line ===
+
+{{project
+|text=Allow to change the UUID of a filesystem at the mount time. The filesystem UUID is stored in all metadata blocks so it's necessary to rewrite all of them. Additionally, the device items also contain the filesystem UUID and need to be updated.
+
+The process goes in three phases. First the new UUID replaces the old one that is backed up somewhere. This also sets a temporary incompatibility bit that means that the filesystem now accepts two UUIDs from the metadata blocks.
+
+Second phase is to rewrite all metadata blocks. Scrub is used for that, ie. rewrite UUID of each block that still has the old one.
+
+Third phase is to drop the incompat bit after verification that the filesystem is fully converted.
+
+The intermediate state of "2 UUIDs" interacts with other feautres:
+* device scanning - we need to update the device-stored UUIDs as soon as possible, consistenly
+* seeding devices - the seeding devices do some UUID conversion magic, so the uuid= option will be probably forbidden here
+* drop the incompat bit - extend scrub with an option to drop the bit after a full scrub runs without problems
+* ''possibly others''
+}}
+
+=== Filesystem UUID change - off-line ===
+
+{{project
+|text=Change the filesystem UUID on a given filesystem image. This is easier than the on-line variant. Go through all the metadata blocks reachable from the superblock, verify and rewrite the UUID.
+
+A POC can be found here https://github.com/kdave/testunion/tree/master/uuid-rewrite .
+}}
+
 == Userspace tools projects ==
 
 Collection of ideas or small tasks for btrfsprogs or other relevant utilites.

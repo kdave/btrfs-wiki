@@ -53,6 +53,17 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 == News ==
 
+<!--
+(highlights or user visible changes)
+-->
+
+'''Linux v3.17 (Oct 2014)'''
+* fix for the infamous deadlock [https://git.kernel.org/linus/9e0af23764344f7f1b68e4eefbe7dc865018b63d]
+* fixed longstanding bug in qgroups accounting after snapshot deletion [https://git.kernel.org/linus/1152651a081720ef6a8c76bb7da676e8c900ac30]
+* updated (less inaccurate) ''df'' numbers [https://git.kernel.org/linus/ba7b6e62f420f5a8832bc161ab0c7ba767f65b3d]
+* speedup for ''rename'' and ''truncate'', less strict flushes [https://git.kernel.org/linus/8d875f95da43c6a8f18f77869f2ef26e9594fecc]
+* updated and fixes to the ''seeding'' feature
+
 '''btrfs-progs 3.16.2 (Oct 2014)'''
 * a few fixes in ''fsck'' and ''image'' tools
 
@@ -66,13 +77,6 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 '''Linux stable v3.16.2'''
 * fix for the infamous deadlock, update recommended
-
-'''Linux v3.17 (highlights or user visible changes)'''
-* fix for the infamous deadlock [https://git.kernel.org/linus/9e0af23764344f7f1b68e4eefbe7dc865018b63d]
-* fixed longstanding bug in qgroups accounting after snapshot deletion [https://git.kernel.org/linus/1152651a081720ef6a8c76bb7da676e8c900ac30]
-* updated (less inaccurate) ''df'' numbers [https://git.kernel.org/linus/ba7b6e62f420f5a8832bc161ab0c7ba767f65b3d]
-* speedup for ''rename'' and ''truncate'', less strict flushes [https://git.kernel.org/linus/8d875f95da43c6a8f18f77869f2ef26e9594fecc]
-* updated and fixes to the ''seeding'' feature
 
 '''Wiki update: manual pages (Jul 2014)'''
 * [[:Category:Manpage]] links to manual pages, generated from git sources
