@@ -430,7 +430,7 @@ Add more regression tests for the userspace tools.
 {{project
 |text=It would be nice to have a library for manipulating btrfs filesystem in a way that the ''btrfs'' tool does and make it available to other programs, or via language bindings.
 
-[[Deduplication|bedup]] has [https://github.com/g2p/bedup/blob/master/bedup/platform/btrfs.py a module] exposing some of the core btrfs functionality to Python.
+[[Deduplication|bedup]] has [https://github.com/g2p/bedup/blob/master/bedup/platform/btrfs.py a module] exposing some of the core btrfs functionality to Python. There is also a [https://hackage.haskell.org/package/btrfs btrfs library] for haskell.
 }}
 
 === Time slider ===

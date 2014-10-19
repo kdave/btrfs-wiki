@@ -4,7 +4,7 @@ Major features or significant feature enhancements by kernel version. For more i
 
 {| class="wikitable" border=1
 |-
-! Feature !! Version !! Description
+! Feature !! Version !! Description !! Notes
 {{FeatureMerged
 |name=scrub
 |version=3.0
@@ -39,6 +39,7 @@ Major features or significant feature enhancements by kernel version. For more i
 |name=big metadata blocks
 |version=3.4
 |text=Support for metadata blocks larger than page size
+|note=Default nodesize is 16k since btrfs-progs 3.12
 }}
 {{FeatureMerged
 |name=error handling
@@ -69,6 +70,7 @@ Major features or significant feature enhancements by kernel version. For more i
 |name=extrefs
 |version=3.7
 |text=Hardlink count limit is 64k
+|note=Default since btrfs-progs 3.12
 }}
 {{FeatureMerged
 |name=hole puching
@@ -101,9 +103,9 @@ Major features or significant feature enhancements by kernel version. For more i
 |text=Label editable on mounted filesystems
 }}
 {{FeatureMerged
-|name=skinny extents
+|name=skinny metadata
 |version=3.10
-|text=Reduced metadata size (format change)
+|text=Reduced metadata size (format change) of extents
 }}
 {{FeatureMerged
 |name=qgroup rescan

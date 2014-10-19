@@ -10,14 +10,14 @@ As for kernels up to 3.6 it's ZLIB.
 == What are the differences between compression methods? ==
 There's a speed/ratio trade-off:
 
-* ZLIB -- slower, higher compression ratio (uses zlib level 3 setting, you can see the zlib level difference between 1 and 6 https://code.google.com/p/lz4/ here).
+* ZLIB -- slower, higher compression ratio (uses zlib level 3 setting, you can see the zlib level difference between 1 and 6 in zlib sources).
 * LZO -- faster compression and decompression than zlib, worse compression ratio, designed to be fast
 
 The differences depend on the actual data set and cannot be expressed by a single number or recommendation. Do your own benchmarks. LZO seems to give satisfying results for general use.
 
 === Are there other compression methods supported? ===
 
-Currently no, there is a work in progress to add [http://code.google.com/p/lz4/ LZ4].  The difference is a plan to add also its ''high compression'' mode that is slow but achieves better compression ratio while the decompressor remains the same and the decompression speed is unaffected (see [http://fastcompression.blogspot.com/p/lz4.html here] and also the High Compression (HC) mode [https://code.google.com/p/lz4/ here]).
+Currently no, there is a work in progress to add [http://code.google.com/p/lz4/ LZ4].  The difference is a plan to add also its ''high compression'' mode that is slow but achieves better compression ratio while the decompressor remains the same and the decompression speed is unaffected (see [http://fastcompression.blogspot.com/p/lz4.html here] and also the High Compression (HC) mode [https://code.google.com/p/lz4/ here]).  It has not yet been accepted, however, see [https://btrfs.wiki.kernel.org/index.php/FAQ#Will_btrfs_support_LZ4.3F here].
 
 Snappy support (compresses slower than LZ0 but decompresses much faster) has also been [http://article.gmane.org/gmane.comp.file-systems.btrfs/15316 proposed].  Some work has been done toward adding lzma (very slow, high compression) support as well.  Current status unknown.
 
