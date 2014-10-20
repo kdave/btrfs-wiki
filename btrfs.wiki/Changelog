@@ -148,6 +148,14 @@ Major features or significant feature enhancements by kernel version. For more i
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
 
+== btrfs-progs 3.17 (Oct 2014) ==
+* ''check'': --init-csum-tree acutally does something useful, rebuilds the whole csum tree
+* /dev scanning for btrfs devices is gone
+* /proc/partitions scanning is gone, blkid is used exclusively
+* new subcommand ''subvolume sync''
+* ''filesystem df'': new options to set unit format
+* ''convert'': allow to copy label from the origin, or specify a new one
+
 == btrfs-progs 3.16 (Aug 2014) ==
 * mkfs: new option to specify UUID, drop experimental notice 
 * check: new option to verify quotas, reduced memory requirements, new option to print extent sharing 
@@ -166,6 +174,9 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 * library version defines
 * static build is fixed
 * build without documentation is possible
+
+=== btrfs-progs 3.16.2 (Oct 2014) ===
+* a few fixes in ''fsck'' and ''image'' tools
 
 == btrfs-progs 3.14 (Apr 2014) ==
 * fsck: fixes and enhancements to --init-extent-tree mode

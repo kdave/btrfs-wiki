@@ -57,6 +57,14 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 (highlights or user visible changes)
 -->
 
+'''btrfs-progs 3.17 (Oct 2014)'''
+* ''check'': --init-csum-tree acutally does something useful, rebuilds the whole csum tree
+* /dev scanning for btrfs devices is gone
+* /proc/partitions scanning is gone, blkid is used exclusively
+* new subcommand ''subvolume sync''
+* ''filesystem df'': new options to set unit format
+* ''convert'': allow to copy label from the origin, or specify a new one
+
 '''Linux v3.17 (Oct 2014)'''
 * fix for the infamous deadlock [https://git.kernel.org/linus/9e0af23764344f7f1b68e4eefbe7dc865018b63d]
 * fixed longstanding bug in qgroups accounting after snapshot deletion [https://git.kernel.org/linus/1152651a081720ef6a8c76bb7da676e8c900ac30]
@@ -64,16 +72,8 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 * speedup for ''rename'' and ''truncate'', less strict flushes [https://git.kernel.org/linus/8d875f95da43c6a8f18f77869f2ef26e9594fecc]
 * updated and fixes to the ''seeding'' feature
 
-'''btrfs-progs 3.16.2 (Oct 2014)'''
-* a few fixes in ''fsck'' and ''image'' tools
-
 '''''Coming in coreutils 8.24'''''
 * ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13]
-
-'''btrfs-progs 3.16.1 (Sep 2014)'''
-* print GlobalReserve in ''fi df'' output
-* new option -R in ''subvol list''
-* [https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs new location of the tarballs]
 
 '''Linux stable v3.16.2'''
 * fix for the infamous deadlock, update recommended
@@ -90,7 +90,7 @@ Read about past releases in the [[Changelog]]
 * '''Article:''' [http://lwn.net/Articles/577218/ Btrfs: Getting started] (LWN.net, 2013/12)
 * '''Article:''' [http://www.zdnet.com/btrfs-hands-on-an-extremely-cool-file-system-7000023734 Btrfs hands on: An extremely cool file system] (ZDNet, 2013/11)
 * '''Technical report:''' [http://domino.watson.ibm.com/library/cyberdig.nsf/1e4115aea78b6e7c85256b360066f0d4/9e29fdded06e5de785257c1d005e7e9e!OpenDocument Visualizating Block IO Workloads]. Section six shows a visual comparison of the IO patterns for BTRFS, XFS, and EXT4. Submitted to ACM Transactions on Storage, November 2013.
-* '''Paper:''' [http://dl.acm.org/citation.cfm?id=2501623 BTRFS: The Linux B-Tree Filesystem] describing the overall concepts and architecture, appeared in ACM Transactions on Storage, August 2013. Includes a detailed comparison with ZFS. There is a free ACM authorized link, from O. Rodeh's [http://researcher.watson.ibm.com/researcher/view_pubs.php?person=us-orodeh&t=1 publications] page. Otherwise, you need a subscription for the ACM library.
+* '''Paper:''' [http://dl.acm.org/citation.cfm?id=2501623 BTRFS: The Linux B-Tree Filesystem] describing the overall concepts and architecture, appeared in ACM Transactions on Storage, August 2013. Includes a detailed comparison with ZFS. There is a free ACM authorized link, from O. Rodeh's [https://sites.google.com/site/ohadrodehshomepage/research] page. Otherwise, you need a subscription for the ACM library.
 * '''Article:''' [http://www.howtoforge.com/a-beginners-guide-to-btrfs A Beginner's Guide To Btrfs] (2012-11-26)
 * '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/advanced-btrfs-1734952.html How I Use the Advanced Capabilities of Btrfs] by Margaret Bierman with Lenz Grimmer (2012-08-11)
 * '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/gettingstarted-btrfs-1695246.html How I Got Started with the Btrfs File System for Oracle Linux] by Margaret Bierman with Lenz Grimmer (2012-07-11)

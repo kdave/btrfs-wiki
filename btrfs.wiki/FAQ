@@ -446,7 +446,9 @@ We don't want to force people into 2.6.31 only, and so the newformat code is ava
 
 == Can I find out compression ratio of a file? ==
 
-Currently no. There's a patch https://patchwork.kernel.org/patch/117782/ adding the kernel part (ioctl). However, the size obtained by this ioctl is not exact and is rounded up to block size (4KB). The real amount of compressed bytes is not reported and recorded by the filesystem (only the block count) in it's structures. It is saved in the disk blocks but solely processed by the compression code.
+Currently no. There's a patchset http://thread.gmane.org/gmane.comp.file-systems.btrfs/37312 that extends the FIEMAP interface to return the physical length of an extent (ie. the compressed size). 
+
+The size obtained is not exact and is rounded up to block size (4KB). The real amount of compressed bytes is not reported and recorded by the filesystem (only the block count) in it's structures. It is saved in the disk blocks but solely processed by the compression code.
 
 == Can I change metadata block size without recreating the filesytem? ==
 
