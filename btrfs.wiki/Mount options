@@ -1,5 +1,9 @@
 Here is a list of the current mount options in btrfs, version they first appeared and an explanation of what they do.
 
+{{Warn|Most mount options apply to the '''whole filesystem''', and only the options for the '''first''' subvolume to be mounted will take effect. This is due to lack of implementation and may change in the future.}}
+
+This means that (for example) you can't set per-subvolume ''nodatacow'', ''nodatasum'', or ''compress'' using mount options. This should eventually be fixed, but it has proved to be difficult to implement correctly within the Linux VFS framework.
+
 == List of options ==
 
 {{MountOption
@@ -9,7 +13,7 @@ Here is a list of the current mount options in btrfs, version they first appeare
 {{MountOption
 |name=autodefrag
 |appeared=3.0
-|desc=Will detect random writes into existing files and kick off background defragging. It is well suited to bdb or sqlite databases, but not virtualization images or big databases (yet). Once the developers make sure it doesn't defrag files over and over again, they'll move this toward the default.
+|desc=Will detect random writes into existing files and kick off background defragging.
 }}
 {{MountOption
 |name=check_int

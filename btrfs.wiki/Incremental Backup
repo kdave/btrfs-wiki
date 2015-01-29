@@ -1,8 +1,8 @@
 BTRFS has some key capabilities which enable efficient backup solutions:
 ; Instant, Atomic COW Snapshots
-: Since the snapshots are atomic, when a snapshot is restored it looks for applications as if a power loss had occured. Thus it is possible to backup databases without stopping them beforehand.
+: Since the snapshots are atomic, when a snapshot is restored it appears to applications as if a power loss had occurred (and the filesystem has gone back to an earlier state). Thus it is possible to backup databases without stopping them beforehand.
 ; Incremental Snapshot Transfer 
-: Efficiently determining and streaming the differences between two snapshots if they are either snapshots of the same underlying subvolume, or have a parent-child relationship. This is far quicker than e.g. rsync could, especially on large file systems.
+: Efficiently determining and streaming the differences between two snapshots if they are either snapshots of the same underlying subvolume, or have a parent-child relationship. This is far quicker than e.g. rsync could, especially on large file systems. (For instance, rsync cannot be aware of mere metadata changes like filename, location etc but the FS itself is certainly aware of it.)
 
 This page presents some approaches to leverage these capabilites.
 
@@ -19,6 +19,9 @@ That said, many fixes have gone in btrfs send/receive and it is recommended to u
 
 ; BTRBCK [https://github.com/ruediste1/btrbck#btrbck].
 : Backup tool with configurable snapshot retention (for example 1 per week for a month, one per month for a year), restore functionality, synchronization to and from other hosts
+
+; btrfs-sxbackup [https://github.com/masc3d/btrfs-sxbackup] by Marco.
+: Another more featureful backup script in python that lets you initiate backups from a server
 
 == Doing it by hand, step by step ==
 When performing incremental backups, we will be working with two snapshots, one of them representing the time of the earlier backup, and the other representing the current backup. When the backup run completes, we can discard the earlier of the snapshots to prepare for the next incremental run.

@@ -1,4 +1,4 @@
-Btrfs supports transparent file compression. There are two algorithms available, [http://en.wikipedia.org/wiki/Zlib ZLIB] and [http://en.wikipedia.org/wiki/Lzo LZO].  Basically, compression is on a file by file basis.  You can have a single btrfs mount point that has some files that are uncompressed, some that are compressed with LZO, some with ZLIB, for instance (though you may not *want* it that way, it is supported).
+Btrfs supports transparent file compression. There are two algorithms available, [http://en.wikipedia.org/wiki/Zlib ZLIB] and [http://en.wikipedia.org/wiki/Lzo LZO].  Basically, compression is on a file by file basis.  You can have a single btrfs mount point that has some files that are uncompressed, some that are compressed with LZO, some with ZLIB, for instance (though you may not '''want''' it that way, it is supported).
 
 = Compression FAQ =
 == How do I enable compression? ==
@@ -61,6 +61,8 @@ Compression does not work with DIO, does work with COW and does not work for NOC
 Yes. The compression processes ranges of a file of maximum size 128 KiB and compresses each 4 KiB (or page-sized) block separately. Accessing a byte in the middle of the given 128 KiB range requires to decompress the whole range. This is not optimal and is subject to optimizations and further development.
 == What happens to incompressible files? ==
 There is a simple decision logic: if the first portion of data being compressed is not smaller than the original, the compression of the file is disabled -- unless the filesystem is mounted with ''compress-force''. In that case it'll be compressed always regardless of the compressibility of the file. This is not optimal and subject to optimizations and further development.
+
+This means that many times, even if you have compression enabled, if the first portion of the file doesn't compress well, but the rest *does* it still won't compress the rest.  Recommend using ''compress-force'' if you really want compression enabled on a mounted filesystem, though if you have many differing types files, then just ''compress'' might work well for you.
 
 = New and unanswered questions =
 

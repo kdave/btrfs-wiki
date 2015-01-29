@@ -12,7 +12,7 @@ An ioctl dedicated to batch deduplication was merged in Linux 3.12.  It brings i
 
 == duperemove ==
 
-From the [https://github.com/markfasheh/duperemove/blob/master/README README] for [https://github.com/markfasheh/duperemove duperemove]:
+From the [https://github.com/markfasheh/duperemove/blob/master/README.md README] for [https://github.com/markfasheh/duperemove duperemove]:
 
 <blockquote>
 Duperemove is a simple tool for finding duplicated extents and

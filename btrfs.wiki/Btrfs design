@@ -11,7 +11,7 @@ The Btrfs btree provides a generic facility to store a variety of data types. In
  struct btrfs_header {
      u8 csum[32];
      u8 fsid[16];
-     __le64 blocknr;
+     __le64 bytenr;
      __le64 flags;
  
      u8 chunk_tree_uid[16];

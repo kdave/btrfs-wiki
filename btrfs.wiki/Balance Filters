@@ -39,10 +39,10 @@ Profile names, used in '''profiles''' and '''convert''' are one of: '''raid0''',
 This is explained in more details on [http://marc.merlins.org/perso/btrfs/post_2014-05-04_Fixing-Btrfs-Filesystem-Full-Problems.html Marc's Blog on Fixing Btrfs Filesystem Full Problems], but basically there are times when btrfs will need rebalancing to fix issues with chunks being misbalanced.
 
 Keys points:
-* If you are getting out of space errors due to metadata being full, try 
+* If you are getting out of space errors due to metadata being full, before 3.18 (where it's now automatic), you can try this:
  btrfs balance start -v -dusage=0 /mnt/btrfs
 
-* If your data chunks are misbalanced, look at how much space is really used in percentage and feed that to -dusage, asking btrfs to rebalance all chunks that are not at that threshold (bigger number means more work):
+* If your data chunks are misbalanced, look at how much space is really used in percentage and you can feed that to -dusage in smaller increments starting from 10. This will ask btrfs to rebalance all chunks that are not at that threshold (bigger number means more work). Rebalancing means chunks under that usage threshold will have their data moved to other chunks so that they can be freed up and made available for new allocations (fixing your filesystem full problem):
  btrfs balance start -dusage=55 /mnt/btrfs
 
 == Other Examples ==

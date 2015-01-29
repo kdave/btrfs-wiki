@@ -197,6 +197,8 @@ There are more places when a check whether the filesystem is being unmounted wil
 
 === Swap file support ===
 {{project
+|who=Omar Sandoval
+|patch=patch in development
 |text=Implement swapfile support on top of swap-over-nfs infrastructure that has been merged in 3.7. Use the exported an API to manage the extents.
 
 There is a patchset (swap-over-nfs) which enhances the swapfile API and btrfs could build swap support on top of the infrastructure. The patchset has been merged into 3.6.
@@ -370,6 +372,15 @@ The intermediate state of "2 UUIDs" interacts with other feautres:
 A POC can be found here https://github.com/kdave/testunion/tree/master/uuid-rewrite .
 }}
 
+=== Implement new RENAME_* modes ===
+
+{{project
+|text=There are new modes of ''rename'' syscall.
+
+* RENAME_EXCHANGE
+* RENAME_WHITEOUT
+}}
+
 == Userspace tools projects ==
 
 Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
@@ -395,6 +406,8 @@ Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 ** start with the easy ones that are not in the code shared with kernel
 ** similar to what's done in kernel code, but beware of differences
 * scrub status: print percentage completed (use get_df for total size)
+* allow to undelete a subvolume that is still left intact on the device
+** constraints: on an unmounted filesystem, drop key is 0, must find a free directory/name
 
 === btrfs-restore ===
 * an option to skip paths by pattern (inverse to [[Restore#How to Run|--path-regex]]) and/or interactive mode asking to add inclusion and exclusion patterns ([https://bugzilla.kernel.org/show_bug.cgi?id=66911 a feature request in Bugzilla], [[Talk:Restore#How to exclude some paths matching a pattern|a detailed description of the idea at this wiki]])
@@ -404,7 +417,6 @@ Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 * optimize data structures and decrease memory consumption on large filesystems
 
 === btrfs-convert ===
-* [[https://patchwork.kernel.org/patch/1527891/ patch]] report progress
 * [[http://comments.gmane.org/gmane.comp.file-systems.btrfs/15750 patch]] add option to transfer label from the original filesystem
 * [[http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg22475.html draft]] allow to set leafsize/nodesize of the new filesystem (like mkfs)
 * pre-create a subvolume and put there contents of the root instead of filling the toplevel subvolume
@@ -414,7 +426,7 @@ Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 === mkfs.btrfs ===
 
 * pre-create a subvolume and put there contents of ''--rootdir'' instead of filling the toplevel subvolume
-* give nicer overview of the created filesystem (block/node/fs sizes, raid profiles, features)
+* '''(claimed)''' give nicer overview of the created filesystem (block/node/fs sizes, raid profiles, features)
 * enable quotas during mkfs
 * allow to compress the files with ''--rootdir'' option
 
@@ -455,6 +467,8 @@ This is a short collection of possible cleanups, that would make the code easier
 
 {{project
 |text=Lots of functions get a root passed, but only need the fs_info part of it. This is confusing, as it is unclear if a specific root is needed or if any root will do.
+|who=Daniel Dressler
+|patch=Patches in flight
 }}
 
 === Helpers for tree enumeration ===
