@@ -56,24 +56,19 @@ It may show unallocated space if you're using raid1 with two drives of different
 
  $ btrfs fi df /mountpoint
 
-will probably report available space in both metadata and data. The problem here is that one particular 256MiB or 1GiB block is full, and wants to allocate another whole block. The easy fix is to run, as root:
+will probably report available space in both metadata and data. If metadata is "close" to full (within 512 MiB), and data has more than 1 GiB spare, then you can reclaim some of the data allocation with:
 
  # btrfs fi balance /mountpoint -dusage=5
 
 This may take a while (although the system is otherwise usable during this time), but when completed, you should be able to use most of the remaining space. We know this isn't ideal, and there are plans to improve the behavior. Running close to empty is rarely the ideal case, but we can get far closer to full than we do.
 
-In a more time-critical situation, you can reclaim space by clobbering a file via 
+If the above command doesn't move any block groups, you should increase the number from 5 to 10. Then 20, 50 and 80. You can stop once it has freed up some data allocation. For more information on balance filters, see [[Balance_filters]]
+
+Very occasionally, it's not possible to run a balance because it runs out of space on the balance. If this happens, the first thing you should be looking to do is upgrade to the latest kernel. If that still doesn't work, then you may be able to delete a large file (and some of its metadata) in a low-overhead way with:
 
  $ true &gt; /path/to/file
 
-This will delete the contents, allowing the space to be reclaimed, but without requiring a metadata allocation. Get out of the tight spot, and then balance as above.
-
-If the echo does not work, mount with the [[mount options|'nodatacow' option]], and try again (tried with [[Ubuntu_support#Ubuntu Linux 12.04 (Precise Pangolin)|3.2.20 kernel for Ubuntu Precise)]]. The reason behind that is that in some case the file is already snapshotted in a no obvious way (like a file of a converted ext4 filesystem). Using 'nodatacow' you are sure to not allocate new metadata when the file is overwritten.
-
-Significant improvements in the way that btrfs handles ENOSPC are incorporated in most new kernel releases, so you should also upgrade to the latest kernel if you are not already using it.
-
-* Note:
-If you've tried ''btrfs fi balance /mountpoint -dusage=5'', and it takes an abnormal amount of time (normal time is 20 hours for 1 TB) it may never end, if you try the [[mount options|'nodatacow' option]] it also does not work, you have to use the mount with [[mount options|'skip_balance' option]] and  [[mount options|'nodatacow' option]], after that you should try te method described before.
+This will delete the contents, allowing the space to be reclaimed. This may get you out of the tight spot, and you can then then balance as above.
 
 == Are btrfs changes backported to stable kernel releases? ==
 
@@ -305,51 +300,94 @@ The folder is a normal btrfs subvolume and you can delete it with the command
 
  btrfs subvolume delete ''/path/to/btrfs/ext2_saved''
 
-== Why does df show incorrect free space for my RAID volume? ==
+== How much free space do I have? ==
 
-== Aaargh! My filesystem is full, and I've put almost nothing into it! ==
+== ''or'' My filesystem is full, and I've put almost nothing into it! ==
 
-== Why are there so many ways to check the amount of free space? ==
+Free space in Btrfs is a tricky concept from a traditional viewpoint, owing partly to the features it provides and partly to the difficulty in making too many assumptions about the exact information you need to know at the time.
 
-Free space in Btrfs is a tricky concept from a traditional viewpoint, owing partly to the features it provides and partly to the difficulty in making too many assumptions about the exact information you need to know at the time. We will eventually figure out a more intuitive solution.
-
-To understand the different ways that btrfs's tools report filesystem usage and free space, you need to know how it allocates and uses space.
-
-=== Raw disk usage ===
+=== Understanding free space, using the original tools ===
 
 Btrfs starts with a pool of raw storage. This is what you see when you run <code>btrfs fi show</code>:
 
- $ sudo btrfs fi show /dev/sda1
+ $ sudo btrfs fi show
  Label: none  uuid: 12345678-1234-5678-1234-1234567890ab
  	Total devices 2 FS bytes used 304.48GB
  	devid    1 size 427.24GB used 197.01GB path /dev/sda1
  	devid    2 size 465.76GB used 197.01GB path /dev/sdc1
 
-The "devid" lines show the total raw bytes available and allocated on each disk, whether containing redundant data or not. As the filesystem needs space for data or metadata, it allocates chunks of raw storage from the disks, typically 1GB (data) and 256MB (metadata) at a time. This allocation of data is known as a <em>block group</em>.
-
-The way that the above allocation occurs depends on the RAID/replication in use, and the type of information it is attempting to store:
-* single - data usage matches the raw block group usage on a single device (data = raw; 1GB of data requires 1GB of disk)
-* DUP - data is duplicated across a single disk, mostly used for metadata (data * 2 = raw; 1GB of data requires 2GB of disk)
-* RAID-1 - data usage will match with two equal chunks on two different devices (data * 2 = raw; 1GB of data requires 2GB of disk)
-* RAID-10 - as with RAID-1 however will require four devices (data * 2 = raw; 1GB of data requires 2GB of disk)
-* RAID-0 - data usage matches the raw data usage on multiple devices (data = raw; 1GB of data requires 1GB of disk)
-* RAID-5 - similar to RAID-0 but with one extra raw block reserved for parity (where you have <em>n</em> disks: data * n = raw * (n-1) ; 6 disks, 5GB of data requires 6GB of disk)
-* RAID-6 - as with RAID-5 except with two blocks reserved for "parity" (where you have <em>n</em> disks: data * n = raw * (n-2) ; 8 disks, 6 GB of data requires 8GB of disk)
-
-In the above example 304.48GB of storage has been used for data and metadata within the filesystem, however sda1 and sdc1 each have 197.01GB of "raw" disk allocated. Due to the differing replication schemes (single/DUP/RAID-x) above and that storage is often allocated but unused, these two numbers will always have a discrepancy, in this case 304.48GB vs 2x 197.01GB (384.02GB).
-
-=== Actual data ===
-
-When allocating new block groups, for example with a new empty btrfs file system using RAID-1 for data, it will allocate two chunks of 1GiB each, which between them have 1GiB of storage capacity. You will see 2GiB of raw space used in "btrfs fi show", 1GiB from each of two devices. You will also see 1GiB of free space appear in "btrfs fi df" as "Data, RAID1". As you write files to it, that 1GiB will get used up at the rate you'd expect (i.e., write 1MiB to it, and 1MiB gets used -- in "btrfs fi df" output). When that 1GiB is used up, another 1GiB is allocated and used.
-
-The total space allocated from the raw pool is shown with <code>btrfs fi show</code>. If you want to see the types and quantities of space allocated, and what they can store, the command is <code>btrfs fi df &lt;mountpoint&gt;</code>:
+The filesystem automatically allocates space out of the pool as it needs it. In this case, it has allocated 394.02 GiB of space (197.01+197.01), out of a total of 893.00 GiB (427.24+465.76) across two devices. The allocation is simply setting aside a region of a disk for some purpose (e.g. "data will be stored in this region"). The output from <code>btrfs fi show</code>, however, doesn't tell the whole story. The <code>btrfs fi show</code> output only shows how much has been '''allocated''' out of the total available space. In order to see ''how'' that allocation is used, and how much of it contains useful data, you also need <code>btrfs fi df</code>:
 
  $ btrfs fi df /
- Metadata: total=18.00GB, used=6.10GB
- Data: total=358.00GB, used=298.37GB
- System: total=12.00MB, used=40.00KB
+ Metadata, single: total=18.00GB, used=6.10GB
+ Data, single: total=376.00GB, used=298.37GB
+ System, single: total=12.00MB, used=40.00KB
 
-This shows how much data has been allocated for each data type and replication type, and how much has been used. The values shown are <em>data</em> rather than <em>raw bytes</em>, so if you're using RAID-1 or RAID-10, the amount of raw storage used is double the values you can see here.
+Note that the "total" values here add up to the "used" values in btrfs fi show. The "used" values here tell you how much useful information is stored. The rest is free space available for data (or metadata).
+
+So, in this case, there is 77.63 GiB of space (376-298.37) for data allocated but unused, and a further 498.98 GiB (427.24+465.76-197.01-197.01) unallocated and available for further use. Some of the unallocated space may be used for metadata as the FS grows in size.
+
+The interpretation is slightly more complicated with RAID filesystems. With a RAID filesystem, <code>btrfs fi show</code> still shows the raw disk space being allocated, but <code>btrfs fi df</code> shows the ''space available for files'', so it takes account of the extra space needed by RAID. Here's a slightly more complex example:
+
+ $ sudo btrfs fi show
+ Label: none  uuid: b7c23711-6b9e-46a8-b451-4b3f79c7bc46
+ 	Total devices 2 FS bytes used 14.67GiB
+ 	devid    1 size 40.00GiB used 16.01GiB path /dev/sdc1
+ 	devid    2 size 40.00GiB used 16.01GiB path /dev/sdd1
+
+ $ sudo btrfs fi df /mnt
+ Data, RAID1: total=15.00GiB, used=14.65GiB
+ System, RAID1: total=8.00MiB, used=16.00KiB
+ Metadata, RAID1: total=1.00GiB, used=15.59MiB
+ GlobalReserve, single: total=16.00MiB, used=0.00
+
+Here, we can see that 32.02 GiB of space has been allocated out of the 80 GiB available. The <code>btrfs fi df</code> output tells us that each of Data, Metadata and System have RAID-1 allocation. Now, note that the sum of the "total" values here is much smaller than the allocated space reported by <code>btrfs fi show</code>. This is because RAID-1 stores two copies of every byte written to it, so to store the 14.65 GiB of data in this filesystem, the 15 GiB of data allocation actually takes up 30 GiB of space on the disks. Taking account of this, we find that the total allocation is: (15.00 + 0.008 + 1.00) * 2, which is 32.02 GiB. The GlobalReserve can be ignored in this calculation.
+
+Depending on the RAID level you are using, the "correction" factor will be different:
+
+ * single and RAID-0 have no correction
+ * DUP, RAID-1 and RAID-10 store two copies, and need to have the values from <code>btrfs fi df</code> doubled
+ * RAID-5 uses one device for parity, so <code>btrfs fi df</code> should be multiplied by n/(n-1) for an n-device filesystem
+ * RAID-6 uses two devices for parity, so <code>btrfs fi df</code> should be multiplied by n/(n-2) for an n-device filesystem
+
+(Note that the number of devices in use may vary on filesystems with unequal devices, so the values for RAID-5 and RAID-6 may not be correct in that case).
+
+=== Understanding free space, using the new tools ===
+
+An all-in-one tool for reporting on free space is available in btrfs-progs from 3.17 onwards. This is <code>btrfs fi usage</code>:
+
+ $ sudo btrfs fi usage /mnt
+ Overall:
+    Device size:		  80.00GiB
+    Device allocated:		  32.02GiB
+    Device unallocated:		  47.98GiB
+    Used:			  29.33GiB
+    Free (estimated):		  24.34GiB	(min: 24.34GiB)
+    Data ratio:			      2.00
+    Metadata ratio:		      2.00
+    Global reserve:		  16.00MiB	(used: 0.00B)
+ 
+ Data,RAID1: Size:15.00GiB, Used:14.65GiB
+   /dev/sdc1 	  15.00GiB
+   /dev/sdd1 	  15.00GiB
+ 
+ Metadata,RAID1: Size:1.00GiB, Used:15.59MiB
+   /dev/sdc1 	   1.00GiB
+   /dev/sdd1 	   1.00GiB
+ 
+ System,RAID1: Size:8.00MiB, Used:16.00KiB
+   /dev/sdc1 	   8.00MiB
+   /dev/sdd1 	   8.00MiB
+ 
+ Unallocated:
+   /dev/sdc1 	  23.99GiB
+   /dev/sdd1 	  23.99GiB
+
+This is showing the space usage for the same filesystem at the end of the previous section, with two 40 GiB devices. The "Overall" section shows aggregate information for the whole filesystem: There are 80 GiB of raw storage in total, with 32.02 GiB allocated, and 29.33 GiB of that allocation used. The "data ratio" and "metadata ratio" values are the proprtion of raw disk space that is used for each byte of data written. For a RAID-1 or RAID-10 filesystem, this should be 2.0; for RAID-5 or RAID-6, this should be somewhere between 1.0 and 1.5. In the example here, the value of 2.0 for data indicates that the 29.34 GiB of used space is holding 14.67 GiB of actual data (29.34 / 2.0).
+
+The "free" value is an estimate of the amount of data that can still be written to this FS, based on the current usage profile. The "min" value is the ''minimum'' amount of data that you can expect to be able to get onto the filesystem.
+
+Below the "overall" section, information is shown for each of the types type of allocation, summarised and then broken down by device. In this section, you are seeing the values after the data or metadata ratio is accounted for, so we can see the 14.65 GiB of actual data used, and the 15 GiB of allocated space it lives in. (The small discrepancy with the value we worked out previously can be accounted for by rounding errors).
 
 == Why is free space so complicated? ==
 

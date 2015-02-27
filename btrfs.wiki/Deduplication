@@ -2,14 +2,6 @@
 
 Out of band / batch deduplication is deduplication done outside of the write path.  We've sometimes called it [http://www.ssrc.ucsc.edu/pub/jones-ssrctr-11-03.html offline] deduplication, but that can confuse people: btrfs dedup involves the kernel and always happens on ''mounted'' filesystems. To use out-of-band deduplication, you run a tool which searches your filesystem for identical blocks, and then deduplicates them.
 
-== bedup ==
-
-'''[https://github.com/g2p/bedup bedup]''' implements incremental whole-file batch deduplication for Btrfs.
-
-bedup supports mainline kernels (Linux 3.3 is required by the file locking implementation, 3.6 is required for cross-subvolume operation), using the clone ioctl (which exposes Btrfs's copy-on-write functionality).
-
-An ioctl dedicated to batch deduplication was merged in Linux 3.12.  It brings in-kernel locking (btrfs guarantees that the deduplicated data is identical without the need for outside locks), better support for read-only snapshots, and retains the features and much of the implementation of the clone ioctl.  There is an experimental [https://github.com/g2p/bedup/branches bedup branch] using the new ioctl.
-
 == duperemove ==
 
 From the [https://github.com/markfasheh/duperemove/blob/master/README.md README] for [https://github.com/markfasheh/duperemove duperemove]:
@@ -24,6 +16,17 @@ extents for deduplication using the btrfs-extent-same ioctl.
 </blockquote>
 
 This tool finds and lists duplicate extents, and optionally will submit the duplicates to the kernel for deduplication.
+
+
+== bedup ==
+
+{{warn | bedup is unmaintained, and does not use the safe deduplication ioctl. Use duperemove instead.}}
+
+'''[https://github.com/g2p/bedup bedup]''' implements incremental whole-file batch deduplication for Btrfs.
+
+bedup supports mainline kernels (Linux 3.3 is required by the file locking implementation, 3.6 is required for cross-subvolume operation), using the clone ioctl (which exposes Btrfs's copy-on-write functionality).
+
+An ioctl dedicated to batch deduplication was merged in Linux 3.12.  It brings in-kernel locking (btrfs guarantees that the deduplicated data is identical without the need for outside locks), better support for read-only snapshots, and retains the features and much of the implementation of the clone ioctl.  There is an experimental [https://github.com/g2p/bedup/branches bedup branch] using the new ioctl.
 
 = Inband =
 

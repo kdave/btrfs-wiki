@@ -18,12 +18,12 @@ This means that (for example) you can't set per-subvolume ''nodatacow'', ''nodat
 {{MountOption
 |name=check_int
 |appeared=3.3
-|desc=Switch on integrity checker for metadata (if compiled in) '''Note: this is a debugging-only option, and will slow down your filesystem massively.'''
+|desc=Switch on integrity checker for metadata (if compiled in). This is not the same as checksum verification, which is always done. '''Note: this is a debugging-only option, and will slow down your filesystem massively.'''
 }}
 {{MountOption
 |name=check_int_data
 |appeared=3.3
-|desc=Switch on integrity checker for data and metadata (if compiled in) '''Note: this is a debugging-only option, and will slow down your filesystem massively.'''
+|desc=Switch on integrity checker for data and metadata (if compiled in). This is not the same as checksum verification, which is always done. '''Note: this is a debugging-only option, and will slow down your filesystem massively.'''
 }}
 {{MountOption
 |name=check_int_print_mask=''number''

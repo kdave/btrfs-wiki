@@ -54,8 +54,11 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 == News ==
 
 <!--
-(highlights or user visible changes)
+'''Linux v3.19 (highlights or user visible changes)'''
 -->
+
+'''Linux v3.19 (Feb 2015)'''
+* raid56 supports scrub and device replace
 
 '''btrfs-progs 3.18.2 (Jan 2015)'''
 * qgroup show: print human readable sizes, options to say otherwise
@@ -67,8 +70,6 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 * backtrace support is back
 * getopt cleanups
 * doc and help updates
-
-'''Linux v3.18 (Dec 2014)'''
 
 '''''Coming in coreutils 8.24'''''
 * ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13]
