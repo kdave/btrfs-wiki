@@ -149,6 +149,33 @@ Major features or significant feature enhancements by kernel version. For more i
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
 
+== btrfs-progs 3.19 (Mar 2015)==
+
+* build converted to autotools
+* btrfs-image
+** restore can now run in parallel threads
+** fixed restore of multiple image from multiple devices onto a single dev
+** introduced metadump v2
+* check: make --init-csum-tree and --init-extent-tree work together
+* find-new: option to search through all metadata even if a root was already found
+* convert: show progress by default, can be turned off
+* corrupt-block: option to work on a specific root
+* bash completion script for all subcommands
+
+=== btrfs-progs 3.19.1 (Mar 2015) ===
+* convert:
+** new option to specify metadata block size
+** --no-progress actually works
+* restore: properly handle the page boundary corner case
+* build fixes:
+** missing macro from public header, BTRFS_BUILD_VERSION
+** wrong handling of --enable-convert
+* fi usage: reports correct space for degraded mounts
+* other:
+** mkfs: help string updates
+** completion: added 'usage' subcommands
+** cleanups in qgroup code, preparatory work
+
 == btrfs-progs 3.18 (Dec 2014) ==
 
 * mkfs - skinny-metadata feature is now on by default, first introduced in kernel 3.10
@@ -242,12 +269,12 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 * mkfs: discard phase is interruptible
 * documentation updates
 
-'''btrfs-progs 3.14.1 (Apr 2014)'''
+=== btrfs-progs 3.14.1 (Apr 2014) ===
 * properties: fix handling of option -t
 * restore: fix reading of compressed extents
 * minor code and doc updates
 
-'''btrfs-progs 3.14.2 (May 2014)'''
+=== btrfs-progs 3.14.2 (May 2014) ===
 * documentation is now written in asciidoc and there are manpages for each subcommand
 * misc bugfixes
 

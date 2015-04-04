@@ -31,6 +31,14 @@ The "Tree(s)" column indicates which trees items of that type can appear in, and
 | inode number of parent
 |
 |-
+| BTRFS_INODE_EXTREF_KEY
+| 13
+| struct btrfs_inode_extref
+|
+| inode number
+| crc32c hash of filename, using inode number of parent as seed
+| Used if the regarding inode_ref array ran out of space. ''Requires the EXTENDED_IREF feature.''
+|-
 | BTRFS_XATTR_ITEM_KEY
 | 24
 |

@@ -2,6 +2,8 @@
 
 Please '''report bugs on [https://bugzilla.kernel.org/ Bugzilla on kernel.org]''' (requires [https://bugzilla.kernel.org/createaccount.cgi registration]) setting the component to Btrfs, and '''report bugs and issues to the [[Btrfs mailing list|mailing list]]''' ([mailto:linux-btrfs@vger.kernel.org linux-btrfs@vger.kernel.org]; you are ''not'' required to subscribe). For quick questions you may want to join the IRC ''#btrfs'' channel on freenode (and stay around for some time in case you do not get the answer right away).
 
+Please use '''btrfs-progs''' somewhere in the bug subject if you're reporting a bug for the userspace tools.
+
 ''Never'' use the Bugzilla on "original" Btrfs project page at Oracle.
 
 If you include kernel log backtraces in bug reports sent to the mailing list, please ''disable word wrapping'' in your mail user agent to keep the kernel log in a readable format.

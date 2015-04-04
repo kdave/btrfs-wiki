@@ -381,6 +381,17 @@ A POC can be found here https://github.com/kdave/testunion/tree/master/uuid-rewr
 * RENAME_WHITEOUT
 }}
 
+=== Track link count for directories ===
+
+{{project
+|text=The link count for directories is traditionally used to count the number of subdirectores iff the link count is >= 2. Btrfs sets this to 1 and does not track the link count at all. The link count could be used by some utilities to do optimizations when traversing the file hierarchy (at least <tt>find</tt> does that).
+
+It seems that the link count can be tracked like the other filesystems do. This will be even backward compatible:
+
+* for new directories and subvolumes , set the initial link count to 2
+* a mkdir/rmdir/move/snapshot will update the link count accordingly iff the current link count is not 1
+}}
+
 == Userspace tools projects ==
 
 Collection of ideas or small tasks for btrfsprogs or other relevant utilites.

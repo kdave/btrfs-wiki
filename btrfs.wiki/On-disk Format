@@ -65,7 +65,7 @@ Btrfs uses [http://en.wikipedia.org/wiki/Unix_time Unix time].
 
 === Superblock ===
 
-The primary superblock is located at 0x1 0000 (6410 KiB). Mirror copies of the superblock are located at physical addresses 0x400 0000 (6410 MiB), 0x40 0000 0000 (25610 GiB), and 0x4 0000 0000 0000 (1 PiB), if these locations are valid. btrfs normally updates all superblocks, but in SSD mode it will update only one at a time. The superblock with the highest generation is used when reading.
+The primary superblock is located at 0x1 0000 (64<sub>10</sub> KiB). Mirror copies of the superblock are located at physical addresses 0x400 0000 (64<sub>10</sub> MiB), 0x40 0000 0000 (256<sub>10</sub> GiB), and 0x4 0000 0000 0000 (1 PiB), if these locations are valid. btrfs normally updates all superblocks, but in SSD mode it will update only one at a time. The superblock with the highest generation is used when reading.
 
 Note that btrfs only recognizes disks with a valid 0x1 0000 superblock; otherwise, there would be confusion with other filesystems.
 
@@ -585,11 +585,75 @@ Contains the stat information for an inode; see [http://linux.die.net/man/2/stat
 
 (inode_id, directory_id) TODO
 
-    From an inode to a name in a directory.
-     0  8 UINT   index in the directory
-     8  2 UINT   name length
-     a    ASCII  name in the directory
-    This structure can be repeated...?
+From an inode to a name in a directory.
+
+{| class="wikitable" border="1"
+|+
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 8
+| UINT
+| index in the directory
+|-
+| align="right" | 8
+| align="right" | 2
+| UINT
+| (''n'')
+|-
+| align="right" | a
+| align="right" | ''n''
+| ASCII
+| name in the directory
+|-
+| colspan="4" | a+''n''
+|}
+
+This structure can be repeated...?
+
+
+=== INODE_EXTREF (0d) ===
+
+(inode_id, hash of name [using directory object ID as seed]) TODO
+
+From an inode to a name in a directory. Used if the regarding INODE_REF array ran out of space. ''This item requires the EXTENDED_IREF feature.''
+
+{| class="wikitable" border="1"
+|+
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 8
+| UINT
+| directory object ID
+|-
+| align="right" | 8
+| align="right" | 8
+| UINT
+| index in the directory
+|-
+| align="right" | 10
+| align="right" | 2
+| UINT
+| (''n'')
+|-
+| align="right" | 12
+| align="right" | ''n''
+| ASCII
+| name in the directory
+|-
+| colspan="4" | 12+''n''
+|}
+
+This structure can be repeated...?
 
 === XATTR_ITEM (18) ===
 
@@ -704,7 +768,7 @@ The contents of a file.
 | align="right" | 10
 | align="right" | 1
 | UINT
-| compression (0=none, 1=zlib)
+| compression (0=none, 1=zlib, 2=LZO)
 |-
 | align="right" | 11
 | align="right" | 1
@@ -724,7 +788,9 @@ The contents of a file.
 | colspan="4" | 15
 |}
 
-If the extent is inline, ''n'' bytes of data follow. Otherwise, the structure continues:
+If the extent is inline, the remaining item bytes are the data bytes (''n'' bytes in case no compression/encryption/other encoding is used).
+
+Otherwise, the structure continues:
 
 {| class="wikitable" border="1"
 |+
@@ -926,34 +992,130 @@ flags
 
 (device id, cc, physical address) TODO
 
-    Maps from physical address to logical.
-     0  8 UINT   chunk tree (always 3)
-     8  8 OBJID  chunk oid (always 100)
-    10  8 UINT   logical address
-    18  8 UINT   size in bytes
-    20 10 UUID   chunk tree UUID
-    30
+Maps from physical address to logical.
+
+{| class="wikitable" border="1"
+|+
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 8
+| UINT
+| chunk tree (always 3)
+|-
+| align="right" | 8
+| align="right" | 8
+| OBJID
+| chunk oid (always 100)
+|-
+| align="right" | 10
+| align="right" | 8
+| UINT
+| logical address
+|-
+| align="right" | 18
+| align="right" | 8
+| UINT
+| size in bytes
+|-
+| align="right" | 20
+| align="right" | 10
+| UUID
+| chunk tree UUID
+|-
+| colspan="4" | 30
+|}
 
 === DEV_ITEM (d8) ===
 
 (1, device id) TODO
 
-    Contains information about one device.
-     0  8 UINT   device id
-     8  8 UINT   number of bytes
-    10  8 UINT   number of bytes used
-    18  4 UINT   optimal I/O align
-    1c  4 UINT   optimal I/O width
-    20  4 UINT   minimal I/O size (sector size)
-    24  8 UINT   type
-    2c  8 UINT   generation
-    34  8 UINT   start offset
-    3c  4 UINT   dev group
-    40  1 UINT   seek speed
-    41  1 UINT   bandwidth
-    42 10 UUID   device UUID
-    52 10 UUID   FS UUID
-    62
+Contains information about one device.
+
+{| class="wikitable" border="1"
+|+
+|-
+! Off
+! Size
+! Type
+! Description
+|-
+| align="right" | 0
+| align="right" | 8
+| UINT
+| device id
+|-
+| align="right" | 8
+| align="right" | 8
+| UINT
+| number of bytes
+|-
+| align="right" | 10
+| align="right" | 8
+| UINT
+| number of bytes used
+|-
+| align="right" | 18
+| align="right" | 4
+| UINT
+| optimal I/O align
+|-
+| align="right" | 1c
+| align="right" | 4
+| UINT
+| optimal I/O width
+|-
+| align="right" | 20
+| align="right" | 4
+| UINT
+| minimal I/O size (sector size)
+|-
+| align="right" | 24
+| align="right" | 8
+| UINT
+| type
+|-
+| align="right" | 2c
+| align="right" | 8
+| UINT
+| generation
+|-
+| align="right" | 34
+| align="right" | 8
+| UINT
+| start offset
+|-
+| align="right" | 3c
+| align="right" | 4
+| UINT
+| dev group
+|-
+| align="right" | 40
+| align="right" | 1
+| UINT
+| seek speed
+|-
+| align="right" | 41
+| align="right" | 1
+| UINT
+| bandwidth
+|-
+| align="right" | 42
+| align="right" | 10
+| UUID
+| device UUID
+|-
+| align="right" | 52
+| align="right" | 10
+| UUID
+| FS UUID
+|-
+| colspan="4" | 62
+|}
 
 === CHUNK_ITEM (e4) ===
 

@@ -57,19 +57,22 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 '''Linux v3.19 (highlights or user visible changes)'''
 -->
 
+'''btrfs-progs 3.19.1 (Mar 2015)'''
+* convert
+** new option to specify metadata block size
+** --no-progress actually works
+* restore: properly handle the page boundary corner case
+* build fixes
+** missing macro from public header, BTRFS_BUILD_VERSION
+** wrong handling of --enable-convert
+* fi usage: reports correct space for degraded mounts
+* other
+** mkfs: help string updates
+** completion: added 'usage' subcommands
+** cleanups in qgroup code, preparatory work
+
 '''Linux v3.19 (Feb 2015)'''
 * raid56 supports scrub and device replace
-
-'''btrfs-progs 3.18.2 (Jan 2015)'''
-* qgroup show: print human readable sizes, options to say otherwise
-* check: new option to explicitly say no to writes
-* mkfs: message about trimming is not printed to stderr
-* fi show: fixed return value
-* tests: new infrastructure
-* btrfstune: force flag can be used together with seeding option
-* backtrace support is back
-* getopt cleanups
-* doc and help updates
 
 '''''Coming in coreutils 8.24'''''
 * ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13]
