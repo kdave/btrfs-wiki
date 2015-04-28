@@ -354,7 +354,7 @@ Depending on the RAID level you are using, the "correction" factor will be diffe
 
 === Understanding free space, using the new tools ===
 
-An all-in-one tool for reporting on free space is available in btrfs-progs from 3.17 onwards. This is <code>btrfs fi usage</code>:
+An all-in-one tool for reporting on free space is available in btrfs-progs from 3.18 onwards. This is <code>btrfs fi usage</code>:
 
  $ sudo btrfs fi usage /mnt
  Overall:

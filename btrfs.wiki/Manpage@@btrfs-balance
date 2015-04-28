@@ -1,7 +1,8 @@
 
 =btrfs-balance(8) Manual Page=
-{{GeneratedManpage}}
-
+{{GeneratedManpageGit
+|name=btrfs-balance
+}}
 
 ==NAME==
 
@@ -9,7 +10,7 @@ btrfs-balance - balance btrfs filesystem
 
 ==SYNOPSIS==
 
-'''btrfs [filesystem] balance''' &lt;subcommand&gt;|&lt;args&gt;
+'''btrfs balance''' &lt;subcommand&gt; &lt;args&gt;
 
 ==DESCRIPTION==
 
@@ -17,10 +18,18 @@ btrfs-balance - balance btrfs filesystem
 
 See [[Manpage/btrfs-device|btrfs-device(8)]] for more details about the effect on device management.
 
+'''Note:''' The balance subcommand also exists under the '''filesystem''' namespace. This still works for backward compatibility but is deprecated and should not be used anymore.
+
+'''Note:''' A short syntax '''btrfs balance &lt;path&gt;''' works due to backward compatibility but is deprecated and should not be used anymore. Use '''btrfs balance start''' command instead.
+
 ==SUBCOMMAND==
 
-; &lt;path&gt;
-: Balance chunks across the devices '''online'''. <br />'''btrfs balance &lt;path&gt;''' is deprecated, please use '''btrfs balance start''' command instead.
+; '''cancel''' &lt;path&gt;
+: Cancel running or paused balance.
+; '''pause''' &lt;path&gt;
+: Pause running balance.
+; '''resume''' &lt;path&gt;
+: Resume interrupted balance.
 ; '''start''' [options] &lt;path&gt;
 : Balance chunks across the devices '''online'''. <br /> Balance and/or convert (change allocation profile of) chunks that passed all filters in a comma-separated list of filters for a particular chunk type. If filter list is not given balance all chunks of that type. In case none of the -d, -m or -s options is given balance all chunks in a filesystem. <br /><code>Options</code><br />
 :; -d[&lt;filters&gt;]
@@ -33,12 +42,6 @@ See [[Manpage/btrfs-device|btrfs-device(8)]] for more details about the effect o
 :: be verbose
 :; -f
 :: force reducing of metadata integrity
-; '''pause''' &lt;path&gt;
-: Pause running balance.
-; '''cancel''' &lt;path&gt;
-: Cancel running or paused balance.
-; '''resume''' &lt;path&gt;
-: Resume interrupted balance.
 ; '''status''' [-v] &lt;path&gt;
 : Show status of running or paused balance. <br /> If '''-v''' option is given, output will be verbose.
 
@@ -63,6 +66,8 @@ The available types are:
 : Balances only block groups which overlap with the given byte range in the filesystem’s internal virtual address space. This is the address space that most reports from btrfs in the kernel log use. The parameter is a range specified as &lt;start..end&gt;.
 ; '''convert'''
 : Convert each selected block group to the given profile name identified by parameters.
+; '''limit'''
+: Process only given number of chunks, after all filters apply. This can be used to specifically target a chunk in connection with other filters (drange, vrange) or just simply limit the amount of work done by a single balance run.
 ; '''soft'''
 : Takes no parameters. Only has meaning when converting between profiles. When doing convert from one profile to another and soft mode is on, restriper won’t touch chunks that already have the target profile. This is useful if e.g. half of the FS was converted earlier. <br /> The soft mode switch is (like every other filter) per-type. This means that we can convert for example meta chunks the "hard" way while converting data chunks selectively with soft switch.
 
@@ -70,7 +75,7 @@ Profile names, used in profiles and convert are one of: '''raid0''', '''raid1'''
 
 ==EXIT STATUS==
 
-'''btrfs balance''' returns a zero exist status if it succeeds. Non zero is returned in case of failure.
+'''btrfs balance''' returns a zero exit status if it succeeds. Non zero is returned in case of failure.
 
 ==AVAILABILITY==
 

@@ -143,6 +143,11 @@ Major features or significant feature enhancements by kernel version. For more i
 |version=3.16
 |text=The extended SEARCH_TREE ioctl able to get more than a 4k data
 }}
+{{FeatureMerged
+|name=rai56: scrub, replace
+|version=3.19
+|text=Scrub and device replace works on RAID56 filesystems.
+}}
 |}
 
 = By version (btrfs-progs) =
@@ -283,6 +288,14 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 * first release after 0.19 (2009/06) with a lot of changes
 
 = By version (linux kernel) =
+
+== v4.0 (Apr 2015) ==
+* file creation time is stored (no easy interface to read it yet)
+* fsync and log replay fixes
+* lots of cleanups and other fixes
+
+== v3.19 (Feb 2015) ==
+* raid56 supports scrub and device replace
 
 == v3.18 (Dec 2014) ==
 

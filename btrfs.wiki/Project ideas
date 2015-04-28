@@ -412,7 +412,6 @@ Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 * add API for tree search ioctl
 * add heuristics to defrag
 ** use ''libmagic'' to guess file type and skip incompressible files -- the library dependency should be probably only run-time, not compile-time
-* shell completion (for [http://www.spinics.net/lists/linux-btrfs/msg15899.html bash 04/2012] needs completing)
 * improve error handling
 ** start with the easy ones that are not in the code shared with kernel
 ** similar to what's done in kernel code, but beware of differences
@@ -429,7 +428,6 @@ Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 
 === btrfs-convert ===
 * [[http://comments.gmane.org/gmane.comp.file-systems.btrfs/15750 patch]] add option to transfer label from the original filesystem
-* [[http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg22475.html draft]] allow to set leafsize/nodesize of the new filesystem (like mkfs)
 * pre-create a subvolume and put there contents of the root instead of filling the toplevel subvolume
 * convert from other filesystems ([http://www.spinics.net/lists/linux-btrfs/msg04985.html reiserfs])
 * convert from md configurations (ie, ext4-on-md converted into btrfs without md)
@@ -463,6 +461,10 @@ Auto snapshot and its management tool.
 
 A tool partly covering this idea is [http://en.opensuse.org/Portal:Snapper snapper]. Earlier work from Anand Jain on this is available at [https://github.com/asj/timeslider GitHub].
 }}
+
+=== Audit tools for usecases with security implications ===
+
+Some tools have to run under root but still may need some level of restrictions or confinement. An example is ''receive'' that could use ''chroot'' at some points. Search for more.
 
 === Documentation ===
 
