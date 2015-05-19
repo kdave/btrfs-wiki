@@ -646,4 +646,33 @@ If you want a cluster file system, there are many production choices that can be
 
 The closest cluster file system that uses Btrfs as its underlying file system is [http://en.wikipedia.org/wiki/Ceph Ceph]
 
+= I've heard that ... =
+
+== ... files cannot be deleted once the filesystem is full ==
+
+Not true. Even though the deletion requires some extra space (because of the copy-on-write design), there is a global reserve that is used for this type of operation.
+
+Historically (before about 3.16 or so), it was indeed possible to reach a situation where files could not be deleted. This was due to bugs in the handling of space. However, many of these bugs have been fixed, and current evidence (May 2015) suggests that if there are remaining bugs in this area, they are very, very hard to hit.
+
+== ... btrfs is broken by design (aka. Edward Shishkin's "Unbound(?) internal fragmentation in Btrfs") ==
+
+Mailing list thread [http://thread.gmane.org/gmane.linux.file-systems/41933 Unbound(?) internal fragmentation in Btrfs] (2010)
+
+''Short answer:'' not a design problem but a bug (see 1) that was fixed
+
+The core of the argument is that the b-tree implementation (from year 2010) does not follow the assumptions found in classic literature about b-trees and can can lead to underutilization of the space. There are two issues raised: one about variable record length (in particular the file data inlined in the leaves), and a second issue about an inefficient b-tree balancing algorithm (see 3).
+
+Inline extents are not split across leaves and are limited in size of one leaf. This was a decision made based on experience with reiserfs, where inline items were split, causing increased code complexity (and bugs) without much gain (see 2).
+
+To completely avoid the theoretical worst case, you can turn off the file inlining by mounting with ''max_inline=0'' (see 2).
+
+In practice, the worst case means that an inline file extent may occupy one leaf block (which is more limited to the memory page size, usually 4k). This leads to the same space efficiency as in other filesystems, where a small file occupies a full block (see 4).
+
+References:
+
+# [http://article.gmane.org/gmane.comp.file-systems.btrfs/5956 it's a bug]
+# [http://article.gmane.org/gmane.comp.file-systems.btrfs/5948 reiserfs experience]
+# [http://article.gmane.org/gmane.comp.file-systems.btrfs/5953 inefficient b-tree balance]
+# [http://article.gmane.org/gmane.comp.file-systems.btrfs/5971 worst case estimation in practice]
+
 [[Category:UserDoc]]

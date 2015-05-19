@@ -25,9 +25,11 @@ The userspace utilities can be downloaded from these repositories:
 
 There are 2 repositories that get synced at the time of a release ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063 announcement]) and can be considered equal for non-development branches.
 
-== Integration repository ==
+== Integration branches, development branches ==
 
-David Sterba maintains an "integration" branch of patches for the userspace tools ([http://repo.or.cz/w/btrfs-progs-unstable/devel.git Gitweb access]). This is at:
+The '''master''' branch of the repositories is updated at the time of a release and is not used for development. This branch is never rebased.
+
+'''Integration branches''' collect patches that may need public testing and are provided for conveniece to developers or users willing to test unstable version. The patches in these branches are not guaranteed to be merged. The branches are assembled from scratch and server more like a snapshots than stable bases for other development.
 
  git://repo.or.cz/btrfs-progs-unstable/devel.git integration-''YYYYMMDD''
 
@@ -44,7 +46,11 @@ Mirror of the repository is at
 
 and has the same layout as the previous repository. ''Please note that github pull requests will not be accepted, send patches to the mailinglist instead.''
 
-The git repositories on ''kernel.org'' are not used for development branches.
+The git repositories on ''kernel.org'' are not used for development or integration branches.
+
+'''Development branches''' are named after the last release with the micro version replaced by ''x'' (eg. 3.19.x, 4.0.x). They contain patches that are reviewed or tested and on the way to the next release.
+
+Note that these branches can be rebased when there's good reason for that (adding Reported-by/Reviewed-by tags to the middle of the patch series) or if there's a change needed down the patch stack in general. The point is to keep the git history clean.
 
 = btrfs kernel module git repository =
 

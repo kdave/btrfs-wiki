@@ -57,6 +57,22 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 '''Linux v3.19 (highlights or user visible changes)'''
 -->
 
+'''btrfs-progs 4.0 (Apr 2015)'''
+
+* resize:
+** don't accept file as an argument (it's confusing)
+** print better error message in case of an error
+* restore: optionally restore metadata (time, mode, uid/gid)
+* receive: optionally enforce chroot
+* new rescue subcommand 'zero-log', same as btrfs-zero-log, but now also part of the main utility
+* check:
+** free space checks match kernel, fixes incorrect reports
+* convert: fix setting of checksum bit if --no-datasum is used
+* fsck.btrfs: don't print messages
+* fix quota rescan on PPC64 (mangled ioctl number)
+* test updates
+* documentation: files renamed to .asciidoc, misc fixups
+
 '''Linux v4.0 (Apr 2015)'''
 * file creation time is stored (no easy interface to read it yet)
 * fsync and log replay fixes
@@ -65,20 +81,6 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 '''Alert: bug in 3.19.1, 3.14.35, 3.18.9'''
 * mount can hang due to a deadlock introduced in stable kernel series, see [[Gotchas]] for more
 * Fixed in '''3.19.5''', '''3.14.39'''
-
-'''btrfs-progs 3.19.1 (Mar 2015)'''
-* convert
-** new option to specify metadata block size
-** --no-progress actually works
-* restore: properly handle the page boundary corner case
-* build fixes
-** missing macro from public header, BTRFS_BUILD_VERSION
-** wrong handling of --enable-convert
-* fi usage: reports correct space for degraded mounts
-* other
-** mkfs: help string updates
-** completion: added 'usage' subcommands
-** cleanups in qgroup code, preparatory work
 
 '''''Coming in coreutils 8.24'''''
 * ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13]
@@ -176,6 +178,7 @@ Links to Btrfs documentation of various Linux distributions:
 
 * [[Btrfs source repositories]]
 * [http://git.kernel.org/?p=linux/kernel/git/mason/linux-btrfs.git;a=tree;f=fs/btrfs;hb=HEAD Gitweb source viewer] of the main kernel repository
+* [https://git.kernel.org/cgit/linux/kernel/git/kdave/btrfs-progs.git/ Gitweb source viewer] of the userspace tools repository
 
 == Benchmarking ==
 

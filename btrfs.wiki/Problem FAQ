@@ -1,3 +1,5 @@
+= General topics =
+
 == How do I report bugs and issues? ==
 
 Please '''report bugs on [https://bugzilla.kernel.org/ Bugzilla on kernel.org]''' (requires [https://bugzilla.kernel.org/createaccount.cgi registration]) setting the component to Btrfs, and '''report bugs and issues to the [[Btrfs mailing list|mailing list]]''' ([mailto:linux-btrfs@vger.kernel.org linux-btrfs@vger.kernel.org]; you are ''not'' required to subscribe). For quick questions you may want to join the IRC ''#btrfs'' channel on freenode (and stay around for some time in case you do not get the answer right away).
@@ -14,6 +16,8 @@ Please attach files (like logs or dumps) directly to the bug and don't use paste
 * [https://bugzilla.kernel.org/buglist.cgi?component=btrfs&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED List open Bugzilla issues]
 * [https://bugzilla.kernel.org/buglist.cgi?component=btrfs List all Bugzilla issues]
 * [http://marc.info/?l=linux-btrfs&m=136733749808576&w=2 Josef's request to use bugzilla.kernel.org]
+
+= Mount/unmount problems =
 
 == I can't mount my filesystem, and I get a kernel oops! ==
 
@@ -69,6 +73,8 @@ This ''should'' be in many distributions' startup scripts (and initrd images, if
 
 Maybe.  Any number of things might be wrong.  The [[Restore|restore tool]] is a non-destructive way to dump data to a backup drive and may be able to recover some or all of your data, even if we can't save the existing filesystem.
 
+= Unsorted/uncategorized =
+
 == Defragmenting a directory doesn't work ==
 
 Running this:
@@ -100,8 +106,6 @@ You are missing the /dev/btrfs-control device node. This is usually set up by ud
 
 You might also want to report to your distribution that their configuration without udev is missing this device.
 
-[[Category:UserDoc]]
-
 == How to clean up old superblock ? ==
 
 The preferred way is to use the ''wipefs'' utility that is part of the ''util-linux'' package. Running the command with the device will not destroy the data, just list the detected filesystems:
@@ -130,6 +134,7 @@ Related problem:
 Use ''wipefs'' as well, it deletes only a small portion of ''sda'' that will not interfere with the next partition data.
 
 === What if I don't have wipefs at hand? ===
+
 There are three superblocks: the first one is located at 64K, the second one at 64M, the third one at 256GB. The following lines reset the '''magic string''' on all the three superblocks
 
  # dd if=/dev/zero bs=1 count=8 of=/dev/sda seek=$((64*1024+64))
@@ -172,6 +177,9 @@ If the balance command ends with "Done, had to relocate 0 out of XX chunks", the
 More information is available elsewhere in this wiki, if you want to know [[FAQ#What_does_.22balance.22_do.3F|what a balance does]], or [[Balance Filters|what options are available]] for the balance command.
 
 == btrfs scrub will not start nor cancel ==
+
+{{note|this has been properly fixed in btrfs-progs version  3.18.2. The workarounds below still apply but are not necessary anymore.}}
+
 As per [http://marc.merlins.org/perso/btrfs/post_2014-04-26_Btrfs-Tips_-Cancel-A-Btrfs-Scrub-That-Is-Already-Stopped.html Marc's blog on how to fix btrfs cancel]:
 Problem:
  gargamel:~# btrfs scrub start -d /dev/mapper/dshelf1
@@ -232,3 +240,21 @@ You will get a similar output (excerpt):
 Such errors should be fixable with "btrfs check --repair" provided you run a recent enough version of [[Changelog#By_version_.28btrfs-progs.29|btrfs-progs]].
 
 ''Note that "btrfs check --repair" should not be used lightly as in some cases it can make a problem worse instead of fixing anything.''
+
+= Deciphering error messages from syslog =
+
+== parent transid verify failed ==
+
+Example:
+
+ parent transid verify failed on 4316004352 wanted 289 found 283
+
+* '''4316004352''' is the byte offset of the metadata block
+* '''289''' expected generation of the block
+* '''283''' generation found in the block
+
+Under normal circumstances the generation numbers must match. A mismatch can be caused by a
+lost write after a crash (ie. a dangling block "pointer"; software bug, hardware bug), 
+misdirected write (the block was never written to that location; software bug, hardware bug).
+
+[[Category:UserDoc]]

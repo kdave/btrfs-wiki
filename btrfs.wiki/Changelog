@@ -154,6 +154,22 @@ Major features or significant feature enhancements by kernel version. For more i
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
 
+== btrfs-progs 4.0 (Mar 2015) ==
+
+* resize:
+** don't accept file as an argument (it's confusing)
+** print better error message in case of an error
+* restore: optionally restore metadata (time, mode, uid/gid)
+* receive: optionally enforce chroot
+* new rescue subcommand 'zero-log', same as btrfs-zero-log, but now also part of the main utility
+* check:
+** free space checks match kernel, fixes incorrect reports
+* convert: fix setting of checksum bit if --no-datasum is used
+* fsck.btrfs: don't print messages
+* fix quota rescan on PPC64 (mangled ioctl number)
+* test updates
+* documentation: files renamed to .asciidoc, misc fixups
+
 == btrfs-progs 3.19 (Mar 2015)==
 
 * build converted to autotools

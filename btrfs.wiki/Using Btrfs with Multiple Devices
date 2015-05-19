@@ -16,9 +16,7 @@ See the [[Gotchas]] page for some current issues when using btrfs with multiple 
 
 === Raid 5 and Raid6 ===
 
-{{warning|Parity RAID (RAID 5 and RAID 6) are not currently complete, and have significant problems with recovery from the loss of a device. They should not be used for anything other than testing purposes.}}
-
-Please see the separate page with details for those: [[RAID56]].
+Please read the parity RAID status page first: [[RAID56]].
 
 === Filesystem creation ===
 
@@ -139,6 +137,8 @@ If you don't have an initrd, or your initrd doesn't perform a btrfs device scan,
  
  /dev/sdb     /mnt    btrfs    device=/dev/sdb,device=/dev/sdc,device=/dev/sdd,device=/dev/sde    0 0
 
-device=PARTUUID=… with GPT partition UUIDs will also work and be less fragile (device paths aren't stable).  All these options can also be [https://www.kernel.org/doc/Documentation/kernel-parameters.txt set from the kernel command line], through root=/fstype=/rootflags=.
+{{warning|Using <code>device</code> is '''not''' recommended, as it is sensitive to device names changing. You should ''really'' be using a initramfs. Most modern distributions will do this for you automatically if you install their own btrfs-progs package.}}
+
+Using <code>device=PARTUUID=...</code> with GPT partition UUIDs would also work and be less fragile. All these options can also be [https://www.kernel.org/doc/Documentation/kernel-parameters.txt set from the kernel command line], through root=/fstype=/rootflags=.
 
 [[Category:UserDoc]]
