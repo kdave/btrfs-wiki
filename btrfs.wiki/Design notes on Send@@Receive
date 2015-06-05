@@ -44,6 +44,7 @@ Missing from v1:
 * send file flags
 ** (FS_IOC_GETFLAGS/FS_IOC_SETFLAGS), the receiving side misses NOCOW and the other attributes like append-only, immutable etc.
 ** setting the flags on receiving side is tricky as the flags affects if/how the data are stored
+* optionally send owner/group as strings
 
 Other:
 * stream version recognition

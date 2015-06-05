@@ -48,9 +48,9 @@ and has the same layout as the previous repository. ''Please note that github pu
 
 The git repositories on ''kernel.org'' are not used for development or integration branches.
 
-'''Development branches''' are named after the last release with the micro version replaced by ''x'' (eg. 3.19.x, 4.0.x). They contain patches that are reviewed or tested and on the way to the next release.
+The latest '''development branches''' is called '''devel'''. Contains patches that are reviewed or tested and on the way to the next release.
 
-Note that these branches can be rebased when there's good reason for that (adding Reported-by/Reviewed-by tags to the middle of the patch series) or if there's a change needed down the patch stack in general. The point is to keep the git history clean.
+Note that this branch can be rebased when there's good reason for that (adding Reported-by/Reviewed-by tags to the middle of the patch series) or if there's a change needed down the patch stack in general. The point is to keep the git history clean.
 
 = btrfs kernel module git repository =
 

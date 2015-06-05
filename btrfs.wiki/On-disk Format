@@ -969,7 +969,7 @@ A block group: an allocated area of disk containing EXTENT_ITEMs. Block groups a
 | align="right" | 8
 | align="right" | 8
 | OBJID
-| chunk tree id (always 100)
+| chunk tree id (always 256)
 |-
 | align="right" | 10
 | align="right" | 8

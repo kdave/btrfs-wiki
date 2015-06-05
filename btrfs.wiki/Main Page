@@ -57,21 +57,15 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 '''Linux v3.19 (highlights or user visible changes)'''
 -->
 
-'''btrfs-progs 4.0 (Apr 2015)'''
+'''btrfs-progs 4.0.1 (May 2015)'''
 
-* resize:
-** don't accept file as an argument (it's confusing)
-** print better error message in case of an error
-* restore: optionally restore metadata (time, mode, uid/gid)
-* receive: optionally enforce chroot
-* new rescue subcommand 'zero-log', same as btrfs-zero-log, but now also part of the main utility
-* check:
-** free space checks match kernel, fixes incorrect reports
-* convert: fix setting of checksum bit if --no-datasum is used
-* fsck.btrfs: don't print messages
-* fix quota rescan on PPC64 (mangled ioctl number)
-* test updates
-* documentation: files renamed to .asciidoc, misc fixups
+* restore:
+** can restore symlinks, new option --symlinks
+** long option variants added
+* convert: dropped dependency on acl.h header and libacl is not required for  build
+* fix for 'check' crash
+* device remove error message fix
+* preparatory works for fsid change
 
 '''Linux v4.0 (Apr 2015)'''
 * file creation time is stored (no easy interface to read it yet)
