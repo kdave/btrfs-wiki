@@ -57,30 +57,17 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 '''Linux v3.19 (highlights or user visible changes)'''
 -->
 
-'''btrfs-progs 4.0.1 (May 2015)'''
+'''Linux v4.0.6 (Jun 2015)'''
+* raid1 conversion regression fixed, see [[Gotchas]]
 
-* restore:
-** can restore symlinks, new option --symlinks
-** long option variants added
-* convert: dropped dependency on acl.h header and libacl is not required for  build
-* fix for 'check' crash
-* device remove error message fix
-* preparatory works for fsid change
+'''Linux v4.1 (Jun 2015)'''
+* ''TBD''
 
-'''Linux v4.0 (Apr 2015)'''
-* file creation time is stored (no easy interface to read it yet)
-* fsync and log replay fixes
-* lots of cleanups and other fixes
-
-'''Alert: bug in 3.19.1, 3.14.35, 3.18.9'''
-* mount can hang due to a deadlock introduced in stable kernel series, see [[Gotchas]] for more
-* Fixed in '''3.19.5''', '''3.14.39'''
+'''btrfs-progs 4.1 (Jun 2015)'''
+* lots of changes see [[Changelog#btrfs-progs_4.1_.28Jun_2015.29|Changelog section]]
 
 '''''Coming in coreutils 8.24'''''
 * ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13]
-
-'''Wiki update: manual pages (Jul 2014)'''
-* [[:Category:Manpage]] links to manual pages, generated from git sources
 
 Read about past releases in the [[Changelog]]
 

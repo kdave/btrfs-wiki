@@ -165,6 +165,63 @@ Major features or significant feature enhancements by kernel version. For more i
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
 
+
+== btrfs-progs 4.1 (Jun 2015) ==
+
+* bugfixes
+** fsck.btrfs: no bash-isms
+** bugzilla 97171: invalid memory access (with tests)
+** receive:
+*** cloning works with --chroot
+*** capabilities not lost
+** mkfs: do not try to register bare file images
+** option --help accepted by the standalone utilities
+* enhancements
+** corrupt block: ability to remove csums
+** mkfs:
+*** warn if metadata redundancy is lower than for data
+*** options to make the output quiet (only errors)
+*** mixed case names of raid profiles accepted
+*** rework the output:
+**** more comprehensive, 'key: value' format
+** subvol:
+*** show:
+**** print received uuid
+**** update the output
+**** new options to specify size units
+*** sync: grab all deleted ids and print them as they're removed, previous implementation only checked if there are any to be deleted - change in command semantics
+** scrub: print timestamps in days HMS format
+** receive:
+*** can specify mount point, do not rely on /proc
+*** can work inside subvolumes
+** send: new option to send stream without data (NO_FILE_DATA)
+** convert: specify incompat features on the new fs
+** qgroup:
+*** show: distinguish no limits and 0 limit value
+*** limit: ability to clear the limit
+** help for 'btrfs' is shorter, 1st level command overview
+** debug tree: print key names according to their C name
+* new
+** rescure zero-log
+** btrfsune:
+*** rewrite uuid on a filesystem image
+*** new option to turn on NO_HOLES incompat feature
+* deprecated
+** standalone btrfs-zero-log
+* other
+** testing framework updates
+*** uuid rewrite test
+*** btrfstune feature setting test
+*** zero-log tests
+*** more testing image formats
+** manual page updates
+** ioctl.h synced with current kernel uapi version
+** convert: preparatory works for more filesystems (reiserfs pending)
+** use static buffers for path handling where possible
+** add new helpers for send uilts that check memory allocations, switch all users, deprecate old helpers
+** Makefile: fix build dependency generation
+** map-logical: make it work again
+
 == btrfs-progs 4.0 (Apr 2015) ==
 
 * resize:

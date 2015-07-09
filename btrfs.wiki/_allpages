@@ -5,7 +5,6 @@ Bcp
 Btree Items
 Btrees
 Btrfs(command)
-Btrfs-bcp
 Btrfs-convert
 Btrfs-debug-tree
 Btrfs-image
@@ -76,7 +75,6 @@ Show-blocks
 SnapBtr
 SysadminGuide
 Trees
-Ubuntu support
 UseCases
 Using Btrfs with Multiple Devices
 Writing patch for btrfs

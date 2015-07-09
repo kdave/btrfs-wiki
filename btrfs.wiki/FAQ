@@ -503,13 +503,31 @@ The size obtained is not exact and is rounded up to block size (4KB). The real a
 No, the value passed to ''mkfs.btrfs -n SIZE'' cannot be changed once the filesystem is created. A backup/restore is needed.<br>
 Note, that this will likely never be implemented because it would require major updates to the core functionality.
 
+== Why do I have "single" chunks in my RAID filesystem? ==
+
+After mkfs and writing some data to the filesystem, <code>btrfs filesystem df /mountpoint</code> will show something like this:
+
+ Data, RAID1: total=3.08TiB, used=3.02TiB
+ Data, single: total=8.00MiB, used=0.00B
+ System, RAID1: total=3.88MiB, used=336.00KiB
+ System, single: total=4.00MiB, used=0.00B
+ Metadata, RAID1: total=4.19GiB, used=3.56GiB
+ Metadata, single: total=8.00MiB, used=0.00B
+ GlobalReserve, single: total=512.00MiB, used=0.00B
+
+The <code>single</code> chunks are perfectly normal, and are a result of the way that mkfs works. They are small, harmless, and will remain unused as the FS grows, so you won't risk any unreplicated data. You can get rid of them with a balance:
+
+ $ btrfs balance start -dusage=0 -musage=0 /mountpoint
+
+(but don't do this ''immediately'' after running mkfs, as you may end up losing your RAID configuration and reverting to single mode -- put at least some data on the FS first).
+
 = Subvolumes =
 
 == What is a subvolume? ==
 
 A subvolume is like a directory - it has a name, there's nothing on it when it is created, and it can hold files and other directories. There's at least one subvolume in every Btrfs filesystem, the <em>top-level</em> subvolume.
 
-As well as being like directories, subvolumes can be mounted independently of the rest of the filesystem. They are also the unit of snapshotting: you can make an atomic snapshot of a single subvolume, but not a whole tree of them; you can't make an atomic snapshot of anything smaller than a subvolume (like a single directory).
+As well as being like directories, subvolumes can be mounted independently of the rest of the filesystem. They are also the unit of snapshotting: you can make an atomic snapshot of a single subvolume, but not a whole tree of them; you can't make an atomic snapshot of anything smaller than a subvolume (like, say, a single directory).
 
 Subvolumes can be given capacity limits, through the qgroups/quota facility, but otherwise share the single storage pool of the whole btrfs filesystem. They may even share data between themselves (through deduplication or snapshotting).
 

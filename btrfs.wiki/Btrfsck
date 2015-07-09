@@ -16,9 +16,10 @@ In a nutshell, you should look at:
 btrfs check --repair (used to be called btrfsck) checks consistency of a btrfs filesystem, and optionally repair some types of breakage. It can only be run on an unmounted FS.
 
 
-Note that while this tool should be able to repair broken filesystems, it is still relatively new code, and has not seen widespread testing on a large range of real-life breakage. It is possible that it may cause additional damage in the process of repair. 
+Note that while this tool should be able to repair broken filesystems, it is still relatively new code, and has not seen widespread testing on a large range of real-life breakage. It is possible (but highly unlikely in the most recent versions) that it may cause additional damage in the process of repair.
+btrfs check --repair received significant updates prior to v4.0. You are strongly recommended to use a version after v4.0 when trying to recover a filesystem.
 
-'''It is highly recommended to get the latest version of btrfs-tools and recover important data with the steps listed above before running btrfs check --repair'''
+'''It is highly recommended to get the latest version of btrfs-tools and recover important data with the steps listed above (mount -o recovery,ro  and btrfs restore) ''before'' trying btrfs check --repair'''
 
  btrfs check --repair &lt;device&gt;
 

@@ -1,11 +1,1 @@
-A program to tune various filesystem parameters.
-
-== Usage ==
-
- btrfstune [-S &lt;value&gt;] &lt;device&gt;
-
-=== Description of parameters ===
-
-* "-S &lt;value&gt;": updates the seeding value (possible values: 1/0; it forces a fs readonly so that you can use it to build other filesystems)
-
-[[Category:Tools]]
+#REDIRECT [[Manpage/btrfstune]]

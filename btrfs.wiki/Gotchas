@@ -11,6 +11,9 @@ Please add new things below, don't forget to add a comment on which version you 
 ** It is safe to copy the data to a file (e.g. with dd), but not to make that file into a block device with the loopback driver.
 ** This problem is due to the UUID on the original and the copy being the same. This confuses the kernel, and it can end up writing updates to the wrong filesystem, causing massive data corruption.
 
+* Stable kernel version '''4.0.6''' fixes a regression in raid1 conversion, works fine on 3.19 and 4.1
+** conversion from eg. single or raid0 profiles to raid1 made no change to the filesystem
+
 * Stable kernel version '''3.19.1+''' can cause a deadlock at mount time
 ** Fixed in '''3.19.5''', '''3.14.39'''
 ** workaround: boot with older kernel, or run ''btrfs-zero-log'' to clear the log. This will lose up to the last 30 seconds of writes to the filesystem. You will have to reboot after running the btrfs-zero-log command, to clear the jammed locks.
