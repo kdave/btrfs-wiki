@@ -1,0 +1,7 @@
+#!/usr/bin/perl
+
+while(<>) {
+	s/^NOTE:/_Note:_/;
+	s/^WARNING:/_Warning:_/;
+	print;
+}

@@ -1,0 +1,61 @@
+#!/usr/bin/perl
+# replace manpage references with links to local wiki or man7.org
+# add category
+# drop "Last updated" footer
+
+my $manbase = "http://man7.org/linux/man-pages/man";
+my $verbose = 0;
+
+sub man2url($$) {
+	my ($name,$section) = @_;
+	return "$manbase$section/$name.$section.html";
+}
+
+# header
+
+while (<>) {
+	# : in defintion breaks line
+	if (/^;+\s.*:/) {
+		s/:/<nowiki>:<\/nowiki>/g;
+	}
+	# fix broken nested definitions
+	s/^;;/:;/;
+	# man pages
+	my $looping = 1000;
+	while ( m{(<code>(btrfs[a-z_-]*)</code>(\(\d+\)))}) {
+		print STDERR "REPLACED: $1\n" if $verbose;
+		s%<code>(btrfs[a-z_-]*)</code>(\(\d+\))%[[Manpage/$1|$1$2]]%;
+		if (!$looping--) {
+			die "FATAL: looping in replacement logic 1, $_\n";
+		}
+	}
+	$looping = 1000;
+	while ( m{(\<code\>((?:mkfs|fsck)\.btrfs)\</code\>(\(\d+\)))}) {
+		print STDERR "REPLACED: $1\n" if $verbose;
+		s%<code>((?:mkfs|fsck)\.btrfs)</code>(\(\d+\))%[[Manpage/$1|$1$2]]%;
+		if (!$looping--) {
+			die "FATAL: looping in replacement logic 2, $_\n";
+		}
+	}
+	$looping = 1000;
+	while (m{(<code>([a-z._-]+)</code>\((\d+)\))}) {
+		print STDERR "REPLACED: $1\n" if $verbose;
+		my $url=&man2url($2,$3);
+		s%<code>([a-z._-]+)</code>(\(\d+\))%[$url $1$2]%;
+		if (!$looping--) {
+			die "FATAL: looping in replacement logic 3, $_\n";
+		}
+	}
+	# no hrules
+	next if (/^----/);
+	# maybe later
+	next if (/Last updated/);
+	print;
+	# after title warning
+	if (/^=\s*.*Manual Page/) {
+		print "{{GeneratedManpage}}\n";
+	}
+}
+
+# footer
+print "[[Category:Manpage]]\n";

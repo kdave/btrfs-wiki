@@ -1,0 +1,8 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+use XHTML::MediaWiki;
+my $mediawiki = XHTML::MediaWiki->new(link_path => "./");
+my $text = join('', <STDIN>);
+my $xhtml = $mediawiki->format($text);
+print "$xhtml\n";

@@ -1,0 +1,7 @@
+#!/usr/bin/perl
+
+use HTML::WikiConverter;
+my $wc = new HTML::WikiConverter( dialect => 'MediaWiki' );
+my @c=<STDIN>;
+my $html=join('',@c);
+print $wc->html2wiki( $html );

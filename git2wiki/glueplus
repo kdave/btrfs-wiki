@@ -1,0 +1,15 @@
+#!/usr/bin/perl
+
+while (<>) {
+	s/^\+$/ +/;
+	print;
+	next;
+
+	if (0) {
+	if (/^\+$/) {
+		print " +";
+		next;
+	}
+	print "\n$_";
+}
+}
