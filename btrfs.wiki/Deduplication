@@ -31,3 +31,5 @@ An ioctl dedicated to batch deduplication was merged in Linux 3.12.  It brings i
 = Inband =
 
 Inband / synchronous / inline deduplication is deduplication done in the write path, so it happens as data is written to the filesystem. This typically requires large amounts of RAM to store the lookup table of known block hashes. [http://www.mail-archive.com/linux-btrfs%40vger.kernel.org/msg32862.html Patches] are currently being worked on.
+
+[[Category: Features]]

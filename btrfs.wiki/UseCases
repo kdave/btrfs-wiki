@@ -177,7 +177,7 @@ You can't, only subvolumes can be really snapshotted. However, there are ways ho
 
 Suppose there's a source directory ''src'', and you want to take a snapshot of this directory named ''dest'', then possibly creating more snapshots of it:
 
- btrfs subvol create dest
+ btrfs subvolume create dest
  cp -ax --reflink=always src/. dest
 
 Note, that the syntax ''src/.'' is important, this will copy contents of ''src'' rather creating the dir ''src'' under ''dest''. Now the directories hold the same files and data, but any change is independent due to nature of reflink.

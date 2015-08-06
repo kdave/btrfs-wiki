@@ -57,21 +57,35 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 '''Linux v3.19 (highlights or user visible changes)'''
 -->
 
+'''btrfs-progs 4.1.2 (Jul 2015)'''
+
+* urgent bugfix: mkfs creates invalid filesystem
+
+'''In coreutils 8.24'''
+* ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13] ([https://lists.gnu.org/archive/html/coreutils-announce/2015-07/msg00000.html| release notes])
+
+'''btrfs-progs 4.1.1 (Jul 2015)'''
+
+NOTE: mkfs creates invalid filesystem, use 4.1.2 and recreate all filesytems
+
+highlights:
+* defrag: threshold overflow fix
+* fsck: fix wrong nbytes
+* mkfs: create only desired block groups for single device
+* new alias for 'device delete': 'device remove'
+* fix compilation on old gcc (4.3)
+
 '''Linux v4.0.6 (Jun 2015)'''
 * raid1 conversion regression fixed, see [[Gotchas]]
 
 '''Linux v4.1 (Jun 2015)'''
 * ''TBD''
 
-'''btrfs-progs 4.1 (Jun 2015)'''
-* lots of changes see [[Changelog#btrfs-progs_4.1_.28Jun_2015.29|Changelog section]]
-
-'''''Coming in coreutils 8.24'''''
-* ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13]
-
 Read about past releases in the [[Changelog]]
 
 == Articles, presentations, podcasts ==
+* '''Video:''' [https://www.youtube.com/watch?v=W3QRWUfBua8 NYLUG Presents: Chris Mason on Btrfs (May 14th 2015)] by Chris Mason at the 192nd meeting of the NYLUG
+* '''Video:''' [https://www.youtube.com/watch?v=6DplcPrQjvA Why you should consider using btrfs ... like Google does.] by Marc Merlin at linux.conf.au 2015. [http://marc.merlins.org/linux/talks/Btrfs-LCA2015/ talk slides]
 * '''Article:''' [http://arstechnica.com/information-technology/2014/01/bitrot-and-atomic-cows-inside-next-gen-filesystems Bitrot and atomic COWs: Inside “next-gen” filesystems] (ars technica, 2014/01)
 * '''Article:''' [https://lwn.net/Articles/579009/ Btrfs: Subvolumes and snapshots] (LWN.net, 2014/01)
 * '''Article:''' [https://lwn.net/Articles/577961/ Btrfs: Working with multiple devices] (LWN.net, 2013/12)

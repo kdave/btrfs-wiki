@@ -222,6 +222,30 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** Makefile: fix build dependency generation
 ** map-logical: make it work again
 
+=== btrfs-progs 4.1.1 (Jul 2015) ===
+
+'''Do not use this version'''
+
+* bugfixes
+** defrag: threshold overflow fix
+** fsck:
+*** check if items fit into the leaf space
+*** fix wrong nbytes
+** mkfs:
+*** create only desired block groups for single device
+*** preparatory work for fix on multiple devices
+* enhancements
+** new alias for 'device delete': 'device remove'
+* other
+** fix compilation on old gcc (4.3)
+** documentation updates
+** debug-tree: print nbytes
+** test: image for corrupted nbytes
+** corupt-block: let it kill nbytes
+
+=== btrfs-progs 4.1.2 (Jul 2015) ===
+* urgent bugfix: mkfs creates invalid filesystem, must be recreated
+
 == btrfs-progs 4.0 (Apr 2015) ==
 
 * resize:

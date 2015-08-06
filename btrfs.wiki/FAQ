@@ -690,7 +690,7 @@ Mailing list thread [http://thread.gmane.org/gmane.linux.file-systems/41933 Unbo
 
 ''Short answer:'' not a design problem but a bug (see 1) that was fixed
 
-The core of the argument is that the b-tree implementation (from year 2010) does not follow the assumptions found in classic literature about b-trees and can can lead to underutilization of the space. There are two issues raised: one about variable record length (in particular the file data inlined in the leaves), and a second issue about an inefficient b-tree balancing algorithm (see 3).
+The core of the argument is that the b-tree implementation (from year 2010) does not follow the assumptions found in classic literature about b-trees and can lead to underutilization of the space. There are two issues raised: one about variable record length (in particular the file data inlined in the leaves), and a second issue about an inefficient b-tree balancing algorithm (see 3).
 
 Inline extents are not split across leaves and are limited in size of one leaf. This was a decision made based on experience with reiserfs, where inline items were split, causing increased code complexity (and bugs) without much gain (see 2).
 
@@ -704,5 +704,11 @@ References:
 # [http://article.gmane.org/gmane.comp.file-systems.btrfs/5948 reiserfs experience]
 # [http://article.gmane.org/gmane.comp.file-systems.btrfs/5953 inefficient b-tree balance]
 # [http://article.gmane.org/gmane.comp.file-systems.btrfs/5971 worst case estimation in practice]
+
+Discussed on LWN:
+
+* https://lwn.net/Articles/393144/ (article)
+* https://lwn.net/Articles/393528/ (comment)
+* https://lwn.net/Articles/393516/ (comment)
 
 [[Category:UserDoc]]

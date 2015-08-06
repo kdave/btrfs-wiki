@@ -26,6 +26,9 @@ That said, many fixes have gone in btrfs send/receive and it is recommended to u
 ; btrbk [http://www.digint.ch/btrbk] by Axel Burri.
 : Backup tool using a configuration file, allows creation of backups from multiple sources to multiple destinations at once, with ssh and configurable retention support (daily/weekly/monthly)
 
+; snazzer [https://github.com/csirac2/snazzer/#snazzer]
+: Minimal-dependency btrfs snapshotting and backup system offering sha512sum/PGP snapshot measurement, ssh or local filesystem transport and non-linear pruning.
+
 == Doing it by hand, step by step ==
 When performing incremental backups, we will be working with two snapshots, one of them representing the time of the earlier backup, and the other representing the current backup. When the backup run completes, we can discard the earlier of the snapshots to prepare for the next incremental run.
 
