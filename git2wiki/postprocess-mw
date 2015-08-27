@@ -52,8 +52,14 @@ while (<>) {
 	next if (/Last updated/);
 	print;
 	# after title warning
-	if (/^=\s*.*Manual Page/) {
-		print "{{GeneratedManpage}}\n";
+	# capture page name for git link
+	if (/^=\s*([a-zA-Z0-9_-]+)\(.*Manual Page/) {
+		my $gitname=$1;
+		if ($gitname ne '') {
+			print "{{GeneratedManpage\n|name=$gitname}}\n";
+		} else {
+			print "{{GeneratedManpage}}\n";
+		}
 	}
 }
 
