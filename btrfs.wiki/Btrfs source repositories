@@ -15,7 +15,7 @@ Everyone tests with the latest btrfs code from git. Even the latest Linus kernel
 
 == Official repositories ==
 
-The userspace utilities can be downloaded from these repositories:
+The sources of the userspace utilities can be obtained from these repositories:
 
 * git://git.kernel.org/pub/scm/linux/kernel/git/kdave/btrfs-progs.git ([http://git.kernel.org/?p=linux/kernel/git/kdave/btrfs-progs.git;a=summary gitweb access])
 * git://git.kernel.org/pub/scm/linux/kernel/git/mason/btrfs-progs.git ([http://git.kernel.org/?p=linux/kernel/git/mason/btrfs-progs.git;a=summary gitweb access])
@@ -25,9 +25,15 @@ The userspace utilities can be downloaded from these repositories:
 
 There are 2 repositories that get synced at the time of a release ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063 announcement]) and can be considered equal for non-development branches.
 
-== Integration branches, development branches ==
-
 The '''master''' branch of the repositories is updated at the time of a release and is not used for development. This branch is never rebased.
+
+== Development branches ==
+
+The latest '''development branch''' is called '''devel'''. Contains patches that are reviewed or tested and on the way to the next release. When a patch is added to the branch, a mail notification is sent as a reply to the patch.
+
+The git repositories on ''kernel.org'' are not used for development or integration branches.
+
+== Integration branches ==
 
 '''Integration branches''' collect patches that may need public testing and are provided for conveniece to developers or users willing to test unstable version. The patches in these branches are not guaranteed to be merged. The branches are assembled from scratch and server more like a snapshots than stable bases for other development.
 
@@ -44,11 +50,9 @@ To check out this repository, and select the latest branch, use:
 Mirror of the repository is at
  git://github.com/kdave/btrfs-progs.git
 
-and has the same layout as the previous repository. ''Please note that github pull requests will not be accepted, send patches to the mailinglist instead.''
+and has the same layout as the previous repository. 
 
-The git repositories on ''kernel.org'' are not used for development or integration branches.
-
-The latest '''development branches''' is called '''devel'''. Contains patches that are reviewed or tested and on the way to the next release.
+'''Note to GitHub users''': the pull requests will not be accepted directly, the preferred way is to send patches to the mailinglist instead. You can link to a branch in any git repository if the mails do not make it to the mailinglist or for convenience.
 
 Note that this branch can be rebased when there's good reason for that (adding Reported-by/Reviewed-by tags to the middle of the patch series) or if there's a change needed down the patch stack in general. The point is to keep the git history clean.
 

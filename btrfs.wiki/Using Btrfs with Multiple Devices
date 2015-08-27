@@ -18,6 +18,8 @@ See the [[Gotchas]] page for some current issues when using btrfs with multiple 
 
 Please read the parity RAID status page first: [[RAID56]].
 
+Note that the minimum number of devices required for RAID5 is 2. In case of a 2 device RAID5 filesystem, one device has data and the other has parity data. Similarly, for RAID6, the minimum is 3 devices.
+
 === Filesystem creation ===
 
 mkfs.btrfs will accept more than one device on the command line. It has options to control the raid configuration for data (-d) and metadata (-m). Valid choices are raid0, raid1, raid10 and single. The option ''-m single'' means that no duplication of metadata is done, which may be desired when using hardware raid.

@@ -26,10 +26,6 @@ Free space is a tricky concept in Btrfs. This is especially apparent when runnin
 
 You can look at the tips below, and you can also try [http://marc.merlins.org/perso/btrfs/post_2014-05-04_Fixing-Btrfs-Filesystem-Full-Problems.html Marc MERLIN's debugging filesystem full page]
 
-=== if you're on 2.6.32 or older ===
-
-You should upgrade your kernel, '''right now'''. The error behaviour of Btrfs has significantly improved, such that you get a nice proper ENOSPC instead of an OOPS or worse. There may be backports of Btrfs eventually, but it currently relies on infrastructure and patches outside of the fs tree which make a backport trickier to manage without compromising the stability of your stable kernel.
-
 === if your device is small ===
 
 i.e., a 4GiB flash card: your main problem is the large block allocation size, which doesn't allow for much breathing room. A ''btrfs fi'' balance may get you working again, but it's probably only a short term fix, as the metadata to data ratio probably won't match the block allocations.
@@ -48,27 +44,29 @@ Finally, the best solution is to upgrade to at least 2.6.37 (or the latest stabl
 
 === if your device is large (&gt;16GiB) ===
 
- # btrfs fi show /dev/device
+If the filesystem has allocated (but not used) all of the available space, and the metadata is close to full, then df can show lots of free space, but you may still get out of space errors because there isn't enough metadata available.
 
-(as root) should show no free space on any drive.
+To see if this is the case, first look for the amount of allocated space with
 
-It may show unallocated space if you're using raid1 with two drives of different sizes, and possibly similar with larger drives. This is normal in itself, as Btrfs will not write both copies to the same device, but you still have an ENOSPC condition.
+ # sudo btrfs fi show /dev/device
+
+If this shows the "used" value equal to the "total" value on each device, then everything has been allocated, which is the first condition for this problem.
+
+Secondly, look at the amount of space you have in metadata, as reported by
 
  $ btrfs fi df /mountpoint
 
-will probably report available space in both metadata and data. If metadata is "close" to full (within 512 MiB), and data has more than 1 GiB spare, then you can reclaim some of the data allocation with:
+If the "used" metadata is close to the "total" value, then that's the second condition for this problem, and you should read on. What does "close" mean? If the free space in metadata is less than or equal to the ''block reserve'' value (typically 512 MiB, but might be something else on a particularly small or large filesystem), then it's close to full.
 
- # btrfs fi balance /mountpoint -dusage=5
+If you have full up metadata, and more than 1 GiB of space free in data, as reported by btrfs fi df, then you should be able to free up some of the data allocation with a partial balance:
 
-This may take a while (although the system is otherwise usable during this time), but when completed, you should be able to use most of the remaining space. We know this isn't ideal, and there are plans to improve the behavior. Running close to empty is rarely the ideal case, but we can get far closer to full than we do.
+ # btrfs balance start /mountpoint -dlimit=3
 
-If the above command doesn't move any block groups, you should increase the number from 5 to 10. Then 20, 50 and 80. You can stop once it has freed up some data allocation. For more information on balance filters, see [[Balance_filters]]
+We know this isn't ideal, and there are plans to improve the behavior. Running close to empty is rarely the ideal case, but we can get far closer to full than we do.
 
-Very occasionally, it's not possible to run a balance because it runs out of space on the balance. If this happens, the first thing you should be looking to do is upgrade to the latest kernel. If that still doesn't work, then you may be able to delete a large file (and some of its metadata) in a low-overhead way with:
+'''When you haven't hit the "usual" problem'''
 
- $ true &gt; /path/to/file
-
-This will delete the contents, allowing the space to be reclaimed. This may get you out of the tight spot, and you can then then balance as above.
+If the conditions above aren't true (i.e. there's plenty of unallocated space, or there's lots of unused metadata allocation), then you may have hit a known but unresolved bug. If this is the case, please report it to either the mailing list, or IRC. In some cases, it has been possible to deal with the problem, but the approach is new, and we would like more direct contact with people experiencing this particular bug.
 
 == Are btrfs changes backported to stable kernel releases? ==
 
@@ -192,8 +190,7 @@ Note, if the ''fsck.btrfs'' utility is in fact ''btrfsck'', then the filesystem 
 
 == Can I use RAID[56] on my Btrfs filesystem? ==
 
-Yes, with 3.9 and above, but it's still experimental.
-Please see [[RAID56]]
+Parity RAID appeared in 3.9, and was considered experimental until 3.19, when recovery code to deal with bitrot/checksum errors was introduced. See [[RAID56]] for more details.
 
 == Is Btrfs optimized for SSD? ==
 
@@ -465,6 +462,16 @@ Balance does a defragmentation, but not on a file level rather on the block grou
 == Do I need to run a balance regularly? ==
 
 In general usage, no. A full unfiltered balance typically takes a long time, and will rewrite huge amounts of data unnecessarily. You may wish to run a balance on metadata only (see [[Balance_Filters]]) if you find you have very large amounts of metadata space allocated but unused, but this should be a last resort. At some point, this kind of clean-up will be made an automatic background process.
+
+== How do I undelete a file? ==
+
+There are three possible approaches to this:
+
+# Restore from your backups (by far the easiest and most reliable method).
+# Unmount the filesystem ''as soon as possible'', and use [[Restore|btrfs-find-root and btrfs restore]] to find an earlier metadata root and restore the files.
+# Unmount the filesystem ''as soon as possible'', and use a file-carving tool (say, PhotoRec) to find data that looks like the file you deleted.
+
+There is no simple undelete tool for btrfs, and it is likely there never will be. The second and third approaches are unreliable at best. It is far better to ensure that you have good working backups in the first place.
 
 == What is the difference between mount -o ssd and mount -o ssd_spread? ==
 
