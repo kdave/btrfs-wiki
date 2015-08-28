@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+# - remove first line if empty
+# - remove more than 2 consecutive empty lines
+
+use strict;
+use warnings;
+my $first = 0;
+
+while (<STDIN>) {
+	if ($first < 1 && /^\n$/) {
+		$first = 1;
+		next;
+	}
+
+	if (/^\n$/) {
+		if ($first == 1) {
+			$first++;
+			print;
+		}
+		next;
+	}
+	$first = 1;
+	print;
+}

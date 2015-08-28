@@ -12,6 +12,6 @@ $(FMW): $(FHTML)
 	asciidoc -b html4 -d manpage -f asciidoc.conf -o $@ $<-tmp
 	#rm $<-tmp
 %.mw: %.html
-	./html2mw < $< | postprocess-mw > $@
+	./html2mw < $< | postprocess-mw | clean-whitespace > $@
 clean:
 	-rm -f $(FMW) $(FHTML) $(FTMP)
