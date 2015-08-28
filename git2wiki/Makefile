@@ -15,3 +15,6 @@ $(FMW): $(FHTML)
 	./html2mw < $< | postprocess-mw | clean-whitespace > $@
 clean:
 	-rm -f $(FMW) $(FHTML) $(FTMP)
+
+clean-tmp:
+	-rm -f $(FHTML) $(FTMP)

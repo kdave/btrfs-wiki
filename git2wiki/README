@@ -19,6 +19,7 @@ Conversion:
 * postprocess mediawiki
   - add hyperlinks to external manpages
   - other visual artifacts that the conversion tools did not get right
+  - clean whitespace
 
 Conversion tools:
 
