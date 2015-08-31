@@ -407,6 +407,50 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 
 = By version (linux kernel) =
 
+=== v4.2 (Aug 2015) ===
+* enhancements
+** transaction abort now reports the caller, not the helper function
+** INO_LOOKUP ioctl: unprivileged if used to just get the rootid (aka. subvolume id)
+** unified ''subvol='' and ''subvolid='' mounting, show the mounted subvol in mount options; also, ''/proc/self/mountinfo'' now always correctly shows the mounted subvolume
+** reworked internal qgroup logic
+** send: use received_uuid of parent during send
+** sysfs: preparatory works for exporting more stats about devices
+** deduplication on the same inode works
+** deduplication does not change mtime/ctime
+* fixes:
+** in send: cloning, renames, orphans, 
+** few more ENOSPC fixes in case of block group creation/removal
+** fix hang during inode eviction due to concurrent readahead
+** EXTENT_SAME ioctl: handle unaligned length
+** more fixes around automatic block group removal
+** deadlock with EXTENT_SAME and readahead
+** for feature NO_HOLES: fsync, truncate
+
+== v4.1 (Jun 2015) ==
+* fixes
+** regression in chunk removal, conversion to raid1 possible again
+** log tree corruption fix with ''-o discard'' mount
+** bare xattr namespace attribute is not accepted
+** orphan cleanup is started for implicitly mounted default subvolume
+** send fixes
+** cloning within same file
+** EXTENT_SAME ioctl infinite loop fix
+** avoid more ENOSPC in delayed-iput context
+** a few ENOMEM fixes
+** ''automatic empty block group removal'' fixups
+* speedups
+** large file deletion: run delayed refs more often
+** large file deletion: don't build up too much work from crc
+** transaction commit latency improved
+** block group cache writeout
+* qgroup:
+** limits are shared upon snapshot
+** allow to remove qgroup which has parent but no child
+** fix status of qgroup consistency after rescan
+** fix quota status bits after dsiabling
+** mark qgroups inconsistent after assign/delete actions
+* code cleanups
+
 == v4.0 (Apr 2015) ==
 * file creation time is stored (no easy interface to read it yet)
 * fsync and log replay fixes

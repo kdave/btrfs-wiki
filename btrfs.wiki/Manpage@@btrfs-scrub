@@ -1,6 +1,7 @@
 
 =btrfs-scrub(8) Manual Page=
-{{GeneratedManpage}}
+{{GeneratedManpage
+|name=btrfs-scrub}}
 
 
 ==NAME==

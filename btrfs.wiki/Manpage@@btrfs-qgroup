@@ -1,6 +1,7 @@
 
 =btrfs-qgroup(8) Manual Page=
-{{GeneratedManpage}}
+{{GeneratedManpage
+|name=btrfs-qgroup}}
 
 
 ==NAME==

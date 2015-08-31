@@ -1,6 +1,7 @@
 
 =mkfs.btrfs(8) Manual Page=
-{{GeneratedManpage}}
+{{GeneratedManpage
+|name=mkfs.btrfs}}
 
 
 ==NAME==

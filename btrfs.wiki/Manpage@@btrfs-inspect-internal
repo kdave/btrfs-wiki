@@ -1,6 +1,7 @@
 
 =btrfs-inspect-internal(8) Manual Page=
-{{GeneratedManpage}}
+{{GeneratedManpage
+|name=btrfs-inspect-internal}}
 
 
 ==NAME==

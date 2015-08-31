@@ -1,6 +1,7 @@
 
 =btrfs-subvolume(8) Manual Page=
-{{GeneratedManpage}}
+{{GeneratedManpage
+|name=btrfs-subvolume}}
 
 
 ==NAME==

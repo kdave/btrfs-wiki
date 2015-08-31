@@ -1,6 +1,7 @@
 
 =fsck.btrfs(8) Manual Page=
-{{GeneratedManpage}}
+{{GeneratedManpage
+|name=fsck.btrfs}}
 
 
 ==NAME==

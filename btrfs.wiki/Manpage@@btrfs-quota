@@ -1,6 +1,7 @@
 
 =btrfs-quota(8) Manual Page=
-{{GeneratedManpage}}
+{{GeneratedManpage
+|name=btrfs-quota}}
 
 
 ==NAME==

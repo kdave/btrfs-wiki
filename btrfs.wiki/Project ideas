@@ -46,28 +46,6 @@ Note, that some of the ideas may not be up-to-date with current state of btrfs i
 |text=dm_cache or bcache can add a cache on a SSD to increase speed of slower spindles. Using this with a multi-device btrfs with mirroring or RAID5/6 would be inefficient, as the (write-trough) cache would not be aware of identical extends to be put on different disks and it doesn't make much sense to have them twice in the cache. This could be solved by adding a new feature into btrfs which allows adding a device used for caching only.
 }}
 
-=== Scrub with RAID 5/6 ===
-{{project
-|text=Scrubbing a RAID 5/6 system is currently not supported.
-The goal of scrubbing is to find and repair disk errors while causing
-minimal impact to the performance of the filesystem. Therefore a goal
-is to avoid seek operations, to read the blocks from each device in
-sorted order. Another goal is to perform the scrubbing quickly,
-therefore currently for each disk one thread is spawned that deals
-with the disk independent of the other disks thus without waiting for
-the other disks.
-Things are a little bit different in case of RAID 5/6 since you need
-to read from multiple devices in order to be able to check the parity
-information. A strategy needs to be found how to scrub RAID 5/6
-filesystems efficiently, afterwards this needs to be implemented.
-}}
-
-=== Device replace with RAID 5/6 ===
-{{project
-|text=See "Scrub with RAID 5/6" since the replace code makes use of the
-scrub code.
-}}
-
 === Verify data at end of device replace ===
 {{project
 |text=Verify copied data before declaring a replace operation as successfully
@@ -364,14 +342,6 @@ The intermediate state of "2 UUIDs" interacts with other feautres:
 * ''possibly others''
 }}
 
-=== Filesystem UUID change - off-line ===
-
-{{project
-|text=Change the filesystem UUID on a given filesystem image. This is easier than the on-line variant. Go through all the metadata blocks reachable from the superblock, verify and rewrite the UUID.
-
-A POC can be found here https://github.com/kdave/testunion/tree/master/uuid-rewrite .
-}}
-
 === Implement new RENAME_* modes ===
 
 {{project
@@ -418,9 +388,18 @@ Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 * scrub status: print percentage completed (use get_df for total size)
 * allow to undelete a subvolume that is still left intact on the device
 ** constraints: on an unmounted filesystem, drop key is 0, must find a free directory/name
+* scrub: print ETA guessed on reported scrubbed bytes and time
+* subvolume listing: overhaul, see Hugo's mail
+* check: make more verbose about the phases, more verbosity levels
+* (prototype exists) print block groups aka chunks in detail
+* use libsmartcolumns -- backward compatibility issues but would be a big improvement all over
+* alternate output formats -- eg. json, structured data, tables etc; libsmartcols knows that already but we'd need to cover output that's not only tables
+* balance: allow to run it in background (fork) and report status periodically
+* (maybe) provide a utility to do ''dd and uuid change'' in one go, should be easy to copy a modified superblock first with new uuid, then simply dd the rest and then run btrfstune on to finish the uuid conversion
 
 === btrfs-restore ===
 * an option to skip paths by pattern (inverse to [[Restore#How to Run|--path-regex]]) and/or interactive mode asking to add inclusion and exclusion patterns ([https://bugzilla.kernel.org/show_bug.cgi?id=66911 a feature request in Bugzilla], [[Talk:Restore#How to exclude some paths matching a pattern|a detailed description of the idea at this wiki]])
+* add more tests to cover all features and recovery option combinations
 
 === fsck ===
 
@@ -431,11 +410,11 @@ Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 * pre-create a subvolume and put there contents of the root instead of filling the toplevel subvolume
 * convert from other filesystems ([http://www.spinics.net/lists/linux-btrfs/msg04985.html reiserfs])
 * convert from md configurations (ie, ext4-on-md converted into btrfs without md)
+* make more verbose about the phases, make it possible to identify at which inode it failed
 
 === mkfs.btrfs ===
 
 * pre-create a subvolume and put there contents of ''--rootdir'' instead of filling the toplevel subvolume
-* '''(claimed)''' give nicer overview of the created filesystem (block/node/fs sizes, raid profiles, features)
 * enable quotas during mkfs
 * allow to compress the files with ''--rootdir'' option
 
@@ -470,6 +449,8 @@ Some tools have to run under root but still may need some level of restrictions 
 
 * update man page of ''mount'' to contain btrfs options (use [[Mount_options]] as a source)
 * this very wiki needs updates and removal of obsolete information, work here is highly appreciated as this is one of the frequently consulted sources of information about btrfs
+* document ioctls: parameters, return values, expected effects
+* document send stream format, RFC, validator, dumper; see far-progs
 
 == Cleanup projects ==
 This is a short collection of possible cleanups, that would make the code easier to read and to maintain. '''Please note''' that cleanups may interfere with patches in-flight doing some real work and merging may be postponed or you may be asked to refresh them on top of other changes.
@@ -837,6 +818,42 @@ Given an inode, the Btrfs metadata can find all the directories that point to th
 |patch=complete
 }}
 
+=== Scrub with RAID 5/6 ===
+{{project
+|who=Miao Xie
+|upstream=3.19
+|patch=complete
+|text=The goal of scrubbing is to find and repair disk errors while causing
+minimal impact to the performance of the filesystem. Therefore a goal
+is to avoid seek operations, to read the blocks from each device in
+sorted order. Another goal is to perform the scrubbing quickly,
+therefore currently for each disk one thread is spawned that deals
+with the disk independent of the other disks thus without waiting for
+the other disks.
+Things are a little bit different in case of RAID 5/6 since you need
+to read from multiple devices in order to be able to check the parity
+information. A strategy needs to be found how to scrub RAID 5/6
+filesystems efficiently, afterwards this needs to be implemented.
+}}
+
+=== Device replace with RAID 5/6 ===
+{{project
+|who=Miao Xie
+|upstream=3.19
+|patch=complete
+|text=See "Scrub with RAID 5/6" since the replace code makes use of the
+scrub code.
+}}
+
+=== Filesystem UUID change - off-line ===
+
+{{project
+|who=Qu Wenruo
+|upstream=/ btrfs-progs 4.1
+|patch=complete
+|text=Change the filesystem UUID on a given filesystem image. This is easier than the on-line variant. Go through all the metadata blocks reachable from the superblock, verify and rewrite the UUID.
+}}
+
 = Obsolete requests =
 
 The following ideas are no longer needed, or have been subsumed within another piece of work.
@@ -871,13 +888,6 @@ http://thread.gmane.org/gmane.comp.file-systems.btrfs/27452
 |who=Sanjeev Mk, Shravan Aras, Gautam Akiwate
 |obsoleted=Project_ideas#Filesystem_object_properties
 |text=[[Btrfstune|btrfstune]] currently can be used to update the seeding value. This project would add on to that and make btrfstune a generic tool to tune various FS parameters.
-
-(Would be better to have this under 'btrfs tune' or something like that)
-
-Contact:<br>
-email : sanjeevmk4890@gmail.com IRC Nick: s-mk <br>
-email: 123.shravan@gmail.com IRC Nick: shravan <br>
-email: gautam.akiwate@gmail.com IRC Nick: gakiwate <br>
 }}
 
 = Development notes, please read =

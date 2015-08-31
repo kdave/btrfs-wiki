@@ -19,7 +19,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 '''The main Btrfs features available at the moment include:'''
 
 * Extent based file storage
-* 2^64 byte == 16 EiB maximum file size
+* 2^64 byte == 16 EiB maximum file size (practical limit is 8 EiB due to Linux VFS)
 * Space-efficient packing of small files
 * Space-efficient indexed directories
 * Dynamic inode allocation
@@ -34,7 +34,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 * Background scrub process for finding and fixing errors on files with redundant copies
 * Online filesystem defragmentation
 * [[btrfsck|Offline filesystem check]]
-* [[Conversion_from_Ext3|Conversion]] of existing ext3/4 file systems
+* In-place [[Conversion_from_Ext3|conversion]] of existing ext3/4 file systems
 * [[Seed-device|Seed devices]]. Create a (readonly) filesystem that acts as a template to seed other Btrfs filesystems. The original filesystem and devices are included as a readonly starting point for the new filesystem. Using copy on write, all modifications are stored on different devices; the original is unchanged.
 * Subvolume-aware [[quota support]]
 * Send/receive of subvolume changes
@@ -43,13 +43,13 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 '''Additional features in development, or planned, include:'''
 
-* Very fast offline filesystem check
+* Fast offline filesystem check
+* Online filesystem check
 * Object-level mirroring and striping
 * Alternative checksum algorithms
-* Online filesystem check
+* In-band [[deduplication]] (happens during writes)
 * Other compression methods (snappy, [[Project_ideas#Compression_enhancements|LZ4]])
 * Hot data tracking and moving to faster devices (currently being pushed as a generic feature available through VFS)
-* In-band [[deduplication]] (happens during writes)
 
 == News ==
 
@@ -57,51 +57,33 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 '''Linux v3.19 (highlights or user visible changes)'''
 -->
 
+'''Linux v4.2 (Aug 2015)'''
+* enhancements
+** transaction abort now reports the caller, not the helper function
+** INO_LOOKUP ioctl: unprivileged if used to just get the rootid (aka. subvolume id)
+** unified ''subvol='' and ''subvolid='' mounting, show the mounted subvol in mount options; also, ''/proc/self/mountinfo'' now always correctly shows the mounted subvolume
+** reworked internal qgroup logic
+** send: use received_uuid of parent during send
+** sysfs: preparatory works for exporting more stats about devices
+** deduplication on the same inode works
+** deduplication does not change mtime/ctime
+* fixes:
+** in send: cloning, renames, orphans, 
+** few more ENOSPC fixes in case of block group creation/removal
+** fix hang during inode eviction due to concurrent readahead
+** EXTENT_SAME ioctl: handle unaligned length
+** more fixes around automatic block group removal
+** deadlock with EXTENT_SAME and readahead
+** for feature NO_HOLES: fsync, truncate
+
 '''btrfs-progs 4.1.2 (Jul 2015)'''
 
 * urgent bugfix: mkfs creates invalid filesystem
 
 '''In coreutils 8.24'''
-* ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13] ([https://lists.gnu.org/archive/html/coreutils-announce/2015-07/msg00000.html| release notes])
-
-'''btrfs-progs 4.1.1 (Jul 2015)'''
-
-NOTE: mkfs creates invalid filesystem, use 4.1.2 and recreate all filesytems
-
-highlights:
-* defrag: threshold overflow fix
-* fsck: fix wrong nbytes
-* mkfs: create only desired block groups for single device
-* new alias for 'device delete': 'device remove'
-* fix compilation on old gcc (4.3)
-
-'''Linux v4.0.6 (Jun 2015)'''
-* raid1 conversion regression fixed, see [[Gotchas]]
-
-'''Linux v4.1 (Jun 2015)'''
-* ''TBD''
+* ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13] ([https://lists.gnu.org/archive/html/coreutils-announce/2015-07/msg00000.html release notes])
 
 Read about past releases in the [[Changelog]]
-
-== Articles, presentations, podcasts ==
-* '''Video:''' [https://www.youtube.com/watch?v=W3QRWUfBua8 NYLUG Presents: Chris Mason on Btrfs (May 14th 2015)] by Chris Mason at the 192nd meeting of the NYLUG
-* '''Video:''' [https://www.youtube.com/watch?v=6DplcPrQjvA Why you should consider using btrfs ... like Google does.] by Marc Merlin at linux.conf.au 2015. [http://marc.merlins.org/linux/talks/Btrfs-LCA2015/ talk slides]
-* '''Article:''' [http://arstechnica.com/information-technology/2014/01/bitrot-and-atomic-cows-inside-next-gen-filesystems Bitrot and atomic COWs: Inside “next-gen” filesystems] (ars technica, 2014/01)
-* '''Article:''' [https://lwn.net/Articles/579009/ Btrfs: Subvolumes and snapshots] (LWN.net, 2014/01)
-* '''Article:''' [https://lwn.net/Articles/577961/ Btrfs: Working with multiple devices] (LWN.net, 2013/12)
-* '''Article:''' [http://lwn.net/Articles/577218/ Btrfs: Getting started] (LWN.net, 2013/12)
-* '''Article:''' [http://www.zdnet.com/btrfs-hands-on-an-extremely-cool-file-system-7000023734 Btrfs hands on: An extremely cool file system] (ZDNet, 2013/11)
-* '''Technical report:''' [http://domino.watson.ibm.com/library/cyberdig.nsf/1e4115aea78b6e7c85256b360066f0d4/9e29fdded06e5de785257c1d005e7e9e!OpenDocument Visualizating Block IO Workloads]. Section six shows a visual comparison of the IO patterns for BTRFS, XFS, and EXT4. Submitted to ACM Transactions on Storage, November 2013.
-* '''Paper:''' [http://dl.acm.org/citation.cfm?id=2501623 BTRFS: The Linux B-Tree Filesystem] describing the overall concepts and architecture, appeared in ACM Transactions on Storage, August 2013. Includes a detailed comparison with ZFS. There is a free ACM authorized link, from O. Rodeh's [https://sites.google.com/site/ohadrodehshomepage/research] page. Otherwise, you need a subscription for the ACM library.
-* '''Article:''' [http://www.howtoforge.com/a-beginners-guide-to-btrfs A Beginner's Guide To Btrfs] (2012-11-26)
-* '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/advanced-btrfs-1734952.html How I Use the Advanced Capabilities of Btrfs] by Margaret Bierman with Lenz Grimmer (2012-08-11)
-* '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/gettingstarted-btrfs-1695246.html How I Got Started with the Btrfs File System for Oracle Linux] by Margaret Bierman with Lenz Grimmer (2012-07-11)
-* '''Article:''' [http://www.funtoo.org/wiki/BTRFS_Fun Btrfs Fun] Wiki page on funtoo.org (2012-05)
-* '''Video:''' [http://video.linux.com/videos/btrfs-filesystem-status-and-new-features Btrfs Filesystem: Status and New Features] by Chris Mason at the 2012 Linux Foundation Collaboration Summit (2012-04-05)
-* '''Article''' [http://static.usenix.org/publications/login/2012-02/openpdfs/Bacik.pdf Btrfs - The Swiss Army Knife Of Storage] by Josef Bacik (2012-02)
-* '''Video:''' [http://www.youtube.com/watch?v=hxWuaozpe2I I Can't Believe This is Butter! A tour of btrfs] by Avi Miller at linux.conf.au (2012-01-18)
-* '''Article:''' [http://lwn.net/Articles/465160/ A btrfs update at LinuxCon Europe] on lwn.net (2011-11-02)
-* '''Podcast:''' [http://feedproxy.google.com/~r/OracleLinux/~3/kRqpaCdTlLg/10491325_Btrfs_071311.mp3 Podcast with Chris Mason: Btrfs overview and status update] (2011-07-13)
 
 == Documentation ==
 
@@ -174,6 +156,26 @@ Links to Btrfs documentation of various Linux distributions:
 * [[Btrfs source repositories]]
 * [http://git.kernel.org/?p=linux/kernel/git/mason/linux-btrfs.git;a=tree;f=fs/btrfs;hb=HEAD Gitweb source viewer] of the main kernel repository
 * [https://git.kernel.org/cgit/linux/kernel/git/kdave/btrfs-progs.git/ Gitweb source viewer] of the userspace tools repository
+
+== Articles, presentations, podcasts ==
+* '''Video:''' [https://www.youtube.com/watch?v=W3QRWUfBua8 NYLUG Presents: Chris Mason on Btrfs (May 14th 2015)] by Chris Mason at the 192nd meeting of the NYLUG
+* '''Video:''' [https://www.youtube.com/watch?v=6DplcPrQjvA Why you should consider using btrfs ... like Google does.] by Marc Merlin at linux.conf.au 2015. [http://marc.merlins.org/linux/talks/Btrfs-LCA2015/ talk slides]
+* '''Article:''' [http://arstechnica.com/information-technology/2014/01/bitrot-and-atomic-cows-inside-next-gen-filesystems Bitrot and atomic COWs: Inside “next-gen” filesystems] (ars technica, 2014/01)
+* '''Article:''' [https://lwn.net/Articles/579009/ Btrfs: Subvolumes and snapshots] (LWN.net, 2014/01)
+* '''Article:''' [https://lwn.net/Articles/577961/ Btrfs: Working with multiple devices] (LWN.net, 2013/12)
+* '''Article:''' [http://lwn.net/Articles/577218/ Btrfs: Getting started] (LWN.net, 2013/12)
+* '''Article:''' [http://www.zdnet.com/btrfs-hands-on-an-extremely-cool-file-system-7000023734 Btrfs hands on: An extremely cool file system] (ZDNet, 2013/11)
+* '''Technical report:''' [http://domino.watson.ibm.com/library/cyberdig.nsf/1e4115aea78b6e7c85256b360066f0d4/9e29fdded06e5de785257c1d005e7e9e!OpenDocument Visualizating Block IO Workloads]. Section six shows a visual comparison of the IO patterns for BTRFS, XFS, and EXT4. Submitted to ACM Transactions on Storage, November 2013.
+* '''Paper:''' [http://dl.acm.org/citation.cfm?id=2501623 BTRFS: The Linux B-Tree Filesystem] describing the overall concepts and architecture, appeared in ACM Transactions on Storage, August 2013. Includes a detailed comparison with ZFS. There is a free ACM authorized link, from O. Rodeh's [https://sites.google.com/site/ohadrodehshomepage/research] page. Otherwise, you need a subscription for the ACM library.
+* '''Article:''' [http://www.howtoforge.com/a-beginners-guide-to-btrfs A Beginner's Guide To Btrfs] (2012-11-26)
+* '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/advanced-btrfs-1734952.html How I Use the Advanced Capabilities of Btrfs] by Margaret Bierman with Lenz Grimmer (2012-08-11)
+* '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/gettingstarted-btrfs-1695246.html How I Got Started with the Btrfs File System for Oracle Linux] by Margaret Bierman with Lenz Grimmer (2012-07-11)
+* '''Article:''' [http://www.funtoo.org/wiki/BTRFS_Fun Btrfs Fun] Wiki page on funtoo.org (2012-05)
+* '''Video:''' [http://video.linux.com/videos/btrfs-filesystem-status-and-new-features Btrfs Filesystem: Status and New Features] by Chris Mason at the 2012 Linux Foundation Collaboration Summit (2012-04-05)
+* '''Article''' [http://static.usenix.org/publications/login/2012-02/openpdfs/Bacik.pdf Btrfs - The Swiss Army Knife Of Storage] by Josef Bacik (2012-02)
+* '''Video:''' [http://www.youtube.com/watch?v=hxWuaozpe2I I Can't Believe This is Butter! A tour of btrfs] by Avi Miller at linux.conf.au (2012-01-18)
+* '''Article:''' [http://lwn.net/Articles/465160/ A btrfs update at LinuxCon Europe] on lwn.net (2011-11-02)
+* '''Podcast:''' [http://feedproxy.google.com/~r/OracleLinux/~3/kRqpaCdTlLg/10491325_Btrfs_071311.mp3 Podcast with Chris Mason: Btrfs overview and status update] (2011-07-13)
 
 == Benchmarking ==
 

@@ -1,6 +1,7 @@
 
 =btrfs-receive(8) Manual Page=
-{{GeneratedManpage}}
+{{GeneratedManpage
+|name=btrfs-receive}}
 
 
 ==NAME==

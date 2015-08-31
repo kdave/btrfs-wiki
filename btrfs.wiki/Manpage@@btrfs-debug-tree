@@ -1,6 +1,7 @@
 
 =btrfs-debug-tree(8) Manual Page=
-{{GeneratedManpage}}
+{{GeneratedManpage
+|name=btrfs-debug-tree}}
 
 
 ==NAME==

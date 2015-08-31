@@ -1,6 +1,7 @@
 
 =btrfs-property(8) Manual Page=
-{{GeneratedManpage}}
+{{GeneratedManpage
+|name=btrfs-property}}
 
 
 ==NAME==

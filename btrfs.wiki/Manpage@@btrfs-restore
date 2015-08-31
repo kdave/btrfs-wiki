@@ -1,6 +1,7 @@
 
 =btrfs-restore(8) Manual Page=
-{{GeneratedManpage}}
+{{GeneratedManpage
+|name=btrfs-restore}}
 
 
 ==NAME==

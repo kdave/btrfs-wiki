@@ -1,6 +1,7 @@
 
 =btrfs-replace(8) Manual Page=
-{{GeneratedManpage}}
+{{GeneratedManpage
+|name=btrfs-replace}}
 
 
 ==NAME==

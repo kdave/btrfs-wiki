@@ -1,6 +1,7 @@
 
 =btrfs-device(8) Manual Page=
-{{GeneratedManpage}}
+{{GeneratedManpage
+|name=btrfs-device}}
 
 
 ==NAME==

@@ -1,6 +1,7 @@
 
 =btrfs-check(8) Manual Page=
-{{GeneratedManpage}}
+{{GeneratedManpage
+|name=btrfs-check}}
 
 
 ==NAME==

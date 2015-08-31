@@ -1,6 +1,7 @@
 
 =btrfs-send(8) Manual Page=
-{{GeneratedManpage}}
+{{GeneratedManpage
+|name=btrfs-send}}
 
 
 ==NAME==
