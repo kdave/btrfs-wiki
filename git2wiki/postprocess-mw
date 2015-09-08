@@ -53,7 +53,7 @@ while (<>) {
 	print;
 	# after title warning
 	# capture page name for git link
-	if (/^=\s*([a-zA-Z0-9_-]+)\(.*Manual Page/) {
+	if (/^=\s*([a-zA-Z0-9_\.-]+)\(.*Manual Page/) {
 		my $gitname=$1;
 		if ($gitname ne '') {
 			print "{{GeneratedManpage\n|name=$gitname}}\n";
