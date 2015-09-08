@@ -165,6 +165,33 @@ Major features or significant feature enhancements by kernel version. For more i
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
 
+== btrfs-progs 4.2 (Sep 2015) ==
+
+
+'''btrfs-progs 4.2 (Sep 2015)'''
+* enhancements:
+** mkfs: do not create extra single chunks on multiple devices
+** resize: try to guess the minimal size, 'inspect min-dev-size'
+** qgroup assign: add option to schedule rescan
+** chunk-recover: be more verbose about the scanning process
+* fixes:
+** check:
+*** find stripes crossing stripe boundary -- created by convert
+*** print correct range for file hole when there are no extents and learn how to fix it
+** replace: more sanity checks
+** convert: concurrency fixes related to reporting progress
+** find-root: option -a will not skip the current root anymore
+** subvol list: fix occasional crash
+** do not create stripes crossing stripe boundary
+* build:
+** fixes for musl libc
+** preliminary support for android (not working yet, more code changes needed)
+** new EXTRA_CFLAGS and EXTRA_LDFLAGS
+* other:
+** lots of cleanups
+** tests: lots of updates, new tests, framework improvements
+** documentation updates
+** debugging: print-tree shows stripe length
 
 == btrfs-progs 4.1 (Jun 2015) ==
 

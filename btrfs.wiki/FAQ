@@ -315,7 +315,7 @@ Free space in Btrfs is a tricky concept from a traditional viewpoint, owing part
 
 === Understanding free space, using the original tools ===
 
-Btrfs starts with a pool of raw storage. This is what you see when you run <code>btrfs fi show</code>:
+Btrfs starts with a pool of raw storage, made up of the space on all the devices in the FS. This is what you see when you run <code>btrfs fi show</code>:
 
  $ sudo btrfs fi show
  Label: none  uuid: 12345678-1234-5678-1234-1234567890ab
@@ -323,7 +323,7 @@ Btrfs starts with a pool of raw storage. This is what you see when you run <code
  	devid    1 size 427.24GB used 197.01GB path /dev/sda1
  	devid    2 size 465.76GB used 197.01GB path /dev/sdc1
 
-The filesystem automatically allocates space out of the pool as it needs it. In this case, it has allocated 394.02 GiB of space (197.01+197.01), out of a total of 893.00 GiB (427.24+465.76) across two devices. The allocation is simply setting aside a region of a disk for some purpose (e.g. "data will be stored in this region"). The output from <code>btrfs fi show</code>, however, doesn't tell the whole story. The <code>btrfs fi show</code> output only shows how much has been '''allocated''' out of the total available space. In order to see ''how'' that allocation is used, and how much of it contains useful data, you also need <code>btrfs fi df</code>:
+The pool is the total size of /dev/sda1 and /dev/sdc1 in this case. The filesystem automatically allocates space out of the pool as it needs it. In this case, it has allocated 394.02 GiB of space (197.01+197.01), out of a total of 893.00 GiB (427.24+465.76) across two devices. The allocation is simply setting aside a region of a disk for some purpose (e.g. "data will be stored in this region"). The output from <code>btrfs fi show</code>, however, doesn't tell the whole story. The <code>btrfs fi show</code> output only shows how much has been '''allocated''' out of the total available space. In order to see ''how'' that allocation is used, and how much of it contains useful data, you also need <code>btrfs fi df</code>:
 
  $ btrfs fi df /
  Metadata, single: total=18.00GB, used=6.10GB

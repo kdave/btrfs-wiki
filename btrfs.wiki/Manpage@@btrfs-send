@@ -1,8 +1,6 @@
-
 =btrfs-send(8) Manual Page=
 {{GeneratedManpage
 |name=btrfs-send}}
-
 
 ==NAME==
 
@@ -36,10 +34,12 @@ It is allowed to omit the '''-p &lt;parent&gt;''' option when '''-c &lt;clone-sr
 : Use this snapshot as a clone source for an incremental send (multiple allowed).
 ; -f &lt;outfile&gt;
 : Output is normally written to stdout. To write to a file, use this option. An alternative would be to use pipes.
+; --no-data
+: Send in NO_FILE_DATA mode. The output stream does not contain any file data and thus cannot be used to transfer changes. This mode is faster and useful to show the differences in metadata.
 
 ==EXIT STATUS==
 
-'''btrfs send''' returns a zero exist status if it succeeds. Non zero is returned in case of failure.
+'''btrfs send''' returns a zero exit status if it succeeds. Non zero is returned in case of failure.
 
 ==AVAILABILITY==
 
@@ -48,6 +48,5 @@ It is allowed to omit the '''-p &lt;parent&gt;''' option when '''-c &lt;clone-sr
 ==SEE ALSO==
 
 [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-receive|btrfs-receive(8)]]
-
 
 [[Category:Manpage]]

@@ -4,28 +4,18 @@ Please add new things below, don't forget to add a comment on which version you 
 
 = Issues =
 
-* All versions
-** Do not make a block-level copy of a btrfs filesystem to a block device, and then try to mount either the original or the copy while both are visible to the same kernel.
-** This means: don't use LVM snapshots, or any other kind of block level snapshots; don't make copies with dd.
-** If you must do this, remove one copy from the system (physically, or by deletion of the block device or FS) before mounting the other copy.
-** It is safe to copy the data to a file (e.g. with dd), but not to make that file into a block device with the loopback driver.
-** This problem is due to the UUID on the original and the copy being the same. This confuses the kernel, and it can end up writing updates to the wrong filesystem, causing massive data corruption.
+== Affecting all versions ==
 
-* Stable kernel version '''4.0.6''' fixes a regression in raid1 conversion, works fine on 3.19 and 4.1
-** conversion from eg. single or raid0 profiles to raid1 made no change to the filesystem
+=== Block-level copies of devices ===
 
-* Stable kernel version '''3.19.1+''' can cause a deadlock at mount time
-** Fixed in '''3.19.5''', '''3.14.39'''
-** workaround: boot with older kernel, or run ''btrfs-zero-log'' to clear the log. This will lose up to the last 30 seconds of writes to the filesystem. You will have to reboot after running the btrfs-zero-log command, to clear the jammed locks.
-** fix: scheduled for 3.19.5, or apply [https://git.kernel.org/linus/9c4f61f01d269815bb7c37be3ede59c5587747c6 9c4f61f01d269815bb7c37].
-** also affected: '''3.14.35+''', '''3.18.9+'''
+* Do not make a block-level copy of a btrfs filesystem to a block device, and then try to mount either the original or the copy while both are visible to the same kernel.
+* This means: don't use LVM snapshots, or any other kind of block level snapshots; don't make copies with dd.
+* If you must do this, remove one copy from the system (physically, or by deletion of the block device or FS) before mounting the other copy.
+* It is safe to copy the data to a file (e.g. with dd), but not to make that file into a block device with the loopback driver.
+* This problem is due to the UUID on the original and the copy being the same. This confuses the kernel, and it can end up writing updates to the wrong filesystem, causing massive data corruption.
 
-* Versions from 3.15 up to 3.16.1 suffer from a deadlock that was observed during heavy rsync workloads with compression on, it's recommended to use '''3.16.2''' and newer
-* There were problems found with the ''snapshot-aware defrag'' that has been turned off in the following kernels:
-** '''3.10.31''', '''3.12.12''', '''3.13.4'''
-** all newer than 3.14
-* '''bcache''' + btrfs was not stable with bcache with old kernels but is apparently ok with 3.19+
-** http://thread.gmane.org/gmane.comp.file-systems.btrfs/31018 user report (2013/12)
+=== Fragmentation ===
+
 * Files with a lot of random writes can become heavily fragmented (10000+ extents) causing trashing on HDDs and excessive multi-second spikes of CPU load on systems with an SSD or large amount a RAM.
 ** On servers and workstations this affects databases and virtual machine images.
 *** The nodatacow [[Mount_options|mount option]] may be of use here, with associated gotchas.
@@ -33,6 +23,28 @@ Please add new things below, don't forget to add a comment on which version you 
 *** Workarounds include manually defragmenting your home directory using btrfs fi defragment. Auto-defragment (mount option autodefrag) should solve this problem in 3.0.
 ** Symptoms include btrfs-transacti and btrfs-endio-wri taking up a lot of CPU time (in spikes, possibly triggered by syncs). You can use filefrag to locate heavily fragmented files (may not work correctly with compression).
 
-* On a multi device btrfs filesystem, mistakingly re-adding a block device that is already part of the btrfs fs with btrfs device add results in an error, and brings btrfs in an inconsistent state. In striping mode, this causes data loss and kernel oops. The btrfs userland tools need to do more checking to prevent these easy mistakes. (2.6.35, btrfs v0.19)
+== Version specific ==
+
+* In kernels '''4.0+''': the empty block groups are reclaimed automatically that can affect the following:
+** a converted filesystem may not be able to do a rollback because of the removed block groups
+
+* There were problems found with the ''snapshot-aware defrag'' that has been turned off in the following kernels:
+** '''3.10.31''', '''3.12.12''', '''3.13.4'''
+** all newer than 3.14
+
+== Historical references ==
+
+List of issues going back 18 months from current release ('''kernels: 3.14+, date: Mar 2014'''). Older issues will be moved to a separate page.
+
+* Stable kernel version '''4.0.6''' fixes a regression in raid1 conversion, works fine on 3.19 and 4.1
+** conversion from eg. single or raid0 profiles to raid1 made no change to the filesystem
+* Stable kernel version '''3.19.1+''' can cause a deadlock at mount time
+** Fixed in '''3.19.5''', '''3.14.39'''
+** workaround: boot with older kernel, or run ''btrfs-zero-log'' to clear the log. This will lose up to the last 30 seconds of writes to the filesystem. You will have to reboot after running the btrfs-zero-log command, to clear the jammed locks.
+** fix: scheduled for 3.19.5, or apply [https://git.kernel.org/linus/9c4f61f01d269815bb7c37be3ede59c5587747c6 9c4f61f01d269815bb7c37].
+** also affected: '''3.14.35+''', '''3.18.9+'''
+* '''bcache''' + btrfs was not stable with bcache with old kernels but is apparently ok with 3.19+
+** http://thread.gmane.org/gmane.comp.file-systems.btrfs/31018 user report (2013/12)
+* Versions from 3.15 up to 3.16.1 suffer from a deadlock that was observed during heavy rsync workloads with compression on, it's recommended to use '''3.16.2''' and newer
 
 [[Category:UserDoc]]

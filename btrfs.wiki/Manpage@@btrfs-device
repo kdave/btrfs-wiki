@@ -1,8 +1,6 @@
-
 =btrfs-device(8) Manual Page=
 {{GeneratedManpage
 |name=btrfs-device}}
-
 
 ==NAME==
 
@@ -29,7 +27,7 @@ Btrfs filesystem uses different profiles to manage different RAID level, and use
 ; Balance
 : [[Manpage/btrfs-balance|btrfs-balance(8)]] subcommand can be used to balance or rebuild chunks to the desired profile. <br /> Due to the fact that balance can rebuild/recovery chunks according to its RAID duplication if possible, so when using RAID1/5/6/10 with some devices failed and you just added a new device to btrfs using [[Manpage/btrfs-device|btrfs-device(8)]], you should run [[Manpage/btrfs-balance|btrfs-balance(8)]] to rebuild the chunks. <br /> See [[Manpage/btrfs-balance|btrfs-balance(8)]] for more details.
 ; Device add/remove/replace
-: Device can be added/removed using [[Manpage/btrfs-replace|btrfs-replace(8)]] subcommand and replaced using [[Manpage/btrfs-replace|btrfs-replace(8)]]. <br /> When device is removed or replaced, btrfs will do the chunk rebuild if needed. <br /> See [[Manpage/btrfs-replace|btrfs-replace(8)]] and this man page for more details.
+: Device can be added/removed using [[Manpage/btrfs-device|btrfs-device(8)]] subcommand and replaced using [[Manpage/btrfs-replace|btrfs-replace(8)]]. <br /> When device is removed or replaced, btrfs will do the chunk rebuild if needed. <br /> See [[Manpage/btrfs-replace|btrfs-replace(8)]] man page for more details on device replace.
 
 ==SUBCOMMAND==
 
@@ -39,8 +37,10 @@ Btrfs filesystem uses different profiles to manage different RAID level, and use
 :: do not perform discard by default
 :; -f|--force
 :: force overwrite of existing filesystem on the given disk(s)
-; '''delete''' &lt;dev&gt; [&lt;dev&gt;…] &lt;path&gt;
+; '''remove''' &lt;dev&gt; [&lt;dev&gt;…] &lt;path&gt;
 : Remove device(s) from a filesystem identified by &lt;path&gt;.
+; '''delete''' &lt;dev&gt; [&lt;dev&gt;…] &lt;path&gt;
+: Alias of remove kept for backwards compatability
 ; '''ready''' &lt;device&gt;
 : Check device to see if it has all of it’s devices in cache for mounting.
 ; '''scan''' [(--all-devices|-d)|&lt;device&gt; [&lt;device&gt;…]]
@@ -83,6 +83,5 @@ If conflicting options are passed, the last one takes precedence.
 ==SEE ALSO==
 
 [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-replace|btrfs-replace(8)]], [[Manpage/btrfs-balance|btrfs-balance(8)]]
-
 
 [[Category:Manpage]]

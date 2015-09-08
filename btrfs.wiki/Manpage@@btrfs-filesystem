@@ -1,8 +1,6 @@
-
 =btrfs-filesystem(8) Manual Page=
 {{GeneratedManpage
 |name=btrfs-filesystem}}
-
 
 ==NAME==
 
@@ -39,28 +37,48 @@ btrfs-filesystem - control btrfs filesystem
 :; -t|--tbytes
 :: show sizes in TiB, or TB with --si <br /> If conflicting options are passed, the last one takes precedence.
 ; '''defragment''' [options] &lt;file&gt;|&lt;dir&gt; [&lt;file&gt;|&lt;dir&gt;…]
-: Defragment file data and/or directory metadata '''online'''. <br /> If '''-r''' is passed, files in dir will be defragmented recursively. The start position and the number of bytes to defragment can be specified by start and len using '''-s''' and '''-l''' options below. Any extent bigger than threshold given by '''-t''' option, will be considered already defragged. Use 0 to take the kernel default. You can also turn on compression in defragment operations. <br /><code>Options</code><br />
+: Defragment file data and/or directory metadata '''online'''. <br /> If '''-r''' is passed, files in dir will be defragmented recursively. The start position and the number of bytes to defragment can be specified by start and len using '''-s''' and '''-l''' options below. Extents bigger than value given by '''-t''' will be skipped, otherwise this value is used as a target extent size, but is only advisory and may not be reached if the free space is too fragmented. Use 0 to take the kernel default, which is 256kB but may change in the future. You can also turn on compression in defragment operations. <br /><code>Options</code><br />
 :; -v
 :: be verbose
-:; -c
-:: compress file contents while defragmenting
+:; -c[&lt;algo&gt;]
+:: compress file contents while defragmenting. Optional argument selects the compression algorithm, '''zlib''' (default) or '''lzo'''. Currently it’s not possible to select no compression.
 :; -r
-:: defragment files recursively
+:: defragment files recursively in given directories
 :; -f
-:: flush filesystem after defragmenting
+:: flush data for each file before going to the next file. This will limit the amount of dirty data to current file, otherwise the amount cumulates from several files and may increase system load.
 :; -s &lt;start&gt;[kKmMgGtTpPeE]
 :: defragment only from byte &lt;start&gt; onward
 :; -l &lt;len&gt;[kKmMgGtTpPeE]
 :: defragment only up to &lt;len&gt; bytes
 :; -t &lt;size&gt;[kKmMgGtTpPeE]
-:: defragment only files at least &lt;size&gt; bytes big <br /> For &lt;start&gt;, &lt;len&gt;, &lt;size&gt; it is possible to append units designator: 'K', 'M', 'G', 'T', 'P', or 'E', which represent KiB, MiB, GiB, TiB, PiB, or EiB, respectively. Case does not matter. <br />'''Warning:''' defragmenting with kernels up to 2.6.37 will unlink COW-ed copies of data, don’t use it if you use snapshots, have de-duplicated your data or made copies with <code>cp --reflink</code>.
+:: target extent size, do not touch extents bigger than &lt;size&gt; <br /> For &lt;start&gt;, &lt;len&gt;, &lt;size&gt; it is possible to append units designator: 'K', 'M', 'G', 'T', 'P', or 'E', which represent KiB, MiB, GiB, TiB, PiB, or EiB, respectively. Case does not matter. <br />'''Warning:''' defragmenting with kernels up to 2.6.37 will unlink COW-ed copies of data, don’t use it if you use snapshots, have de-duplicated your data or made copies with <code>cp --reflink</code>.
 ; '''label''' [&lt;dev&gt;|&lt;mountpoint&gt;] [&lt;newlabel&gt;]
 : Show or update the label of a filesystem. <br /> [&lt;device&gt;|&lt;mountpoint&gt;] is used to identify the filesystem. If a newlabel optional argument is passed, the label is changed. <br />'''Note:''' the maximum allowable length shall be less than 256 chars
 
 ; '''resize''' [&lt;devid&gt;<nowiki>:</nowiki>][+/-]&lt;size&gt;[kKmMgGtTpPeE]|[&lt;devid&gt;<nowiki>:</nowiki>]max &lt;path&gt;
-: Resize a filesystem identified by &lt;path&gt; for the underlying device devid '''online'''.<br /> The devid can be found with '''btrfs filesystem show''' and defaults to 1 if not specified. The &lt;size&gt; parameter specifies the new size of the filesystem. If the prefix + or - is present the size is increased or decreased by the quantity &lt;size&gt;. If no units are specified, the unit of the &lt;size&gt; parameter defaults to bytes. Optionally, the size parameter may be suffixed by one of the following units designators: 'K', 'M', 'G', 'T', 'P', or 'E', which represent KiB, MiB, GiB, TiB, PiB, or EiB, respectively. Case does not matter. <br /> If 'max' is passed, the filesystem will occupy all available space on the device devid. <br /> The resize command does not manipulate the size of underlying partition. If you wish to enlarge/reduce a filesystem, you must make sure you can expand the partition before enlarging the filesystem and shrink the partition after reducing the size of the filesystem. This can done using [http://man7.org/linux/man-pages/man8/fdisk.8.html fdisk(8)] or [http://man7.org/linux/man-pages/man8/parted.8.html parted(8)] to delete the existing partition and recreate it with the new desired size. When recreating the partition make sure to use the same starting disk cylinder as before.
-; '''show''' [--mounted|--all-devices|&lt;path&gt;|&lt;uuid&gt;|&lt;device&gt;|&lt;label&gt;]
-: Show the btrfs filesystem with some additional info. <br /> If no option nor &lt;path&gt;|&lt;uuid&gt;|&lt;device&gt;|&lt;label&gt; is passed, btrfs shows information of all the btrfs filesystem both mounted and unmounted. If '''--mounted''' is passed, it would probe btrfs kernel to list mounted btrfs filesystem(s); If '''--all-devices''' is passed, all the devices under /dev are scanned; otherwise the devices list is extracted from the /proc/partitions file.
+: Resize a mounted filesystem identified by directory &lt;path&gt;. A particular device can be resized by specifying a &lt;devid&gt;. <br /> If &lt;path&gt; is a file containing a btrfs image then resize does not work as expected and does not resize the image. This would resize the underlying filesystem instead. <br /> The devid can be found with '''btrfs filesystem show''' and defaults to 1 if not specified. The &lt;size&gt; parameter specifies the new size of the filesystem. If the prefix + or - is present the size is increased or decreased by the quantity &lt;size&gt;. If no units are specified, the unit of the &lt;size&gt; parameter defaults to bytes. Optionally, the size parameter may be suffixed by one of the following units designators: 'K', 'M', 'G', 'T', 'P', or 'E', which represent KiB, MiB, GiB, TiB, PiB, or EiB, respectively. Case does not matter. <br /> If 'max' is passed, the filesystem will occupy all available space on the device devid. <br /> The resize command does not manipulate the size of underlying partition. If you wish to enlarge/reduce a filesystem, you must make sure you can expand the partition before enlarging the filesystem and shrink the partition after reducing the size of the filesystem. This can done using [http://man7.org/linux/man-pages/man8/fdisk.8.html fdisk(8)] or [http://man7.org/linux/man-pages/man8/parted.8.html parted(8)] to delete the existing partition and recreate it with the new desired size. When recreating the partition make sure to use the same starting disk cylinder as before.
+; '''show''' [options] [&lt;path&gt;|&lt;uuid&gt;|&lt;device&gt;|&lt;label&gt;]
+: Show the btrfs filesystem with some additional info. <br /> If no option nor &lt;path&gt;|&lt;uuid&gt;|&lt;device&gt;|&lt;label&gt; is passed, btrfs shows information of all the btrfs filesystem both mounted and unmounted. <br /><code>Options</code><br />
+:; -m|--mounted
+:: probe btrfs kernel to list mounted btrfs filesystems(s)
+:; -d|--all-devices
+:: scan all devices under /dev, otherwise the devices list is extracted from the /proc/partitions file.
+:; --raw
+:: raw numbers in bytes, without the '''B''' suffix
+:; --human-readable
+:: print human friendly numbers, base 1024, this is the default
+:; --iec
+:: select the 1024 base for the following options, according to the IEC standard
+:; --si
+:: select the 1000 base for the following options, according to the SI standard
+:; --kbytes
+:: show sizes in KiB, or kB with --si
+:; --mbytes
+:: show sizes in MiB, or MB with --si
+:; --gbytes
+:: show sizes in GiB, or GB with --si
+:; --tbytes
+:: show sizes in TiB, or TB with --si
 ; '''sync''' &lt;path&gt;
 : Force a sync for the filesystem identified by &lt;path&gt;.
 ; '''usage''' [options] &lt;path&gt; [&lt;path&gt;…]
@@ -97,6 +115,5 @@ btrfs-filesystem - control btrfs filesystem
 ==SEE ALSO==
 
 [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
-
 
 [[Category:Manpage]]

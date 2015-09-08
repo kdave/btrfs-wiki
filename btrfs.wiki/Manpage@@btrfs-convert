@@ -1,8 +1,6 @@
-
 =btrfs-convert(8) Manual Page=
 {{GeneratedManpage
 |name=btrfs-convert}}
-
 
 ==NAME==
 
@@ -15,6 +13,10 @@ btrfs-convert - convert from ext2/3/4 filesystem to btrfs or rollback
 ==DESCRIPTION==
 
 '''btrfs-convert''' is used to convert existed ext2/3/4 to btrfs filesystem, and the original filesystem image is accessible as from separate subvolume named '''ext2_saved''' as file image.
+
+'''Warning:''' If one hopes to rollback to ext2/3/4, they should not execute '''btrfs balance''' command on converted btrfs, since it will change the extent layout and make '''btrfs-convert''' unable to rollback.
+
+'''Note:''' If one is satisfied with converted btrfs, and not longer wants to rollback to ext2/3/4, it is highly recommended to remove '''ext2_saved''' subvolume and execute '''btrfs filesystem defragment''' and '''btrfs balance''' command on the converted btrfs.
 
 ==OPTIONS==
 
@@ -44,6 +46,5 @@ btrfs-convert - convert from ext2/3/4 filesystem to btrfs or rollback
 ==SEE ALSO==
 
 [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]]
-
 
 [[Category:Manpage]]

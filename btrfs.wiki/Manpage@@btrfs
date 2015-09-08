@@ -1,8 +1,6 @@
-
 =btrfs(8) Manual Page=
 {{GeneratedManpage
 |name=btrfs}}
-
 
 ==NAME==
 
@@ -45,7 +43,7 @@ If a command is terminated by '''--help''', the detailed help is showed. If the 
 ; '''rescue'''
 : Try to rescue damaged btrfs filesystem.<br /> See [[Manpage/btrfs-rescue|btrfs-rescue(8)]] for details.
 ; '''restore'''
-: Manage a btrfs filesystem, including label setting/sync and so on.<br /> See [[Manpage/btrfs-restore|btrfs-restore(8)]] for details.
+: Try to restore files from a damaged btrfs filesystem.<br /> See [[Manpage/btrfs-restore|btrfs-restore(8)]] for details.
 ; '''scrub'''
 : Scrub a btrfs filesystem.<br /> See [[Manpage/btrfs-scrub|btrfs-scrub(8)]] for details.
 ; '''send'''
@@ -64,6 +62,5 @@ If a command is terminated by '''--help''', the detailed help is showed. If the 
 ==SEE ALSO==
 
 [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [http://man7.org/linux/man-pages/man1/ionice.1.html ionice(1)], [[Manpage/btrfs-balance|btrfs-balance(8)]], [[Manpage/btrfs-check|btrfs-check(8)]], [[Manpage/btrfs-device|btrfs-device(8)]], [[Manpage/btrfs-filesystem|btrfs-filesystem(8)]], [[Manpage/btrfs-inspect-internal|btrfs-inspect-internal(8)]], [[Manpage/btrfs-property|btrfs-property(8)]], [[Manpage/btrfs-qgroup|btrfs-qgroup(8)]], [[Manpage/btrfs-quota|btrfs-quota(8)]], [[Manpage/btrfs-receive|btrfs-receive(8)]], [[Manpage/btrfs-replace|btrfs-replace(8)]], [[Manpage/btrfs-rescue|btrfs-rescue(8)]], [[Manpage/btrfs-restore|btrfs-restore(8)]], [[Manpage/btrfs-scrub|btrfs-scrub(8)]], [[Manpage/btrfs-send|btrfs-send(8)]], [[Manpage/btrfs-subvolume|btrfs-subvolume(8)]],
-
 
 [[Category:Manpage]]

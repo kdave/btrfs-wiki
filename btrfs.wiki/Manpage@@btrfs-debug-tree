@@ -1,8 +1,6 @@
-
 =btrfs-debug-tree(8) Manual Page=
 {{GeneratedManpage
 |name=btrfs-debug-tree}}
-
 
 ==NAME==
 
@@ -36,6 +34,5 @@ This is maybe useful for analyzing filesystem state or inconsistence and has a p
 ==SEE ALSO==
 
 [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]]
-
 
 [[Category:Manpage]]

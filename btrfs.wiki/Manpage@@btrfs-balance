@@ -1,8 +1,6 @@
-
 =btrfs-balance(8) Manual Page=
 {{GeneratedManpage
-|name=btrfs-balance
-}}
+|name=btrfs-balance}}
 
 ==NAME==
 
@@ -84,6 +82,5 @@ Profile names, used in profiles and convert are one of: '''raid0''', '''raid1'''
 ==SEE ALSO==
 
 [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-device|btrfs-device(8)]]
-
 
 [[Category:Manpage]]

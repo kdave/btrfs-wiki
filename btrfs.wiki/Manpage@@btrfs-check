@@ -1,8 +1,6 @@
-
 =btrfs-check(8) Manual Page=
 {{GeneratedManpage
 |name=btrfs-check}}
-
 
 ==NAME==
 
@@ -50,6 +48,5 @@ btrfs-check - check or repair an unmounted btrfs filesystem
 ==SEE ALSO==
 
 [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-scrub|btrfs-scrub(8)]], [[Manpage/btrfs-rescue|btrfs-rescue(8)]]
-
 
 [[Category:Manpage]]

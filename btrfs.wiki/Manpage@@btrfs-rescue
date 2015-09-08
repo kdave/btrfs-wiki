@@ -1,8 +1,6 @@
-
 =btrfs-rescue(8) Manual Page=
 {{GeneratedManpage
 |name=btrfs-rescue}}
-
 
 ==NAME==
 
@@ -70,6 +68,5 @@ If the errors are like above, then '''zero-log''' should be used to clear the lo
 ==SEE ALSO==
 
 [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-scrub|btrfs-scrub(8)]], [[Manpage/btrfs-check|btrfs-check(8)]]
-
 
 [[Category:Manpage]]

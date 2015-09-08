@@ -1,8 +1,6 @@
-
 =btrfs-subvolume(8) Manual Page=
 {{GeneratedManpage
 |name=btrfs-subvolume}}
-
 
 ==NAME==
 
@@ -25,7 +23,7 @@ A subvolume in btrfs can be accessed in two ways.
 # From the parent subvolume<br /> When accessing from the parent subvolume, the subvolume can be used just like a directory. It can have child subvolumes and its own files/directories.
 # Separate mounted filesystem<br /> When [http://man7.org/linux/man-pages/man8/mount.8.html mount(8)] using '''subvol''' or '''subvolid''' mount option, one can access files/directories/subvolumes inside it, but nothing in parent subvolumes.
 
-Also every btrfs filesystem has a default subvolume as its initially top-level subvolume, whose subvolume id is 5(FS_TREE).
+Also every btrfs filesystem has a default subvolume as its initially top-level subvolume, whose subvolume id is 5. (0 is also acceptable as an alias.)
 
 A btrfs snapshot is much like a subvolume, but shares its data(and metadata) with other subvolume/snapshot. Due to the capabilities of COW, modifications inside a snapshot will only show in a snapshot but not in its source subvolume.
 
@@ -43,6 +41,10 @@ Although in btrfs, subvolumes/snapshots are treated as directories, only subvolu
 :: wait for transaction commit at the end of the operation <br />
 :; -C|--commit-each
 :: wait for transaction commit after delet each subvolume
+; '''find-new''' &lt;subvolume&gt; &lt;last_gen&gt;
+: List the recently modified files in a subvolume, after &lt;last_gen&gt; ID.
+; '''get-default''' &lt;path&gt;
+: Get the default subvolume of the filesystem &lt;path&gt;. <br /> The output format is similar to '''subvolume list''' command.
 ; '''list''' [options] [-G [+|-]&lt;value&gt;] [-C [+|-]&lt;value&gt;] [--sort=rootid,gen,ogen,path] &lt;path&gt;
 : List the subvolumes present in the filesystem &lt;path&gt;. <br /> For every subvolume the following information is shown by default.<br /> ID &lt;ID&gt; top level &lt;ID&gt; path &lt;path&gt;<br /> where path is the relative path of the subvolume to the top level subvolume. The subvolume’s ID may be used by the subvolume set-default command, or at mount time via the subvolid= option. If <code>-p</code> is given, then parent &lt;ID&gt; is added to the output between ID and top level. The parent’s ID may be used at mount time via the <code>subvolrootid=</code> option. <br /><code>Options</code><br />
 :; -p
@@ -54,11 +56,13 @@ Although in btrfs, subvolumes/snapshots are treated as directories, only subvolu
 :; -g
 :: print the generation of the subvolume.
 :; -o
-:: print only subvolumes bellow specified &lt;path&gt;.
+:: print only subvolumes below specified &lt;path&gt;.
 :; -u
 :: print the UUID of the subvolume.
 :; -q
 :: print the parent uuid of subvolumes (and snapshots).
+:; -R
+:: print the UUID of the sent subvolume, where the subvolume is the result of a receive operation
 :; -t
 :: print the result as a table.
 :; -s
@@ -71,20 +75,20 @@ Although in btrfs, subvolumes/snapshots are treated as directories, only subvolu
 :: list subvolumes in the filesystem that its ogeneration is &gt;=, &lt;= or = value. The usage is the same to '''-g''' option.
 :; --sort=rootid,gen,ogen,path
 :: list subvolumes in order by specified items. you can add '+' or '-' in front of each items, '+' means ascending, '-' means descending. The default is ascending. <br /> for --sort you can combine some items together by ',', just like -sort=+ogen,-gen,path,rootid.
-; '''snapshot''' [-r] &lt;source&gt; &lt;dest&gt;|[&lt;dest&gt;/]&lt;name&gt;
-: Create a writable/readonly snapshot of the subvolume &lt;source&gt; with the name &lt;name&gt; in the &lt;dest&gt; directory. <br /> If only &lt;dest&gt; is given, the subvolume will be named the basename of &lt;source&gt;. If &lt;source&gt; is not a subvolume, btrfs returns an error. If '''-r''' is given, the snapshot will be readonly.
-; '''get-default''' &lt;path&gt;
-: Get the default subvolume of the filesystem &lt;path&gt;. <br /> The output format is similar to '''subvolume list''' command.
 ; '''set-default''' &lt;id&gt; &lt;path&gt;
 : Set the subvolume of the filesystem &lt;path&gt; which is mounted as default. <br /> The subvolume is identified by &lt;id&gt;, which is returned by the '''subvolume list''' command.
-; '''find-new''' &lt;subvolume&gt; &lt;last_gen&gt;
-: List the recently modified files in a subvolume, after &lt;last_gen&gt; ID.
 ; '''show''' &lt;path&gt;
 : Show information of a given subvolume in the &lt;path&gt;.
+; '''snapshot''' [-r] &lt;source&gt; &lt;dest&gt;|[&lt;dest&gt;/]&lt;name&gt;
+: Create a writable/readonly snapshot of the subvolume &lt;source&gt; with the name &lt;name&gt; in the &lt;dest&gt; directory. <br /> If only &lt;dest&gt; is given, the subvolume will be named the basename of &lt;source&gt;. If &lt;source&gt; is not a subvolume, btrfs returns an error. If '''-r''' is given, the snapshot will be readonly.
+; '''sync''' &lt;path&gt; [subvolid…]
+: Wait until given subvolume(s) are completely removed from the filesystem after deletion. If no subvolume id is given, wait until all current deletion requests are completed, but do not wait for subvolumes deleted meanwhile. The status of subvolume ids is checked periodically. <br /><code>Options</code><br />
+:; -s &lt;N&gt;
+:: sleep N seconds between checks (default: 1)
 
 ==EXIT STATUS==
 
-'''btrfs subvolume''' returns a zero exit status if it succeeds. Non zero is returned in case of failure.
+'''btrfs subvolume''' returns a zero exit status if it succeeds. A non-zero value is returned in case of failure.
 
 ==AVAILABILITY==
 
@@ -93,6 +97,5 @@ Although in btrfs, subvolumes/snapshots are treated as directories, only subvolu
 ==SEE ALSO==
 
 [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-subvolume|btrfs-subvolume(8)]], [[Manpage/btrfs-quota|btrfs-quota(8)]], [[Manpage/btrfs-qgroup|btrfs-qgroup(8)]],
-
 
 [[Category:Manpage]]

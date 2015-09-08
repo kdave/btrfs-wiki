@@ -20,7 +20,7 @@ This tool finds and lists duplicate extents, and optionally will submit the dupl
 
 == bedup ==
 
-{{warn | bedup is unmaintained, and does not use the safe deduplication ioctl. Use duperemove instead.}}
+{{warning | bedup is unmaintained, and does not use the safe deduplication ioctl. Use duperemove instead.}}
 
 '''[https://github.com/g2p/bedup bedup]''' implements incremental whole-file batch deduplication for Btrfs.
 

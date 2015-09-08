@@ -53,9 +53,30 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 == News ==
 
-<!--
-'''Linux v3.19 (highlights or user visible changes)'''
--->
+'''btrfs-progs 4.2 (Sep 2015)'''
+* enhancements:
+** mkfs: do not create extra single chunks on multiple devices
+** resize: try to guess the minimal size, 'inspect min-dev-size'
+** qgroup assign: add option to schedule rescan
+** chunk-recover: be more verbose about the scanning process
+* fixes:
+** check:
+*** find stripes crossing stripe boundary -- created by convert
+*** print correct range for file hole when there are no extents and learn how to fix it
+** replace: more sanity checks
+** convert: concurrency fixes related to reporting progress
+** find-root: option -a will not skip the current root anymore
+** subvol list: fix occasional crash
+** do not create stripes crossing stripe boundary
+* build:
+** fixes for musl libc
+** preliminary support for android (not working yet, more code changes needed)
+** new EXTRA_CFLAGS and EXTRA_LDFLAGS
+* other:
+** lots of cleanups
+** tests: lots of updates, new tests, framework improvements
+** documentation updates
+** debugging: print-tree shows stripe length
 
 '''Linux v4.2 (Aug 2015)'''
 * enhancements
@@ -76,14 +97,13 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 ** deadlock with EXTENT_SAME and readahead
 ** for feature NO_HOLES: fsync, truncate
 
-'''btrfs-progs 4.1.2 (Jul 2015)'''
-
-* urgent bugfix: mkfs creates invalid filesystem
-
 '''In coreutils 8.24'''
 * ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13] ([https://lists.gnu.org/archive/html/coreutils-announce/2015-07/msg00000.html release notes])
 
 Read about past releases in the [[Changelog]]
+* [[Changelog#By_feature|features by kernel version]]
+* [[Changelog#By_version_.28linux_kernel.29|kernel changes]]
+* [[Changelog#By_version_.28btrfs-progs.29|btrfs-progs]]
 
 == Documentation ==
 

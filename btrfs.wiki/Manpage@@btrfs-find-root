@@ -1,8 +1,6 @@
-
 =btrfs-find-root(8) Manual Page=
 {{GeneratedManpage
 |name=btrfs-find-root}}
-
 
 ==NAME==
 
@@ -18,6 +16,8 @@ btrfs-find-root - filter to find btrfs root
 
 ==OPTIONS==
 
+; -a
+: Search through all the metadata extents, even the root is already found.
 ; -g &lt;generation&gt;
 : Filter root tree by it’s original transaction id, tree root’s generation in default.
 ; -o &lt;objectid&gt;
@@ -29,21 +29,8 @@ btrfs-find-root - filter to find btrfs root
 
 '''btrfs-find-root''' will return 0 if no error happened. If any problems happened, 1 will be returned.
 
-==AUTHOR==
-
-Written by Shilong Wang and Wenruo Qu.
-
-==COPYRIGHT==
-
-Copyright © 2013 FUJITSU LIMITED.
-
-License GPLv2: GNU GPL version 2 http://gnu.org/licenses/gpl.html.
-
-This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the extent permitted by law.
-
 ==SEE ALSO==
 
 [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]]
-
 
 [[Category:Manpage]]
