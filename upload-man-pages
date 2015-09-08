@@ -1,0 +1,74 @@
+#!/usr/bin/python
+# usage: $0 file.mw [more...]
+
+dodiff=True
+doedit=True
+
+summary='Update from git, v4.2'
+
+import os
+import sys
+import re
+import difflib
+if os.path.exists('wikitools/wikitools'):
+    sys.path.append('wikitools')
+
+from wikitools import wiki
+from wikitools import category
+from wikitools import api
+from time import strftime
+import codecs
+import config
+from getpass import getpass
+
+def message(*args, **kwargs):
+    print '*** '+' '.join(args)
+
+# main -------------------------------------------------------
+
+files={}
+
+for arg in sys.argv[1:]:
+	fn=re.search(r'(?:.*/)?(.*)\.mw', arg).group(1)
+	print "arg: %s, fn: %s" % (arg, fn)
+	fp=open(arg, 'r')
+	files[fn]=fp.readlines()
+	fp.close()
+
+if len(files) == 0:
+	print "Usage: $0 file1.mw [more...]"
+	sys.exit(1)
+
+message('Start')
+message('URL',config.wiki_api_url())
+site=wiki.Wiki(config.wiki_api_url())
+site.login("kdave", remember=True, force=False, password=True, verify=False)
+print site
+
+cat = category.Category(site, "Manpage")
+for page in cat.getAllMembersGen():
+	message('Page: ',page.title)
+	pn=re.search(r'Manpage/(.*)', page.title).group(1)
+	if pn in files:
+		message("Found %s in files" % pn)
+		wt=page.getWikiText()
+		wts=wt.splitlines(True)
+		if dodiff:
+			message("Diff page against file")
+			hasdiff=False
+			if not wts[-1].endswith('\n'):
+				wts[-1]+='\n'
+			for l in difflib.unified_diff(wts, files[pn]):
+				hasdiff=True
+				sys.stdout.write(l)
+			if hasdiff:
+				message("Found differences")
+				if doedit:
+					p=getpass("Really apply changes? [y/N]")
+					if p!='y':
+						message("Skip update of %s" % pn)
+						continue
+					txt=''.join(files[pn])
+					message("Update wiki page %s" % pn)
+					res=page.edit(text=txt, summary=summary, notminor=True, bot=True)
+					print "RES:", res
