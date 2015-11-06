@@ -3,6 +3,7 @@
 
 dodiff=True
 doedit=True
+whoami='kdave'
 
 summary='Update from git, v4.2'
 
@@ -42,8 +43,18 @@ if len(files) == 0:
 message('Start')
 message('URL',config.wiki_api_url())
 site=wiki.Wiki(config.wiki_api_url())
-site.login("kdave", remember=True, force=False, password=True, verify=False)
+if site.isLoggedIn(whoami):
+	message("Already logged in")
+	site.login(whoami, remember=True, force=False, password=True, verify=True)
+else:
+	message("Not logged in")
+	site.login(whoami, remember=True, force=True, password=False, verify=True)
+
 print site
+
+if re.search(r'not logged', str(site)) and doedit:
+	message('Not logged in to edit, exit')
+	sys.exit(1)
 
 cat = category.Category(site, "Manpage")
 for page in cat.getAllMembersGen():
