@@ -187,6 +187,11 @@ References:
 
 }}
 
+=== Bad block tracking ===
+
+{{project
+|text=Currently btrfs doesn't keep track of bad blocks, disk blocks that are very likely to lose data written to them.  Btrfs should accept a list in badblocks' output format, store it in a new btree (or maybe in the current extent tree, with a new flag), relocate whatever data the blocks contain, and reserve these blocks so they can't be used for future allocations.  Additionally, scrub could be taught to test for bad blocks when a checksum error is found.  This would make scrub much more useful; checksum errors are generally caused by the disk, but while scrub detects afflicted files, which in a backup scenario gives the opportunity to recreate them, the next file to reuse the bad blocks will just start getting errors instead.  These two items would match an ext4 feature (used through e2fsck).}}
+
 === Hybrid Storage ===
 {{project
 |text=It should be possible to use very fast devices as a front end to traditional storage. The most used blocks should be kept hot on the fast device and they should be pushed out to slower storage in large sequential chunks.
@@ -396,6 +401,7 @@ Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 * alternate output formats -- eg. json, structured data, tables etc; libsmartcols knows that already but we'd need to cover output that's not only tables
 * balance: allow to run it in background (fork) and report status periodically
 * (maybe) provide a utility to do ''dd and uuid change'' in one go, should be easy to copy a modified superblock first with new uuid, then simply dd the rest and then run btrfstune on to finish the uuid conversion
+* convert custom code for formatting columns to use libsmartcols
 
 === btrfs-restore ===
 * an option to skip paths by pattern (inverse to [[Restore#How to Run|--path-regex]]) and/or interactive mode asking to add inclusion and exclusion patterns ([https://bugzilla.kernel.org/show_bug.cgi?id=66911 a feature request in Bugzilla], [[Talk:Restore#How to exclude some paths matching a pattern|a detailed description of the idea at this wiki]])
@@ -587,18 +593,6 @@ Projects that are under development. Patches may exist, but have not been pulled
 |who=Jan Schmidt and Arne Jansen
 |text=We're able to split data and metadata IO very easily. Metadata tends to be dominated by seeks and for many applications it makes sense to put the metadata onto faster SSDs.
 |patch=submitted
-}}
-
-=== Raid5/6 ===
-{{project
-|who=Chris Mason
-|appeared=3.9
-|text=The multi-device code needs a raid6 implementation, and perhaps a raid5 implementation. This involves a few different topics including extra code to make sure writeback happens in stripe sized widths, and stripe aligning file allocations.
-
-Metadata blocks are currently clustered together, but extra code will be needed to ensure stripe efficient IO on metadata. Another option is to leave metadata in raid1 mirrors and only do raid5/6 for data.
-
-The existing raid0/1/10 code will need minor refactoring to provide dedicated chunk allocation and lookup functions per raid level. It currently happens via a collection of if statements.
-|patch=patch developed, needs updating and integration
 }}
 
 === Better data balancing over multiple devices for raid1/10 (allocation) ===
@@ -815,6 +809,18 @@ Given an inode, the Btrfs metadata can find all the directories that point to th
 |who=Filipe Manana
 |upstream=3.16
 |text=There's a special open() flag O_TMPFILE that creates temporary file in a safe way [http://lwn.net/Articles/559921/]. There's a filesystem-specific support needed.
+|patch=complete
+}}
+
+=== Raid5/6 ===
+{{project
+|who=Chris Mason
+|appeared=3.9
+|text=The multi-device code needs a raid6 implementation, and perhaps a raid5 implementation. This involves a few different topics including extra code to make sure writeback happens in stripe sized widths, and stripe aligning file allocations.
+
+Metadata blocks are currently clustered together, but extra code will be needed to ensure stripe efficient IO on metadata. Another option is to leave metadata in raid1 mirrors and only do raid5/6 for data.
+
+The existing raid0/1/10 code will need minor refactoring to provide dedicated chunk allocation and lookup functions per raid level. It currently happens via a collection of if statements.
 |patch=complete
 }}
 

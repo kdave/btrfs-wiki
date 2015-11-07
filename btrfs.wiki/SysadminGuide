@@ -70,11 +70,13 @@ Changing the default subvolume with btrfs subvolume default will make the top le
 
 == Snapshots ==
 
-A snapshot is simply a subvolume that shares its data (and metadata) with some other subvolume, using btrfs's COW capabilities. Once a [writable] snapshot is made, there is no difference in status between the original subvolume, and the new snapshot subvolume. To roll back to a snapshot, unmount the modified original subvolume, and mount the snapshot in its place. At this point, the original subvolume may be deleted if wished. Since a snapshot is a subvolume, snapshots of snapshots are also possible.
+A snapshot is simply a subvolume that shares its data (and metadata) with some other subvolume, using btrfs's COW capabilities. Once a [writable] snapshot is made, there is no difference in status between the original subvolume, and the new snapshot subvolume. To roll back to a snapshot, unmount the modified original subvolume, use mv to rename the old subvolume to a temporary location, and then again to rename the snapshot to the original name. You can then remount the subvolume.
+
+At this point, the original subvolume may be deleted if wished. Since a snapshot is a subvolume, snapshots of snapshots are also possible.
 
 == Managing snapshots ==
 
-One possible structure for managing snapshots (particularly on a root filesystem) is to leave the top level of the filesystem empty, except for subvolumes, and to set a default subvolume. The top level can then be mounted temporarily while subvolume operations are being done, and unmounted again afterwards:
+One possible structure for managing snapshots (particularly on a root filesystem) is to leave the top level of the filesystem empty, except for subvolumes. The top level can then be mounted temporarily while subvolume operations are being done, and unmounted again afterwards:
 
 /etc/fstab:
 

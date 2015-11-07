@@ -165,10 +165,52 @@ Major features or significant feature enhancements by kernel version. For more i
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
 
+== btrfs-progs 4.3 (Nov 2015) ==
+
+* mkfs
+** mixed mode is not forced for filesystems smaller than 1GiB
+** mixed mode broken with mismatching sectorsize and nodesize, fixed
+** print version info earlier
+** print devices sorted by id
+** do not truncate target image with --rootsize
+* fi usage:
+** don't print global block reserve
+** print device id
+** minor output tuning
+** other cleanups
+* calc-size:
+** div-by-zero fix on an empty filesystem
+** fix crash
+* bugfixes:
+** more superblock sanity checks
+** consistently round size of all devices down to sectorsize
+** misc leak fixes
+** convert: don't try to rollback with a half-deleted ext2_saved subvolume
+* other:
+** check: add progress indicator
+** scrub: enahced error message
+** show-super: read superblock from a given offset
+** add README
+** docs: update manual page for mkfs.btrfs, btrfstune, balance, convert and inspect-internal
+** build: optional build with more warnings (W=...)
+** build: better support for static checkers
+** build: html output of documentation
+** pretty-print: last_snapshot for root_item
+** pretty-print: stripe dev uuid
+** error reporting wrappers, introduced and example use
+** refactor open_file_or_dir
+** other docs and help updates
+* testing:
+** test for nodes crossing stripes
+** test for broken 'subvolume sync'
+** basic tests for mkfs, raid option combinations
+** basic tests for fuzzed images (check)
+** command intrumentation (eg valgrind)
+** print commands if requested
+** add README for tests
+
 == btrfs-progs 4.2 (Sep 2015) ==
 
-
-'''btrfs-progs 4.2 (Sep 2015)'''
 * enhancements:
 ** mkfs: do not create extra single chunks on multiple devices
 ** resize: try to guess the minimal size, 'inspect min-dev-size'
@@ -192,6 +234,29 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** tests: lots of updates, new tests, framework improvements
 ** documentation updates
 ** debugging: print-tree shows stripe length
+
+=== btrfs-progs 4.2.1 (Sep 2015) ===
+* fix an off-by-one error in cross-stripe boundary check
+** if nodesize was 64k, any metadata block was reported as crossing, this leads to mkfs failure for example due to "no free blocks found"
+** for other nodesizes, if the end of the metadata block was 64k aligned, it was incorrectly reported by fsck
+* convert: don't write uninitialized data to image
+* image:
+** don't loop with option -t0
+** don't create threads if compression is not requested
+* other: minor cleanups
+
+=== btrfs-progs 4.2.2 (Oct 2015) ===
+* fi label: use fallback if the label ioctl is not available
+* convert: check nodesize constraints against commandline features (-O)
+* scrub: report status 'running' until all devices are finished
+* device scanning might crash in some scenarios
+* fi usage: print summary for non-root users
+
+=== btrfs-progs 4.2.3 (Oct 2015) ===
+* subvol sync: make it actually work again: it's been broken since 4.1.2, due to a reversed condition it returned immediatelly instead of waiting
+* scanning: do not scan already discovered filesystems (minor optimization)
+* convert: better error message in case the filesystem is not finalized
+* restore: off-by-one symlink path check fix
 
 == btrfs-progs 4.1 (Jun 2015) ==
 
@@ -433,6 +498,8 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 * first release after 0.19 (2009/06) with a lot of changes
 
 = By version (linux kernel) =
+
+=== v4.3 (Nov 2015) ===
 
 === v4.2 (Aug 2015) ===
 * enhancements

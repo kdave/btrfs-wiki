@@ -62,7 +62,7 @@ The required support was broken accidentally in earlier kernels, but has now bee
 
 == How do I change RAID levels? ==
 
-At the moment (<= 3.2), you can't change the RAID level after a filesystem has been created. Starting with kernel 3.3 it's possible to change raid level of data and metadata by the ''[[Balance Filters|btrfs balance]]'' command (the feature was named restriper originally, but renamed back to balance).
+From kernel 3.3 onwards, it is possible to change the raid level of data and metadata using the ''[[Balance Filters|btrfs balance]]'' command, with the '''convert=''' filter.
 
 = Snapshots and subvolumes =
 
@@ -86,6 +86,8 @@ using the subvolume ID, or alternatively if you already have the snapshot mounte
 
 
 == How can I use btrfs for backups/time-machine? ==
+
+(See also the page on [[Incremental Backup]]).
 
 Available tools:
 

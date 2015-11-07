@@ -528,6 +528,22 @@ The <code>single</code> chunks are perfectly normal, and are a result of the way
 
 (but don't do this ''immediately'' after running mkfs, as you may end up losing your RAID configuration and reverting to single mode -- put at least some data on the FS first).
 
+== What is the GlobalReserve and why does 'btrfs fi df' show it as ''single'' even on RAID filesystems? ==
+
+The global block reserve is last-resort space for filesystem operations that
+may require allocating workspace even on a full filesystem. An example is
+removing a file, subvolume or truncating a file. This is mandated by the COW
+model, even removing data blocks requires to allocate some metadata blocks
+first (and free them once the change is persistent).
+
+The block reserve is only virtual and is not stored on the devices. It's an
+internal notion of Metadata but normally unreachable for the user actions
+(besides the ones mentioned above). For ease it's displayed as ''single''.
+
+The size of global reserve is determined dynamically according to the
+filesystem size but is capped at 512MiB. The value ''used'' greater than 0
+means that it is in use.
+
 = Subvolumes =
 
 == What is a subvolume? ==

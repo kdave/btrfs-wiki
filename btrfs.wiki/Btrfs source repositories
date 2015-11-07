@@ -52,9 +52,18 @@ Mirror of the repository is at
 
 and has the same layout as the previous repository. 
 
-'''Note to GitHub users''': the pull requests will not be accepted directly, the preferred way is to send patches to the mailinglist instead. You can link to a branch in any git repository if the mails do not make it to the mailinglist or for convenience.
-
 Note that this branch can be rebased when there's good reason for that (adding Reported-by/Reviewed-by tags to the middle of the patch series) or if there's a change needed down the patch stack in general. The point is to keep the git history clean.
+
+== Note to GitHub users ==
+
+The pull requests will not be accepted directly, the preferred way is to send patches to the mailinglist instead. You can link to a branch in any git repository if the mails do not make it to the mailinglist or for convenience.
+
+The development model of btrfs-progs shares a lot with the kernel model. The github way is different in some ways. We, the upstream community, expect that the patches meet some criteria (often lacking in github contributions):
+
+* proper '''subject line''': eg. prefix with ''btrfs-progs: subpart, ...'' , descriptive yet not too long
+* proper '''changelog''': the changelogs are often missing or lacking explanation ''why'' the change was made, or ''how'' is something broken, ''what'' are user-visible effects of the bug or the fix, ''how'' does an improvement help or the intended ''usecase''
+* the '''Signed-off-by''' line: this document who authored the change, you can read more about the ''The Developer's Certificate of Origin'' [https://www.kernel.org/doc/Documentation/SubmittingPatches here (chapter 11)]
+* '''one logical change''' per patch: eg. not mixing bugfixes, cleanups, features etc., sometimes it's not clear and will be usually pointed out during reviews
 
 = btrfs kernel module git repository =
 

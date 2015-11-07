@@ -1,12 +1,25 @@
-The Btrfs mailing list is hosted on vger.kernel.org. The email address is [mailto:linux-btrfs@vger.kernel.org linux-btrfs@vger.kernel.org]. You can find details on how to subscribe here (subscription is not required to send mail):
+The Btrfs mailing list is hosted on http://vger.kernel.org.
 
-http://vger.kernel.org/vger-lists.html#linux-btrfs
+* email address is '''[mailto:linux-btrfs@vger.kernel.org linux-btrfs@vger.kernel.org]'''
+* subscription required to send email: no
 
-Mailing list archives are available from gmane:
+=== How to subscribe ===
 
-http://dir.gmane.org/gmane.comp.file-systems.btrfs
+You can find details on how to subscribe here http://vger.kernel.org/vger-lists.html#linux-btrfs
+
+Send an email to '''majordomo@vger.kernel.org''' with plain text format the follwing (and only that):
+
+ subscribe linux-btrfs
 
 The mailing list server utilizes [https://en.wikipedia.org/wiki/Greylisting greylisting] (i.e. the server may delay mails) and [http://vger.kernel.org/majordomo-info.html#taboo discards emails that are in HTML format or that exceed 100,000 bytes]. And please disable word wrapping in the mail client for sent mails that include kernel log backtraces.
+
+=== Archives ===
+
+Mailing list archives are available from:
+
+* gmane.org: http://news.gmane.org/gmane.comp.file-systems.btrfs
+* mail archive: https://mail-archive.com/linux-btrfs@vger.kernel.org
+* marc: https://www.marc.info/?l=linux-btrfs
 
 The old mailing lists on oss.oracle.com are no longer active, but the gmane archives do include the old list as well.
 

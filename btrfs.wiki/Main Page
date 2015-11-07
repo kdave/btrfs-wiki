@@ -53,49 +53,24 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 == News ==
 
-'''btrfs-progs 4.2 (Sep 2015)'''
-* enhancements:
-** mkfs: do not create extra single chunks on multiple devices
-** resize: try to guess the minimal size, 'inspect min-dev-size'
-** qgroup assign: add option to schedule rescan
-** chunk-recover: be more verbose about the scanning process
-* fixes:
-** check:
-*** find stripes crossing stripe boundary -- created by convert
-*** print correct range for file hole when there are no extents and learn how to fix it
-** replace: more sanity checks
-** convert: concurrency fixes related to reporting progress
-** find-root: option -a will not skip the current root anymore
-** subvol list: fix occasional crash
-** do not create stripes crossing stripe boundary
-* build:
-** fixes for musl libc
-** preliminary support for android (not working yet, more code changes needed)
-** new EXTRA_CFLAGS and EXTRA_LDFLAGS
-* other:
-** lots of cleanups
-** tests: lots of updates, new tests, framework improvements
-** documentation updates
-** debugging: print-tree shows stripe length
+'''btrfs-progs 4.3 (Nov 2015)'''
 
-'''Linux v4.2 (Aug 2015)'''
-* enhancements
-** transaction abort now reports the caller, not the helper function
-** INO_LOOKUP ioctl: unprivileged if used to just get the rootid (aka. subvolume id)
-** unified ''subvol='' and ''subvolid='' mounting, show the mounted subvol in mount options; also, ''/proc/self/mountinfo'' now always correctly shows the mounted subvolume
-** reworked internal qgroup logic
-** send: use received_uuid of parent during send
-** sysfs: preparatory works for exporting more stats about devices
-** deduplication on the same inode works
-** deduplication does not change mtime/ctime
-* fixes:
-** in send: cloning, renames, orphans, 
-** few more ENOSPC fixes in case of block group creation/removal
-** fix hang during inode eviction due to concurrent readahead
-** EXTENT_SAME ioctl: handle unaligned length
-** more fixes around automatic block group removal
-** deadlock with EXTENT_SAME and readahead
-** for feature NO_HOLES: fsync, truncate
+Hilights (see [[Changelog]] for the full change list):
+* mkfs:
+** mixed mode is not forced for filesystems smaller than 1GiB
+** do not truncate target image with --rootsize
+* fi usage: don't print global block reserve; print device id
+* bugfixes:
+** more superblock sanity checks
+** consistently round size of all devices down to sectorsize
+** convert: don't try to rollback with a half-deleted ext2_saved subvolume
+* other:
+** check: add progress indicator
+** scrub: enahced error message
+** docs: update manual page for mkfs.btrfs, btrfstune, balance, convert and inspect-internal
+* various testsuite updates
+
+'''Linux v4.3 (Nov 2015)'''
 
 '''In coreutils 8.24'''
 * ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13] ([https://lists.gnu.org/archive/html/coreutils-announce/2015-07/msg00000.html release notes])

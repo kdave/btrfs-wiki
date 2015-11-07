@@ -99,7 +99,7 @@ This option may slow down your system at first run, or after mounting without th
 }}
 {{MountOption
 |name=nobarrier
-|desc=Do not use device barriers. NOTE: Using this option greatly increases the chances of you experiencing data corruption during a power failure situation. This means full file-system corruption, and not just losing or corrupting data that was being written during a power cut or kernel panic
+|desc=Do not use device barriers. NOTE: Using this option greatly increases the chances of you experiencing data corruption during a system crash or a power failure. This means full file-system corruption, and not just losing or corrupting data that was being written during the event.
 }}
 {{MountOption
 |name=nodatacow

@@ -14,6 +14,8 @@ That said, many fixes have gone in btrfs send/receive and it is recommended to u
 
 == Available Backup Tools ==
 
+(See also the list in [[UseCases#How_can_I_use_btrfs_for_backups.2Ftime-machine.3F|Use Cases]]).
+
 ; btrfs-subvolume-backup [http://marc.merlins.org/perso/btrfs/post_2014-03-22_Btrfs-Tips_-Doing-Fast-Incremental-Backups-With-Btrfs-Send-and-Receive.html] by Marc MERLIN.
 : Script taking a snapshot and transferring it to another location via SSH. Keeps an configurable number of past snapshots
 

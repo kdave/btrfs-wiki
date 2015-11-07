@@ -44,6 +44,7 @@ Manpage/btrfs-filesystem
 Manpage/btrfs-find-root
 Manpage/btrfs-image
 Manpage/btrfs-inspect-internal
+Manpage/btrfs-mount
 Manpage/btrfs-property
 Manpage/btrfs-qgroup
 Manpage/btrfs-quota
