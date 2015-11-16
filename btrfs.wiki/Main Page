@@ -53,22 +53,13 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 == News ==
 
-'''btrfs-progs 4.3 (Nov 2015)'''
+'''btrfs-progs 4.3.1 (Nov 2015)'''
 
 Hilights (see [[Changelog]] for the full change list):
-* mkfs:
-** mixed mode is not forced for filesystems smaller than 1GiB
-** do not truncate target image with --rootsize
-* fi usage: don't print global block reserve; print device id
-* bugfixes:
-** more superblock sanity checks
-** consistently round size of all devices down to sectorsize
-** convert: don't try to rollback with a half-deleted ext2_saved subvolume
-* other:
-** check: add progress indicator
-** scrub: enahced error message
-** docs: update manual page for mkfs.btrfs, btrfstune, balance, convert and inspect-internal
-* various testsuite updates
+* fixes
+** device delete: recognize 'missing' again
+** mkfs: long names are not trimmed when doing ssd check
+** support partitioned loop devices
 
 '''Linux v4.3 (Nov 2015)'''
 

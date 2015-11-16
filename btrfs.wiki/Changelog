@@ -209,6 +209,19 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** print commands if requested
 ** add README for tests
 
+=== btrfs-progs 4.3.1 (Nov 2015) ===
+
+* fixes
+** device delete: recognize 'missing' again
+** mkfs: long names are not trimmed when doing ssd check
+** support partitioned loop devices
+* other
+** replace several mallocs with on-stack variables
+** more memory allocation failure handling
+** add tests for bugs fixed
+** cmd-device: switch to new message printing helpers
+** minor code cleanups
+
 == btrfs-progs 4.2 (Sep 2015) ==
 
 * enhancements:
