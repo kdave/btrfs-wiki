@@ -256,6 +256,7 @@ This section collects random pieces of advice from mailinglist that are given to
 
 = References =
 
+* [https://events.linuxfoundation.org/sites/events/files/slides/clement-kernel-maintainership-oral-tradition.pdf Kernel maintainersip: an oral tradition] (pdf) a nice presentation from ELCE 2015 what does it mean to be a maintainre and what the developers can expect.
 * https://www.kernel.org/doc/Documentation/SubmittingPatches (must read)
 * https://www.kernel.org/doc/Documentation/CodingStyle (must read)
 * Pro Git by Scott Chacon http://progit.org/book/

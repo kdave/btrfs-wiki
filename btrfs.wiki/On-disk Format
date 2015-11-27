@@ -1010,7 +1010,7 @@ Maps from physical address to logical.
 | align="right" | 8
 | align="right" | 8
 | OBJID
-| chunk oid (always 100)
+| chunk oid (always 256?)
 |-
 | align="right" | 10
 | align="right" | 8

@@ -414,7 +414,7 @@ Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 === btrfs-convert ===
 
 * pre-create a subvolume and put there contents of the root instead of filling the toplevel subvolume
-* convert from other filesystems ([http://www.spinics.net/lists/linux-btrfs/msg04985.html reiserfs])
+* convert from other filesystems ([http://www.spinics.net/lists/linux-btrfs/msg04985.html reiserfs], XFS)
 * convert from md configurations (ie, ext4-on-md converted into btrfs without md)
 * make more verbose about the phases, make it possible to identify at which inode it failed
 
