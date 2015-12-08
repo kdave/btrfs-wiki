@@ -23,9 +23,9 @@ Before mounting such filesystem, the kernel module must know all the devices eit
 ; '''-b|--byte-count &lt;size&gt;'''
 : Specify the size of the filesystem. If this option is not used, mkfs.btrfs uses the entire device space for the filesystem.
 ; '''-d|--data &lt;profile&gt;'''
-: Specify the profile for the data block groups. Valid values are '''raid0''', '''raid1''', '''raid5''', '''raid6''', '''raid10''' or '''single''', (case does not matter).
+: Specify the profile for the data block groups. Valid values are '''raid0''', '''raid1''', '''raid5''', '''raid6''', '''raid10''' or '''single''' or dup (case does not matter). <br /> See '''DUP PROFILES ON A SINGLE DEVICE''' for more.
 ; '''-m|--metadata &lt;profile&gt;'''
-: Specify the profile for the metadata block groups. Valid values are '''raid0''', '''raid1''', '''raid5''', '''raid6''', '''raid10''', '''single''' or '''dup''', (case does not matter). <br /> A single device filesystem will default to '''DUP''', unless a SSD is detected. Then it will default to '''single'''. The detection is based on the value of <code>/sys/block/DEV/queue/rotational</code>, where '''DEV''' is the short name of the device. This is because SSDs can remap the blocks internally to a single copy thus deduplicating them which negates the purpose of increased metadata redunancy and just wastes space. <br /> Note that the rotational status can be arbitrarily set by the underlying block device driver and may not reflect the true status (network block device, memory-backed SCSI devices etc). Use the options '''--data/--metadata''' to avoid confusion.
+: Specify the profile for the metadata block groups. Valid values are '''raid0''', '''raid1''', '''raid5''', '''raid6''', '''raid10''', '''single''' or '''dup''', (case does not matter). <br /> A single device filesystem will default to '''DUP''', unless a SSD is detected. Then it will default to '''single'''. The detection is based on the value of <code>/sys/block/DEV/queue/rotational</code>, where '''DEV''' is the short name of the device. <br /> Note that the rotational status can be arbitrarily set by the underlying block device driver and may not reflect the true status (network block device, memory-backed SCSI devices etc). Use the options '''--data/--metadata''' to avoid confusion. <br /> See '''DUP PROFILES ON A SINGLE DEVICE''' for more details.
 ; '''-M|--mixed'''
 : Normally the data and metadata block groups are isolated. The '''mixed''' mode will remove the isolation and store both types in the same block group type. This helps to utilize the free space regardless of the purpose and is suitable for small devices. The separate allocation of block groups leads to a situation where the space is reserved for the other block group type, is not available for allocation and can lead to ENOSPC state. <br /> The recommended size for the mixed mode is for filesystems less than 1GiB. The soft recommendation is to use it for filesystems smaller than 5GiB. Thie mixed mode may lead to degraded performance on larger filesystems, but is otherwise usable, even on multiple devices. <br /> The '''nodesize''' and '''sectorsize''' must be equal, and the block group types must match. <br />'''Note:''' versions up to 4.2.x forced the mixed mode for devices smaller than 1GiB. This has been removed in 4.3+ as it caused some usability issues.
 ; '''-l|--leafsize &lt;size&gt;'''
@@ -112,67 +112,113 @@ There are the following block group types available:
 <div>
 
 {| width="60%" frame="border" rules="all" cellpadding="4" frame="border" rules="all"
-! width="25%" align="left" valign="top" | Profile
-! width="25%" align="left" valign="top" | Redundancy
-! width="25%" align="left" valign="top" | Striping
-! width="25%" align="left" valign="top" | Min/max devices
+| rowspan="2" width="20%" align="center" valign="top" |
+'''Profile'''
+| colspan="3" width="20%" align="center" valign="middle" |
+'''Redundancy'''
+| rowspan="2" width="20%" align="center" valign="top" |
+'''Min/max devices'''
 |-
-| width="25%" align="left" valign="top" |
+| width="20%" align="center" valign="middle" |
+'''Copies'''
+| width="20%" align="center" valign="middle" |
+'''Parity'''
+| width="20%" align="center" valign="top" |
+'''Striping'''
+|-
+| width="20%" align="center" valign="top" |
 single
-| width="25%" align="left" valign="top" |
-1 copy
-| width="25%" align="left" valign="top" |
-n/a
-| width="25%" align="left" valign="top" |
+| width="20%" align="center" valign="top" |
+1
+| width="20%" align="center" valign="top" |
+
+| width="20%" align="center" valign="top" |
+
+| width="20%" align="center" valign="top" |
 1/any
 |-
-| width="25%" align="left" valign="top" |
+| width="20%" align="center" valign="top" |
 DUP
-| width="25%" align="left" valign="top" |
-2 copies / 1 device
-| width="25%" align="left" valign="top" |
-n/a
-| width="25%" align="left" valign="top" |
-1/1
+| width="20%" align="center" valign="top" |
+2 / 1 device
+| width="20%" align="center" valign="top" |
+
+| width="20%" align="center" valign="top" |
+
+| width="20%" align="center" valign="top" |
+1/1 <sup>(see note)</sup>
 |-
-| width="25%" align="left" valign="top" |
+| width="20%" align="center" valign="top" |
 RAID0
-| width="25%" align="left" valign="top" |
-n/a
-| width="25%" align="left" valign="top" |
+| width="20%" align="center" valign="top" |
+
+| width="20%" align="center" valign="top" |
+
+| width="20%" align="center" valign="top" |
 1 to N
-| width="25%" align="left" valign="top" |
+| width="20%" align="center" valign="top" |
 2/any
 |-
-| width="25%" align="left" valign="top" |
+| width="20%" align="center" valign="top" |
+RAID1
+| width="20%" align="center" valign="top" |
+2
+| width="20%" align="center" valign="top" |
+
+| width="20%" align="center" valign="top" |
+
+| width="20%" align="center" valign="top" |
+2/any
+|-
+| width="20%" align="center" valign="top" |
 RAID10
-| width="25%" align="left" valign="top" |
-2 copies
-| width="25%" align="left" valign="top" |
+| width="20%" align="center" valign="top" |
+2
+| width="20%" align="center" valign="top" |
+
+| width="20%" align="center" valign="top" |
 1 to N
-| width="25%" align="left" valign="top" |
+| width="20%" align="center" valign="top" |
 4/any
 |-
-| width="25%" align="left" valign="top" |
+| width="20%" align="center" valign="top" |
 RAID5
-| width="25%" align="left" valign="top" |
-2 copies
-| width="25%" align="left" valign="top" |
-3 to N - 1
-| width="25%" align="left" valign="top" |
+| width="20%" align="center" valign="top" |
+1
+| width="20%" align="center" valign="top" |
+1
+| width="20%" align="center" valign="top" |
+2 to N - 1
+| width="20%" align="center" valign="top" |
 2/any
 |-
-| width="25%" align="left" valign="top" |
+| width="20%" align="center" valign="top" |
 RAID6
-| width="25%" align="left" valign="top" |
-3 copies
-| width="25%" align="left" valign="top" |
+| width="20%" align="center" valign="top" |
+1
+| width="20%" align="center" valign="top" |
+2
+| width="20%" align="center" valign="top" |
 3 to N - 2
-| width="25%" align="left" valign="top" |
+| width="20%" align="center" valign="top" |
 3/any
 |}
 
 </div>
+
+'''Note:''' DUP may exist on more than 1 device if it starts on a single device and another one is added, but '''mkfs.btrfs''' will not let you create DUP on multiple devices.
+
+==DUP PROFILES ON A SINGLE DEVICE==
+
+The mkfs utility will let the user create a filesystem with profiles that write the logical blocks to 2 physical locations. Whether there are really 2 physical copies highly depends on the underlying device type.
+
+For example, a SSD drive can remap the blocks internally to a single copy thus deduplicating them. This negates the purpose of increased redunancy and just wastes space.
+
+The duplicated data/metadata may still be useful to statistically improve the chances on a device that might perform some internal optimizations. The actual details are not usually disclosed by vendors. As another example, the widely used USB flash or SD cards use a translation layer. The data lifetime may be affected by frequent plugging. The memory cells could get damaged, hopefully not destroying both copies of particular data.
+
+The traditional rotational hard drives usually fail at the sector level.
+
+In any case, a device that starts to misbehave and repairs from the DUP copy should be replaced! '''DUP is not backup'''.
 
 ==KNOWN ISSUES==
 

@@ -28,7 +28,9 @@ You can look at the tips below, and you can also try [http://marc.merlins.org/pe
 
 === if your device is small ===
 
-i.e., a 4GiB flash card: your main problem is the large block allocation size, which doesn't allow for much breathing room. A ''btrfs fi'' balance may get you working again, but it's probably only a short term fix, as the metadata to data ratio probably won't match the block allocations.
+The best solution for small devices (under about 16 GB) is to reformat the FS with the <code>--mixed</code> option to mkfs.btrfs. This needs a kernel 2.6.37 or later, and similarly recent btrfs-progs.
+
+The main issue is that the allocation units (chunk size) are very large compared to the size of the filesystem, and the allocation can very quickly become full. A ''btrfs fi'' balance may get you working again, but it's probably only a short term fix, as the metadata to data ratio probably won't match the block allocations.
 
 If you can afford to delete files, you can clobber a file via 
 
@@ -37,10 +39,6 @@ If you can afford to delete files, you can clobber a file via
 which will recover that space without requiring a new metadata allocation (which would otherwise ENOSPC again).
 
 You might consider remounting with ''-o compress'', and either rewrite particular files in-place, or run a [[UseCases#How_do_I_defragment_many_files.3F | recursive defragmentation]] which (if an explicit flag is given, or if the filesystem is mounted with compression enabled) will also recompress everything.  This may take a while.
-
-Next, depending on whether your metadata block group or the data block group is filled up, you can recreate your filesystem and mount it with ''metadata_ratio='', setting the value up or down from the default of 8 (i.e., 4 if metadata ran out first, 12 if data ran out first). This can be changed at any time by remounting, but will only affect new block allocations.
-
-Finally, the best solution is to upgrade to at least 2.6.37 (or the latest stable kernel) and recreate the filesystem to take advantage of mixed block groups, which avoid effectively-fixed allocation sizes on small devices. Note that this incurs a fragmentation overhead, and currently cannot be converted back to normal split metadata/data groups without recreating the partition. Using mixed block groups is recommended for filesystems of 1GiB or smaller and ''mkfs.btrfs'' will force mixed block groups automatically in that case.
 
 === if your device is large (&gt;16GiB) ===
 

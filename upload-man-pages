@@ -5,7 +5,7 @@ dodiff=True
 doedit=True
 whoami='kdave'
 
-summary='Update from git, v4.3'
+summary='Update from git, v4.3.x'
 
 import os
 import sys
