@@ -13,6 +13,8 @@ Suppose that your device is /dev/sda and you want to restore files to /mnt/resto
 You're here though, so chances are you aren't that lucky.  Here are the options for restore that might help you.
 * -s: Also restore snapshots.  Without this option snapshots will not be restored.
 * -x: Get extended attributes. Without this option, extented attributes will not be retrieved.
+* -m: Restore metadata: owner, mode and times.
+* -S: Restore symbolic links.
 * -v: Increase verbosity.  May be given multiple times.
 * -i: Ignore errors.  Normally the restore tool exits immediately for any error.  This option forces it to keep going if it can, usually this results in some missing data.
 * -o: Overwrite existing files.  If files exist at the output location with the same name, normally the restore utility will skip restoring that file.  This option will overwrite the existing files instead.
@@ -22,7 +24,11 @@ You're here though, so chances are you aren't that lucky.  Here are the options 
 * -d: ???
 * -r: Root objectid.  The objectid given will be used as the root of the filesystem, instead of the location specified by the superblock.  This may assist in recovery of subvolumes where the real root is damaged.
 * -c: Case insensitive regex matching.
+* -l: List tree roots.
+* -D: Dry run (only list files that would be recovered).
 * --path-regex: Regex for files to restore.  In order to restore only a single folder somewhere in the btrfs tree, it is unfortunately necessary to construct a slightly nontrivial regex, e.g.: '^/(|home(|/username(|/Desktop(|/.*))))$'
+
+Note that the restore point (/mnt/restore) does not have to be a btrfs filesystem.
 
 == Advanced usage ==
 

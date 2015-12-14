@@ -281,6 +281,11 @@ A new ioctl would solve that.
 That distinction in data structures makes snapshotting efficient, but it may not be necessary to expose it to userspace.
 Transparent snapshots would encode the subvolume rootid (which non-transparent snapshots expose in <tt>st_dev</tt>) by reserving bits from the inode number. rename() and link() would reuse <tt>copy_root_at_dir</tt> when crossing a subvolume boundary.
 
+==== (Atomically) convert directories into subvolumes and vice versa ====
+
+Probably not the most important feature, but if it would be easily possible to implement (or even technically possible at all) then it may help to make systems more easily administrable, when directories could be converted atomically (especially without stopping any service, moving the dir/subvol, creating a subvol/dir of it's name, ref-link moving the data from/to the subvol, and removing the dir/subvol) into a subvolume and vice versa (that is a subvolume being "merged" atomically into it's parent subvolume).
+And example would be, that there is a system with one subvolume, including /var/lib/postgresql, and the administrator decides that he rather wants to have that moved into a separate subvolume at that location (for whatever reason, e.g. to exclude it from snapshots or to set nodatacow on that subvol)... and that ''this should be done ideally without requiring a downtime of PosgreSQL''.
+
 === More checksumming algorithms ===
 {{project
 |text=Currently crc32c is used, we may offer more alternatives with different speed/strength characteristics. The considered ones are xxHash and SHA1.
