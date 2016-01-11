@@ -278,4 +278,11 @@ Or create one big btrfs partition and use subvolumes where you would normally cr
 
 What are the considerations for doing it either way?
 
+
+== How do I copy a large file and utilize COW to keep it from actually being copied? ==
+
+You may want to make copies of a large file (like a virtual machine) within a volume/subvolume and have those copies behave as independant files (as opposed to traditional hard-links) when edited but not need to store common blocks multiple times. To do this, you can use <tt>cp</tt>'s built in <tt>--reflink</tt> option. By specifing <tt>--reflink=always</tt> you are guaranteed that it will take advantage of btrfs's COW (Copy On Write) functionality. If you use <tt>--reflink=always</tt> on a non-COW capable filesyste, you will be given an error.
+
+ cp --reflink=always my_file.bin my_file_copy.bin
+
 [[Category:UserDoc]]

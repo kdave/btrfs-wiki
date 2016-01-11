@@ -53,6 +53,8 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 == News ==
 
+'''Linux v4.4 (Jan 2016)'''
+
 '''btrfs-progs 4.3.1 (Nov 2015)'''
 
 Hilights (see [[Changelog]] for the full change list):
@@ -60,8 +62,6 @@ Hilights (see [[Changelog]] for the full change list):
 ** device delete: recognize 'missing' again
 ** mkfs: long names are not trimmed when doing ssd check
 ** support partitioned loop devices
-
-'''Linux v4.3 (Nov 2015)'''
 
 '''In coreutils 8.24'''
 * ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13] ([https://lists.gnu.org/archive/html/coreutils-announce/2015-07/msg00000.html release notes])

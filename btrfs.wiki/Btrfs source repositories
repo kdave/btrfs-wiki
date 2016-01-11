@@ -67,6 +67,12 @@ The development model of btrfs-progs shares a lot with the kernel model. The git
 * the '''Signed-off-by''' line: this document who authored the change, you can read more about the ''The Developer's Certificate of Origin'' [https://www.kernel.org/doc/Documentation/SubmittingPatches here (chapter 11)]
 * '''one logical change''' per patch: eg. not mixing bugfixes, cleanups, features etc., sometimes it's not clear and will be usually pointed out during reviews
 
+= Administration and support tools =
+
+There is a separate repository of useful scripts for common administrative tasks on btrfs. This is at:
+
+https://github.com/kdave/btrfsmaintenance/
+
 = btrfs kernel module git repository =
 
 Until October 2012, the latest features and bug fixes hit this repo before going upstream to Linus' kernel tree. Currently it is not up to date. The Linux RCs are more up to date and btrfs-next (see below) is most up to date.

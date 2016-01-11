@@ -91,7 +91,7 @@ Major features or significant feature enhancements by kernel version. For more i
 |name=snapshot-aware defrag
 |version=3.9
 |text=Defrag does not break links between shared extents (snapshots, reflinked files)
-|note=Disabled since 3.14 due to problems. Will be enabled in the future.
+|note=Disabled since 3.14 (and backported to some stable kernel versions) due to problems. Will be enabled in the future.
 }}
 {{FeatureMerged
 |name=lightweight send
@@ -512,6 +512,8 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 
 = By version (linux kernel) =
 
+=== v4.4 (Jan 2016) ===
+
 === v4.3 (Nov 2015) ===
 
 === v4.2 (Aug 2015) ===
@@ -594,9 +596,9 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 * export filesystem info through sysfs: features, allocation profiles
 * added pairing mount options (for remount)
 * heap of small performance optimizations
+* snapshot-aware defrag was disabled due to problems
 
 == v3.13 (Jan 2014) ==
-* snapshot-aware defrag was disabled due to problems
 * ''fiemap'' exports information about shared extents
 * bugfix and stability foucsed release
 

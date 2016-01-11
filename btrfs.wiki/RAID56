@@ -12,18 +12,6 @@ If you'd like to learn btrfs raid5/6 and rebuilds by example (based on kernel 3.
 
 == Note ==
 
+Using as many devices as are available means that there will be a performance issue for filesystems with large numbers of devices. It also means that filesystems with different-sized devices will end up with differing-width stripes as the filesystem fills up, and some space may be wasted when the smaller devices are full.
 
-Using as many devices as are available means that there will be a performance issue for filesystems with large numbers of devices. It also means that filesystems with different-sized devices will end up with differing-width stripes as the filesystem fills up, and some space may be wasted when the smaller devices are full. Both of these issues can be addressed by specifying a fixed-width stripe, always running over exactly the same number of devices.
-
-
-
-== The history ==
-
-RAID-5 was [http://marc.info/?l=linux-btrfs&m=133855691115496&w=2 due to arrive in 3.5], but didn't make it in time because of a serious bug. The feature also [http://marc.info/?l=linux-btrfs&m=134333725309451&w=2 missed 3.6], because two other large and important features also had to go in, and there wasn't time to complete the full testing programme for all three features before the 3.6 merge window. 
-
-(From the 3.7 [http://marc.info/?l=linux-btrfs&m=134987008202744&w=2 pull request]):
-:"I'm cooking more unrelated RAID code, but I wanted to make sure <nowiki>[the rest of the pull request]</nowiki> makes it in. The largest updates here are relatively old and have been in testing for some time."
-
-(From the 3.8 [http://marc.info/?l=linux-btrfs&m=135578070809380&w=2 pull request]):
-:"raid5/6 is being rebased against the device replacement code. I'll have it posted this Friday along with a nice series of benchmarks."
-::-- It didn't make it into the pull for 3.8.
+Both of these issues could be addressed by specifying a fixed-width stripe, always running over exactly the same number of devices. This capability is not yet implemented, though.

@@ -372,6 +372,105 @@ It seems that the link count can be tracked like the other filesystems do. This 
 * a mkdir/rmdir/move/snapshot will update the link count accordingly iff the current link count is not 1
 }}
 
+
+=== Per-object default mount-options / btrfs-properties / chattr(1) attributes and reasonable userland defaults ===
+The following more or less belongs together respectively has common motivations.
+It's also partially based on the assumption that, we have the following two classes:
+* mount options apply to anything below that respective mountpoint only, so for example if the same subvol is mounted ro as /foo and rw as /bar, one can write on it via /bar, but not via /foo,... '''and''' that these options would (as far as possible/implemented) also apply to any nested subvolumes below the one mounted.
+and:
+* properties (as in btrfs-property(8)) however are really per object (subvols, filesystems, device, inode), so for example a subvol having been marked ro with btrfs-property and then ''mounted'' ro as /foo and rw as /bar (or indirectly as being a nested subvol that is mounted like that), would in both cases be ro... '''and''' that these btrfs-properties are ''not'' "inherited" by child subvols of the one where the property was set upon.
+* attributes (as in chattr(1)), again really per object (this time: inodes only),
+
+Both classes are quite useful in different cases, therefore the following separate ideas may be worth being implemented:
+
+
+==== Handle (or at least document) conflict cases ====
+Right now it's completely undocumented, AFAICS, what happens if different mechanisms specify different options, e.g.
+mount option: compress lzo
+btrfs property: compression no
+chattr attribute: compression yes
+
+Especially chattr attributes and btrfs properties seem to overlap quite a bit, so perhaps a first part of a solution is to get away with chattr attributes at all, or just make them set the respective properties - if this isn't anyway already the case; it should then however be also documented.
+The 2nd part would be to properly document what actually happens in case of a conflict (which one wins?).
+
+Whether the following makes really sense or not, would need to be thoroughly analysed,... but it ''may'' make sense, that one somehow allows to control, what happens in case of conflicting properties and mount options.
+For example:
+* A subvolume is marked compress=no via a property, but mounted compress=zlib via mount option.
+* Similar example with ro flag.
+
+Possible solutions:
+* Simply let the one of the two always override (probably the btrfs-properties then).
+* Add a (possibly even per subvol) mountoption that allows to specify which of the two should win, maybe even per option, e.g. something like:
+: subvol=/foo,override_prio=compress+mntopt,override_prio=ro+property
+: meaning that for the mountpoint where /foo is mounted, the mountoptions override in the case of the compress option, the properties override in case of the ro option.
+: Alternatively it would perhaps be even better to set the override rules via properties, which would e.g. allow to set fallback-defaults for the whole filesystem, or a mandatory-default for the whole filesystem, basically to control inheritance.
+
+As you can see, this would all need to be properly thought through, which I, the proposer of this, haven't done here for that part of the whole feature request.
+
+
+==== Support inheritance of properties ====
+E.g., AFAIU, chattr sets the attributes only per file. So newly added files won't get e.g. "noatime" set.
+Properties, in a way, have inheritance, e.g. by setting the property for the subvolume, and it would be applied for everything below (again the question: what if a object below sets another property?).
+
+So maybe some inheritance mechanism would make sense, eventually. E.g. setting "noatime" on a dir, and have that inherited by all newly created files below. As well as ways to "break out" of inheritance.
+
+
+==== Add more btrfs-properties ====
+Right now we have ro, label and compression.
+We also have chattr(1) attributes, A (for noatime), C (nodatacow) and a few more (see btrfs-mount(5) at the very bottom).
+As mentioned above, this is partially ambiguous with what btrfs-properties have.
+
+(Some) mount options and attributes should be supported as properties:
+For example, noatime, nodatacow, notdatasum.
+Maybe even autodefrag/noautodefrag if these would work for e.g. certain subvolumes/dirs/files only and not just for the fs at a whole; discard/nodiscard could make sense on a per-device basis... and so on.
+
+Using the chattrs or mount options, doesn't really scale/work in all cases:
+E.g. consider you want to make sure a snapshot is noatime, you could of course mount the snapshot noatime, but then, AFAIU, it would be only at that specific mountpoint noatime, not e.g. when accessed from another mountpoint or as nestes subvolume vi some parent subvolume (e.g. via the mounted top-level subvolume).
+chattr in turn, would require to set all of the snapshots files with the A attr... and that probably remains set when sending/receiving that snapshot or making another rw-snapshot of it. May be desired but also not. It would seem much better, if one could simply mark the subvol as noatime via a btrfs-property.
+
+Easy to add, easy to remove, fast, and effective at all places the subvolume appears (at mountpoints, or as nested svol).
+
+One can easily construct similar examples for other options (like said, nodatacow, nodatasum, etc.)
+
+I would further propose, to add properties that match the behaviour of the nodev,noexec,nosuid general mount options.
+
+This is based on some idea brought to my attention by Duncan on the mailing list:
+When snapshots are made from the system' (i.e. /usr/, /dev/, /etc/ and so on), these snapshots may be accessible by any user (e.g. at /snapshots/) which may not be just by accident but intentional.
+The problem now is, that these snapshots may contain old files that impose at least the following (security) issues:
+* Old and insecure permissions/owners/ACLs to any file. E.g. /etc/shadow may have had accidentally, been world-readable, this was noticed, corrected in the "main" file, but it's still open in the already existing snapshots.
+* Even though udev mounts typically a devtmpfs on /dev, there may still be systems not using udev, or systems that do use udev, but have manually created some most important device file on /dev ''below'' the devtmpfs mount.
+: Same as above, if any of these had bad permissions, it would have been snapshot, and may be abused by any user that can access the snapshot.
+* Or take and setuid binaries, these may have seen security updates in the "main" version of the file, but the snapshot would still hold the vulnerable one. If accessible by users, that would be bad.
+* Or take systems that have taken measures so that users cannot run/create their own binaries. If in such a system an undesired binary is removed, it would again be still in the snaphot, where people could execute it.
+
+Having nodev,noexec,nosuid properties would at least help against all of the above except the first one. Still better than nothing.
+Again, the main idea for having them as properties and not just as mount-options would be, to make sure, that wherever the subvolume snapshot appears (mountpoint, nested) it's "protected".
+
+Having these three options as subvolumes, might even be used in other scenarios. Consider e.g. areas (which could be made subvols), where less trusted people should be allowed to write e.g. executable files, but where one doesn't want allow them, to actually do execute them.
+
+Another idea would be to allow for user/nouser and user= options to be set at subvolumes. On systems with many subvolumes this might allow to keep /etc/fstab small, while still allowing ordinary users to mount "their" subvols.
+
+
+==== Make reasonable use of newly added btrfs properties ====
+If the above should get implemented, and e.g. noatime,noexec,nodev,nosuid options be implemented. Then one should consider whether or not it makes sense to have these automatically used in some cases.
+
+The use case I'm thinking of is snapshots, especially ro snapshots, maybe even rw.
+For the reasons outlaid above, these could be dangerous in terms of security, so maybe btrfs subvolume snapshot would per default set the snapshot's subvolume to be noexec,nodev,nosuid... and it would perhaps offer an extra switch, not to do so.
+
+Further, there's the well known issue, that when having many snapshots and noatime is not in place, than accessing will cause atime uptdates which is followed by a lot of metadata writes, that could potentially eat up quite some space.
+For that reason it ''may'' make sense to have snapshots subvols marked with a noatime property per default, again offering a switch not to do so.
+Whether it makes sense for ro-snapshots, depends on whether ro-snapshots have atime updates at all.
+
+
+==== Default [subvolume] mount options ====
+Speaking of what e.g. ext2/3/4 has in form of tune2fs' -E mount_opts=string and the -o option.
+
+The idea is, if mount(8) mounts a btrfs fs|svol, the default mountoptions are read and used unless overridden somehow for that mountpoint.
+
+This may have some motivations:
+* Mount options, AFAIU, are "inherited" to any nested subvolume. So unless property-inheritance (as proposed above) would get implemented, this could be kinda abused for something similar.
+* Similar to why e.g. noatime,nodev,noexec,nosuid,etc. properties were motivated above (i.e.making sure wherever the object appears, it has these properties) it would allow one to make sure that when subvol foo is mounted (wherever) it gets e.g. nodev set... but unlike to properties it would still allow one to make intentional exceptions, by mounting with the "opposite" mount-option, thereby overriding the default mount option.
+
 == Userspace tools projects ==
 
 Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
