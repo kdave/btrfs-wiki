@@ -14,6 +14,10 @@ sub man2url($$) {
 # header
 
 while (<>) {
+	# artificial newlines
+	if (/MARKERNEWLINE/) {
+		s/MARKERNEWLINE/<br \/>/g;
+	}
 	# : in defintion breaks line
 	if (/^;+\s.*:/) {
 		s/:/<nowiki>:<\/nowiki>/g;

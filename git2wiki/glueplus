@@ -1,9 +1,23 @@
 #!/usr/bin/perl
+#
+# conversion to mediawiki does not understand standalone '+' as a continuation
+# and does not insert a newline
+#
+# gluing to the previous line works, but means something else in asciidoc
+#
+# insert artificial line break marker and replace it by <br /> in the final
+# mediawiki output
 
 while (<>) {
+	s/^\+$/MARKERNEWLINE\n+/;
+	print;
+	next;
+
+	if (0) {
 	s/^\+$/ +/;
 	print;
 	next;
+	}
 
 	if (0) {
 	if (/^\+$/) {
