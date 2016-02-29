@@ -111,7 +111,7 @@ do
     group=${g##*/}
     [[ ! -z ${volName[group]} ]] && name=${volName[group]} || name='(unknown)'
     echo $name $g `numfmt --to=iec $r` `numfmt --to=iec $e`
-done < <(btrfs qgroup show $1 | tail -n+3) | column -t
+done < <(btrfs qgroup show --raw $1 | tail -n+3) | column -t
 </pre>
 
 == /usr/local/bin/btrfsQuota.py ==
@@ -148,7 +148,7 @@ for line in subprocess.check_output(cmd).splitlines():
 
 print("subvol\t\t\t\t\t\tgroup         total    unshared")
 print("-" * 79)
-cmd = ["btrfs", "qgroup", "show", mount_point]
+cmd = ["btrfs", "qgroup", "show", "--raw", mount_point]
 for line in subprocess.check_output(cmd).splitlines():
     args = [x for x in line.strip().split(' ') if len(x)>0]
 
@@ -209,7 +209,7 @@ for line in subprocess.check_output(cmd).splitlines():
 
 print("subvol\t\t\t\t\t\tgroup         total    unshared")
 print("-" * 79)
-cmd = ["btrfs", "qgroup", "show", mount_point]
+cmd = ["btrfs", "qgroup", "show", "--raw", mount_point]
 for line in subprocess.check_output(cmd).splitlines():
     args = str(line, encoding='utf8').split()
 

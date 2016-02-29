@@ -23,17 +23,17 @@ Before mounting such filesystem, the kernel module must know all the devices eit
 ; '''-b|--byte-count &lt;size&gt;'''
 : Specify the size of the filesystem. If this option is not used, mkfs.btrfs uses the entire device space for the filesystem.
 ; '''-d|--data &lt;profile&gt;'''
-: Specify the profile for the data block groups. Valid values are '''raid0''', '''raid1''', '''raid5''', '''raid6''', '''raid10''' or '''single''' or dup (case does not matter). <br /> See '''DUP PROFILES ON A SINGLE DEVICE''' for more.
+: Specify the profile for the data block groups. Valid values are '''raid0''', '''raid1''', '''raid5''', '''raid6''', '''raid10''' or '''single''' or dup (case does not matter). <br />See '''DUP PROFILES ON A SINGLE DEVICE''' for more.
 ; '''-m|--metadata &lt;profile&gt;'''
-: Specify the profile for the metadata block groups. Valid values are '''raid0''', '''raid1''', '''raid5''', '''raid6''', '''raid10''', '''single''' or '''dup''', (case does not matter). <br /> A single device filesystem will default to '''DUP''', unless a SSD is detected. Then it will default to '''single'''. The detection is based on the value of <code>/sys/block/DEV/queue/rotational</code>, where '''DEV''' is the short name of the device. <br /> Note that the rotational status can be arbitrarily set by the underlying block device driver and may not reflect the true status (network block device, memory-backed SCSI devices etc). Use the options '''--data/--metadata''' to avoid confusion. <br /> See '''DUP PROFILES ON A SINGLE DEVICE''' for more details.
+: Specify the profile for the metadata block groups. Valid values are '''raid0''', '''raid1''', '''raid5''', '''raid6''', '''raid10''', '''single''' or '''dup''', (case does not matter). <br />A single device filesystem will default to '''DUP''', unless a SSD is detected. Then it will default to '''single'''. The detection is based on the value of <code>/sys/block/DEV/queue/rotational</code>, where '''DEV''' is the short name of the device. <br />Note that the rotational status can be arbitrarily set by the underlying block device driver and may not reflect the true status (network block device, memory-backed SCSI devices etc). Use the options '''--data/--metadata''' to avoid confusion. <br />See '''DUP PROFILES ON A SINGLE DEVICE''' for more details.
 ; '''-M|--mixed'''
-: Normally the data and metadata block groups are isolated. The '''mixed''' mode will remove the isolation and store both types in the same block group type. This helps to utilize the free space regardless of the purpose and is suitable for small devices. The separate allocation of block groups leads to a situation where the space is reserved for the other block group type, is not available for allocation and can lead to ENOSPC state. <br /> The recommended size for the mixed mode is for filesystems less than 1GiB. The soft recommendation is to use it for filesystems smaller than 5GiB. Thie mixed mode may lead to degraded performance on larger filesystems, but is otherwise usable, even on multiple devices. <br /> The '''nodesize''' and '''sectorsize''' must be equal, and the block group types must match. <br />'''Note:''' versions up to 4.2.x forced the mixed mode for devices smaller than 1GiB. This has been removed in 4.3+ as it caused some usability issues.
+: Normally the data and metadata block groups are isolated. The '''mixed''' mode will remove the isolation and store both types in the same block group type. This helps to utilize the free space regardless of the purpose and is suitable for small devices. The separate allocation of block groups leads to a situation where the space is reserved for the other block group type, is not available for allocation and can lead to ENOSPC state. <br />The recommended size for the mixed mode is for filesystems less than 1GiB. The soft recommendation is to use it for filesystems smaller than 5GiB. Thie mixed mode may lead to degraded performance on larger filesystems, but is otherwise usable, even on multiple devices. <br />The '''nodesize''' and '''sectorsize''' must be equal, and the block group types must match. <br />'''Note:''' versions up to 4.2.x forced the mixed mode for devices smaller than 1GiB. This has been removed in 4.3+ as it caused some usability issues.
 ; '''-l|--leafsize &lt;size&gt;'''
 : Alias for --nodesize. Deprecated.
 ; '''-n|--nodesize &lt;size&gt;'''
-: Specify the nodesize, the tree block size in which btrfs stores metadata. The default value is 16KiB (16384) or the page size, whichever is bigger. Must be a multiple of the sectorsize, but not larger than 64KiB (65536). Leafsize always equals nodesize and the options are aliases. <br /> Smaller node size increases fragmentation but lead to higher b-trees which in turn leads to lower locking contention. Higher node sizes give better packing and less fragmentation at the cost of more expensive memory operations while updating the metadata blocks. <br />'''Note:''' versions up to 3.11 set the nodesize to 4k.
+: Specify the nodesize, the tree block size in which btrfs stores metadata. The default value is 16KiB (16384) or the page size, whichever is bigger. Must be a multiple of the sectorsize, but not larger than 64KiB (65536). Leafsize always equals nodesize and the options are aliases. <br />Smaller node size increases fragmentation but lead to higher b-trees which in turn leads to lower locking contention. Higher node sizes give better packing and less fragmentation at the cost of more expensive memory operations while updating the metadata blocks. <br />'''Note:''' versions up to 3.11 set the nodesize to 4k.
 ; '''-s|--sectorsize &lt;size&gt;'''
-: Specify the sectorsize, the minimum data block allocation unit. <br /> The default value is the page size and is autodetected. If the sectorsize differs from the page size, the created filesystem may not be mountable by the kernel. Therefore it is not recommended to use this option unless you are going to mount it on a system with the appropriate page size.
+: Specify the sectorsize, the minimum data block allocation unit. <br />The default value is the page size and is autodetected. If the sectorsize differs from the page size, the created filesystem may not be mountable by the kernel. Therefore it is not recommended to use this option unless you are going to mount it on a system with the appropriate page size.
 ; '''-L|--label &lt;string&gt;'''
 : Specify a label for the filesystem. The '''string''' should be less than 256 bytes and must not contain newline characters.
 ; '''-K|--nodiscard'''
@@ -41,7 +41,7 @@ Before mounting such filesystem, the kernel module must know all the devices eit
 ; '''-r|--rootdir &lt;rootdir&gt;'''
 : Populate the toplevel subvolume with files from '''rootdir'''. This does not require root permissions and does not mount the filesystem.
 ; '''-O|--features &lt;feature1&gt;[,&lt;feature2&gt;…]'''
-: A list of filesystem features turned on at mkfs time. Not all features are supported by old kernels. To disable a feature, prefix it with '''^'''. <br /> See section '''FILESYSTEM FEATURES''' for more details. To see all available features that mkfs.btrfs supports run: <br /><code>mkfs.btrfs -O list-all</code>
+: A list of filesystem features turned on at mkfs time. Not all features are supported by old kernels. To disable a feature, prefix it with '''^'''. <br />See section '''FILESYSTEM FEATURES''' for more details. To see all available features that mkfs.btrfs supports run: <br /><code>mkfs.btrfs -O list-all</code>
 ; '''-f|--force'''
 : Forcibly overwrite the block devices when an existing filesystem is detected. By default, mkfs.btrfs will utilize '''libblkid''' to check for any known filesystem on the devices. Alternatively you can use the <code>wipefs</code> utility to clear the devices.
 ; '''-q|--quiet'''
@@ -76,11 +76,11 @@ Another possibility is to use the mount options '''device''' to specify the list
 ; '''mixed-bg'''
 : mixed data and metadata block groups, also set by option '''--mixed'''
 ; '''extref'''
-: (default since btrfs-progs 3.12, kernel support since 3.7) <br /> increased hardlink limit per file in a directory to 65536, older kernels supported a varying number of hardlinks depending on the sum of all file name sizes that can be stored into one metadata block
+: (default since btrfs-progs 3.12, kernel support since 3.7) <br />increased hardlink limit per file in a directory to 65536, older kernels supported a varying number of hardlinks depending on the sum of all file name sizes that can be stored into one metadata block
 ; '''raid56'''
 : extended format for RAID5/6, also enabled if raid5 or raid6 block groups are selected
 ; '''skinny-metadata'''
-: (default since btrfs-progs 3.18, kernel support since 3.10) <br /> reduced-size metadata for extent references, saves a few percent of metadata
+: (default since btrfs-progs 3.18, kernel support since 3.10) <br />reduced-size metadata for extent references, saves a few percent of metadata
 ; '''no-holes'''
 : improved representation of file extents where holes are not explicitly stored as an extent, saves a few percent of metadata if sparse files are used
 
@@ -99,7 +99,7 @@ Other terms commonly used:
 
 ; '''block group'''
 ; '''chunk'''
-: a logical range of space of a given profile, stores data, metadata or both; sometimes the terms are used interchangably <br /> A typical size of metadata block group is 256MiB (filesystem smaller than 50GiB) and 1GiB (larger than 50GiB), for data it’s 1GiB. The system block group size is a few megabytes.
+: a logical range of space of a given profile, stores data, metadata or both; sometimes the terms are used interchangably <br />A typical size of metadata block group is 256MiB (filesystem smaller than 50GiB) and 1GiB (larger than 50GiB), for data it’s 1GiB. The system block group size is a few megabytes.
 ; '''RAID'''
 : a block group profile type that utilizes RAID-like features on multiple devices: striping, mirroring, parity
 ; '''profile'''

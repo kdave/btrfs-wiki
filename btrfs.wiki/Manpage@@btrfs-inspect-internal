@@ -17,11 +17,11 @@ This command group provides an interface to query internal information. The func
 ==SUBCOMMAND==
 
 ; '''inode-resolve''' [-v] &lt;ino&gt; &lt;path&gt;
-: (needs root privileges) <br /> resolve paths to all files with given inode number '''ino''' in a given subvolume at '''path''', ie. all hardlinks <br /><code>Options</code><br />
+: (needs root privileges) <br />resolve paths to all files with given inode number '''ino''' in a given subvolume at '''path''', ie. all hardlinks <br /><code>Options</code> <br />
 :; -v
 :: verbose mode, print count of returned paths and ioctl() return value
 ; '''logical-resolve''' [-Pv] [-s &lt;bufsize&gt;] &lt;logical&gt; &lt;path&gt;
-: (needs root privileges) <br /> resolve paths to all files at given '''logical''' address in the linear filesystem space <br /><code>Options</code><br />
+: (needs root privileges) <br />resolve paths to all files at given '''logical''' address in the linear filesystem space <br /><code>Options</code> <br />
 :; -P
 :: skip the path resolving and print the inodes instead
 :; -v
@@ -29,13 +29,13 @@ This command group provides an interface to query internal information. The func
 :; -s &lt;bufsize&gt;
 :: set internal buffer for storing the file names to '''bufsize''', default is 4096, maximum 64k
 ; '''min-dev-size''' [options] &lt;path&gt;
-: (needs root privileges) <br /> return the minimum size the device can be shrunk to, without performing any resize operation, this may be useful before executing the actual resize operation <br /><code>Options</code><br />
+: (needs root privileges) <br />return the minimum size the device can be shrunk to, without performing any resize operation, this may be useful before executing the actual resize operation <br /><code>Options</code> <br />
 :; --id &lt;id&gt;
 :: specify the device '''id''' to query, default is 1 if this option is not used
 ; '''rootid''' &lt;path&gt;
 : for a given file or directory, return the containing tree root id, for a subvolume itself return it’s own tree id (ie. subvol id) <br />'''Note:''' The result is undefined for the so-called empty subvolumes (identified by inode number 2), but such subvolume does not contain any files anyway
 ; '''subvolid-resolve''' &lt;subvolid&gt; &lt;path&gt;
-: (needs root privileges) <br /> resolve the absolute path of a the subvolume id '''subvolid'''
+: (needs root privileges) <br />resolve the absolute path of a the subvolume id '''subvolid'''
 
 ==EXIT STATUS==
 

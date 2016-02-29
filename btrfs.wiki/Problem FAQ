@@ -80,11 +80,10 @@ Maybe.  Any number of things might be wrong.  The [[Restore|restore tool]] is a 
 Running this:
 
  # btrfs filesystem defragment ~/stuff
- 
 
 does not defragment the contents of the directory.
 
-This is by design. '''btrfs fi defrag''' operates on the single filesystem object passed to it. This means that the command defragments just the metadata held by the directory object, and not the contents of the directory. If you want to defragment recursively, see [[UseCases#How_do_I_defragment_many_files.3F | recursive defragmentation]] (possibly use <code>-maxdepth 1</code> if you don't want further recursion).
+This is by design. <code>btrfs fi defrag</code> operates on the single filesystem object passed to it, e.g. a (regular) file. When ran on a directory, it defragments the metadata held by the subvolume containing the directory, and not the contents of the directory. If you want to defragment the contents of a directory, you have to use the recursive mode with the <code>-r</code> flag (see [[UseCases#How_do_I_defragment_many_files.3F | recursive defragmentation]]).
 
 == Compression doesn't work / poor compression ratios ==
 

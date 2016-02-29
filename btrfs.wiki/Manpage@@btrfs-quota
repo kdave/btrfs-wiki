@@ -25,7 +25,7 @@ For setting quota or other quota operations on a btrfs filesystem, please see [[
 ; '''enable''' &lt;path&gt;
 : Enable subvolume quota support for a filesystem.
 ; '''rescan''' [-s] &lt;path&gt;
-: Trash all qgroup numbers and scan the metadata again with the current config. <br /><code>Options</code><br />
+: Trash all qgroup numbers and scan the metadata again with the current config. <br /><code>Options</code> <br />
 :; -s
 :: show status of a running rescan operation.
 :; -w

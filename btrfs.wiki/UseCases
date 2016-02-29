@@ -104,6 +104,7 @@ Proposed tools:
 * There is a proposal for somehow generic solution, called [[Autosnap]] ([http://thread.gmane.org/gmane.comp.file-systems.btrfs/12603/focus=12605 initial proposal], [http://thread.gmane.org/gmane.comp.file-systems.btrfs/16030 patch]).
 * A simple [http://article.gmane.org/gmane.comp.file-systems.btrfs/12609 script] which could be tuned for your needs.
 * A python script called [[SnapBtr]].
+* Extension of SnapBtr called snapbtrex with btrfs send and receive capabilities for remote backup sync [https://github.com/yoshtec/snapbtrex]
 
 == How do I mount the real root of the filesystem once I've made another subvolume the default? ==
 

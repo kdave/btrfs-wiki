@@ -254,6 +254,36 @@ This section collects random pieces of advice from mailinglist that are given to
 * Use the documentation at [[Main_Page#Developer_documentation]], and the output of btrfs-debug-tree to understand the internal structure of the FS
 * Pick up one of the smaller, more self-contained ideas from the projects page [[Project_ideas]] (say, [[Project_ideas#Cancellable_operations]] or [[Project_ideas#Implement_new_FALLOC_FL_.2A_modes]]) and try to implement it. Again: build, write test code, test thoroughly, submit patch for review, modify as suggested by reviewers, and repeat as often as necessary.
 
+== How not to start ==
+
+It might be tempting to look for coding style violations and send patches to fix them. This happens from time to time and the community does not welcome that. The following text reflects our stance:
+
+''(copied from http://article.gmane.org/gmane.comp.file-systems.btrfs/53421)''
+
+If you want to contribute and do something useful for others and
+yourself, just don't keep sending these patches to fix
+whitespace/style issues reported by checkpatch.
+Think about it:
+
+# You don't learn anything by doing them. You don't learn nothing about btrfs internals, filesystems in general, kernel programming in general, general programming in C, etc. It ends up being only a waste of time for you;
+# You're not offering any benefit to users - not fixing a bug, not adding a new feature, not doing any performance/efficiency improvement, not making the code more reliable, etc;
+# You're not offering a benefit for other developers either, like doing a cleanup that simplifies a complex algorithm for example.
+
+If you care so much about the whitespace/style issues, just fix them
+while doing a useful change as mentioned above that happens to touch
+the same code.
+It takes time to read and understand code, it can be a big investment
+of time, but it ends up being worth it. There's plenty of bug reports
+and performance issues in the mailing list or bugzilla, so there's no
+shortage of things to do.
+
+Same advice applies to any other kernel subsystem or open source
+project in general. Also before jumping into such a storm of useless
+patches, observe first what a community does for at least a month, and
+learn from other contributors - what they do, how they do it, the flow
+of development and releases, etc. Don't rush into a sending patch just
+for the sake of sending it and having your name in the git history.
+
 = References =
 
 * [https://events.linuxfoundation.org/sites/events/files/slides/clement-kernel-maintainership-oral-tradition.pdf Kernel maintainersip: an oral tradition] (pdf) a nice presentation from ELCE 2015 what does it mean to be a maintainre and what the developers can expect.

@@ -165,6 +165,56 @@ Major features or significant feature enhancements by kernel version. For more i
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
 
+== btrfs-progs 4.4 (Jan 2016) ==
+
+User visible changes:
+
+* mkfs.btrfs --data dup
+
+People asked about duplicating data on a single device for a long time. There
+are no technical obstacles preventing that, so it got enabled with a warning
+about potential dangers when the device will not do the duplicated copies.
+See mkfs.btrfs section ''DUP PROFILES ON A SINGLE DEVICE''.
+
+* support balance filters added/enhanced in linux 4.4
+** usage=min..max	-- enhanced to take range
+** stripes=min..max	-- new, filter by stripes for raid0/10/5/6
+** limit=min..max	-- enhanced to take range
+
+Noe: due to backward compatibility, the range maximum for 'usage' is not inclusive as for the others, to keep the same behaviour as usage=N .
+
+* manual pages enhanced (btrfs, mkfs, mount, filesystem, balance)
+
+* error messages updates, rewordings -- some fstests may break due to that
+
+* added support for free-space-tree implementation of space cache -- ''this requires kernel 4.5 and is not recommended for non-developers yet''
+
+* ''btrfs filesystem usage'' works with mixed blockgroups
+
+Other:
+
+* installation to /usr/local -- this has unintentionally changed during conversion to autotools in 3.19
+* check: fix a false alert where extent record has wrong metadata flag
+* improved stability on fuzzed/crafted images when reading sys array in superblock
+* build: the 'ar' tool is properly deteced during cross-compilation
+* debug-tree: option -t understands ids for tree root and chnuk tree
+* preparatory work for btrfs-convert rewrite
+* sparse, gcc warning fixes
+* more memory allocation failure handling
+* cleanups
+* more tests
+
+Bugfixes:
+
+* chunk recovery: fix floating point exception
+* chunk recovery: endianity bugfix during rebuild
+* mkfs with 64K pages and nodesize reported superblock checksum mismatch
+* check: properly reset nlink of multi-linked file
+
+=== btrfs-progs 4.4.1 (Feb 2016) ===
+
+* bugfix release
+
 == btrfs-progs 4.3 (Nov 2015) ==
 
 * mkfs

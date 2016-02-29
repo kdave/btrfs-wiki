@@ -62,9 +62,20 @@ If you have full up metadata, and more than 1 GiB of space free in data, as repo
 
 We know this isn't ideal, and there are plans to improve the behavior. Running close to empty is rarely the ideal case, but we can get far closer to full than we do.
 
+'''Free space cache file is invalid. skip it'''
+
+If you see something like this when mounting:
+ BTRFS info (device sdc1): The free space cache file (2159324168192) is invalid. skip it
+
+then you should run btrfs check on your fs. I have been seeing this in dmesg and Data would not allocate new blocks at all. Doing btrfs check fixed this at least for me. I still would hit the bug below afterwards (bug #74101) - that is, Data would normally resize, but sometimes it would fail to do that, and the fs crashed and remounted as ro. Before btrfs check I also resized the fs to smaller than it was and then to the max size using btrfs fi resize, which may have helped part way, but until I ran btrfs check, Data would not resize. Try resizing.
+
 '''When you haven't hit the "usual" problem'''
 
 If the conditions above aren't true (i.e. there's plenty of unallocated space, or there's lots of unused metadata allocation), then you may have hit a known but unresolved bug. If this is the case, please report it to either the mailing list, or IRC. In some cases, it has been possible to deal with the problem, but the approach is new, and we would like more direct contact with people experiencing this particular bug.
+
+The "Data" field in btrfs fi df fills up and doesn't become larger, and then the bug transpires. This has been reported in the btrfs mailing list (search for the subject ''6TB partition, Data only 2TB - aka When you haven't hit the "usual" problem''). Here is a likely bug report: https://bugzilla.kernel.org/show_bug.cgi?id=74101
+
+The bug would only happen after some time, so I was able to move a lot of data onto the fs before btrfs crashed, and then it was just a case of unmounting and mounting again.
 
 == Are btrfs changes backported to stable kernel releases? ==
 

@@ -84,6 +84,10 @@ Hugo Mill worked on [http://thread.gmane.org/gmane.comp.file-systems.btrfs/34792
 
 }}
 
+=== Allow device-replace accept smaller device than original ===
+{{project
+|text=Requested in https://bugzilla.kernel.org/show_bug.cgi?id=112741, we don't need to insist on the same devaice size as long as the moved data fit to the new device and reaid constraints are satisfied. This has been verified to work, we need to extend the checks and command line UI. Eg. add a warning and only allow replace to smaller device with an extra option.
+
 == Other projects ==
 
 === extent_io state ranges ===
@@ -482,8 +486,8 @@ Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 ** for the reasons stated under [https://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg36259.html], the functionality should be implemented with the ''properties'' rather than a separate subcommand
 * audit code for use of backup superblocks and change it to read only the first unless told otherwise by a command-line option
 * write a ''mount.btrfs'' helper to scan devices on the fly (and use libblkid and libmount for that)
-* introduce subcommand ''debug'' and move there functionality from separate debugging utilities
-** dump-tree from btrfs-debug-tree
+* ('''claimed''') introduce subcommand ''debug'' and move there functionality from separate debugging utilities
+** ('''done''') dump-tree from btrfs-debug-tree
 ** dump-super from btrfs-show-super (with functionality of btrfs-dump-super as an option)
 ** tree-stats from calc-size
 ** map-logical (not sure if this is not for inspect-internal)

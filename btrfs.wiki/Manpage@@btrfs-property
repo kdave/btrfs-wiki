@@ -19,7 +19,7 @@ btrfs-property - get/set/list properties for given btrfs object.
 ==SUBCOMMAND==
 
 ; '''get''' [-t &lt;type&gt;] &lt;object&gt; [&lt;name&gt;]
-: Gets a property from a btrfs object. <br /> A btrfs object, which is set by &lt;object&gt;, can be a btrfs filesystem itself, a btrfs subvolume, an inode(file or directory) inside btrfs, or a device on which a btrfs exists. <br /> The '''-t &lt;type&gt;''' option can be used to explicitly specify what type of object you meant. This is only needed when a property could be set for more then one object type. <br /> Possible types are '''s[ubvol]''', '''f[ilesystem]''', '''i[node]''' and '''d[evice]'''. <br /> Set the name of property by '''&lt;name&gt;'''. If no '''&lt;name&gt;''' is specified, all properties for the given object are printed. '''&lt;name&gt;''' is one of the followings.
+: Gets a property from a btrfs object. <br />A btrfs object, which is set by &lt;object&gt;, can be a btrfs filesystem itself, a btrfs subvolume, an inode(file or directory) inside btrfs, or a device on which a btrfs exists. <br />The '''-t &lt;type&gt;''' option can be used to explicitly specify what type of object you meant. This is only needed when a property could be set for more then one object type. <br />Possible types are '''s[ubvol]''', '''f[ilesystem]''', '''i[node]''' and '''d[evice]'''. <br />Set the name of property by '''&lt;name&gt;'''. If no '''&lt;name&gt;''' is specified, all properties for the given object are printed. '''&lt;name&gt;''' is one of the followings.
 :; ro
 :: read-only flag of subvolume: true or false
 :; label
@@ -27,9 +27,9 @@ btrfs-property - get/set/list properties for given btrfs object.
 :; compression
 :: compression setting for an inode: lzo, zlib, or "" (empty string)
 ; '''list''' [-t &lt;type&gt;] &lt;object&gt;
-: Lists available properties with their descriptions for the given object. <br /> See the description of '''get''' subcommand for the meaning of each option.
+: Lists available properties with their descriptions for the given object. <br />See the description of '''get''' subcommand for the meaning of each option.
 ; '''set''' [-t &lt;type&gt;] &lt;object&gt; &lt;name&gt; &lt;value&gt;
-: Sets a property on a btrfs object. <br /> See the description of '''get''' subcommand for the meaning of each option.
+: Sets a property on a btrfs object. <br />See the description of '''get''' subcommand for the meaning of each option.
 
 ==EXIT STATUS==
 

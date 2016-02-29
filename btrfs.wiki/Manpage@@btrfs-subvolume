@@ -32,11 +32,11 @@ Although in btrfs, subvolumes/snapshots are treated as directories, only subvolu
 ==SUBCOMMAND==
 
 ; '''create''' [-i &lt;qgroupid&gt;] [&lt;dest&gt;]&lt;name&gt;
-: Create a subvolume &lt;name&gt; in &lt;dest&gt;. <br /> If &lt;dest&gt; is not given, subvolume &lt;name&gt; will be created in the currently directory. <br /><code>Options</code><br />
+: Create a subvolume &lt;name&gt; in &lt;dest&gt;. <br />If &lt;dest&gt; is not given, subvolume &lt;name&gt; will be created in the currently directory. <br /><code>Options</code> <br />
 :; -i &lt;qgroupid&gt;
 :: Add the newly created subvolume to a qgroup. This option can be given multiple times.
 ; '''delete''' [options] &lt;subvolume&gt; [&lt;subvolume&gt;…]
-: Delete the subvolume(s) from the filesystem. <br /> If &lt;subvolume&gt; is not a subvolume, btrfs returns an error but continues if there are more arguments to process. <br /> The corresponding directory is removed instantly but the data blocks are removed later. The deletion does not involve full commit by default due to performance reasons (as a consequence, the subvolume may appear again after a crash). Use one of the '''--commit''' options to wait until the operation is safely stored on the media. <br /><code>Options</code><br />
+: Delete the subvolume(s) from the filesystem. <br />If &lt;subvolume&gt; is not a subvolume, btrfs returns an error but continues if there are more arguments to process. <br />The corresponding directory is removed instantly but the data blocks are removed later. The deletion does not involve full commit by default due to performance reasons (as a consequence, the subvolume may appear again after a crash). Use one of the '''--commit''' options to wait until the operation is safely stored on the media. <br /><code>Options</code> <br />
 :; -c|--commit-after
 :: wait for transaction commit at the end of the operation <br />
 :; -C|--commit-each
@@ -44,9 +44,9 @@ Although in btrfs, subvolumes/snapshots are treated as directories, only subvolu
 ; '''find-new''' &lt;subvolume&gt; &lt;last_gen&gt;
 : List the recently modified files in a subvolume, after &lt;last_gen&gt; ID.
 ; '''get-default''' &lt;path&gt;
-: Get the default subvolume of the filesystem &lt;path&gt;. <br /> The output format is similar to '''subvolume list''' command.
+: Get the default subvolume of the filesystem &lt;path&gt;. <br />The output format is similar to '''subvolume list''' command.
 ; '''list''' [options] [-G [+|-]&lt;value&gt;] [-C [+|-]&lt;value&gt;] [--sort=rootid,gen,ogen,path] &lt;path&gt;
-: List the subvolumes present in the filesystem &lt;path&gt;. <br /> For every subvolume the following information is shown by default.<br /> ID &lt;ID&gt; top level &lt;ID&gt; path &lt;path&gt;<br /> where path is the relative path of the subvolume to the top level subvolume. The subvolume’s ID may be used by the subvolume set-default command, or at mount time via the subvolid= option. If <code>-p</code> is given, then parent &lt;ID&gt; is added to the output between ID and top level. The parent’s ID may be used at mount time via the <code>subvolrootid=</code> option. <br /><code>Options</code><br />
+: List the subvolumes present in the filesystem &lt;path&gt;. <br />For every subvolume the following information is shown by default.<br /> ID &lt;ID&gt; top level &lt;ID&gt; path &lt;path&gt;<br /> where path is the relative path of the subvolume to the top level subvolume. The subvolume’s ID may be used by the subvolume set-default command, or at mount time via the subvolid= option. If <code>-p</code> is given, then parent &lt;ID&gt; is added to the output between ID and top level. The parent’s ID may be used at mount time via the <code>subvolrootid=</code> option. <br /><code>Options</code> <br />
 :; -p
 :: print parent ID.
 :; -a
@@ -74,15 +74,15 @@ Although in btrfs, subvolumes/snapshots are treated as directories, only subvolu
 :; -C [+|-]&lt;value&gt;
 :: list subvolumes in the filesystem that its ogeneration is &gt;=, &lt;= or = value. The usage is the same to '''-g''' option.
 :; --sort=rootid,gen,ogen,path
-:: list subvolumes in order by specified items. you can add '+' or '-' in front of each items, '+' means ascending, '-' means descending. The default is ascending. <br /> for --sort you can combine some items together by ',', just like -sort=+ogen,-gen,path,rootid.
+:: list subvolumes in order by specified items. you can add '+' or '-' in front of each items, '+' means ascending, '-' means descending. The default is ascending. <br />for --sort you can combine some items together by ',', just like -sort=+ogen,-gen,path,rootid.
 ; '''set-default''' &lt;id&gt; &lt;path&gt;
-: Set the subvolume of the filesystem &lt;path&gt; which is mounted as default. <br /> The subvolume is identified by &lt;id&gt;, which is returned by the '''subvolume list''' command.
+: Set the subvolume of the filesystem &lt;path&gt; which is mounted as default. <br />The subvolume is identified by &lt;id&gt;, which is returned by the '''subvolume list''' command.
 ; '''show''' &lt;path&gt;
 : Show information of a given subvolume in the &lt;path&gt;.
 ; '''snapshot''' [-r] &lt;source&gt; &lt;dest&gt;|[&lt;dest&gt;/]&lt;name&gt;
-: Create a writable/readonly snapshot of the subvolume &lt;source&gt; with the name &lt;name&gt; in the &lt;dest&gt; directory. <br /> If only &lt;dest&gt; is given, the subvolume will be named the basename of &lt;source&gt;. If &lt;source&gt; is not a subvolume, btrfs returns an error. If '''-r''' is given, the snapshot will be readonly.
+: Create a writable/readonly snapshot of the subvolume &lt;source&gt; with the name &lt;name&gt; in the &lt;dest&gt; directory. <br />If only &lt;dest&gt; is given, the subvolume will be named the basename of &lt;source&gt;. If &lt;source&gt; is not a subvolume, btrfs returns an error. If '''-r''' is given, the snapshot will be readonly.
 ; '''sync''' &lt;path&gt; [subvolid…]
-: Wait until given subvolume(s) are completely removed from the filesystem after deletion. If no subvolume id is given, wait until all current deletion requests are completed, but do not wait for subvolumes deleted meanwhile. The status of subvolume ids is checked periodically. <br /><code>Options</code><br />
+: Wait until given subvolume(s) are completely removed from the filesystem after deletion. If no subvolume id is given, wait until all current deletion requests are completed, but do not wait for subvolumes deleted meanwhile. The status of subvolume ids is checked periodically. <br /><code>Options</code> <br />
 :; -s &lt;N&gt;
 :: sleep N seconds between checks (default: 1)
 

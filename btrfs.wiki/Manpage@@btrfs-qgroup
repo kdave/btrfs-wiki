@@ -33,17 +33,17 @@ The qgroup hierarchy is built by commands '''create''' and '''assign'''.
 ==SUBCOMMAND==
 
 ; '''assign''' [options] &lt;src&gt; &lt;dst&gt; &lt;path&gt;
-: Assign qgroup &lt;src&gt; as the child qgroup of &lt;dst&gt; in the btrfs filesystem identified by &lt;path&gt;. <br /><code>Options</code><br />
+: Assign qgroup &lt;src&gt; as the child qgroup of &lt;dst&gt; in the btrfs filesystem identified by &lt;path&gt;. <br /><code>Options</code> <br />
 :; --rescan
 :: Automatically schedule quota rescan if the new qgroup assignment leads to quota inconsistency.
 :; --no-rescan
 :: Explicitly ask not to do a rescan.
 ; '''create''' &lt;qgroupid&gt; &lt;path&gt;
-: Create a subvolume quota group. <br /> For the '''0/&lt;subvolume id&gt;''' qgroup, a qgroup can be created even before the subvolume created.
+: Create a subvolume quota group. <br />For the '''0/&lt;subvolume id&gt;''' qgroup, a qgroup can be created even before the subvolume created.
 ; '''destroy''' &lt;qgroupid&gt; &lt;path&gt;
-: Destroy a qgroup. <br /> If a qgroup is no isolated,which means it is a parent or child qgroup, it can’t be destroyed.
+: Destroy a qgroup. <br />If a qgroup is no isolated,which means it is a parent or child qgroup, it can’t be destroyed.
 ; '''limit''' [options] &lt;size&gt;|none [&lt;qgroupid&gt;] &lt;path&gt;
-: Limit the size of a qgroup to &lt;size&gt; or no limit in the btrfs filesystem identified by &lt;path&gt;. <br /> If &lt;qgroupid&gt; is not given, qgroup of the subvolume identified by &lt;path&gt; is used if possible. <br /><code>Options</code><br />
+: Limit the size of a qgroup to &lt;size&gt; or no limit in the btrfs filesystem identified by &lt;path&gt;. <br />If &lt;qgroupid&gt; is not given, qgroup of the subvolume identified by &lt;path&gt; is used if possible. <br /><code>Options</code> <br />
 :; -c
 :: limit amount of data after compression. This is the default, it is currently not possible to turn off this option. <br />
 :; -e
@@ -51,7 +51,7 @@ The qgroup hierarchy is built by commands '''create''' and '''assign'''.
 ; '''remove''' &lt;src&gt; &lt;dst&gt; &lt;path&gt;
 : Remove the relationship between child qgroup &lt;src&gt; and parent qgroup &lt;dst&gt; in the btrfs filesystem identified by &lt;path&gt;.
 ; '''show''' [options] &lt;path&gt;
-: Show all qgroups in the btrfs filesystem identified by &lt;path&gt;. <br /><code>Options</code><br />
+: Show all qgroups in the btrfs filesystem identified by &lt;path&gt;. <br /><code>Options</code> <br />
 :; -p
 :: print parent qgroup id.
 :; -c
@@ -81,7 +81,7 @@ The qgroup hierarchy is built by commands '''create''' and '''assign'''.
 :; --tbytes
 :: show sizes in TiB, or TB with --si.
 :; --sort=[+/-]&lt;attr&gt;[,[+/-]&lt;attr&gt;]…
-:: list qgroups in order of &lt;attr&gt;. <br /> &lt;attr&gt; can be one or more of qgroupid,rfer,excl,max_rfer,max_excl. <br /> Prefix '+' means ascending order and '-' means descending order of &lt;attr&gt;. If no prefix is given, use ascending order by default. <br /> If multiple &lt;attr&gt;s is given, use comma to separate.
+:: list qgroups in order of &lt;attr&gt;. <br />&lt;attr&gt; can be one or more of qgroupid,rfer,excl,max_rfer,max_excl. <br />Prefix '+' means ascending order and '-' means descending order of &lt;attr&gt;. If no prefix is given, use ascending order by default. <br />If multiple &lt;attr&gt;s is given, use comma to separate.
 
 ==EXIT STATUS==
 

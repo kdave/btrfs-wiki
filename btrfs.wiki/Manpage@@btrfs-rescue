@@ -17,7 +17,7 @@ btrfs-rescue - Recover a damaged btrfs filesystem
 ==SUBCOMMAND==
 
 ; '''chunk-recover''' [options] &lt;device&gt;
-: Recover the chunk tree by scanning the devices <br /><code>Options</code><br />
+: Recover the chunk tree by scanning the devices <br /><code>Options</code> <br />
 :; -y
 :: assume an answer of '''yes''' to all questions.
 :; -v
@@ -28,7 +28,7 @@ btrfs-rescue - Recover a damaged btrfs filesystem
 '''Note:''' Since '''chunk-recover''' will scan the whole device, it will be '''VERY''' slow especially executed on a large device.
 
 ; '''super-recover''' [options] &lt;device&gt;
-: Recover bad superblocks from good copies. <br /><code>Options</code><br />
+: Recover bad superblocks from good copies. <br /><code>Options</code> <br />
 :; -y
 :: assume an answer of '''yes''' to all questions.
 :; -v
@@ -44,7 +44,7 @@ The common case where this happens has been fixed a long time ago, so it is unli
 
 One can determine whether '''zero-log''' is needed according to the kernel backtrace:
 
-{| width="100%" cellpadding="4" bgcolor="#e8e8e8"
+{| width="100%" cellpadding="10" bgcolor="#e8e8e8"
 |
  <code>? replay_one_dir_item+0xb5/0xb5 [btrfs]
  ? walk_log_tree+0x9c/0x19d [btrfs]

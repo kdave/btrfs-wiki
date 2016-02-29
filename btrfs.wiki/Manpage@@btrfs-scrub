@@ -17,11 +17,11 @@ btrfs-scrub - scrub btrfs filesystem
 ==SUBCOMMAND==
 
 ; '''cancel''' &lt;path&gt;|&lt;device&gt;
-: If a scrub is running on the filesystem identified by &lt;path&gt;, cancel it. <br /> Progress is saved in the scrub progress file and scrubbing can be resumed later using the scrub resume command. If a &lt;device&gt; is given, the corresponding filesystem is found and scrub cancel behaves as if it was called on that filesystem.
+: If a scrub is running on the filesystem identified by &lt;path&gt;, cancel it. <br />Progress is saved in the scrub progress file and scrubbing can be resumed later using the scrub resume command. If a &lt;device&gt; is given, the corresponding filesystem is found and scrub cancel behaves as if it was called on that filesystem.
 ; '''resume''' [-BdqrR] [-c &lt;ioprio_class&gt; -n &lt;ioprio_classdata&gt;] &lt;path&gt;|&lt;device&gt;
-: Resume a canceled or interrupted scrub cycle on the filesystem identified by &lt;path&gt; or on a given &lt;device&gt;. <br /> Does not start a new scrub if the last scrub finished successfully. <br /><code>Options</code><br /> see '''scrub start'''.
+: Resume a canceled or interrupted scrub cycle on the filesystem identified by &lt;path&gt; or on a given &lt;device&gt;. <br />Does not start a new scrub if the last scrub finished successfully. <br /><code>Options</code> <br />see '''scrub start'''.
 ; '''start''' [-BdqrRf] [-c &lt;ioprio_class&gt; -n &lt;ioprio_classdata&gt;] &lt;path&gt;|&lt;device&gt;
-: Start a scrub on all devices of the filesystem identified by &lt;path&gt; or on a single &lt;device&gt;. If a scrub is already running, the new one fails. <br /> Without options, scrub is started as a background process. Progress can be obtained with the '''scrub status''' command. Scrubbing involves reading all data from all disks and verifying checksums. Errors are corrected along the way if possible. <br /> The default IO priority of scrub is the idle class. The priority can be configured similar to the [http://man7.org/linux/man-pages/man1/ionice.1.html ionice(1)] syntax using '''-c''' and '''-n''' options. <br /><code>Options</code><br />
+: Start a scrub on all devices of the filesystem identified by &lt;path&gt; or on a single &lt;device&gt;. If a scrub is already running, the new one fails. <br />Without options, scrub is started as a background process. Progress can be obtained with the '''scrub status''' command. Scrubbing involves reading all data from all disks and verifying checksums. Errors are corrected along the way if possible. <br />The default IO priority of scrub is the idle class. The priority can be configured similar to the [http://man7.org/linux/man-pages/man1/ionice.1.html ionice(1)] syntax using '''-c''' and '''-n''' options. <br /><code>Options</code> <br />
 :; -B
 :: Do not background and print scrub statistics when finished.
 :; -d
@@ -39,7 +39,7 @@ btrfs-scrub - scrub btrfs filesystem
 :; -f
 :: Force starting new scrub even if a scrub is already running. This is useful when scrub stat record file is damaged.
 ; '''status''' [-d] &lt;path&gt;|&lt;device&gt;
-: Show status of a running scrub for the filesystem identified by &lt;path&gt; or for the specified &lt;device&gt;. <br /> If no scrub is running, show statistics of the last finished or canceled scrub for that filesystem or device. <br /><code>Options</code><br />
+: Show status of a running scrub for the filesystem identified by &lt;path&gt; or for the specified &lt;device&gt;. <br />If no scrub is running, show statistics of the last finished or canceled scrub for that filesystem or device. <br /><code>Options</code> <br />
 :; -d
 :: Print separate statistics for each device of the filesystem.
 

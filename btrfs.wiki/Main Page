@@ -53,15 +53,36 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 == News ==
 
-'''Linux v4.4 (Jan 2016)'''
+'''btrfs-progs 4.4 (Feb 2016)'''
 
-'''btrfs-progs 4.3.1 (Nov 2015)'''
+* bugfix release
+
+'''Linux v4.4.3 (Feb 2016)'''
+* bugfixes:
+** direct io requests report errors to userspace
+** fitrim does not affect bootloader area
+** dedup ioctl fixes
+
+'''btrfs-progs 4.4 (Jan 2016)'''
 
 Hilights (see [[Changelog]] for the full change list):
-* fixes
-** device delete: recognize 'missing' again
-** mkfs: long names are not trimmed when doing ssd check
-** support partitioned loop devices
+* mkfs.btrfs --data dup (see also manual page)
+* support balance filters added/enhanced in linux 4.4
+** usage=min..max	-- enhanced to take range
+** stripes=min..max	-- new, filter by stripes for raid0/10/5/6
+** limit=min..max	-- enhanced to take range
+* manual pages enhanced (btrfs, mkfs, mount, filesystem, balance)
+* 'btrfs filesystem usage' works with mixed blockgroups
+* build: installation to /usr/local
+* build: the 'ar' tool is properly deteced during cross-compilation
+* improved stability on fuzzed/crafted images when reading sys array in superblock
+* debug-tree: option -t understands ids for tree root and chnuk tree
+* check: properly reset nlink of multi-linked file
+* chunk recovery: fix floating point exception
+* chunk recovery: endianity bugfix during rebuild
+* mkfs with 64K pages and nodesize reported superblock checksum mismatch
+
+'''Linux v4.4 (Jan 2016)'''
 
 '''In coreutils 8.24'''
 * ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13] ([https://lists.gnu.org/archive/html/coreutils-announce/2015-07/msg00000.html release notes])

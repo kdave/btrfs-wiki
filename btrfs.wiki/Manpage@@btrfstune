@@ -31,7 +31,7 @@ The common usecase is to enable features that were not enabled at mkfs time. Ple
 ; -u
 : Change fsid to a randomly generated UUID or continue previous fsid change operation in case it was interrupted.
 ; -U &lt;UUID&gt;
-: Change fsid to '''UUID'''. <br /> The '''UUID''' should be a 36 bytes string in [http://man7.org/linux/man-pages/man3/printf.3.html printf(3)] format '''"%08x-%04x-%04x-%04x-%012x"'''. If there is a previous unfinished fsid change, it will continue only if the '''UUID''' matches the unfinished one or if you use the option '''-u'''.
+: Change fsid to '''UUID'''. <br />The '''UUID''' should be a 36 bytes string in [http://man7.org/linux/man-pages/man3/printf.3.html printf(3)] format '''"%08x-%04x-%04x-%04x-%012x"'''. If there is a previous unfinished fsid change, it will continue only if the '''UUID''' matches the unfinished one or if you use the option '''-u'''.
 
 '''Warning:''' Cancelling or interrupting a UUID change operation will make the filesystem temporarily unmountable. To fix it, rerun '''btrfstune -u''' to restore the UUID and let it complete.
 
