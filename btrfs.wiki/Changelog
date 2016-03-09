@@ -159,6 +159,24 @@ Major features or significant feature enhancements by kernel version. For more i
 |version=4.0
 |text=Save creation time (otime) for all new files and directories. For future use, current tool cannot read it directly.
 }}
+{{FeatureMerged
+|name=balance filter updates
+|version=4.4
+|text=Enhanced syntax and new balance filters:
+* limit=min..max
+* usage=min..max
+* stripes=min..max
+}}
+{{FeatureMerged
+|name=free space tree
+|version=4.5
+|text=Improved implementation of free space cache, using b-trees.
+}}
+{{FeatureMerged
+|name=balance filter updates
+|version=4.5
+|text=Conversion to data/DUP profile possible through balance filters.
+}}
 |}
 
 = By version (btrfs-progs) =
@@ -213,7 +231,11 @@ Bugfixes:
 
 === btrfs-progs 4.4.1 (Feb 2016) ===
 
-* bugfix release
+* find-root: don't skip the first chunk
+* free-space-tree compat bits fix
+* build: target symlinks
+* documentation updates
+* test updates
 
 == btrfs-progs 4.3 (Nov 2015) ==
 

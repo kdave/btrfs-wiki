@@ -53,6 +53,9 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 == News ==
 
+'''Linux v4.4.4 (mar 2016)'''
+* bugfixes
+
 '''btrfs-progs 4.4 (Feb 2016)'''
 
 * bugfix release
