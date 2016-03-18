@@ -53,12 +53,20 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 == News ==
 
-'''Linux v4.4.4 (mar 2016)'''
+'''btrfs-progs 4.5-rc1 (Mar 2016)'''
+* [http://article.gmane.org/gmane.comp.file-systems.btrfs/54158 announcement]
+
+'''Linux v4.5 (Mar 2016)'''
+* free space cache v2: an incompat feature to track the free space cache as a b-tree
+* balance:
+** '-dconvert=dup' supported
+** continue but warn if metadata have lower redundancy than data
+* fixes:
+** trim does not overwrite bootloader area (introduced in 4.3, fixed in 4.4.x stable kernels)
+* assorted bugfixes, improvements or cleanups
+
+'''Linux v4.4.5 (Mar 2016)'''
 * bugfixes
-
-'''btrfs-progs 4.4 (Feb 2016)'''
-
-* bugfix release
 
 '''Linux v4.4.3 (Feb 2016)'''
 * bugfixes:
@@ -84,8 +92,6 @@ Hilights (see [[Changelog]] for the full change list):
 * chunk recovery: fix floating point exception
 * chunk recovery: endianity bugfix during rebuild
 * mkfs with 64K pages and nodesize reported superblock checksum mismatch
-
-'''Linux v4.4 (Jan 2016)'''
 
 '''In coreutils 8.24'''
 * ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13] ([https://lists.gnu.org/archive/html/coreutils-announce/2015-07/msg00000.html release notes])
@@ -126,6 +132,7 @@ Links to Btrfs documentation of various Linux distributions:
 
 * [[Changelog]] — history of changes in linux kernel wrt btrfs
 ** [[Changelog#By_feature | features added by release]]
+* [[Contributors#Statistics|Development statistics]] — contributors, commits, lines
 * [[Glossary]]
 * Contact information:
 ** [[Btrfs mailing list]]

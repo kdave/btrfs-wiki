@@ -555,9 +555,7 @@ Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 * audit code for use of backup superblocks and change it to read only the first unless told otherwise by a command-line option
 * write a ''mount.btrfs'' helper to scan devices on the fly (and use libblkid and libmount for that)
 * ('''claimed''') introduce subcommand ''debug'' and move there functionality from separate debugging utilities
-** ('''done''') dump-tree from btrfs-debug-tree
-** dump-super from btrfs-show-super (with functionality of btrfs-dump-super as an option)
-** tree-stats from calc-size
+** (claimed) tree-stats from calc-size
 ** map-logical (not sure if this is not for inspect-internal)
 ** dump-image from btrfs-image
 * add API for tree search ioctl

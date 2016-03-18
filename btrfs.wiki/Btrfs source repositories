@@ -37,7 +37,7 @@ The git repositories on ''kernel.org'' are not used for development or integrati
 
 == Integration branches ==
 
-'''Integration branches''' collect patches that may need public testing and are provided for conveniece to developers or users willing to test unstable version. The patches in these branches are not guaranteed to be merged. The branches are assembled from scratch and server more like a snapshots than stable bases for other development.
+'''Integration branches''' collect patches that may need public testing and are provided for conveniece to developers or users willing to test unstable version. The patches in these branches are not guaranteed to be merged. The branches are assembled from scratch and serve more like a snapshots than stable bases for other development.
 
  git://repo.or.cz/btrfs-progs-unstable/devel.git integration-''YYYYMMDD''
 
@@ -75,48 +75,7 @@ https://github.com/kdave/btrfsmaintenance/
 
 = btrfs kernel module git repository =
 
-Until October 2012, the latest features and bug fixes hit this repo before going upstream to Linus' kernel tree. Currently it is not up to date. The Linux RCs are more up to date and btrfs-next (see below) is most up to date.
-
-btrfs repository (the command downloads a complete Linux kernel tree, if you have a local instance already, add it as a git remote) ([http://git.kernel.org/?p=linux/kernel/git/mason/linux-btrfs.git;a=summary Gitweb access])
-
- git clone git://git.kernel.org/pub/scm/linux/kernel/git/mason/linux-btrfs.git
-
-== Integration repository (btrfs-next) ==
-
-Josef Bacik maintains an "integration" branch of all the kernel patches  seen on the mailing list.
- git clone git://git.kernel.org/pub/scm/linux/kernel/git/josef/btrfs-next.git 
-[http://git.kernel.org/?p=linux/kernel/git/josef/btrfs-next.git;a=summary gitweb access]
-
-This is often the code you want to test if you think you've found a bug or want to test the latest features.
-Check the git log for the fs/btrfs to check which is up-to-date - in case one
-tree has fallen behind e.g.
-
-https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/log/fs/btrfs
-
-vs.
-
-https://git.kernel.org/cgit/linux/kernel/git/josef/btrfs-next.git/log/fs/btrfs
-
-vs.
-
-https://git.kernel.org/cgit/linux/kernel/git/mason/linux-btrfs.git/log/fs/btrfs (use the drop-down at the far top-right of this window to check the different branches which Chris maintains - the latest code is normally not on 'master').
-
-"Hello,
-
-In an effort to be a little bit better about reviewing patches sent to the
-mailinglist I've created a btrfs-next git tree kernel.org.  You can get it here
-
-git://git.kernel.org/pub/scm/linux/kernel/git/josef/btrfs-next.git
-
-I'm going to be scraping the mailinglist every day for patches that are sent and
-applying them to this tree in order to get some better testing throughout the
-development cycle and possibly stop being such a lazy bum about reviewing.  If
-you are looking to get patches into the next merge window and you notice I
-haven't included them in this tree please let me know so I can pull them in, I
-did a very casual look through the list to find stuff so I probably missed
-something.  Thanks much,
-
-Josef"
+git://git.kernel.org/pub/scm/linux/kernel/git/mason/linux-btrfs.git ([http://git.kernel.org/?p=linux/kernel/git/mason/linux-btrfs.git;a=summary Gitweb access])
 
 = Patches sent to mailinglist =
 
