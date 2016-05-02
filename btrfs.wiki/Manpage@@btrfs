@@ -14,7 +14,7 @@ btrfs - control a btrfs filesystem
 
 The '''btrfs''' utility is a toolbox for managing btrfs filesystems. There are command groups to work with subvolumes, devices, for whole filesystem or other specific actions. See section '''COMMANDS'''.
 
-==COMMAND SYTNAX==
+==COMMAND SYNTAX==
 
 Any command name can be shortened as far as it stays unambiguous, however it is recommended to use full command names in scripts. All command groups have their manual page named '''btrfs-&lt;group&gt;'''.
 

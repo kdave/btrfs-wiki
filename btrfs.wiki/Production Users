@@ -7,6 +7,7 @@ The following companies use Btrfs in production:
 * [http://rockstor.com Rockstor] (BTRFS powered FOSS NAS solution)
 * Tripadvisor (mid term log storage)
 * NAS devices from [http://www.thecus.com Thecus] support Btrfs support since FW 2.05.04 ([http://www.thecus.com/Downloads/FW/64/X64_FWRN_2.05.04.pdf release notes])
+* [http://synology.com Synology] (NAS vendor) features Btrfs starting in [https://www.synology.com/en-global/dsm/Btrfs DiskStation Manager (DSM) v6.0]
 
 These companies are currently working on adding Btrfs to production products:
 * Netgear (ReadyNAS products)

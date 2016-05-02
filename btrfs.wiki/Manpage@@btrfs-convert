@@ -55,17 +55,15 @@ Note that balance operation takes a lot of time.
 ; -n|--no-inline
 : disable inlining of small files to metadata blocks, this will decrease the metadata consumption and may help to convert a filesystem with low free space
 ; -N|--nodesize &lt;SIZE&gt;
-: set filesystem nodesize, the tree block size in which btrfs stores its metadata. The default value is 16KB (16384) or the page size, whichever is bigger. Must be a multiple of the sectorsize, but not larger than 65536. Se [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] for more details.
+: set filesystem nodesize, the tree block size in which btrfs stores its metadata. The default value is 16KB (16384) or the page size, whichever is bigger. Must be a multiple of the sectorsize, but not larger than 65536. See [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] for more details.
 ; -r|--rollback
 : rollback to the original ext2/3/4 filesystem if possible
 ; -l|--label &lt;LABEL&gt;
 : set filesystem label during conversion
 ; -L|--copy-label
 : use label from the converted filesystem
-; -p|--progress
-: show progress of conversion, on by default
-; --no-progress
-: disable detailed progress and show only the main phases of conversion
+; -O|--features &lt;feature1&gt;[,&lt;feature2&gt;…]
+: A list of filesystem features turned on at btrfs-convert time. Not all features are supported by old kernels. To disable a feature, prefix it with '''^'''.To see all available features that btrfs-convert supports run:<code>btrfs-convert -O list-all</code> -p|--progress:: show progress of conversion, on by default --no-progress:: disable detailed progress and show only the main phases of conversion
 
 ==EXIT STATUS==
 

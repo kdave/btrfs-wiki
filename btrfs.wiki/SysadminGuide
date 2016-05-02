@@ -115,7 +115,7 @@ Subvolumes are located anywhere in the file hierarchy, typically at their desire
 
 This has several implications (advantages and disadvantages):
 * Management of snapshots (especially rolling them) may be considered more difficult as the effective layout isn't directly visible.
-* Subvolumes need to be mounted manually (e.g. via fstab) to their desired locations, they "appear automatically" at their respective locations.
+* Subvolumes don't need to be mounted manually (or via fstab) to their desired locations, they "appear automatically" at their respective locations.
 * For each of these subvolumes the mount options of their mountpoint applies.
 * Everything is visible. Of course one could only mount a subvolume, but then important parts of the filesystem (in this example much of the system's "main" filesystem) would be missing as well. This may have disadvantages for security, especially when being used with snapshots, see below.
 
@@ -132,7 +132,6 @@ This makes changing the structure (for example to something more flat) more diff
 3) Mixed
 Of course the above two basic schemas can be mixed at personal convenience, e.g. the base structure may follow a flat layout, with certain parts of the filesystem, being placed in nested subvolumes.
 But care must be taken when snapshots should be made (nested subvolumes are not part of a snapshot, and as of now, there are no recursive snapshots) as well when those are rotated, where the nested subvolumes would then need to be manually moved (either the "current" versions or a snaptshot thereof).
-
 
 == When To Make Subvolumes ==
 This is a not exhaustive list of typical guidelines where/when to make subvolumes, rather than keeping things in the same subvolume.

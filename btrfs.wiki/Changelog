@@ -183,6 +183,49 @@ Major features or significant feature enhancements by kernel version. For more i
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
 
+== btrfs-progs 4.5 (Mar 2016) ==
+
+* new/moved commands
+** btrfs-show-super -> btrfs inspect-internal dump-super
+** btrfs-debug-tree -> btrfs inspect-internal dump-tree
+* new commands
+** btrfs fi du - calculate disk usage, including shared extents
+* enhancements
+** device delete - delete by id (needs kernel support, not merged to 4.6)
+** check - new option to specify chunk root
+** debug-tree/dump-tree - option -t understands human readable name of the tree (along numerical ids)
+** btrfs-debugfs - can dump block group information
+* bugfixes
+** all commands should accept the option separator "--"
+** several fixes in device scan
+** restore works on filesystems with sectorsize > 4k
+** debug-tree/dump-tree - print compression type as string
+** subvol sync: fix crash, memory corruption
+** argument parsing fixes: subvol get-default, qgroup create/destroy/assign, inspect subvolid-resolve
+** check for block device or regular file in several commands
+* other
+** documentation updates
+** manual pages for the moved tools now point to btrfs-filesystem
+** testsuite updates
+
+=== btrfs-progs 4.5.1 (Mar 2016) ===
+* mkfs: allow DUP on multi-device filesystems
+* bugfixes: build fixes, assorted other fixes
+
+=== btrfs-progs 4.5.2 (May 2016) ===
+* new/moved command: btrfs-calc-stats -> btrfs inspect tree-stats
+* check: fix false alert for metadata blocks crossing stripe boundary
+* check: catch when qgroup numbers mismatch
+* check: detect running quota rescan and report mismatches
+* balance start: add safety delay before doing a full balance
+* fi sync: is now silent
+* fi show: don't miss filesystems with partially matching uuids
+* dev ready: accept only one argument for device
+* dev stats: print "devid:N" for a missing device instead of "(null)"
+* other:
+** lowest supported version of e2fsprogs is 1.41
+** minor cleanups, test updates
+
 == btrfs-progs 4.4 (Jan 2016) ==
 
 User visible changes:

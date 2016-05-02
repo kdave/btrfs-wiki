@@ -53,8 +53,19 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 == News ==
 
-'''btrfs-progs 4.5-rc1 (Mar 2016)'''
-* [http://article.gmane.org/gmane.comp.file-systems.btrfs/54158 announcement]
+'''btrfs-progs 4.5.2 (Mar 2016)'''
+* new/moved command: btrfs-calc-stats -> btrfs inspect tree-stats
+* check: fix false alert for metadata blocks crossing stripe boundary
+* check: catch when qgroup numbers mismatch
+* check: detect running quota rescan and report mismatches
+* balance start: add safety delay before doing a full balance
+* fi sync: is now silent
+* fi show: don't miss filesystems with partially matching uuids
+* dev ready: accept only one argument for device
+* dev stats: print "devid:N" for a missing device instead of "(null)"
+* other:
+** lowest supported version of e2fsprogs is 1.41
+** minor cleanups, test updates
 
 '''Linux v4.5 (Mar 2016)'''
 * free space cache v2: an incompat feature to track the free space cache as a b-tree
@@ -64,34 +75,6 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 * fixes:
 ** trim does not overwrite bootloader area (introduced in 4.3, fixed in 4.4.x stable kernels)
 * assorted bugfixes, improvements or cleanups
-
-'''Linux v4.4.5 (Mar 2016)'''
-* bugfixes
-
-'''Linux v4.4.3 (Feb 2016)'''
-* bugfixes:
-** direct io requests report errors to userspace
-** fitrim does not affect bootloader area
-** dedup ioctl fixes
-
-'''btrfs-progs 4.4 (Jan 2016)'''
-
-Hilights (see [[Changelog]] for the full change list):
-* mkfs.btrfs --data dup (see also manual page)
-* support balance filters added/enhanced in linux 4.4
-** usage=min..max	-- enhanced to take range
-** stripes=min..max	-- new, filter by stripes for raid0/10/5/6
-** limit=min..max	-- enhanced to take range
-* manual pages enhanced (btrfs, mkfs, mount, filesystem, balance)
-* 'btrfs filesystem usage' works with mixed blockgroups
-* build: installation to /usr/local
-* build: the 'ar' tool is properly deteced during cross-compilation
-* improved stability on fuzzed/crafted images when reading sys array in superblock
-* debug-tree: option -t understands ids for tree root and chnuk tree
-* check: properly reset nlink of multi-linked file
-* chunk recovery: fix floating point exception
-* chunk recovery: endianity bugfix during rebuild
-* mkfs with 64K pages and nodesize reported superblock checksum mismatch
 
 '''In coreutils 8.24'''
 * ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13] ([https://lists.gnu.org/archive/html/coreutils-announce/2015-07/msg00000.html release notes])
@@ -150,7 +133,7 @@ Links to Btrfs documentation of various Linux distributions:
 ** [[Manpage/btrfs-check|btrfs check]] — repairing file systems
 ** [[Manpage/btrfs-convert|btrfs-convert]] — tool to convert in-place from ext2/3/4 filesystems to btrfs. For a greater detail of how the algorithm works, please see the [[Conversion from Ext3]] page.
 
-* Original wiki documenation (obsolete, will be removed)
+* Original wiki documentation (obsolete, will be removed)
 ** [[Restore|restore and find-root]] — utilities to find and restore data from an unmountable filesystem
 
 === Developer documentation ===
@@ -168,6 +151,9 @@ Links to Btrfs documentation of various Linux distributions:
 * [[Debugging Btrfs with GDB]]
 * [[Writing patch for btrfs]]
 * [[Btree_Items]] - Mapping from Btrfs key to item-data
+
+* Original COW B-tree: Source code in C that implements the COW B-tree algorithms [https://github.com/orodeh/bt repository]. Written by Ohad Rodeh at IBM Research in 2006, and released under a BSD license. This is a reference implementation, that works in user space.
+
 ==== Source code download ====
 
 * [[Btrfs source repositories]]
@@ -183,7 +169,7 @@ Links to Btrfs documentation of various Linux distributions:
 * '''Article:''' [http://lwn.net/Articles/577218/ Btrfs: Getting started] (LWN.net, 2013/12)
 * '''Article:''' [http://www.zdnet.com/btrfs-hands-on-an-extremely-cool-file-system-7000023734 Btrfs hands on: An extremely cool file system] (ZDNet, 2013/11)
 * '''Technical report:''' [http://domino.watson.ibm.com/library/cyberdig.nsf/1e4115aea78b6e7c85256b360066f0d4/9e29fdded06e5de785257c1d005e7e9e!OpenDocument Visualizating Block IO Workloads]. Section six shows a visual comparison of the IO patterns for BTRFS, XFS, and EXT4. Submitted to ACM Transactions on Storage, November 2013.
-* '''Paper:''' [http://dl.acm.org/citation.cfm?id=2501623 BTRFS: The Linux B-Tree Filesystem] describing the overall concepts and architecture, appeared in ACM Transactions on Storage, August 2013. Includes a detailed comparison with ZFS. There is a free ACM authorized link, from O. Rodeh's [https://sites.google.com/site/ohadrodehshomepage/research] page. Otherwise, you need a subscription for the ACM library.
+* '''Paper:''' [http://dl.acm.org/citation.cfm?id=2501623 BTRFS: The Linux B-Tree Filesystem] describing the overall concepts and architecture, appeared in ACM Transactions on Storage, August 2013. Includes a detailed comparison with ZFS. There is a free ACM authorized link, from O. Rodeh's [https://sites.google.com/site/ohadrodehshomepage/research] page. Otherwise, try [http://domino.research.ibm.com/library/cyberdig.nsf/papers/6E1C5B6A1B6EDD9885257A38006B6130/$File/rj10501.pdf IBM Research link]
 * '''Article:''' [http://www.howtoforge.com/a-beginners-guide-to-btrfs A Beginner's Guide To Btrfs] (2012-11-26)
 * '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/advanced-btrfs-1734952.html How I Use the Advanced Capabilities of Btrfs] by Margaret Bierman with Lenz Grimmer (2012-08-11)
 * '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/gettingstarted-btrfs-1695246.html How I Got Started with the Btrfs File System for Oracle Linux] by Margaret Bierman with Lenz Grimmer (2012-07-11)
@@ -194,15 +180,10 @@ Links to Btrfs documentation of various Linux distributions:
 * '''Article:''' [http://lwn.net/Articles/465160/ A btrfs update at LinuxCon Europe] on lwn.net (2011-11-02)
 * '''Podcast:''' [http://feedproxy.google.com/~r/OracleLinux/~3/kRqpaCdTlLg/10491325_Btrfs_071311.mp3 Podcast with Chris Mason: Btrfs overview and status update] (2011-07-13)
 
+<!--
 == Benchmarking ==
+-->
 
-* '''2012-10''' [http://www.ilsistemista.net/index.php/linux-a-unix/36-btrfs-mount-options-and-virtual-machines-an-in-depth-look.html BTRFS, mount options and virtual machines: an in-depth look] (Ilsistemista.net)
-* '''2012-06''' [http://www.ilsistemista.net/index.php/linux-a-unix/34-btrfs-ext3-ext4-xfs-and-kvm-virtual-machine-a-host-side-filesystem-comparison.html BTRFS EXT3 EXT4 XFS and KVM virtual machine: a host-side filesystem comparison] (Ilsistemista.net)
-* '''2012-06''' [http://www.ilsistemista.net/index.php/linux-a-unix/33-btrfs-vs-ext3-vs-ext4-vs-xfs-performance-on-fedora-17.html BTRFS vs EXT3 vs EXT4 vs XFS performance on Fedora 17] (Ilsistemista.net)
-* '''2012-05''' [http://www.phoronix.com/scan.php?page=article&item=linux_34_fs&num=1 XFS, Btrfs, EXT4 Battle It Out On Linux 3.4] (Phoronix.com)
-* '''2012-05''' [http://cd34.com/blog/scalability/ext4-xfs-and-btrfs-benchmark-redux/ Ext4, XFS and Btrfs benchmark redux]
-* '''2012-03''' [http://www.phoronix.com/scan.php?page=article&item=linux_btrfs_options&num=1 Testing Out The Btrfs Mount Options On Linux 3.2] (Phoronix.com)
-* '''2012-03''' [http://www.phoronix.com/scan.php?page=article&item=ubuntu_1204_fs&num=1 Ubuntu 12.04 LTS - Benchmarking All The Linux File-Systems] (Phoronix.com)
 
 == Historical resources ==
 
@@ -216,6 +197,13 @@ Links to old or obsolete documentation, articles. Kept for historical reasons. S
 * '''Article:''' [http://lwn.net/Articles/342892/ Valerie Aurora: A short history of btrfs] (2009-07-22)
 
 === Benchmarks ===
+* '''2012-10''' [http://www.ilsistemista.net/index.php/linux-a-unix/36-btrfs-mount-options-and-virtual-machines-an-in-depth-look.html BTRFS, mount options and virtual machines: an in-depth look] (Ilsistemista.net)
+* '''2012-06''' [http://www.ilsistemista.net/index.php/linux-a-unix/34-btrfs-ext3-ext4-xfs-and-kvm-virtual-machine-a-host-side-filesystem-comparison.html BTRFS EXT3 EXT4 XFS and KVM virtual machine: a host-side filesystem comparison] (Ilsistemista.net)
+* '''2012-06''' [http://www.ilsistemista.net/index.php/linux-a-unix/33-btrfs-vs-ext3-vs-ext4-vs-xfs-performance-on-fedora-17.html BTRFS vs EXT3 vs EXT4 vs XFS performance on Fedora 17] (Ilsistemista.net)
+* '''2012-05''' [http://www.phoronix.com/scan.php?page=article&item=linux_34_fs&num=1 XFS, Btrfs, EXT4 Battle It Out On Linux 3.4] (Phoronix.com)
+* '''2012-05''' [http://cd34.com/blog/scalability/ext4-xfs-and-btrfs-benchmark-redux/ Ext4, XFS and Btrfs benchmark redux]
+* '''2012-03''' [http://www.phoronix.com/scan.php?page=article&item=linux_btrfs_options&num=1 Testing Out The Btrfs Mount Options On Linux 3.2] (Phoronix.com)
+* '''2012-03''' [http://www.phoronix.com/scan.php?page=article&item=ubuntu_1204_fs&num=1 Ubuntu 12.04 LTS - Benchmarking All The Linux File-Systems] (Phoronix.com)
 * '''2011-12''' [http://btrfs.boxacle.net Btrfs Performance Analysis]
 * '''2011-11''' [http://www.phoronix.com/vr.php?view=16773 Testing The "Pretty Beefy" Btrfs Changes In Linux 3.2] (Phoronix.com)
 * '''2011-10''' [http://www.ilsistemista.net/index.php/linux-a-unix/21-ext3-ext4-xfs-and-btrfs-filesystems-comparison-on-linux-kernel-300.html EXT3 vs EXT4 vs XFS vs BTRFS - filesystems comparison on Linux kernel 3.0.0] (Ilsistemista.net)
@@ -231,6 +219,3 @@ Links to old or obsolete documentation, articles. Kept for historical reasons. S
 * '''2009-04''' [http://www.phoronix.com/scan.php?page=article&item=btrfs_benchmarks&num=1 Phoronix Performance Test on Fedora 11 Preview] (Phoronix.com) The phoronix workload is mostly CPU based, but they do have a few filesystem benchmarks. Btrfs performs well, but you can see the checksumming and metadata duplication show up on their single disk streaming write workload. dbench in general measures lots of different caching effects, and is not a great measure of everyday performance.
 * '''2008-10''' [http://btrfs.boxacle.net Btrfs performance analysis by Steven Pratt and IBM] The benchmarks from IBM demonstrate some bottlenecks we have in the extent recording on large workloads. We're working on fixes for these.
 * '''2008-04''' [[Multi-device Benchmarks]]
-
-=== Original COW B-tree ===
-* Source code in C that implements the COW B-tree algorithms [https://github.com/orodeh/bt repository]. Written by Ohad Rodeh at IBM Research in 2006, and released under a BSD license. This is a reference implementation, that works in user space.

@@ -22,11 +22,6 @@ Note, that some of the ideas may not be up-to-date with current state of btrfs i
 |text=Devices should be taken offline after they reach a given threshold of IO errors. Jeff Mahoney works on handling EIO errors (among others), this project can build on top of it.
 }}
 
-=== Hot spare support ===
-{{project
-|text=It should be possible to add a drive and flag it as a hot spare.
-}}
-
 === "Enhanced" (ala RAID 5E / RAID5EE / RAID6E) support ===
 {{project
 |text=Support a Hot Spare device that is ''active'' within the fs but which does not contribute toward capacity. This would result in better performance and less rebalance/rebuild time in the event of a disk failure.
@@ -643,6 +638,15 @@ This is a short collection of possible cleanups, that would make the code easier
 
 '''Please note''' that '''pure whitespace and style reformatting changes''' are '''not''' really necessary at this phase of development. They get fixed along regular changes. Possibly once upon in a while a patch that fixes many if not all whitespace errors could work, but otherwise it's considered a noise.
 
+=== Trivial changes ===
+
+Trivial changes that are obviously correct are also accepted, see SubmittingPatches, end of section 5 for more specific information about the whole ''trivial patch'' workflow. It's recommended to CC linux-btrfs mailinglist even for the trivial patches that have visible impact.
+
+Examples:
+
+* typos in comments: spelling fixes, typos in variable names referenced in comments
+* typos in error messages, or other wording changes that make things more readable and understandable
+
 === Pass fs_info instead of root ===
 
 {{project
@@ -825,6 +829,15 @@ Related to that, all the bootloaders that support btrfs should support the enhan
 |patch=[http://www.spinics.net/lists/linux-fsdevel/msg69925.html Atomic IO]
 |text=The Btrfs implementation of data=ordered only updates metadata to point to new data blocks when the data IO is finished. This makes it easy for us to implement atomic writes of an arbitrary size. Some hardware is coming out that can support this down in the block layer as well.
 }}
+
+=== Hot spare support ===
+{{project
+|who=Anand Jain
+|patch=[http://thread.gmane.org/gmane.comp.file-systems.btrfs/49985 Global hotspare]
+|text=It should be possible to add a drive and flag it as a hot spare.
+}}
+
+
 
 == Cleanup projects ==
 
