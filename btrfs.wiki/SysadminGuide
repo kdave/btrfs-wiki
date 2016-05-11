@@ -244,8 +244,6 @@ With multi-device setups, [https://github.com/gebi/keyctl_keyscript decrypt_keyc
 
 The following page shows benchmarks of btrfs vs ext4 on top of dmcrypt or with ecryptfs: http://www.mayrhofer.eu.org/ssd-linux-benchmark . The summary is that btrfs with lzo compression enabled on top top of dmcrypt is either slightly faster or slightly slower than ext4 and encryption only creates a slowdown in the 5% range on an SSD (likely even less on a spinning drive).
 
- # mkfs.ext4 /dev/sda3
- # /home/ubuntu/wiper.sh --commit /dev/sda3
  # cryptsetup -c aes-xts-plain -s 256 luksFormat /dev/sda3
  # cryptsetup luksOpen /dev/sda3 luksroot
  # mkfs.btrfs /dev/mapper/luksroot

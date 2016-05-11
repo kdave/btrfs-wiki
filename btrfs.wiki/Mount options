@@ -110,6 +110,16 @@ This option may slow down your system at first run, or after mounting without th
 |desc=Do not checksum data for newly created files. Means bit flips and bit rot might go undetected, but allows for slightly faster operation since data checksum does not have to be calculated. On most modern CPUs this option does not result in any reasonable performance improvement.
 }}
 {{MountOption
+|name=nologreplay
+|appeared=4.6-rc1
+|desc=Disable the log tree replay at mount time to prevent filesystem from getting modified.	Must be used with 'ro' mount option. A filesystem mounted with this option cannot transition to a read-write mount via remount,rw - the filesystem must be unmounted and mounted back again if read-write access is desired.
+}}
+{{MountOption
+|name=norecovery
+|appeared=4.6-rc1
+|desc=Alias for nologreplay, to keep "norecovery" behavior the same with other filesystems.
+}}
+{{MountOption
 |name=nospace_cache
 |appeared=3.2
 |desc=Disable free space caching. This may slow down new writes.
@@ -121,7 +131,7 @@ This option may slow down your system at first run, or after mounting without th
 {{MountOption
 |name=recovery
 |appeared=3.2
-|desc=Enable autorecovery upon mount; currently it scans list of several previous tree roots and tries to use the first readable. The information about the tree root backups is stored by kernels starting with 3.2, older kernels do not and thus no recovery can be done.
+|desc=''(Deprecated in 4.6-rc1)'' Enable autorecovery upon mount; currently it scans list of several previous tree roots and tries to use the first readable. The information about the tree root backups is stored by kernels starting with 3.2, older kernels do not and thus no recovery can be done. Replaced by ''usebackuproot'' in 4.6-rc1, but still works.
 }}
 {{MountOption
 |name=rescan_uuid_tree
@@ -165,6 +175,11 @@ Note: until kernels 3.2 the subvolume had to be in the toplevel subvolume. There
 |desc=The number of worker threads to allocate.
 }}
 {{MountOption
+|name=usebackuproot
+|appeared=4.6-rc1
+|desc=Enable attempts to use backup tree roots if a bad tree root is found at mount time. Currently this scans a list of 4 previous tree roots and tries to use the first readable. And since the mount option doesn't affect any behavior after mount, it won't be shown in mount info. Prior to 4.6, this was done by 'recovery' option that has been deprecated, but will work.
+}}
+{{MountOption
 |name=user_subvol_rm_allowed
 |appeared=3.0
 |desc=Subvolumes may be deleted by a non-root user. Use with caution. 
@@ -193,7 +208,8 @@ Options grouped by subsystem or area they affect, one option may appear in more 
 
 === Recovery ===
 
-* recovery
+* recovery/usebackuproot
+* nologreplay/norecovery
 * skip_balance
 * degraded
 
