@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+#
+# look for standalone +, put marker at the end of the previous line
+
+my $prev = undef;
+
+while (<>) {
+	if (/^\+$/) {
+		# blockdef or underline or verbatim or ...
+		if ($prev !~ /^[\.-]+$/) {
+			#print "DBG: $prev has linez and adding marker!!!!\n";
+			print "${prev} MARKERNEWLINE\n";
+		} else {
+			print "$prev\n";
+		}
+	} else {
+		print "$prev\n";
+	}
+	$prev=$_;
+	chomp $prev;
+}
+
+print "$prev\n";

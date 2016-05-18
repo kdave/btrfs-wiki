@@ -2,3 +2,7 @@ btrfs.wiki-*
 /wikitools
 *.pyc
 *.cookies
+/git2wiki/*.asciidoc
+/git2wiki/*.asciidoc-tmp
+/git2wiki/*.html
+/git2wiki/*.mw

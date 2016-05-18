@@ -9,12 +9,26 @@
 # mediawiki output
 
 while (<>) {
+	if(0) {
+	s/^\+$/+\n++\n+/;
+	print;
+	next;
+	}
+
+	if(0) {
+	s,^\+$,//////////////////////////\nMARKERNEWLINE\n//////////////////////////\n+,;
+	print;
+	next;
+	}
+
+	if(0) {
 	s/^\+$/MARKERNEWLINE\n+/;
 	print;
 	next;
+	}
 
 	if (0) {
-	s/^\+$/ +/;
+	s/^\+$/+/;
 	print;
 	next;
 	}
@@ -25,5 +39,7 @@ while (<>) {
 		next;
 	}
 	print "\n$_";
-}
+	}
+
+	print;
 }

@@ -15,8 +15,11 @@ sub man2url($$) {
 
 while (<>) {
 	# artificial newlines
-	if (/MARKERNEWLINE/) {
-		s/MARKERNEWLINE/<br \/>/g;
+	if (/ MARKERNEWLINE/) {
+		s/ MARKERNEWLINE/<br \/>/g;
+	}
+	if (/\+\+/) {
+		s/\+\+/<br \/>/g;
 	}
 	# : in defintion breaks line
 	if (/^;+\s.*:/) {

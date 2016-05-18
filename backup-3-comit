@@ -26,4 +26,4 @@ fi
 ts=${foundname#${name}-}
 echo Timestamp $ts
 
-EDITOR=/bin/true git commit -save -m"Update $ts"
+EDITOR=/bin/true git commit -sv -m"Update $ts"

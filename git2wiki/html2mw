@@ -1,7 +1,19 @@
 #!/usr/bin/perl
 
+use Data::Dumper;
 use HTML::WikiConverter;
-my $wc = new HTML::WikiConverter( dialect => 'MediaWiki' );
+use HTML::TreeBuilder;
+
+my $wc = new HTML::WikiConverter( dialect => 'MediaWiki', p_strict => 0 );
 my @c=<STDIN>;
 my $html=join('',@c);
+
+if(1){
 print $wc->html2wiki( $html );
+
+}else{
+print STDERR "RFT " . Dumper($wc->rules_for_tag('p')) . "\n";
+my $raw=HTML::TreeBuilder->new_from_content($html);
+printf $raw->dump;
+$raw->delete;
+}
