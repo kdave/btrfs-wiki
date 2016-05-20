@@ -1,46 +1,76 @@
-=btrfs-quota(8) Manual Page=
+=btrfs-quota(8) manual page=
 {{GeneratedManpage
 |name=btrfs-quota}}
 
 ==NAME==
-
 btrfs-quota - control the quota of a btrfs filesystem
 
 ==SYNOPSIS==
 
-'''btrfs quota''' &lt;subcommand&gt; &lt;args&gt;
-
+<p><b>btrfs quota</b> <em>&lt;subcommand&gt;</em> <em>&lt;args&gt;</em></p>
 ==DESCRIPTION==
 
-'''btrfs quota''' is used to enable/disable or rescan subvolume quota of a btrfs filesystem.
-
-For setting quota or other quota operations on a btrfs filesystem, please see [[Manpage/btrfs-qgroup|btrfs-qgroup(8)]] for details.
-
-'''Warning:''' Quota and qgroup in btrfs filesystem is not stable and impacts performance in mainline kernel yet(v3.14 so far).
-
+<p><b>btrfs quota</b> is used to enable/disable or rescan subvolume quota of a btrfs
+filesystem.</p>
+<p>For setting quota or other quota operations on a btrfs filesystem, please see
+[[Manpage/btrfs-qgroup|btrfs-qgroup(8)]] for details.</p>
+<blockquote><b>Warning:</b>
+Quota and qgroup in btrfs filesystem is not stable and impacts
+performance in mainline kernel yet(v3.14 so far).</blockquote>
 ==SUBCOMMAND==
 
-; '''disable''' &lt;path&gt;
-: Disable subvolume quota support for a filesystem.
-; '''enable''' &lt;path&gt;
-: Enable subvolume quota support for a filesystem.
-; '''rescan''' [-s] &lt;path&gt;
-: Trash all qgroup numbers and scan the metadata again with the current config. <br /><code>Options</code> <br />
-:; -s
-:: show status of a running rescan operation.
-:; -w
-:: wait for rescan operation to finish(can be already in progress).
+<dl>
+<dt>
+<b>disable</b> <em>&lt;path&gt;</em>
+<dd>
+<p>
+Disable subvolume quota support for a filesystem.
+</p>
 
+<dt>
+<b>enable</b> <em>&lt;path&gt;</em>
+<dd>
+<p>
+Enable subvolume quota support for a filesystem.
+</p>
+
+<dt>
+<b>rescan</b> [-s] <em>&lt;path&gt;</em>
+<dd>
+<p>
+Trash all qgroup numbers and scan the metadata again with the current config.
+</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-s
+<dd>
+<p>
+show status of a running rescan operation.
+</p>
+
+<dt>
+-w
+<dd>
+<p>
+wait for rescan operation to finish(can be already in progress).
+</p>
+
+</dl>
+
+</dl>
 ==EXIT STATUS==
 
-'''btrfs quota''' returns a zero exit status if it succeeds. Non zero is returned in case of failure.
-
+<p><b>btrfs quota</b> returns a zero exit status if it succeeds. Non zero is
+returned in case of failure.</p>
 ==AVAILABILITY==
 
-'''btrfs''' is part of btrfs-progs. Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for further details.
-
+<p><b>btrfs</b> is part of btrfs-progs.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.</p>
 ==SEE ALSO==
 
-[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-subvolume|btrfs-subvolume(8)]], [[Manpage/btrfs-qgroup|btrfs-qgroup(8)]]
-
+<p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
+[[Manpage/btrfs-subvolume|btrfs-subvolume(8)]],
+[[Manpage/btrfs-qgroup|btrfs-qgroup(8)]]</p>
 [[Category:Manpage]]

@@ -1,125 +1,298 @@
-=btrfs-balance(8) Manual Page=
+=btrfs-balance(8) manual page=
 {{GeneratedManpage
 |name=btrfs-balance}}
 
 ==NAME==
-
 btrfs-balance - balance block groups on a btrfs filesystem
 
 ==SYNOPSIS==
 
-'''btrfs balance''' &lt;subcommand&gt; &lt;args&gt;
-
+<p><b>btrfs balance</b> <em>&lt;subcommand&gt;</em> <em>&lt;args&gt;</em></p>
 ==DESCRIPTION==
 
-The primary purpose of the balance feature is to spread block groups accross all devices so they match constraints defined by the respective profiles. See [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] section '''PROFILES''' for more details. The scope of the balancing process can be further tuned by use of filters that can select the block groups to process. Balance works only on a mounted filesystem.
-
-The balance operation is cancellable by the user. The on-disk state of the filesystem is always consistent so an unexpected interruption (eg. system crash, reboot) does not corrupt the filesystem. The progress of the balance operation is temporarily stored and will be resumed upon mount, unless the mount option '''skip_balance''' is specified.
-
-'''Warning:''' running balance without filters will take a lot of time as it basically rewrites the entire filesystem and needs to update all block pointers.
-
-The filters can be used to perform following actions:
-
-* convert block group profiles (filter '''convert''')
-* make block group usage more compact (filter '''usage''')
-* perform actions only on a given device (filters '''devid''', '''drange''')
-
-The filters can be applied to a combination of block group types (data, metadata, system). Note that changing '''system''' needs the force option.
-
-'''Note:''' the balance operation needs enough work space, ie. space that is completely unused in the filesystem, otherwise this may lead to ENOSPC reports. See the section '''ENOSPC''' for more details.
-
+<p>The primary purpose of the balance feature is to spread block groups across
+all devices so they match constraints defined by the respective profiles. See
+[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] section <em>PROFILES</em> for more details.
+The scope of the balancing process can be further tuned by use of filters that
+can select the block groups to process. Balance works only on a mounted
+filesystem.</p>
+<p>The balance operation is cancellable by the user. The on-disk state of the
+filesystem is always consistent so an unexpected interruption (eg. system crash,
+reboot) does not corrupt the filesystem. The progress of the balance operation
+is temporarily stored and will be resumed upon mount, unless the mount option
+<em>skip_balance</em> is specified.</p>
+<blockquote><b>Warning:</b>
+running balance without filters will take a lot of time as it basically
+rewrites the entire filesystem and needs to update all block pointers.</blockquote>
+<p>The filters can be used to perform following actions:</p>
+<ul>
+<li>
+<p>
+convert block group profiles (filter <em>convert</em>)
+</p>
+</li>
+<li>
+<p>
+make block group usage more compact  (filter <em>usage</em>)
+</p>
+</li>
+<li>
+<p>
+perform actions only on a given device (filters <em>devid</em>, <em>drange</em>)
+</p>
+</li>
+</ul>
+<p>The filters can be applied to a combination of block group types (data,
+metadata, system). Note that changing <em>system</em> needs the force option.</p>
+<blockquote><b>Note:</b>
+the balance operation needs enough work space, ie. space that is
+completely unused in the filesystem, otherwise this may lead to ENOSPC reports.
+See the section <em>ENOSPC</em> for more details.</blockquote>
 ==COMPATIBILITY==
 
-'''Note:''' The balance subcommand also exists under the '''btrfs filesystem''' namespace. This still works for backward compatibility but is deprecated and should not be used anymore.
-
-'''Note:''' A short syntax '''btrfs balance &lt;path&gt;''' works due to backward compatibility but is deprecated and should not be used anymore. Use '''btrfs balance start''' command instead.
-
+<blockquote><b>Note:</b>
+The balance subcommand also exists under the <b>btrfs filesystem</b>
+namespace. This still works for backward compatibility but is deprecated and
+should not be used anymore.</blockquote>
+<blockquote><b>Note:</b>
+A short syntax <b>btrfs balance <em>&lt;path&gt;</em></b> works due to backward compatibility
+but is deprecated and should not be used anymore. Use <b>btrfs balance start</b>
+command instead.</blockquote>
 ==SUBCOMMAND==
 
-; '''cancel''' &lt;path&gt;
-: cancel running or paused balance
-; '''pause''' &lt;path&gt;
-: pause running balance operation, this will store the state of the balance progress and used filters to the filesystem
-; '''resume''' &lt;path&gt;
-: resume interrupted balance
-; '''start''' [options] &lt;path&gt;
-: start the balance operation according to the specified filters, no filters will rewrite the entire filesystem. The process runs in the foreground. <br /><code>Options</code> <br />
-:; -d[&lt;filters&gt;]
-:: act on data block groups, see <code>FILTERS</code> section for details about '''filters'''
-:; -m[&lt;filters&gt;]
-:: act on metadata chunks, see <code>FILTERS</code> section for details about '''filters'''
-:; -s[&lt;filters&gt;]
-:: act on system chunks (requires '''-f'''), see <code>FILTERS</code> section for details about '''filters'''.
-:; -v
-:: be verbose and print balance filter arguments
-:; -f
-:: force reducing of metadata integrity, eg. when going from '''raid1''' to '''single'''
-; '''status''' [-v] &lt;path&gt;
-: Show status of running or paused balance. <br />If '''-v''' option is given, output will be verbose.
+<dl>
+<dt>
+<b>cancel</b> <em>&lt;path&gt;</em>
+<dd>
+<p>
+cancel running or paused balance
+</p>
 
+<dt>
+<b>pause</b> <em>&lt;path&gt;</em>
+<dd>
+<p>
+pause running balance operation, this will store the state of the balance
+progress and used filters to the filesystem
+</p>
+
+<dt>
+<b>resume</b> <em>&lt;path&gt;</em>
+<dd>
+<p>
+resume interrupted balance
+</p>
+
+<dt>
+<b>start</b> [options] <em>&lt;path&gt;</em>
+<dd>
+<p>
+start the balance operation according to the specified filters, no filters
+will rewrite the entire filesystem. The process runs in the foreground.
+</p>
+<blockquote><b>Note:</b>
+the balance command without filters will basically rewrite everything
+in the filesystem. The run time is potentially very long, depending on the
+filesystem size. To prevent starting a full balance by accident, the user is
+warned and has a few seconds to cancel the operation before it starts. The
+warning and delay can be skipped with <em>--full-balance</em> option.</blockquote>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-d[<em>&lt;filters&gt;</em>]
+<dd>
+<p>
+act on data block groups, see <tt>FILTERS</tt> section for details about <em>filters</em>
+</p>
+
+<dt>
+-m[<em>&lt;filters&gt;</em>]
+<dd>
+<p>
+act on metadata chunks, see <tt>FILTERS</tt> section for details about <em>filters</em>
+</p>
+
+<dt>
+-s[<em>&lt;filters&gt;</em>]
+<dd>
+<p>
+act on system chunks (requires <em>-f</em>), see <tt>FILTERS</tt> section for details about <em>filters</em>.
+</p>
+
+<dt>
+-v
+<dd>
+<p>
+be verbose and print balance filter arguments
+</p>
+
+<dt>
+-f
+<dd>
+<p>
+force reducing of metadata integrity, eg. when going from <em>raid1</em> to <em>single</em>
+</p>
+
+</dl>
+
+<dt>
+<b>status</b> [-v] <em>&lt;path&gt;</em>
+<dd>
+<p>
+Show status of running or paused balance.
+</p>
+<p>If <em>-v</em> option is given, output will be verbose.</p>
+
+</dl>
 ==FILTERS==
 
-From kernel 3.3 onwards, btrfs balance can limit its action to a subset of the full filesystem, and can be used to change the replication configuration (e.g. moving data from single to RAID1). This functionality is accessed through the '''-d''', '''-m''' or '''-s''' options to btrfs balance start, which filter on data, metadata and system blocks respectively.
+<p>From kernel 3.3 onwards, btrfs balance can limit its action to a subset of the
+full filesystem, and can be used to change the replication configuration (e.g.
+moving data from single to RAID1). This functionality is accessed through the
+<em>-d</em>, <em>-m</em> or <em>-s</em> options to btrfs balance start, which filter on data,
+metadata and system blocks respectively.</p>
+<p>A filter has the following structure: <em>type</em>[=<em>params</em>][,<em>type</em>=&#8230;]</p>
+<p>The available types are:</p>
+<dl>
+<dt>
+<b>profiles=<em>&lt;profiles&gt;</em></b>
+<dd>
+<p>
+Balances only block groups with the given profiles. Parameters
+are a list of profile names separated by "<em>|</em>" (pipe).
+</p>
 
-A filter has the following stucture: '''type'''[='''params'''][,'''type'''=…]
+<dt>
+<b>usage=<em>&lt;percent&gt;</em></b>
+<dt>
+<b>usage=<em>&lt;range&gt;</em></b>
+<dd>
+<p>
+Balances only block groups with usage under the given percentage. The
+value of 0 is allowed and will clean up completely unused block groups, this
+should not require any new work space allocated. You may want to use <em>usage=0</em>
+in case balance is returning ENOSPC and your filesystem is not too full.
+</p>
+<p>The argument may be a single value or a range. The single value <em>N</em> means <em>at
+most N percent used</em>, equivalent to <em>..N</em> range syntax. Kernels prior to 4.4
+accept only the single value format.
+The minimum range boundary is inclusive, maximum is exclusive.</p>
 
-The available types are:
+<dt>
+<b>devid=<em>&lt;id&gt;</em></b>
+<dd>
+<p>
+Balances only block groups which have at least one chunk on the given
+device. To list devices with ids use <b>btrfs fi show</b>.
+</p>
 
-; '''profiles=&lt;profiles&gt;'''
-: Balances only block groups with the given profiles. Parameters are a list of profile names separated by "'''|'''" (pipe).
-; '''usage=&lt;percent&gt;'''
-; '''usage=&lt;range&gt;'''
-: Balances only block groups with usage under the given percentage. The value of 0 is allowed and will clean up completely unused block groups, this should not require any new work space allocated. You may want to use '''usage=0''' in case balance is returnin ENOSPC and your filesystem is not too full. <br />The argument may be a single value or a range. The single value '''N''' means '''at most N percent used''', equivalent to '''..N''' range syntax. Kernels prior to 4.4 accept only the single value format. The minimum range boundary is inclusive, maximum is exclusive.
-; '''devid=&lt;id&gt;'''
-: Balances only block groups which have at least one chunk on the given device. To list devices with ids use '''btrfs fi show'''.
-; '''drange=&lt;range&gt;'''
-: Balance only block groups which overlap with the given byte range on any device. Use in conjunction with '''devid''' to filter on a specific device. The parameter is a range specified as '''start..end'''.
-; '''vrange=&lt;range&gt;'''
-: Balance only block groups which overlap with the given byte range in the filesystem’s internal virtual address space. This is the address space that most reports from btrfs in the kernel log use. The parameter is a range specified as '''start..end'''.
-; '''convert=&lt;profile&gt;'''
-: Convert each selected block group to the given profile name identified by parameters. <br />'''Note:''' starting with kernel 4.5, the '''data''' chunks can be converted to/from the '''DUP''' profile on a single device.
-; '''limit=&lt;number&gt;'''
-; '''limit=&lt;range&gt;'''
-: Process only given number of chunks, after all filters are applied. This can be used to specifically target a chunk in connection with other filters ('''drange''', '''vrange''') or just simply limit the amount of work done by a single balance run. <br />The argument may be a single value or a range. The single value '''N''' means '''at most N chunks''', equivalent to '''..N''' range syntax. Kernels prior to 4.4 accept only the single value format. The range minimum and maximum are inclusive.
-; '''stripes=&lt;range&gt;'''
-: Balance only block groups which have the given number of stripes. The parameter is a range specified as '''start..end'''. Makes sense fo block group profiles that utilize striping, ie. RAID0/10/5/6. The range minimum and maximum are inclusive.
-; '''soft'''
-: Takes no parameters. Only has meaning when converting between profiles. When doing convert from one profile to another and soft mode is on, chunks that already have the target profile are left untouched. This is useful e.g. when half of the filesystem was converted earlier but got cancelled. <br />The soft mode switch is (like every other filter) per-type. For example, this means that we can convert metadata chunks the "hard" way while converting data chunks selectively with soft switch.
+<dt>
+<b>drange=<em>&lt;range&gt;</em></b>
+<dd>
+<p>
+Balance only block groups which overlap with the given byte range on any
+device. Use in conjunction with <em>devid</em> to filter on a specific device. The
+parameter is a range specified as <em>start..end</em>.
+</p>
 
-Profile names, used in '''profiles''' and '''convert''' are one of: '''raid0''', '''raid1''', '''raid10''', '''raid5''', '''raid6''', '''dup''', '''single'''. The mixed data/metadata profiles can be converted in the same way, but it’s conversion between mixed and non-mixed is not implemented. For the constraints of the profiles please refer to [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], section '''PROFILES'''.
+<dt>
+<b>vrange=<em>&lt;range&gt;</em></b>
+<dd>
+<p>
+Balance only block groups which overlap with the given byte range in the
+filesystem&#8217;s internal virtual address space. This is the address space that
+most reports from btrfs in the kernel log use. The parameter is a range
+specified as <em>start..end</em>.
+</p>
 
+<dt>
+<b>convert=<em>&lt;profile&gt;</em></b>
+<dd>
+<p>
+Convert each selected block group to the given profile name identified by
+parameters.
+</p>
+<blockquote><b>Note:</b>
+starting with kernel 4.5, the <em>data</em> chunks can be converted to/from the
+<em>DUP</em> profile on a single device.</blockquote>
+
+<dt>
+<b>limit=<em>&lt;number&gt;</em></b>
+<dt>
+<b>limit=<em>&lt;range&gt;</em></b>
+<dd>
+<p>
+Process only given number of chunks, after all filters are applied. This can be
+used to specifically target a chunk in connection with other filters (<em>drange</em>,
+<em>vrange</em>) or just simply limit the amount of work done by a single balance run.
+</p>
+<p>The argument may be a single value or a range. The single value <em>N</em> means <em>at
+most N chunks</em>, equivalent to <em>..N</em> range syntax. Kernels prior to 4.4 accept
+only the single value format.  The range minimum and maximum are inclusive.</p>
+
+<dt>
+<b>stripes=<em>&lt;range&gt;</em></b>
+<dd>
+<p>
+Balance only block groups which have the given number of stripes. The parameter
+is a range specified as <em>start..end</em>. Makes sense for block group profiles that
+utilize striping, ie. RAID0/10/5/6.  The range minimum and maximum are
+inclusive.
+</p>
+
+<dt>
+<b>soft</b>
+<dd>
+<p>
+Takes no parameters. Only has meaning when converting between profiles.
+When doing convert from one profile to another and soft mode is on,
+chunks that already have the target profile are left untouched.
+This is useful e.g. when half of the filesystem was converted earlier but got
+cancelled.
+</p>
+<p>The soft mode switch is (like every other filter) per-type.
+For example, this means that we can convert metadata chunks the "hard" way
+while converting data chunks selectively with soft switch.</p>
+
+</dl>
+<p>Profile names, used in <em>profiles</em> and <em>convert</em> are one of: <em>raid0</em>, <em>raid1</em>,
+<em>raid10</em>, <em>raid5</em>, <em>raid6</em>, <em>dup</em>, <em>single</em>. The mixed data/metadata profiles
+can be converted in the same way, but it&#8217;s conversion between mixed and non-mixed
+is not implemented. For the constraints of the profiles please refer to [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
+section <em>PROFILES</em>.</p>
 ==ENOSPC==
 
-The way balance operates, it usually needs to temporarily create a new block group and move the old data there. For that it needs work space, otherwise it fails for ENOSPC reasons. This is not the same ENOSPC as if the free space is exhausted. This refers to the space on the level of block groups.
-
-The free work space can be calculated from the output of the '''btrfs filesystem show''' command:
-
-{| width="100%" cellpadding="10" bgcolor="#e8e8e8"
-|
- <code>   Label: 'BTRFS'  uuid: 8a9d72cd-ead3-469d-b371-9c7203276265
-            Total devices 2 FS bytes used 77.03GiB
-            devid    1 size 53.90GiB used 51.90GiB path /dev/sdc2
-            devid    2 size 53.90GiB used 51.90GiB path /dev/sde1</code>
-|}
-
-'''size''' - '''used''' = '''free work space'''<br />'''53.90GiB''' - '''51.90GiB''' = '''2.00GiB'''
-
-An example of a filter that does not require workspace is '''usage=0'''. This will scan through all unused block groups of a given type and will reclaim the space. Ater that it might be possible to run other filters.
-
-'''CONVERSIONS ON MULTIPLE DEVICES'''
-
-Conversion to profiles based on striping (RAID0, RAID5/6) require the work space on each device. An interrupted balance may leave partially filled block groups that might consume the work space.
-
+<p>The way balance operates, it usually needs to temporarily create a new block
+group and move the old data there. For that it needs work space, otherwise
+it fails for ENOSPC reasons.
+This is not the same ENOSPC as if the free space is exhausted. This refers to
+the space on the level of block groups.</p>
+<p>The free work space can be calculated from the output of the <b>btrfs filesystem show</b>
+command:</p>
+<pre>   Label: 'BTRFS'  uuid: 8a9d72cd-ead3-469d-b371-9c7203276265
+           Total devices 2 FS bytes used 77.03GiB
+           devid    1 size 53.90GiB used 51.90GiB path /dev/sdc2
+           devid    2 size 53.90GiB used 51.90GiB path /dev/sde1</pre>
+<p><em>size</em> - <em>used</em> = <em>free work space</em><br/>
+<em>53.90GiB</em> - <em>51.90GiB</em> = <em>2.00GiB</em></p>
+<p>An example of a filter that does not require workspace is <em>usage=0</em>. This will
+scan through all unused block groups of a given type and will reclaim the
+space. After that it might be possible to run other filters.</p>
+<p><b>CONVERSIONS ON MULTIPLE DEVICES</b></p>
+<p>Conversion to profiles based on striping (RAID0, RAID5/6) require the work
+space on each device. An interrupted balance may leave partially filled block
+groups that might consume the work space.</p>
 ==EXIT STATUS==
 
-'''btrfs balance''' returns a zero exit status if it succeeds. Non zero is returned in case of failure.
-
+<p><b>btrfs balance</b> returns a zero exit status if it succeeds. Non zero is
+returned in case of failure.</p>
 ==AVAILABILITY==
 
-'''btrfs''' is part of btrfs-progs. Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for further details.
-
+<p><b>btrfs</b> is part of btrfs-progs.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.</p>
 ==SEE ALSO==
 
-[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-device|btrfs-device(8)]]
-
+<p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
+[[Manpage/btrfs-device|btrfs-device(8)]]</p>
 [[Category:Manpage]]

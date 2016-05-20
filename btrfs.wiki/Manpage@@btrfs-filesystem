@@ -1,198 +1,618 @@
-=btrfs-filesystem(8) Manual Page=
+=btrfs-filesystem(8) manual page=
 {{GeneratedManpage
 |name=btrfs-filesystem}}
 
 ==NAME==
-
 btrfs-filesystem - command group of btrfs that usually work on the whole filesystem
 
 ==SYNOPSIS==
 
-'''btrfs filesystem''' &lt;subcommand&gt; &lt;args&gt;
-
+<p><b>btrfs filesystem</b> <em>&lt;subcommand&gt;</em> <em>&lt;args&gt;</em></p>
 ==DESCRIPTION==
 
-'''btrfs filesystem''' is used to do the whole filesystem level tasks, including all the regular filesystem operations like resizing, space stats, label setting/getting, and defragmentation.
-
+<p><b>btrfs filesystem</b> is used to do the whole filesystem level tasks, including
+all the regular filesystem operations like resizing, space stats, label
+setting/getting, and defragmentation.</p>
 ==SUBCOMMAND==
 
-; '''df''' [options] &lt;path&gt;
-: Show a terse summary information about allocation of block group types of a given mount point. The original purpose of this command was a debugging helper. The output needs to be further interpreted and is not suitable for quick overview. <br /><div>An example with description:
-:* device size: '''1.9TiB''', one device, no RAID
-:* filesystem size: '''1.9TiB'''
-:* created with: '''mkfs.btrfs -d single -m single'''</div>
-
-<br />
-
-+
-
-{| width="100%" cellpadding="10" bgcolor="#e8e8e8"
-|
- <code>$ btrfs filesystem df /path
- Data, single: total=1.15TiB, used=1.13TiB
- System, single: total=32.00MiB, used=144.00KiB
- Metadata, single: total=12.00GiB, used=6.45GiB
- GlobalReserve, single: total=512.00MiB, used=0.00B</code>
-|}
-
-<br />
-
-+
-
+<dl>
+<dt>
+<b>df</b> [options] <em>&lt;path&gt;</em>
+<dd>
+<p>
+Show a terse summary information about allocation of block group types of a given
+mount point. The original purpose of this command was a debugging helper. The
+output needs to be further interpreted and is not suitable for quick overview.
+</p>
 <div>
-
-* '''Data''', '''System''' and '''Metadata''' are separeate block group types. '''GlobalReserve''' is an artificial and internal emergency space, see below.
-* '''single''' — the allocation profile, defined at mkfs time
-* '''total''' — sum of space reserved for all allocation profiles of the given type, ie. all Data/single. Note that it’s not total size of filesystem.
-* '''used''' — sum of used space of the above, ie. file extents, metadata blocks
-
+<p>An example with description:</p>
+<ul>
+<li>
+<p>
+device size: <em>1.9TiB</em>, one device, no RAID
+</p>
+</li>
+<li>
+<p>
+filesystem size: <em>1.9TiB</em>
+</p>
+</li>
+<li>
+<p>
+created with: <em>mkfs.btrfs -d single -m single</em>
+</p>
+</li>
+</ul>
 </div>
+<pre>$ btrfs filesystem df /path
+Data, single: total=1.15TiB, used=1.13TiB
+System, single: total=32.00MiB, used=144.00KiB
+Metadata, single: total=12.00GiB, used=6.45GiB
+GlobalReserve, single: total=512.00MiB, used=0.00B</pre>
+<div>
+<ul>
+<li>
+<p>
+<em>Data</em>, <em>System</em> and <em>Metadata</em> are separate block group types.
+<em>GlobalReserve</em> is an artificial and internal emergency space, see below.
+</p>
+</li>
+<li>
+<p>
+<em>single</em>&#8201;&#8212;&#8201;the allocation profile, defined at mkfs time
+</p>
+</li>
+<li>
+<p>
+<em>total</em>&#8201;&#8212;&#8201;sum of space reserved for
+all allocation profiles of the given type, ie. all Data/single. Note that it&#8217;s
+not total size of filesystem.
+</p>
+</li>
+<li>
+<p>
+<em>used</em>&#8201;&#8212;&#8201;sum of used space of the above, ie. file extents, metadata blocks
+</p>
+</li>
+</ul>
+</div>
+<p><em>GlobalReserve</em> is an artificial and internal emergency space. It is used eg.
+when the filesystem is full. Its <em>total</em> size is dynamic based on the
+filesystem size, usually not larger than 512MiB, <em>used</em> may fluctuate.</p>
+<p>The global block reserve is accounted within Metadata. In case the filesystem
+metadata are exhausted, <em>GlobalReserve/total + Metadata/used = Metadata/total</em>.</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-b|--raw
+<dd>
+<p>
+raw numbers in bytes, without the <em>B</em> suffix
+</p>
 
-<br />
+<dt>
+-h|--human-readable
+<dd>
+<p>
+print human friendly numbers, base 1024, this is the default
+</p>
 
-+ '''GlobalReserve''' is an artificial and internal emergency space. It is used eg. when the filesystem is full. Its '''total''' size is dynamic based on the filesystem size, usually not larger than 512MiB, '''used''' may fluctuate. <br />
+<dt>
+-H
+<dd>
+<p>
+print human friendly numbers, base 1000
+</p>
 
-+ The global block reserve is accounted within Metadata. In case the filesystem metadata are exhausted, '''GlobalReserve/total + Metadata/used = Metadata/total'''. <br />
+<dt>
+--iec
+<dd>
+<p>
+select the 1024 base for the following options, according to the IEC standard
+</p>
 
-+ <code>Options</code> <br />
+<dt>
+--si
+<dd>
+<p>
+select the 1000 base for the following options, according to the SI standard
+</p>
 
-+ -b|--raw:::: raw numbers in bytes, without the '''B''' suffix -h|--human-readable:::: print human friendly numbers, base 1024, this is the default -H:::: print human friendly numbers, base 1000 --iec:::: select the 1024 base for the following options, according to the IEC standard --si:::: select the 1000 base for the following options, according to the SI standard -k|--kbytes:::: show sizes in KiB, or kB with --si -m|--mbytes:::: show sizes in MiB, or MB with --si -g|--gbytes:::: show sizes in GiB, or GB with --si -t|--tbytes:::: show sizes in TiB, or TB with --si <br />
+<dt>
+-k|--kbytes
+<dd>
+<p>
+show sizes in KiB, or kB with --si
+</p>
 
-+ If conflicting options are passed, the last one takes precedence.
+<dt>
+-m|--mbytes
+<dd>
+<p>
+show sizes in MiB, or MB with --si
+</p>
 
-; '''defragment''' [options] &lt;file&gt;|&lt;dir&gt; [&lt;file&gt;|&lt;dir&gt;…]
-: Defragment file data on a mounted filesytem. <br />If '''-r''' is passed, files in dir will be defragmented recursively. The start position and the number of bytes to defragment can be specified by start and len using '''-s''' and '''-l''' options below. Extents bigger than value given by '''-t''' will be skipped, otherwise this value is used as a target extent size, but is only advisory and may not be reached if the free space is too fragmented. Use 0 to take the kernel default, which is 256kB but may change in the future. You can also turn on compression in defragment operations. <br />'''Warning:''' Defragmenting with Linux kernel versions &lt; 3.9 or ≥ 3.14-rc2 as well as with Linux stable kernel versions ≥ 3.10.31, ≥ 3.12.12 or ≥ 3.13.4 will break up the ref-links of COW data (for example files copied with <code>cp --reflink</code>, snapshots or de-duplicated data). This may cause considerable increase of space usage depending on the broken up ref-links. <br /><code>Options</code> <br />
-:; -v
-:: be verbose, print file names as they’re submitted for defragmentation
-:; -c[&lt;algo&gt;]
-:: compress file contents while defragmenting. Optional argument selects the compression algorithm, '''zlib''' (default) or '''lzo'''. Currently it’s not possible to select no compression. See also section '''EXAMPLES'''.
-:; -r
-:: defragment files recursively in given directories
-:; -f
-:: flush data for each file before going to the next file. This will limit the amount of dirty data to current file, otherwise the amount cumulates from several files and may increase system load.
-:; -s &lt;start&gt;[kKmMgGtTpPeE]
-:: defragmentation will start from the given offset, default is beginning of a file
-:; -l &lt;len&gt;[kKmMgGtTpPeE]
-:: defragment only up to '''len''' bytes, default is the file size
-:; -t &lt;size&gt;[kKmMgGtTpPeE]
-:: target extent size, do not touch extents bigger than '''size''' <br />For '''start''', '''len''', '''size''' it is possible to append units designator: 'K', 'M', 'G', 'T', 'P', or 'E', which represent KiB, MiB, GiB, TiB, PiB, or EiB, respectively (case does not matter). <br />'''Note:''' Directory arguments without '''-r''' do not defragment files recursively but will defragment certain internal trees (extent tree and the subvolume tree). This has been confusing and could be removed in the future.
-; '''label''' [&lt;dev&gt;|&lt;mountpoint&gt;] [&lt;newlabel&gt;]
-: Show or update the label of a filesystem. This works on a mounted filesystem or a filesystem image. <br />The '''newlabel''' argument is optional. Current label is printed if the the argument is omitted. <br />'''Note:''' the maximum allowable length shall be less than 256 chars and must not contain a newline. The trailing newline is stripped automatically.
+<dt>
+-g|--gbytes
+<dd>
+<p>
+show sizes in GiB, or GB with --si
+</p>
 
-; '''resize''' [&lt;devid&gt;<nowiki>:</nowiki>][+/-]&lt;size&gt;[kKmMgGtTpPeE]|[&lt;devid&gt;<nowiki>:</nowiki>]max &lt;path&gt;
-: Resize a mounted filesystem identified by '''path'''. A particular device can be resized by specifying a '''devid'''. <br />'''Warning:''' If '''path''' is a file containing a BTRFS image then resize does not work as expected and does not resize the image. This would resize the underlying filesystem instead. <br />The '''devid''' can be found in the output of '''btrfs filesystem show''' and defaults to 1 if not specified. The '''size''' parameter specifies the new size of the filesystem. If the prefix '''+''' or '''-''' is present the size is increased or decreased by the quantity '''size'''. If no units are specified, bytes are assumed for '''size'''. Optionally, the size parameter may be suffixed by one of the following units designators: 'K', 'M', 'G', 'T', 'P', or 'E', which represent KiB, MiB, GiB, TiB, PiB, or EiB, respectively (case does not matter). <br />If '''max''' is passed, the filesystem will occupy all available space on the device respecting '''devid''' (remember, devid 1 by default). <br />The resize command does not manipulate the size of underlying partition. If you wish to enlarge/reduce a filesystem, you must make sure you can expand the partition before enlarging the filesystem and shrink the partition after reducing the size of the filesystem. This can done using [http://man7.org/linux/man-pages/man8/fdisk.8.html fdisk(8)] or [http://man7.org/linux/man-pages/man8/parted.8.html parted(8)] to delete the existing partition and recreate it with the new desired size. When recreating the partition make sure to use the same starting partition offset as before. <br />Growing is usually instant as it only updates the size. However, shrinking could take a long time if there are data in the device area that’s beyond the new end. Relocation of the data takes time. <br />See also section '''EXAMPLES'''.
-; '''show''' [options] [&lt;path&gt;|&lt;uuid&gt;|&lt;device&gt;|&lt;label&gt;]
-: Show the btrfs filesystem with some additional info about devices and space allocation. <br />If no option none of '''path'''/'''uuid'''/'''device'''/'''label''' is passed, information about all the BTRFS filesystems is shown, both mounted and unmounted. <br /><code>Options</code> <br />
-:; -m|--mounted
-:: probe kernel for mounted BTRFS filesystems
-:; -d|--all-devices
-:: scan all devices under /dev, otherwise the devices list is extracted from the /proc/partitions file. This is a fallback option if there’s no device node manager (like udev) available in the system.
-:; --raw
-:: raw numbers in bytes, without the '''B''' suffix
-:; --human-readable
-:: print human friendly numbers, base 1024, this is the default
-:; --iec
-:: select the 1024 base for the following options, according to the IEC standard
-:; --si
-:: select the 1000 base for the following options, according to the SI standard
-:; --kbytes
-:: show sizes in KiB, or kB with --si
-:; --mbytes
-:: show sizes in MiB, or MB with --si
-:; --gbytes
-:: show sizes in GiB, or GB with --si
-:; --tbytes
-:: show sizes in TiB, or TB with --si
-; '''sync''' &lt;path&gt;
-: Force a sync of the filesystem at '''path'''. This is done via a special ioctl and will also trigger cleaning of deleted subvolumes. Besides that it’s equivalent to the [http://man7.org/linux/man-pages/man1/sync.1.html sync(1)] command.
-; '''usage''' [options] &lt;path&gt; [&lt;path&gt;…]
-: Show detailed information about internal filesystem usage. This is supposed to replace the '''btrfs filesystem df''' command in the long run. <br />The level of detail can differ if the command is run under a regular or the root user (due to use of restricted ioctl). For both there’s a summary section with information about space usage: <br />{| width="100%" cellpadding="10" bgcolor="#e8e8e8"
-|
- <code>$ btrfs fi usage /path
- _Warning:_ cannot read detailed chunk info, RAID5/6 numbers will be incorrect, run as root
- Overall:
-     Device size:                   1.82TiB
-     Device allocated:              1.17TiB
-     Device unallocated:          669.99GiB
-     Device missing:                  0.00B
-     Used:                          1.14TiB
-     Free (estimated):            692.57GiB      (min: 692.57GiB)
-     Data ratio:                       1.00
-     Metadata ratio:                   1.00
-     Global reserve:              512.00MiB      (used: 0.00B)</code>
-|}
+<dt>
+-t|--tbytes
+<dd>
+<p>
+show sizes in TiB, or TB with --si
+</p>
+<p>If conflicting options are passed, the last one takes precedence.</p>
 
-<br />
+</dl>
 
-+ The root user will also see stats broken down by block group types: <br />
+<dt>
+<b>defragment</b> [options] <em>&lt;file&gt;</em>|<em>&lt;dir&gt;</em> [<em>&lt;file&gt;</em>|<em>&lt;dir&gt;</em>&#8230;]
+<dd>
+<p>
+Defragment file data on a mounted filesystem.
+</p>
+<p>If <em>-r</em> is passed, files in dir will be defragmented recursively.
+The start position and the number of bytes to defragment can be specified by
+start and length using <em>-s</em> and <em>-l</em> options below.
+Extents bigger than value given by <em>-t</em> will be skipped, otherwise this value
+is used as a target extent size, but is only advisory and may not be reached
+if the free space is too fragmented.
+Use 0 to take the kernel default, which is 256kB but may change in the future.
+You can also turn on compression in defragment operations.</p>
+<blockquote><b>Warning:</b>
+Defragmenting with Linux kernel versions &lt; 3.9 or ≥ 3.14-rc2 as well as
+with Linux stable kernel versions ≥ 3.10.31, ≥ 3.12.12 or ≥ 3.13.4 will break up
+the ref-links of COW data (for example files copied with <tt>cp --reflink</tt>,
+snapshots or de-duplicated data).
+This may cause considerable increase of space usage depending on the broken up
+ref-links.</blockquote>
+<blockquote><b>Note:</b>
+Directory arguments without <em>-r</em> do not defragment files recursively but will
+defragment certain internal trees (extent tree and the subvolume tree). This has been
+confusing and could be removed in the future.</blockquote>
+<p>For <em>start</em>, <em>len</em>, <em>size</em> it is possible to append
+units designator: 'K', 'M', 'G', 'T', 'P', or 'E', which represent
+KiB, MiB, GiB, TiB, PiB, or EiB, respectively (case does not matter).</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-v
+<dd>
+<p>
+be verbose, print file names as they&#8217;re submitted for defragmentation
+</p>
 
-+
+<dt>
+-c[<em>&lt;algo&gt;</em>]
+<dd>
+<p>
+compress file contents while defragmenting. Optional argument selects the compression
+algorithm, <em>zlib</em> (default) or <em>lzo</em>. Currently it&#8217;s not possible to select no
+compression. See also section <em>EXAMPLES</em>.
+</p>
 
-{| width="100%" cellpadding="10" bgcolor="#e8e8e8"
-|
- <code>Data,single: Size:1.15TiB, Used:1.13TiB
-    /dev/sdb        1.15TiB
- 
- Metadata,single: Size:12.00GiB, Used:6.45GiB
-    /dev/sdb       12.00GiB
- 
- System,single: Size:32.00MiB, Used:144.00KiB
-    /dev/sdb       32.00MiB
- 
- Unallocated:
-    /dev/sdb      669.99GiB</code>
-|}
+<dt>
+-r
+<dd>
+<p>
+defragment files recursively in given directories
+</p>
 
-<br />
+<dt>
+-f
+<dd>
+<p>
+flush data for each file before going to the next file. This will limit the amount
+of dirty data to current file, otherwise the amount cumulates from several files
+and may increase system load.
+</p>
 
-+ <code>Options</code> <br />
+<dt>
+-s <em>&lt;start&gt;</em>[kKmMgGtTpPeE]
+<dd>
+<p>
+defragmentation will start from the given offset, default is beginning of a file
+</p>
 
-+ -b|--raw:::: raw numbers in bytes, without the '''B''' suffix -h|--human-readable:::: print human friendly numbers, base 1024, this is the default -H:::: print human friendly numbers, base 1000 --iec:::: select the 1024 base for the following options, according to the IEC standard --si:::: select the 1000 base for the following options, according to the SI standard -k|--kbytes:::: show sizes in KiB, or kB with --si -m|--mbytes:::: show sizes in MiB, or MB with --si -g|--gbytes:::: show sizes in GiB, or GB with --si -t|--tbytes:::: show sizes in TiB, or TB with --si -T:::: show data in tabular format <br />
+<dt>
+-l <em>&lt;len&gt;</em>[kKmMgGtTpPeE]
+<dd>
+<p>
+defragment only up to <em>len</em> bytes, default is the file size
+</p>
 
-+ If conflicting options are passed, the last one takes precedence.
+<dt>
+-t <em>&lt;size&gt;</em>[kKmMgGtTpPeE]
+<dd>
+<p>
+target extent size, do not touch extents bigger than <em>size</em>
+</p>
 
+</dl>
+
+<dt>
+<b>du</b> [options] <em>&lt;path&gt;</em> [<em>&lt;path&gt;</em>..]
+<dd>
+<p>
+Calculate disk usage of the target files using FIEMAP. For individual
+files, it will report a count of total bytes, and exclusive (not
+shared) bytes. We also calculate a <em>set shared</em> value which is
+described below.
+</p>
+<p>Each argument to <em>btrfs fi du</em> will have a <em>set shared</em> value
+calculated for it. We define each <em>set</em> as those files found by a
+recursive search of an argument. The <em>set shared</em> value
+then is a sum of all shared space referenced by the set.</p>
+<p><em>set shared</em> takes into account overlapping shared extents, hence it
+isn&#8217;t as simple as adding up shared extents.</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-s|--summarize
+<dd>
+<p>
+display only a total for each argument
+</p>
+
+<dt>
+--raw
+<dd>
+<p>
+raw numbers in bytes, without the <em>B</em> suffix.
+</p>
+
+<dt>
+--human-readable
+<dd>
+<p>
+print human friendly numbers, base 1024, this is the default
+</p>
+
+<dt>
+--iec
+<dd>
+<p>
+select the 1024 base for the following options, according to the IEC standard.
+</p>
+
+<dt>
+--si
+<dd>
+<p>
+select the 1000 base for the following options, according to the SI standard.
+</p>
+
+<dt>
+--kbytes
+<dd>
+<p>
+show sizes in KiB, or kB with --si.
+</p>
+
+<dt>
+--mbytes
+<dd>
+<p>
+show sizes in MiB, or MB with --si.
+</p>
+
+<dt>
+--gbytes
+<dd>
+<p>
+show sizes in GiB, or GB with --si.
+</p>
+
+<dt>
+--tbytes
+<dd>
+<p>
+show sizes in TiB, or TB with --si.
+</p>
+
+</dl>
+
+<dt>
+<b>label</b> [<em>&lt;dev&gt;</em>|<em>&lt;mountpoint&gt;</em>] [<em>&lt;newlabel&gt;</em>]
+<dd>
+<p>
+Show or update the label of a filesystem. This works on a mounted filesystem or
+a filesystem image.
+</p>
+<p>The <em>newlabel</em> argument is optional. Current label is printed if the the argument
+is omitted.</p>
+<blockquote><b>Note:</b>
+the maximum allowable length shall be less than 256 chars and must not contain
+a newline. The trailing newline is stripped automatically.</blockquote>
+
+</dl>
+<dl>
+<dt>
+<b>resize</b> [<em>&lt;devid&gt;</em>:][+/-]<em>&lt;size&gt;</em>[kKmMgGtTpPeE]|[<em>&lt;devid&gt;</em>:]max <em>&lt;path&gt;</em>
+<dd>
+<p>
+Resize a mounted filesystem identified by <em>path</em>. A particular device
+can be resized by specifying a <em>devid</em>.
+</p>
+<blockquote><b>Warning:</b>
+If <em>path</em> is a file containing a BTRFS image then resize does not work
+as expected and does not resize the image. This would resize the underlying
+filesystem instead.</blockquote>
+<p>The <em>devid</em> can be found in the output of <b>btrfs filesystem show</b> and
+defaults to 1 if not specified.
+The <em>size</em> parameter specifies the new size of the filesystem.
+If the prefix <em>+</em> or <em>-</em> is present the size is increased or decreased
+by the quantity <em>size</em>.
+If no units are specified, bytes are assumed for <em>size</em>.
+Optionally, the size parameter may be suffixed by one of the following
+units designators: 'K', 'M', 'G', 'T', 'P', or 'E', which represent
+KiB, MiB, GiB, TiB, PiB, or EiB, respectively (case does not matter).</p>
+<p>If <em>max</em> is passed, the filesystem will occupy all available space on the
+device respecting <em>devid</em> (remember, devid 1 by default).</p>
+<p>The resize command does not manipulate the size of underlying
+partition.  If you wish to enlarge/reduce a filesystem, you must make sure you
+can expand the partition before enlarging the filesystem and shrink the
+partition after reducing the size of the filesystem.  This can done using
+[http://man7.org/linux/man-pages/man8/fdisk.8.html fdisk(8)] or [http://man7.org/linux/man-pages/man8/parted.8.html parted(8)] to delete the existing partition and recreate
+it with the new desired size.  When recreating the partition make sure to use
+the same starting partition offset as before.</p>
+<p>Growing is usually instant as it only updates the size. However, shrinking could
+take a long time if there are data in the device area that&#8217;s beyond the new
+end. Relocation of the data takes time.</p>
+<p>See also section <em>EXAMPLES</em>.</p>
+
+<dt>
+<b>show</b> [options] [<em>&lt;path&gt;</em>|<em>&lt;uuid&gt;</em>|<em>&lt;device&gt;</em>|<em>&lt;label&gt;</em>]
+<dd>
+<p>
+Show the btrfs filesystem with some additional info about devices and space
+allocation.
+</p>
+<p>If no option none of <em>path</em>/<em>uuid</em>/<em>device</em>/<em>label</em> is passed, information
+about all the BTRFS filesystems is shown, both mounted and unmounted.</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-m|--mounted
+<dd>
+<p>
+probe kernel for mounted BTRFS filesystems
+</p>
+
+<dt>
+-d|--all-devices
+<dd>
+<p>
+scan all devices under /dev, otherwise the devices list is extracted from the
+/proc/partitions file. This is a fallback option if there&#8217;s no device node
+manager (like udev) available in the system.
+</p>
+
+<dt>
+--raw
+<dd>
+<p>
+raw numbers in bytes, without the <em>B</em> suffix
+</p>
+
+<dt>
+--human-readable
+<dd>
+<p>
+print human friendly numbers, base 1024, this is the default
+</p>
+
+<dt>
+--iec
+<dd>
+<p>
+select the 1024 base for the following options, according to the IEC standard
+</p>
+
+<dt>
+--si
+<dd>
+<p>
+select the 1000 base for the following options, according to the SI standard
+</p>
+
+<dt>
+--kbytes
+<dd>
+<p>
+show sizes in KiB, or kB with --si
+</p>
+
+<dt>
+--mbytes
+<dd>
+<p>
+show sizes in MiB, or MB with --si
+</p>
+
+<dt>
+--gbytes
+<dd>
+<p>
+show sizes in GiB, or GB with --si
+</p>
+
+<dt>
+--tbytes
+<dd>
+<p>
+show sizes in TiB, or TB with --si
+</p>
+
+</dl>
+
+<dt>
+<b>sync</b> <em>&lt;path&gt;</em>
+<dd>
+<p>
+Force a sync of the filesystem at <em>path</em>. This is done via a special ioctl and
+will also trigger cleaning of deleted subvolumes. Besides that it&#8217;s equivalent
+to the [http://man7.org/linux/man-pages/man1/sync.1.html sync(1)] command.
+</p>
+
+<dt>
+<b>usage</b> [options] <em>&lt;path&gt;</em> [<em>&lt;path&gt;</em>&#8230;]
+<dd>
+<p>
+Show detailed information about internal filesystem usage. This is supposed to
+replace the <b>btrfs filesystem df</b> command in the long run.
+</p>
+<p>The level of detail can differ if the command is run under a regular or the
+root user (due to use of restricted ioctl). For both there&#8217;s a summary section
+with information about space usage:</p>
+<pre>$ btrfs fi usage /path
+WARNING: cannot read detailed chunk info, RAID5/6 numbers will be incorrect, run as root
+Overall:
+    Device size:                   1.82TiB
+    Device allocated:              1.17TiB
+    Device unallocated:          669.99GiB
+    Device missing:                  0.00B
+    Used:                          1.14TiB
+    Free (estimated):            692.57GiB      (min: 692.57GiB)
+    Data ratio:                       1.00
+    Metadata ratio:                   1.00
+    Global reserve:              512.00MiB      (used: 0.00B)</pre>
+<p>The root user will also see stats broken down by block group types:</p>
+<pre>Data,single: Size:1.15TiB, Used:1.13TiB
+   /dev/sdb        1.15TiB
+
+Metadata,single: Size:12.00GiB, Used:6.45GiB
+   /dev/sdb       12.00GiB
+
+System,single: Size:32.00MiB, Used:144.00KiB
+   /dev/sdb       32.00MiB
+
+Unallocated:
+   /dev/sdb      669.99GiB</pre>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-b|--raw
+<dd>
+<p>
+raw numbers in bytes, without the <em>B</em> suffix
+</p>
+
+<dt>
+-h|--human-readable
+<dd>
+<p>
+print human friendly numbers, base 1024, this is the default
+</p>
+
+<dt>
+-H
+<dd>
+<p>
+print human friendly numbers, base 1000
+</p>
+
+<dt>
+--iec
+<dd>
+<p>
+select the 1024 base for the following options, according to the IEC standard
+</p>
+
+<dt>
+--si
+<dd>
+<p>
+select the 1000 base for the following options, according to the SI standard
+</p>
+
+<dt>
+-k|--kbytes
+<dd>
+<p>
+show sizes in KiB, or kB with --si
+</p>
+
+<dt>
+-m|--mbytes
+<dd>
+<p>
+show sizes in MiB, or MB with --si
+</p>
+
+<dt>
+-g|--gbytes
+<dd>
+<p>
+show sizes in GiB, or GB with --si
+</p>
+
+<dt>
+-t|--tbytes
+<dd>
+<p>
+show sizes in TiB, or TB with --si
+</p>
+
+<dt>
+-T
+<dd>
+<p>
+show data in tabular format
+</p>
+<p>If conflicting options are passed, the last one takes precedence.</p>
+
+</dl>
+
+</dl>
 ==EXAMPLES==
 
-'''$ btrfs filesystem defrag -v -r dir/'''
-
-Recursively defragment files under '''dir/''', print files as they are processed. The file names will be printed in batches, similarly the amount of data triggered by defragmentation will be proportional to last N printed files. The system dirty memory throttling will slow down the defragmentation but there can still be a lot of IO load and the system may stall for a moment.
-
-'''$ btrfs filesystem defrag -v -r -f dir/'''
-
-Recusively defragment files under '''dir/''', be verbose and wait until all blocks are flushed before processing next file. You can note slower progress of the output and lower IO load (proportional to currently defragmented file).
-
-'''$ btrfs filesystem defrag -v -r -f -clzo dir/'''
-
-Recusively defragment files under '''dir/''', be verbose, wait until all blocks are flushed and force file compression.
-
-'''$ btrfs filesystem defrag -v -r -t 64M dir/'''
-
-Recusively defragment files under '''dir/''', be verbose and try to merge extents to be about 64MiB. As stated above, the success rate depends on actual free space fragmentation and the final result is not guaranteed to meet the target even if run repeatedly.
-
-'''$ btrfs filesystem resize -1G /path'''
-
-'''$ btrfs filesystem resize 1:-1G /path'''
-
-Shrink size of the filesystem’s device id 1 by 1GiB. The first syntax expects a device with id 1 to exist, otherwise fails. The second is equivalent and more explicit. For a single-device filesystem it’s typically not necessary to specify the devid though.
-
-'''$ btrfs filesystem resize max /path'''
-
-'''$ btrfs filesystem resize 1:max /path'''
-
-Let’s assume that devid 1 exists, the filesystem does not occupy the whole block device, eg. it has been enlarged and we wan the grow the filesystem. Simply using '''max''' as size we will achieve that.
-
-'''Note:''' There are two ways to minimize the filesystem on a given device. The '''btrfs inspect-internal min-dev-size''' command, or iteratively shrink in steps.
-
+<p><b>$ btrfs filesystem defrag -v -r dir/</b></p>
+<p>Recursively defragment files under <em>dir/</em>, print files as they are processed.
+The file names will be printed in batches, similarly the amount of data triggered
+by defragmentation will be proportional to last N printed files. The system dirty
+memory throttling will slow down the defragmentation but there can still be a lot
+of IO load and the system may stall for a moment.</p>
+<p><b>$ btrfs filesystem defrag -v -r -f dir/</b></p>
+<p>Recursively defragment files under <em>dir/</em>, be verbose and wait until all blocks
+are flushed before processing next file. You can note slower progress of the
+output and lower IO load (proportional to currently defragmented file).</p>
+<p><b>$ btrfs filesystem defrag -v -r -f -clzo dir/</b></p>
+<p>Recursively defragment files under <em>dir/</em>, be verbose, wait until all blocks are
+flushed and force file compression.</p>
+<p><b>$ btrfs filesystem defrag -v -r -t 64M dir/</b></p>
+<p>Recursively defragment files under <em>dir/</em>, be verbose and try to merge extents
+to be about 64MiB. As stated above, the success rate depends on actual free
+space fragmentation and the final result is not guaranteed to meet the target
+even if run repeatedly.</p>
+<p><b>$ btrfs filesystem resize -1G /path</b></p>
+<p><b>$ btrfs filesystem resize 1:-1G /path</b></p>
+<p>Shrink size of the filesystem&#8217;s device id 1 by 1GiB. The first syntax expects a
+device with id 1 to exist, otherwise fails. The second is equivalent and more
+explicit. For a single-device filesystem it&#8217;s typically not necessary to
+specify the devid though.</p>
+<p><b>$ btrfs filesystem resize max /path</b></p>
+<p><b>$ btrfs filesystem resize 1:max /path</b></p>
+<p>Let&#8217;s assume that devid 1 exists, the filesystem does not occupy the whole block
+device, eg. it has been enlarged and we wan the grow the filesystem. Simply using
+<em>max</em> as size we will achieve that.</p>
+<blockquote><b>Note:</b>
+There are two ways to minimize the filesystem on a given device. The
+<b>btrfs inspect-internal min-dev-size</b> command, or iteratively shrink in steps.</blockquote>
 ==EXIT STATUS==
 
-'''btrfs filesystem''' returns a zero exit status if it succeeds. Non zero is returned in case of failure.
-
+<p><b>btrfs filesystem</b> returns a zero exit status if it succeeds. Non zero is
+returned in case of failure.</p>
 ==AVAILABILITY==
 
-'''btrfs''' is part of btrfs-progs. Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for further details.
-
+<p><b>btrfs</b> is part of btrfs-progs.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.</p>
 ==SEE ALSO==
 
-[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
-
+<p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],</p>
 [[Category:Manpage]]

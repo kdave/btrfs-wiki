@@ -637,9 +637,38 @@ Bugfixes:
 
 = By version (linux kernel) =
 
+=== v4.6 (May 2016) ===
+* mount options:
+** usebackuproot - replace 'recovery' (works but is deprecated)
+** logreplay, nologreplay - disable log replay at mount time, does no writes to the device
+** norecovery - synthetic option to disable recovery at mount time and disable writes (now does: nologreplay)
+* default inline limit is now 2048 (instead of page size, usually 4096)
+* /dev/btrfs-control now understands the GET_SUPPORTE_FEATURES ioctl
+* get rid of harmless message "''could not find root %llu''"
+* preparatory work for subpage-blocksize patchset
+* fix bug when using overlayfs
+* fixes in readahead, log replay, fsync, and more
+
+=== v4.5 (Mar 2016) ===
+* free space cache v2: an incompat feature to track the free space cache as a b-tree
+* balance:
+** '-dconvert=dup' supported
+** continue but warn if metadata have lower redundancy than data
+* fixes:
+** trim does not overwrite bootloader area (introduced in 4.3, fixed in 4.4.x stable kernels)
+* assorted bugfixes, improvements or cleanups
+
 === v4.4 (Jan 2016) ===
+* send fixes: cloning, sending with parent
+* improved handling of framgented space using bitmaps
+* new mount option for debugging: fragment=data|metadata|all
+* updated balance filters: limit, stripes, usage
+* more bugfixes and cleanups
 
 === v4.3 (Nov 2015) ===
+* fix raid56 rebuild with missing device
+* discard ioctl will return the number of bytes
+* more bugfixes and cleanups
 
 === v4.2 (Aug 2015) ===
 * enhancements

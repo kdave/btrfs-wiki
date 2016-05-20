@@ -1,52 +1,101 @@
-=btrfs-receive(8) Manual Page=
+=btrfs-receive(8) manual page=
 {{GeneratedManpage
 |name=btrfs-receive}}
 
 ==NAME==
-
-btrfs-receive - receive subvolumes from stdin/file.
+btrfs-receive - receive subvolumes from send stream
 
 ==SYNOPSIS==
 
-'''btrfs receive''' [options] &lt;mount&gt;
-
+<p><b>btrfs receive</b> [options] <em>&lt;mount&gt;</em></p>
 ==DESCRIPTION==
 
-Receives one or more subvolumes that were previously sent with '''btrfs send'''. The received subvolumes are stored into &lt;mount&gt;.
+<p>Receive a stream of changes and replicate one or more subvolumes that were
+previously used with <b>btrfs send</b> The received subvolumes are stored to
+<em>mount</em>.</p>
+<p><b>btrfs receive</b> will fail int the following cases:</p>
+<ol>
+<li>
+<p>
+receiving subvolume already exists
+</p>
+</li>
+<li>
+<p>
+previously received subvolume was changed after it was received
+</p>
+</li>
+<li>
+<p>
+default subvolume has changed or you didn&#8217;t mount BTRFS filesystem at the toplevel subvolume
+</p>
+</li>
+</ol>
+<p>A subvolume is made read-only after the receiving process finishes succesfully.</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-v
+<dd>
+<p>
+enable verbose debug output, print each operation (each occurrence of this
+option increases the verbosity level)
+</p>
 
-'''btrfs receive''' will fail with the following case:
+<dt>
+-f <em>&lt;infile&gt;</em>
+<dd>
+<p>
+by default, btrfs receive uses standard input to receive the stream,
+use this option to read from a file instead
+</p>
 
-# a receiving subvolume already exists.
-# a previously received subvolume was changed after it was received.
-# default subvolume is changed or you don’t mount btrfs filesystem with fs tree.
+<dt>
+-C|--chroot
+<dd>
+<p>
+confine the process to <em>mount</em> using [http://man7.org/linux/man-pages/man1/chroot.1.html chroot(1)]
+</p>
 
-After receiving a subvolume, it is immediately set to read only.
+<dt>
+-e
+<dd>
+<p>
+terminate after receiving an <em>end cmd</em> marker in the stream.
+</p>
+<p>Without this option, the receiver terminates only if an error is encountered
+or at end of file</p>
 
-<code>Options</code>
+<dt>
+--max-errors <em>&lt;N&gt;</em>
+<dd>
+<p>
+terminate as soon as N errors happened while processing commands from the send
+stream, default value is 1, 0 means no limit
+</p>
 
-; -v
-: Enable verbose debug output. Each occurrence of this option increases the verbose level more.
-; -f &lt;infile&gt;
-: By default, btrfs receive uses stdin to receive the subvolumes. Use this option to specify a file to use instead.
-; -C|--chroot
-: Confine the process to &lt;mount&gt; using chroot.
-; -e
-: Terminate after receiving an &lt;end cmd&gt; in the data stream. Without this option, the receiver terminates only if an error is recognized or on EOF.
-; --max-errors &lt;N&gt;
-: Terminate as soon as N errors happened while processing commands from the send stream. Default value is 1. A value of 0 means no limit.
-; -m
-: The root mount point of the destination fs. <br />By default the mountpoint is searched in /proc/self/mounts. If you do not have /proc, eg. in a chroot environment, use this option to tell us where this filesystem is mounted.
+<dt>
+-m <em>&lt;mountpoint&gt;</em>
+<dd>
+<p>
+the root mount point of the destination filesystem
+</p>
+<p>By default the mountpoint is searched in <em>/proc/self/mounts</em>.
+If you do not have <em>/proc</em>, eg. in a chroot environment, use this option to tell
+us where this filesystem is mounted.</p>
 
+</dl>
 ==EXIT STATUS==
 
-'''btrfs receive''' returns a zero exit status if it succeeds. Non zero is returned in case of failure.
-
+<p><b>btrfs receive</b> returns a zero exit status if it succeeds. Non zero is
+returned in case of failure.</p>
 ==AVAILABILITY==
 
-'''btrfs''' is part of btrfs-progs. Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for further details.
-
+<p><b>btrfs</b> is part of btrfs-progs.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.</p>
 ==SEE ALSO==
 
-[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-send|btrfs-send(8)]]
-
+<p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
+[[Manpage/btrfs-send|btrfs-send(8)]]</p>
 [[Category:Manpage]]

@@ -1,72 +1,122 @@
-=btrfs-rescue(8) Manual Page=
+=btrfs-rescue(8) manual page=
 {{GeneratedManpage
 |name=btrfs-rescue}}
 
 ==NAME==
-
 btrfs-rescue - Recover a damaged btrfs filesystem
 
 ==SYNOPSIS==
 
-'''btrfs rescue''' &lt;subcommand&gt; &lt;args&gt;
-
+<p><b>btrfs rescue</b> <em>&lt;subcommand&gt;</em> <em>&lt;args&gt;</em></p>
 ==DESCRIPTION==
 
-'''btrfs rescue''' is used to try to recover a damaged btrfs filesystem.
-
+<p><b>btrfs rescue</b> is used to try to recover a damaged btrfs filesystem.</p>
 ==SUBCOMMAND==
 
-; '''chunk-recover''' [options] &lt;device&gt;
-: Recover the chunk tree by scanning the devices <br /><code>Options</code> <br />
-:; -y
-:: assume an answer of '''yes''' to all questions.
-:; -v
-:: verbose mode.
-:; -h
-:: help.
+<dl>
+<dt>
+<b>chunk-recover</b> [options] <em>&lt;device&gt;</em>
+<dd>
+<p>
+Recover the chunk tree by scanning the devices
+</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-y
+<dd>
+<p>
+assume an answer of <em>yes</em> to all questions.
+</p>
 
-'''Note:''' Since '''chunk-recover''' will scan the whole device, it will be '''VERY''' slow especially executed on a large device.
+<dt>
+-v
+<dd>
+<p>
+verbose mode.
+</p>
 
-; '''super-recover''' [options] &lt;device&gt;
-: Recover bad superblocks from good copies. <br /><code>Options</code> <br />
-:; -y
-:: assume an answer of '''yes''' to all questions.
-:; -v
-:: verbose mode.
-; '''zero-log''' &lt;device&gt;
-: clear the filesystem log tree
+<dt>
+-h
+<dd>
+<p>
+help.
+</p>
 
-This command will clear the filesystem log tree. This may fix a specific set of problem when the filesystem mount fails due to the log replay. See below for sample stacktraces that may show up in system log.
+</dl>
 
-The common case where this happens has been fixed a long time ago, so it is unlikely that you will see this particular problem, but the utility is kept around.
+</dl>
+<blockquote><b>Note:</b>
+Since <b>chunk-recover</b> will scan the whole device, it will be <b>VERY</b> slow
+especially executed on a large device.</blockquote>
+<dl>
+<dt>
+<b>super-recover</b> [options] <em>&lt;device&gt;</em>
+<dd>
+<p>
+Recover bad superblocks from good copies.
+</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-y
+<dd>
+<p>
+assume an answer of <em>yes</em> to all questions.
+</p>
 
-'''Note:''' clearing the log may lead to loss of changes that were made since the last transaction commit. This may be up to 30 seconds (default commit period) or less if the commit was implied by other filesystem activity.
+<dt>
+-v
+<dd>
+<p>
+verbose mode.
+</p>
 
-One can determine whether '''zero-log''' is needed according to the kernel backtrace:
+</dl>
 
-{| width="100%" cellpadding="10" bgcolor="#e8e8e8"
-|
- <code>? replay_one_dir_item+0xb5/0xb5 [btrfs]
- ? walk_log_tree+0x9c/0x19d [btrfs]
- ? btrfs_read_fs_root_no_radix+0x169/0x1a1 [btrfs]
- ? btrfs_recover_log_trees+0x195/0x29c [btrfs]
- ? replay_one_dir_item+0xb5/0xb5 [btrfs]
- ? btree_read_extent_buffer_pages+0x76/0xbc [btrfs]
- ? open_ctree+0xff6/0x132c [btrfs]</code>
-|}
+<dt>
+<b>zero-log</b> <em>&lt;device&gt;</em>
+<dd>
+<p>
+clear the filesystem log tree
+</p>
 
-If the errors are like above, then '''zero-log''' should be used to clear the log and the filesystem may be mounted normally again. The keywords to look for are '''open_ctree''' which says that it’s during mount and function names that contain '''replay''', '''recover''' or '''log_tree'''.
-
+</dl>
+<p>This command will clear the filesystem log tree. This may fix a specific
+set of problem when the filesystem mount fails due to the log replay. See below
+for sample stacktraces that may show up in system log.</p>
+<p>The common case where this happens has been fixed a long time ago,
+so it is unlikely that you will see this particular problem, but the utility is
+kept around.</p>
+<blockquote><b>Note:</b>
+clearing the log may lead to loss of changes that were made since the
+last transaction commit. This may be up to 30 seconds (default commit period)
+or less if the commit was implied by other filesystem activity.</blockquote>
+<p>One can determine whether <b>zero-log</b> is needed according to the kernel
+backtrace:</p>
+<pre>? replay_one_dir_item+0xb5/0xb5 [btrfs]
+? walk_log_tree+0x9c/0x19d [btrfs]
+? btrfs_read_fs_root_no_radix+0x169/0x1a1 [btrfs]
+? btrfs_recover_log_trees+0x195/0x29c [btrfs]
+? replay_one_dir_item+0xb5/0xb5 [btrfs]
+? btree_read_extent_buffer_pages+0x76/0xbc [btrfs]
+? open_ctree+0xff6/0x132c [btrfs]</pre>
+<p>If the errors are like above, then <b>zero-log</b> should be used to clear
+the log and the filesystem may be mounted normally again. The keywords to look
+for are <em>open_ctree</em> which says that it&#8217;s during mount and function names
+that contain <em>replay</em>, <em>recover</em> or <em>log_tree</em>.</p>
 ==EXIT STATUS==
 
-'''btrfs rescue''' returns a zero exit status if it succeeds. Non zero is returned in case of failure.
-
+<p><b>btrfs rescue</b> returns a zero exit status if it succeeds. Non zero is
+returned in case of failure.</p>
 ==AVAILABILITY==
 
-'''btrfs''' is part of btrfs-progs. Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for further details.
-
+<p><b>btrfs</b> is part of btrfs-progs.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.</p>
 ==SEE ALSO==
 
-[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-scrub|btrfs-scrub(8)]], [[Manpage/btrfs-check|btrfs-check(8)]]
-
+<p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
+[[Manpage/btrfs-scrub|btrfs-scrub(8)]],
+[[Manpage/btrfs-check|btrfs-check(8)]]</p>
 [[Category:Manpage]]

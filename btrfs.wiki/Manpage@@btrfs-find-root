@@ -1,36 +1,54 @@
-=btrfs-find-root(8) Manual Page=
+=btrfs-find-root(8) manual page=
 {{GeneratedManpage
 |name=btrfs-find-root}}
 
 ==NAME==
-
 btrfs-find-root - filter to find btrfs root
 
 ==SYNOPSIS==
 
-'''btrfs-find-root''' [options] &lt;dev&gt;
-
+<p><b>btrfs-find-root</b> [options] <em>&lt;dev&gt;</em></p>
 ==DESCRIPTION==
 
-'''btrfs-find-root''' is used to find the satisfied root, you can filter by root tree’s objectid, generation, level.
-
+<p><b>btrfs-find-root</b> is used to find the satisfied root, you can filter by
+root tree&#8217;s objectid, generation, level.</p>
 ==OPTIONS==
 
-; -a
-: Search through all the metadata extents, even the root is already found.
-; -g &lt;generation&gt;
-: Filter root tree by it’s original transaction id, tree root’s generation in default.
-; -o &lt;objectid&gt;
-: Filter root tree by it’s objectid,tree root’s objectid in default.
-; -l &lt;level&gt;
-: Filter root tree by B-+ tree’s level, level 0 in default.
+<dl>
+<dt>
+-a
+<dd>
+<p>
+Search through all the metadata extents, even the root is already found.
+</p>
 
+<dt>
+-g <em>&lt;generation&gt;</em>
+<dd>
+<p>
+Filter root tree by it&#8217;s original transaction id, tree root&#8217;s generation in default.
+</p>
+
+<dt>
+-o <em>&lt;objectid&gt;</em>
+<dd>
+<p>
+Filter root tree by it&#8217;s objectid,tree root&#8217;s objectid in default.
+</p>
+
+<dt>
+-l <em>&lt;level&gt;</em>
+<dd>
+<p>
+Filter root tree by B-+ tree&#8217;s level, level 0 in default.
+</p>
+
+</dl>
 ==EXIT STATUS==
 
-'''btrfs-find-root''' will return 0 if no error happened. If any problems happened, 1 will be returned.
-
+<p><b>btrfs-find-root</b> will return 0 if no error happened.
+If any problems happened, 1 will be returned.</p>
 ==SEE ALSO==
 
-[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]]
-
+<p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]]</p>
 [[Category:Manpage]]

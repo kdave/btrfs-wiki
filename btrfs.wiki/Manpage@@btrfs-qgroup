@@ -1,98 +1,252 @@
-=btrfs-qgroup(8) Manual Page=
+=btrfs-qgroup(8) manual page=
 {{GeneratedManpage
 |name=btrfs-qgroup}}
 
 ==NAME==
-
 btrfs-qgroup - control the quota group of a btrfs filesystem
 
 ==SYNOPSIS==
 
-'''btrfs qgroup''' &lt;subcommand&gt; &lt;args&gt;
-
+<p><b>btrfs qgroup</b> <em>&lt;subcommand&gt;</em> <em>&lt;args&gt;</em></p>
 ==DESCRIPTION==
 
-'''btrfs qgroup''' is used to control quota group (qgroup) of a btrfs filesystem.
-
-'''Note:''' To use qgroup you need to enable quota first using '''btrfs quota enable''' command.
-
-'''Warning:''' Qgroup is not stable yet and will impact performance in current mainline kernel (v3.14 so far).
-
+<p><b>btrfs qgroup</b> is used to control quota group (qgroup) of a btrfs filesystem.</p>
+<blockquote><b>Note:</b>
+To use qgroup you need to enable quota first using <b>btrfs quota enable</b>
+command.</blockquote>
+<blockquote><b>Warning:</b>
+Qgroup is not stable yet and will impact performance in current mainline
+kernel (v3.14 so far).</blockquote>
 ==QGROUP==
 
-Quota groups or qgroup in btrfs make a tree hierarchy, the leaf qgroups are attached to subvolumes. The size limits are set per qgroup and apply when any limit is reached in tree that contains a given subvolume.
-
-The limit sare separated between shared and exclusive and reflect the extent ownership. For example a fresh snapshot shares almost all the blocks with the original subvolume, new writes to either subvolume will raise towards the exclusive limit.
-
-The qgroup identifiers conform to '''level/id''' where level 0 is reserved to the qgroups associated with subvolumes. Such qgroups are created automatically.
-
-The qgroup hierarchy is built by commands '''create''' and '''assign'''.
-
-'''Note:''' If the qgroup of a subvolume is destroyed, quota about the subvolume will not be functional until qgroup '''0/&lt;subvolume id&gt;''' is created again.
-
+<p>Quota groups or qgroup in btrfs make a tree hierarchy, the leaf qgroups are
+attached to subvolumes. The size limits are set per qgroup and apply when any
+limit is reached in tree that contains a given subvolume.</p>
+<p>The limits are separated between shared and exclusive and reflect the extent
+ownership. For example a fresh snapshot shares almost all the blocks with the
+original subvolume, new writes to either subvolume will raise towards the
+exclusive limit.</p>
+<p>The qgroup identifiers conform to <em>level/id</em> where level 0 is reserved to the
+qgroups associated with subvolumes. Such qgroups are created automatically.</p>
+<p>The qgroup hierarchy is built by commands <b>create</b> and <b>assign</b>.</p>
+<blockquote><b>Note:</b>
+If the qgroup of a subvolume is destroyed, quota about the subvolume
+will not be functional until qgroup <em>0/<em>&lt;subvolume id&gt;</em></em> is created again.</blockquote>
 ==SUBCOMMAND==
 
-; '''assign''' [options] &lt;src&gt; &lt;dst&gt; &lt;path&gt;
-: Assign qgroup &lt;src&gt; as the child qgroup of &lt;dst&gt; in the btrfs filesystem identified by &lt;path&gt;. <br /><code>Options</code> <br />
-:; --rescan
-:: Automatically schedule quota rescan if the new qgroup assignment leads to quota inconsistency.
-:; --no-rescan
-:: Explicitly ask not to do a rescan.
-; '''create''' &lt;qgroupid&gt; &lt;path&gt;
-: Create a subvolume quota group. <br />For the '''0/&lt;subvolume id&gt;''' qgroup, a qgroup can be created even before the subvolume created.
-; '''destroy''' &lt;qgroupid&gt; &lt;path&gt;
-: Destroy a qgroup. <br />If a qgroup is no isolated,which means it is a parent or child qgroup, it can’t be destroyed.
-; '''limit''' [options] &lt;size&gt;|none [&lt;qgroupid&gt;] &lt;path&gt;
-: Limit the size of a qgroup to &lt;size&gt; or no limit in the btrfs filesystem identified by &lt;path&gt;. <br />If &lt;qgroupid&gt; is not given, qgroup of the subvolume identified by &lt;path&gt; is used if possible. <br /><code>Options</code> <br />
-:; -c
-:: limit amount of data after compression. This is the default, it is currently not possible to turn off this option. <br />
-:; -e
-:: limit space exclusively assigned to this qgroup.
-; '''remove''' &lt;src&gt; &lt;dst&gt; &lt;path&gt;
-: Remove the relationship between child qgroup &lt;src&gt; and parent qgroup &lt;dst&gt; in the btrfs filesystem identified by &lt;path&gt;.
-; '''show''' [options] &lt;path&gt;
-: Show all qgroups in the btrfs filesystem identified by &lt;path&gt;. <br /><code>Options</code> <br />
-:; -p
-:: print parent qgroup id.
-:; -c
-:: print child qgroup id.
-:; -r
-:: print limit of referenced size of qgroup.
-:; -e
-:: print limit of exclusive size of qgroup.
-:; -F
-:: list all qgroups which impact the given path(include ancestral qgroups)
-:; -f
-:: list all qgroups which impact the given path(exclude ancestral qgroups)
-:; --raw
-:: raw numbers in bytes, without the '''B''' suffix.
-:; --human-readable
-:: print human friendly numbers, base 1024, this is the default
-:; --iec
-:: select the 1024 base for the following options, according to the IEC standard.
-:; --si
-:: select the 1000 base for the following options, according to the SI standard.
-:; --kbytes
-:: show sizes in KiB, or kB with --si.
-:; --mbytes
-:: show sizes in MiB, or MB with --si.
-:; --gbytes
-:: show sizes in GiB, or GB with --si.
-:; --tbytes
-:: show sizes in TiB, or TB with --si.
-:; --sort=[+/-]&lt;attr&gt;[,[+/-]&lt;attr&gt;]…
-:: list qgroups in order of &lt;attr&gt;. <br />&lt;attr&gt; can be one or more of qgroupid,rfer,excl,max_rfer,max_excl. <br />Prefix '+' means ascending order and '-' means descending order of &lt;attr&gt;. If no prefix is given, use ascending order by default. <br />If multiple &lt;attr&gt;s is given, use comma to separate.
+<dl>
+<dt>
+<b>assign</b> [options] <em>&lt;src&gt;</em> <em>&lt;dst&gt;</em> <em>&lt;path&gt;</em>
+<dd>
+<p>
+Assign qgroup <em>&lt;src&gt;</em> as the child qgroup of <em>&lt;dst&gt;</em> in the btrfs filesystem
+identified by <em>&lt;path&gt;</em>.
+</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+--rescan
+<dd>
+<p>
+Automatically schedule quota rescan if the new qgroup assignment leads to
+quota inconsistency.
+</p>
 
+<dt>
+--no-rescan
+<dd>
+<p>
+Explicitly ask not to do a rescan.
+</p>
+
+</dl>
+
+<dt>
+<b>create</b> <em>&lt;qgroupid&gt;</em> <em>&lt;path&gt;</em>
+<dd>
+<p>
+Create a subvolume quota group.
+</p>
+<p>For the <em>0/<em>&lt;subvolume id&gt;</em></em> qgroup, a qgroup can be created even before the
+subvolume created.</p>
+
+<dt>
+<b>destroy</b> <em>&lt;qgroupid&gt;</em> <em>&lt;path&gt;</em>
+<dd>
+<p>
+Destroy a qgroup.
+</p>
+<p>If a qgroup is no isolated,which means it is a parent or child qgroup, it
+can&#8217;t be destroyed.</p>
+
+<dt>
+<b>limit</b> [options] <em>&lt;size&gt;</em>|none [<em>&lt;qgroupid&gt;</em>] <em>&lt;path&gt;</em>
+<dd>
+<p>
+Limit the size of a qgroup to <em>&lt;size&gt;</em> or no limit in the btrfs filesystem
+identified by <em>&lt;path&gt;</em>.
+</p>
+<p>If <em>&lt;qgroupid&gt;</em> is not given, qgroup of the subvolume identified by <em>&lt;path&gt;</em>
+is used if possible.</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-c
+<dd>
+<p>
+limit amount of data after compression. This is the default, it is currently not
+possible to turn off this option.
+</p>
+
+<dt>
+-e
+<dd>
+<p>
+limit space exclusively assigned to this qgroup.
+</p>
+
+</dl>
+
+<dt>
+<b>remove</b> <em>&lt;src&gt;</em> <em>&lt;dst&gt;</em> <em>&lt;path&gt;</em>
+<dd>
+<p>
+Remove the relationship between child qgroup <em>&lt;src&gt;</em> and parent qgroup <em>&lt;dst&gt;</em> in
+the btrfs filesystem identified by <em>&lt;path&gt;</em>.
+</p>
+
+<dt>
+<b>show</b> [options] <em>&lt;path&gt;</em>
+<dd>
+<p>
+Show all qgroups in the btrfs filesystem identified by <em>&lt;path&gt;</em>.
+</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-p
+<dd>
+<p>
+print parent qgroup id.
+</p>
+
+<dt>
+-c
+<dd>
+<p>
+print child qgroup id.
+</p>
+
+<dt>
+-r
+<dd>
+<p>
+print limit of referenced size of qgroup.
+</p>
+
+<dt>
+-e
+<dd>
+<p>
+print limit of exclusive size of qgroup.
+</p>
+
+<dt>
+-F
+<dd>
+<p>
+list all qgroups which impact the given path(include ancestral qgroups)
+</p>
+
+<dt>
+-f
+<dd>
+<p>
+list all qgroups which impact the given path(exclude ancestral qgroups)
+</p>
+
+<dt>
+--raw
+<dd>
+<p>
+raw numbers in bytes, without the <em>B</em> suffix.
+</p>
+
+<dt>
+--human-readable
+<dd>
+<p>
+print human friendly numbers, base 1024, this is the default
+</p>
+
+<dt>
+--iec
+<dd>
+<p>
+select the 1024 base for the following options, according to the IEC standard.
+</p>
+
+<dt>
+--si
+<dd>
+<p>
+select the 1000 base for the following options, according to the SI standard.
+</p>
+
+<dt>
+--kbytes
+<dd>
+<p>
+show sizes in KiB, or kB with --si.
+</p>
+
+<dt>
+--mbytes
+<dd>
+<p>
+show sizes in MiB, or MB with --si.
+</p>
+
+<dt>
+--gbytes
+<dd>
+<p>
+show sizes in GiB, or GB with --si.
+</p>
+
+<dt>
+--tbytes
+<dd>
+<p>
+show sizes in TiB, or TB with --si.
+</p>
+
+<dt>
+--sort=[+/-]<em>&lt;attr&gt;</em>[,[+/-]<em>&lt;attr&gt;</em>]&#8230;
+<dd>
+<p>
+list qgroups in order of <em>&lt;attr&gt;</em>.
+</p>
+<p><em>&lt;attr&gt;</em> can be one or more of qgroupid,rfer,excl,max_rfer,max_excl.</p>
+<p>Prefix '+' means ascending order and '-' means descending order of <em>&lt;attr&gt;</em>.
+If no prefix is given, use ascending order by default.</p>
+<p>If multiple <em>&lt;attr&gt;</em>s is given, use comma to separate.</p>
+
+</dl>
+
+</dl>
 ==EXIT STATUS==
 
-'''btrfs qgroup''' returns a zero exit status if it succeeds. Non zero is returned in case of failure.
-
+<p><b>btrfs qgroup</b> returns a zero exit status if it succeeds. Non zero is
+returned in case of failure.</p>
 ==AVAILABILITY==
 
-'''btrfs''' is part of btrfs-progs. Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for further details.
-
+<p><b>btrfs</b> is part of btrfs-progs.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.</p>
 ==SEE ALSO==
 
-[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-subvolume|btrfs-subvolume(8)]], [[Manpage/btrfs-quota|btrfs-quota(8)]],
-
+<p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
+[[Manpage/btrfs-subvolume|btrfs-subvolume(8)]],
+[[Manpage/btrfs-quota|btrfs-quota(8)]],</p>
 [[Category:Manpage]]

@@ -1,68 +1,152 @@
-=btrfs-restore(8) Manual Page=
+=btrfs-restore(8) manual page=
 {{GeneratedManpage
 |name=btrfs-restore}}
 
 ==NAME==
-
 btrfs-restore - try to restore files from a damaged btrfs filesystem image
 
 ==SYNOPSIS==
 
-'''btrfs restore''' [options] &lt;device&gt; &lt;path&gt; | -l &lt;device&gt;
-
+<p><b>btrfs restore</b> [options] <em>&lt;device&gt;</em> <em>&lt;path&gt;</em> | -l <em>&lt;device&gt;</em></p>
 ==DESCRIPTION==
 
-'''btrfs restore''' is used to try to salvage files from a damaged filesystem and restore them into &lt;path&gt; or just list the tree roots.
-
-Since current [[Manpage/btrfs-check|btrfs-check(8)]] or [[Manpage/btrfs-rescue|btrfs-rescue(8)]] only has very limited usage, '''btrfs restore''' is normally a better choice.
-
-'''Note:''' It is recommended to read the following btrfs wiki page if your data is not salvaged with default option:<br />https://btrfs.wiki.kernel.org/index.php/Restore
-
+<p><b>btrfs restore</b> is used to try to salvage files from a damaged filesystem and
+restore them into <em>&lt;path&gt;</em> or just list the tree roots.</p>
+<p>Since current [[Manpage/btrfs-check|btrfs-check(8)]] or [[Manpage/btrfs-rescue|btrfs-rescue(8)]] only has very limited usage,
+<b>btrfs restore</b> is normally a better choice.</p>
+<blockquote><b>Note:</b>
+It is recommended to read the following btrfs wiki page if your data is
+not salvaged with default option:<br/>
+https://btrfs.wiki.kernel.org/index.php/Restore</blockquote>
 ==OPTIONS==
 
-; -s|--snapshots
-: get snapshots, btrfs restore skips snapshots in default.
-; -x|--xattr
-: get extended attributes.
-; -m|--metadata
-: restore owner, mode and times.
-; -S|--symlinks
-: restore symbolic links as well as normal files.
-; -v|--verbose
-: verbose.
-; -i|--ignore-errors
-: ignore errors.
-; -o|--overwrite
-: overwrite directories/files in &lt;path&gt;.
-; -t &lt;bytenr&gt;
-: use &lt;bytenr&gt; to read root tree.
-; -f &lt;bytenr&gt;
-: only restore files that are under specified root whose root bytenr is &lt;bytenr&gt;.
-; -u|--super &lt;mirror&gt;
-: use given superblock mirror identified by &lt;mirror&gt;, it can be 0,1,2.
-; -r|--root &lt;rootid&gt;
-: only restore files that are under specified root whose objectid is &lt;rootid&gt;.
-; -d
-: find dir.
-; -l|--list-roots
-: list tree roots.
-; -D|--dry-run
-: dry run (only list files that would be recovered).
-; --path-regex &lt;regex&gt;
-: restore only filenames matching regex, you have to use following syntax (possibly quoted): <br /><code>^/(|home(|/username(|/Desktop(|/.*))))$</code>
-; -c
-: ignore case (--path-regex only).
+<dl>
+<dt>
+-s|--snapshots
+<dd>
+<p>
+get snapshots, btrfs restore skips snapshots in default.
+</p>
 
+<dt>
+-x|--xattr
+<dd>
+<p>
+get extended attributes.
+</p>
+
+<dt>
+-m|--metadata
+<dd>
+<p>
+restore owner, mode and times.
+</p>
+
+<dt>
+-S|--symlinks
+<dd>
+<p>
+restore symbolic links as well as normal files.
+</p>
+
+<dt>
+-v|--verbose
+<dd>
+<p>
+verbose.
+</p>
+
+<dt>
+-i|--ignore-errors
+<dd>
+<p>
+ignore errors.
+</p>
+
+<dt>
+-o|--overwrite
+<dd>
+<p>
+overwrite directories/files in <em>&lt;path&gt;</em>.
+</p>
+
+<dt>
+-t <em>&lt;bytenr&gt;</em>
+<dd>
+<p>
+use <em>&lt;bytenr&gt;</em> to read root tree.
+</p>
+
+<dt>
+-f <em>&lt;bytenr&gt;</em>
+<dd>
+<p>
+only restore files that are under specified root whose root bytenr is <em>&lt;bytenr&gt;</em>.
+</p>
+
+<dt>
+-u|--super <em>&lt;mirror&gt;</em>
+<dd>
+<p>
+use given superblock mirror identified by <em>&lt;mirror&gt;</em>, it can be 0,1,2.
+</p>
+
+<dt>
+-r|--root <em>&lt;rootid&gt;</em>
+<dd>
+<p>
+only restore files that are under specified root whose objectid is <em>&lt;rootid&gt;</em>.
+</p>
+
+<dt>
+-d
+<dd>
+<p>
+find dir.
+</p>
+
+<dt>
+-l|--list-roots
+<dd>
+<p>
+list tree roots.
+</p>
+
+<dt>
+-D|--dry-run
+<dd>
+<p>
+dry run (only list files that would be recovered).
+</p>
+
+<dt>
+--path-regex <em>&lt;regex&gt;</em>
+<dd>
+<p>
+restore only filenames matching regex, you have to use following syntax (possibly quoted):
+</p>
+<p><tt>^/(|home(|/username(|/Desktop(|/.*))))$</tt></p>
+
+<dt>
+-c
+<dd>
+<p>
+ignore case (--path-regex only).
+</p>
+
+</dl>
 ==EXIT STATUS==
 
-'''btrfs restore''' returns a zero exit status if it succeeds. Non zero is returned in case of failure.
-
+<p><b>btrfs restore</b> returns a zero exit status if it succeeds. Non zero is
+returned in case of failure.</p>
 ==AVAILABILITY==
 
-'''btrfs''' is part of btrfs-progs. Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for further details.
-
+<p><b>btrfs</b> is part of btrfs-progs.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.</p>
 ==SEE ALSO==
 
-[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-rescue|btrfs-rescue(8)]], [[Manpage/btrfs-check|btrfs-check(8)]]
-
+<p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
+[[Manpage/btrfs-rescue|btrfs-rescue(8)]],
+[[Manpage/btrfs-check|btrfs-check(8)]]</p>
 [[Category:Manpage]]

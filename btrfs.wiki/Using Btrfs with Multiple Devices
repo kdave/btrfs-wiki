@@ -38,7 +38,7 @@ Raid10 requires at least 4 devices.
  # Don't duplicate metadata on a single drive (default on single SSDs)
  mkfs.btrfs -m single /dev/sdb
 
-When you have drives with differing sizes and want to use the full capacity of each drive, you have to use the ''single'' profile for the data blocks, rather than raid0.
+If you want to use devices of different sizes, striped RAID levels (RAID-0, RAID-10, RAID-5, RAID-6) may not use all of the available space on the devices. Non-striped equivalents may give you a more effective use of space (single instead of RAID-0, RAID-1 instead of RAID-10).
 
  # Use full capacity of multiple drives with different sizes (metadata mirrored, data not mirrored and not striped)
  mkfs.btrfs -d single /dev/sdb /dev/sdc

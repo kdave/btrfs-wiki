@@ -1,76 +1,127 @@
-=btrfs-convert(8) Manual Page=
+=btrfs-convert(8) manual page=
 {{GeneratedManpage
 |name=btrfs-convert}}
 
 ==NAME==
-
 btrfs-convert - convert from ext2/3/4 filesystem to btrfs
 
 ==SYNOPSIS==
 
-'''btrfs-convert''' [options] &lt;device&gt;
-
+<p><b>btrfs-convert</b> [options] <em>&lt;device&gt;</em></p>
 ==DESCRIPTION==
 
-'''btrfs-convert''' is used to convert existing ext2/3/4 filesystem image to a btrfs filesystem in-place. The original filesystem image is accessible subvolume named '''ext2_saved''' as file '''image'''.
-
-'''Warning:''' If you are going to perform rollback to ext2/3/4, you should not execute '''btrfs balance''' command on the converted filesystem. This will change the extent layout and make '''btrfs-convert''' unable to rollback.
-
-The conversion utilizes free space of the original filesystem. The exact estimate of the required space cannot be foretold. The final btrfs metadata might occupy several gigabytes on a hundreds-gigabyte filesystem.
-
-If you decide not to rollback anymore, it is recommended to perform a few more steps to transform the btrfs filesystem to a more compact layout. The conversion inherits the original data block fragmentation and the metadata blocks are bound to the original free space layout.
-
-'''REMOVE THE ORIGINAL FILESYSTEM METADATA'''
-
-By removing the '''ext2_saved''' subvolume, all metadata of the original filesystem will be removed:
-
- <code><nowiki># btrfs subvolume delete /mnt/ext2_saved</nowiki></code>
-
-At this point it’s not possible to do rollback. The filesystem is usable but may be impacted by the fragmentation.
-
-'''MAKE FILE DATA MORE CONTIGUOUS'''
-
-An optional but recommended step is to run defragmentation on the entire filesystem. This will attempt to make file extents more contiguous.
-
- <code><nowiki># btrfs filesystem defrag -v -r -f -t 32M /mnt/btrfs</nowiki></code>
-
-Verbose recursive defragmentation ('''-v''', '''-r'''), flush data per-file ('''-f''') with target extent size 32M ('''-t''').
-
-'''ATTEMPT TO MAKE BTRFS METADATA MORE COMPACT'''
-
-Optional but recommended step.
-
-The metadata block groups after conversion may be smaller than the default size (256MiB or 1GiB). Running a balance will attempt to merge the block groups. This depends on the free space layout (and fragmentation) and may fail. This is a soft error leaving the filesystem usable but the block group layout may remain unchanged.
-
-Note that balance operation takes a lot of time.
-
- <code><nowiki># btrfs balance start -m /mnt/btrfs</nowiki></code>
-
+<p><b>btrfs-convert</b> is used to convert existing ext2/3/4 filesystem image to a
+btrfs filesystem in-place.  The original filesystem image is accessible
+subvolume named <em>ext2_saved</em> as file <em>image</em>.</p>
+<blockquote><b>Warning:</b>
+If you are going to perform rollback to ext2/3/4, you should not
+execute <b>btrfs balance</b> command on the converted filesystem. This will change
+the extent layout and make <b>btrfs-convert</b> unable to rollback.</blockquote>
+<p>The conversion utilizes free space of the original filesystem. The exact
+estimate of the required space cannot be foretold. The final btrfs metadata
+might occupy several gigabytes on a hundreds-gigabyte filesystem.</p>
+<p>If you decide not to rollback anymore, it is recommended to perform a few more
+steps to transform the btrfs filesystem to a more compact layout. The
+conversion inherits the original data block fragmentation and the metadata
+blocks are bound to the original free space layout.</p>
+<p><b>REMOVE THE ORIGINAL FILESYSTEM METADATA</b></p>
+<p>By removing the <em>ext2_saved</em> subvolume, all metadata of the original filesystem
+will be removed:</p>
+<pre># btrfs subvolume delete /mnt/ext2_saved</pre>
+<p>At this point it&#8217;s not possible to do rollback. The filesystem is usable but may
+be impacted by the fragmentation.</p>
+<p><b>MAKE FILE DATA MORE CONTIGUOUS</b></p>
+<p>An optional but recommended step is to run defragmentation on the entire
+filesystem. This will attempt to make file extents more contiguous.</p>
+<pre># btrfs filesystem defrag -v -r -f -t 32M /mnt/btrfs</pre>
+<p>Verbose recursive defragmentation (<em>-v</em>, <em>-r</em>), flush data per-file (<em>-f</em>) with target
+extent size 32M (<em>-t</em>).</p>
+<p><b>ATTEMPT TO MAKE BTRFS METADATA MORE COMPACT</b></p>
+<p>Optional but recommended step.</p>
+<p>The metadata block groups after conversion may be smaller than the default size
+(256MiB or 1GiB). Running a balance will attempt to merge the block groups.
+This depends on the free space layout (and fragmentation) and may fail. This is
+a soft error leaving the filesystem usable but the block group layout may
+remain unchanged.</p>
+<p>Note that balance operation takes a lot of time.</p>
+<pre># btrfs balance start -m /mnt/btrfs</pre>
 ==OPTIONS==
 
-; -d|--no-datasum
-: disable data checksum calculations and set NODATASUM file flag, this can speed up the conversion
-; -i|--no-xattr
-: ignore xattrs and ACLs of files
-; -n|--no-inline
-: disable inlining of small files to metadata blocks, this will decrease the metadata consumption and may help to convert a filesystem with low free space
-; -N|--nodesize &lt;SIZE&gt;
-: set filesystem nodesize, the tree block size in which btrfs stores its metadata. The default value is 16KB (16384) or the page size, whichever is bigger. Must be a multiple of the sectorsize, but not larger than 65536. See [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] for more details.
-; -r|--rollback
-: rollback to the original ext2/3/4 filesystem if possible
-; -l|--label &lt;LABEL&gt;
-: set filesystem label during conversion
-; -L|--copy-label
-: use label from the converted filesystem
-; -O|--features &lt;feature1&gt;[,&lt;feature2&gt;…]
-: A list of filesystem features turned on at btrfs-convert time. Not all features are supported by old kernels. To disable a feature, prefix it with '''^'''.To see all available features that btrfs-convert supports run:<code>btrfs-convert -O list-all</code> -p|--progress:: show progress of conversion, on by default --no-progress:: disable detailed progress and show only the main phases of conversion
+<dl>
+<dt>
+-d|--no-datasum
+<dd>
+<p>
+disable data checksum calculations and set NODATASUM file flag, this can speed
+up the conversion
+</p>
 
+<dt>
+-i|--no-xattr
+<dd>
+<p>
+ignore xattrs and ACLs of files
+</p>
+
+<dt>
+-n|--no-inline
+<dd>
+<p>
+disable inlining of small files to metadata blocks, this will decrease the metadata
+consumption and may help to convert a filesystem with low free space
+</p>
+
+<dt>
+-N|--nodesize <em>&lt;SIZE&gt;</em>
+<dd>
+<p>
+set filesystem nodesize, the tree block size in which btrfs stores its metadata.
+The default value is 16KB (16384) or the page size, whichever is bigger.
+Must be a multiple of the sectorsize, but not larger than 65536. See
+[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] for more details.
+</p>
+
+<dt>
+-r|--rollback
+<dd>
+<p>
+rollback to the original ext2/3/4 filesystem if possible
+</p>
+
+<dt>
+-l|--label <em>&lt;LABEL&gt;</em>
+<dd>
+<p>
+set filesystem label during conversion
+</p>
+
+<dt>
+-L|--copy-label
+<dd>
+<p>
+use label from the converted filesystem
+</p>
+
+<dt>
+-O|--features <em>&lt;feature1&gt;</em>[,<em>&lt;feature2&gt;</em>&#8230;]
+<dd>
+<p>
+A list of filesystem features turned on at btrfs-convert time. Not all features
+are supported by old kernels. To disable a feature, prefix it with <em>^</em>.
+</p>
+<p>To see all available features that btrfs-convert supports run:</p>
+<p><tt>btrfs-convert -O list-all</tt>
+-p|--progress::
+show progress of conversion, on by default
+--no-progress::
+disable detailed progress and show only the main phases of conversion</p>
+
+</dl>
 ==EXIT STATUS==
 
-'''btrfs-convert''' will return 0 if no error happened. If any problems happened, 1 will be returned.
-
+<p><b>btrfs-convert</b> will return 0 if no error happened.
+If any problems happened, 1 will be returned.</p>
 ==SEE ALSO==
 
-[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]]
-
+<p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]]</p>
 [[Category:Manpage]]

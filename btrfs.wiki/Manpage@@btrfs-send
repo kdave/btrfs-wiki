@@ -1,52 +1,94 @@
-=btrfs-send(8) Manual Page=
+=btrfs-send(8) manual page=
 {{GeneratedManpage
 |name=btrfs-send}}
 
 ==NAME==
-
-btrfs-send - send data of subvolume(s) to stdout/file.
+btrfs-send - generate a stream of changes between two subvolumes
 
 ==SYNOPSIS==
 
-'''btrfs send''' [-ve] [-p &lt;parent&gt;] [-c &lt;clone-src&gt;] [-f &lt;outfile&gt;] &lt;subvol&gt; [&lt;subvol&gt;…]
-
+<p><b>btrfs send</b> [-ve] [-p <em>&lt;parent&gt;</em>] [-c <em>&lt;clone-src&gt;</em>] [-f <em>&lt;outfile&gt;</em>] <em>&lt;subvol&gt;</em> [<em>&lt;subvol&gt;</em>&#8230;]</p>
 ==DESCRIPTION==
 
-Sends the subvolume(s) specified by &lt;subvol&gt; to stdout.
+<p>This command will generate a stream of instructions that describe changes
+between two subvolumes. The stream can be consumed by the <b>btrfs receive</b>
+command to replicate the sent subvolume on a different filesystem.
+The command operates in two modes: full and incremental.</p>
+<p>All subvolumes involved in one send command must be read-only (ie. the
+read-only snapshots and this status cannot be changed if there&#8217;s a running send
+operation that uses the subvolume).</p>
+<p>In the full mode, the entire subvolume data and metadata will end up in the
+stream.</p>
+<p>In the incremental mode (options <em>-p</em> and <em>-c</em>), there can be one or more
+parent subvolumes that will establish the base for determining the changes.
+The final stream will be smaller compared to the full mode.</p>
+<p>It is allowed to omit the <em>-p <em>&lt;parent&gt;</em></em> option when <em>-c <em>&lt;clone-src&gt;</em></em> options
+are given, in which case <b>btrfs send</b> will determine a suitable parent among the
+clone sources itself.</p>
+<p>You must not specify clone sources unless you guarantee that these snapshots
+are exactly in the same state on both sides, the sender and the receiver.</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-v
+<dd>
+<p>
+enable verbose output, print generated commands in a readable form, (each
+occurrence of this option increases the verbosity level)
+</p>
 
-By default, this will send the whole subvolume. To do an incremental send, use '''-p &lt;parent&gt;'''.
+<dt>
+-e
+<dd>
+<p>
+if sending multiple subvolumes at once, use the new format and omit the
+<em>end cmd</em> marker in the stream separating the subvolumes
+</p>
 
-If you want to allow btrfs to clone from any additional local snapshots, use '''-c &lt;clone-src&gt;''' (multiple times where applicable).
+<dt>
+-p <em>&lt;parent&gt;</em>
+<dd>
+<p>
+send an incremental stream from <em>parent</em> to <em>subvol</em>
+</p>
 
-You must not specify clone sources unless you guarantee that these snapshots are exactly in the same state on both sides, the sender and the receiver.
+<dt>
+-c <em>&lt;clone-src&gt;</em>
+<dd>
+<p>
+use this snapshot as a clone source for an incremental send (multiple allowed)
+</p>
 
-It is allowed to omit the '''-p &lt;parent&gt;''' option when '''-c &lt;clone-src&gt;''' options are given, in which case '''btrfs send''' will determine a suitable parent among the clone sources itself.
+<dt>
+-f <em>&lt;outfile&gt;</em>
+<dd>
+<p>
+output is normally written to standard outout so it can be eg. piped to
+receive, use this option to write it to a file
+</p>
 
-<code>Options</code>
+<dt>
+--no-data
+<dd>
+<p>
+send in <em>NO_FILE_DATA</em> mode
+</p>
+<p>The output stream does not contain any file
+data and thus cannot be used to transfer changes. This mode is faster and
+useful to show the differences in metadata.</p>
 
-; -v
-: Enable verbose debug output. Each occurrence of this option increases the verbose level more.
-; -e
-: If sending multiple subvols at once, use the new format and omit the &lt;end cmd&gt; between the subvols.
-; -p &lt;parent&gt;
-: Send an incremental stream from &lt;parent&gt; to &lt;subvol&gt;.
-; -c &lt;clone-src&gt;
-: Use this snapshot as a clone source for an incremental send (multiple allowed).
-; -f &lt;outfile&gt;
-: Output is normally written to stdout. To write to a file, use this option. An alternative would be to use pipes.
-; --no-data
-: Send in NO_FILE_DATA mode. The output stream does not contain any file data and thus cannot be used to transfer changes. This mode is faster and useful to show the differences in metadata.
-
+</dl>
 ==EXIT STATUS==
 
-'''btrfs send''' returns a zero exit status if it succeeds. Non zero is returned in case of failure.
-
+<p><b>btrfs send</b> returns a zero exit status if it succeeds. Non zero is
+returned in case of failure.</p>
 ==AVAILABILITY==
 
-'''btrfs''' is part of btrfs-progs. Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for further details.
-
+<p><b>btrfs</b> is part of btrfs-progs.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.</p>
 ==SEE ALSO==
 
-[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-receive|btrfs-receive(8)]]
-
+<p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
+[[Manpage/btrfs-receive|btrfs-receive(8)]]</p>
 [[Category:Manpage]]

@@ -1,52 +1,290 @@
-=btrfs-inspect-internal(8) Manual Page=
+=btrfs-inspect-internal(8) manual page=
 {{GeneratedManpage
 |name=btrfs-inspect-internal}}
 
 ==NAME==
-
 btrfs-inspect-internal - query various internal information
 
 ==SYNOPSIS==
 
-'''btrfs inspect-internal''' &lt;subcommand&gt; &lt;args&gt;
-
+<p><b>btrfs inspect-internal</b> <em>&lt;subcommand&gt;</em> <em>&lt;args&gt;</em></p>
 ==DESCRIPTION==
 
-This command group provides an interface to query internal information. The functionality ranges from a simple UI to an ioctl or a more complex query that assembles the result from several internal structures. The latter usually requires calls to privileged ioctls.
-
+<p>This command group provides an interface to query internal information. The
+functionality ranges from a simple UI to an ioctl or a more complex query that
+assembles the result from several internal structures. The latter usually
+requires calls to privileged ioctls.</p>
 ==SUBCOMMAND==
 
-; '''inode-resolve''' [-v] &lt;ino&gt; &lt;path&gt;
-: (needs root privileges) <br />resolve paths to all files with given inode number '''ino''' in a given subvolume at '''path''', ie. all hardlinks <br /><code>Options</code> <br />
-:; -v
-:: verbose mode, print count of returned paths and ioctl() return value
-; '''logical-resolve''' [-Pv] [-s &lt;bufsize&gt;] &lt;logical&gt; &lt;path&gt;
-: (needs root privileges) <br />resolve paths to all files at given '''logical''' address in the linear filesystem space <br /><code>Options</code> <br />
-:; -P
-:: skip the path resolving and print the inodes instead
-:; -v
-:: verbose mode, print count of returned paths and all ioctl() return values
-:; -s &lt;bufsize&gt;
-:: set internal buffer for storing the file names to '''bufsize''', default is 4096, maximum 64k
-; '''min-dev-size''' [options] &lt;path&gt;
-: (needs root privileges) <br />return the minimum size the device can be shrunk to, without performing any resize operation, this may be useful before executing the actual resize operation <br /><code>Options</code> <br />
-:; --id &lt;id&gt;
-:: specify the device '''id''' to query, default is 1 if this option is not used
-; '''rootid''' &lt;path&gt;
-: for a given file or directory, return the containing tree root id, for a subvolume itself return it’s own tree id (ie. subvol id) <br />'''Note:''' The result is undefined for the so-called empty subvolumes (identified by inode number 2), but such subvolume does not contain any files anyway
-; '''subvolid-resolve''' &lt;subvolid&gt; &lt;path&gt;
-: (needs root privileges) <br />resolve the absolute path of a the subvolume id '''subvolid'''
+<dl>
+<dt>
+<b>dump-super</b> [options] <em>&lt;device&gt;</em> [device&#8230;]
+<dd>
+<p>
+(replaces the standalone tool <b>btrfs-show-super</b>)
+</p>
+<p>Show btrfs superblock information stored on given devices in textual form.
+By default the first superblock is printed, more details about all copies or
+additional backup data can be printed.</p>
+<p>Besides verifictaion of the filesystem signature, there are no other sanity
+checks. The superblock checksum status is reported, the device item and
+filesystem UUIDs are checked and reported.</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-f|--full
+<dd>
+<p>
+print full superblock information, including the system chunk array and backup roots
+</p>
 
+<dt>
+-a|--all
+<dd>
+<p>
+print information about all present superblock copies (cannot be used together with <em>-i</em> option)
+</p>
+
+<dt>
+-i <em>&lt;super_mirror&gt;</em>
+<dd>
+<p>
+specify which mirror to print, valid values are 0, 1 and 2 and the superblock must be present on the device
+</p>
+<p>If there are multiple options specified, only the last one is applies.</p>
+
+<dt>
+-F|--force
+<dd>
+<p>
+attempt to print the superblock even if thre&#8217;s no valid BTRFS signature found
+</p>
+<p>The result may be completely wrong if the data do not resemble a superblock.</p>
+
+<dt>
+-s <em>&lt;bytenr&gt;</em>
+<dd>
+<p>
+specify offset to a superblock in a non-standard location at <em>bytenr</em>, useful
+for debugging (disables the <em>-f</em> option)
+</p>
+
+</dl>
+
+<dt>
+<b>dump-tree</b> [options] <em>&lt;device&gt;</em>
+<dd>
+<p>
+(replaces the standalone tool <b>btrfs-debug-tree</b>)
+</p>
+<p>Dump tree structures from a given device in textual form, expand keys to human
+readable equivalents where possible.
+This is useful for analyzing filesystem state or inconsistencies and has
+a positive educational effect on understanding the internal filesystem structure.</p>
+<blockquote><b>Note:</b>
+contains file names, consider that if you&#8217;re asked to send the dump for
+analysis. Does not contain file data.</blockquote>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-e|--extents
+<dd>
+<p>
+print only extent-related information: extent and device trees
+</p>
+
+<dt>
+-d|--device
+<dd>
+<p>
+print only device-related information: tree root, chunk and device trees
+</p>
+
+<dt>
+-r|--roots
+<dd>
+<p>
+print only short root node information, ie. the root tree keys
+</p>
+
+<dt>
+-R|--backups
+<dd>
+<p>
+same as --roots plus print backup root info, ie. the backup root keys and
+the respective tree root block offset
+</p>
+
+<dt>
+-u|--uuid
+<dd>
+<p>
+print only the uuid tree information, empty output if the tree does not exist
+</p>
+
+<dt>
+-b <em>&lt;block_num&gt;</em>
+<dd>
+<p>
+print info of the specified block only
+</p>
+
+<dt>
+-t <em>&lt;tree_id&gt;</em>
+<dd>
+<p>
+print only the tree with the specified ID, where the ID can be numerical or
+common name in a flexible human readable form
+</p>
+<p>The tree id name recognition rules:</p>
+<ul>
+<li>
+<p>
+case does not matter
+</p>
+</li>
+<li>
+<p>
+the C source definition, eg. BTRFS_ROOT_TREE_OBJECTID
+</p>
+</li>
+<li>
+<p>
+short forms without BTRFS_ prefix, without _TREE and _OBJECTID suffix, eg. ROOT_TREE, ROOT
+</p>
+</li>
+<li>
+<p>
+convenience aliases, eg. DEVICE for the DEV tree, CHECKSUM for CSUM
+</p>
+</li>
+<li>
+<p>
+unrecognized ID is an error
+</p>
+</li>
+</ul>
+
+</dl>
+
+<dt>
+<b>inode-resolve</b> [-v] <em>&lt;ino&gt;</em> <em>&lt;path&gt;</em>
+<dd>
+<p>
+(needs root privileges)
+</p>
+<p>resolve paths to all files with given inode number <em>ino</em> in a given subvolume
+at <em>path</em>, ie. all hardlinks</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-v
+<dd>
+<p>
+verbose mode, print count of returned paths and ioctl() return value
+</p>
+
+</dl>
+
+<dt>
+<b>logical-resolve</b> [-Pv] [-s <em>&lt;bufsize&gt;</em>] <em>&lt;logical&gt;</em> <em>&lt;path&gt;</em>
+<dd>
+<p>
+(needs root privileges)
+</p>
+<p>resolve paths to all files at given <em>logical</em> address in the linear filesystem space</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-P
+<dd>
+<p>
+skip the path resolving and print the inodes instead
+</p>
+
+<dt>
+-v
+<dd>
+<p>
+verbose mode, print count of returned paths and all ioctl() return values
+</p>
+
+<dt>
+-s <em>&lt;bufsize&gt;</em>
+<dd>
+<p>
+set internal buffer for storing the file names to <em>bufsize</em>, default is 4096, maximum 64k
+</p>
+
+</dl>
+
+<dt>
+<b>min-dev-size</b> [options] <em>&lt;path&gt;</em>
+<dd>
+<p>
+(needs root privileges)
+</p>
+<p>return the minimum size the device can be shrunk to, without performing any
+resize operation, this may be useful before executing the actual resize operation</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+--id <em>&lt;id&gt;</em>
+<dd>
+<p>
+specify the device <em>id</em> to query, default is 1 if this option is not used
+</p>
+
+</dl>
+
+<dt>
+<b>rootid</b> <em>&lt;path&gt;</em>
+<dd>
+<p>
+for a given file or directory, return the containing tree root id, for a
+subvolume itself return it&#8217;s own tree id (ie. subvol id)
+</p>
+<blockquote><b>Note:</b>
+The result is undefined for the so-called empty subvolumes (identified by
+inode number 2), but such subvolume does not contain any files anyway</blockquote>
+
+<dt>
+<b>subvolid-resolve</b> <em>&lt;subvolid&gt;</em> <em>&lt;path&gt;</em>
+<dd>
+<p>
+(needs root privileges)
+</p>
+<p>resolve the absolute path of a the subvolume id <em>subvolid</em></p>
+
+<dt>
+<b>tree-stats</b> [options] <em>&lt;device&gt;</em>
+<dd>
+<p>
+(needs root privileges)
+</p>
+<p>Print sizes and statistics of trees.</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-b
+<dd>
+<p>
+Print raw numbers in bytes.
+</p>
+
+</dl>
+
+</dl>
 ==EXIT STATUS==
 
-'''btrfs inspect-internal''' returns a zero exit status if it succeeds. Non zero is returned in case of failure.
-
+<p><b>btrfs inspect-internal</b> returns a zero exit status if it succeeds. Non zero is
+returned in case of failure.</p>
 ==AVAILABILITY==
 
-'''btrfs''' is part of btrfs-progs. Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for further details.
-
+<p><b>btrfs</b> is part of btrfs-progs.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.</p>
 ==SEE ALSO==
 
-[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], [[Manpage/btrfs-debug-tree|btrfs-debug-tree(8)]]
-
+<p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]]</p>
 [[Category:Manpage]]

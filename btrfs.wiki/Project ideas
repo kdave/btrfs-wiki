@@ -157,11 +157,15 @@ other filesystem specific to btrfs.
 === Implement new RENAME_* modes ===
 
 {{project
+|who=Dan Fuhry
+|patch=[http://www.spinics.net/lists/linux-btrfs/msg51542.html]
 |text=There are new modes of ''rename'' syscall.
 
 * RENAME_EXCHANGE
 * RENAME_WHITEOUT
 }}
+
+Candidate for 4.7 ([https://git.kernel.org/cgit/linux/kernel/git/fdmanana/linux.git/log/?h=for-chris-4.7 submitted by fdmanana])
 
 === Swap file support ===
 {{project
