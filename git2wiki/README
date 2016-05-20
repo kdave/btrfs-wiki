@@ -2,30 +2,25 @@ Rudimentary conversion from asciidoc to mediawiki.
 
 Requires:
 
-* perl HTML::WikiConverter
-* perl HTML::WikiConverter::MediaWiki
+* asciidoc
 
 Optional:
-
-* perl XHTML::MediaWiki
 
 Conversion:
 
 * preprocess asciidoc
-  - [obsoleted] glue lines with + directly, the convertors were confused
-  - due to an unknown bug in html -> mediawiki conversion, a newline after
-    a standalone '+' is lost, we have to look for such lines and insert
-    a temporary marker than gets replaced by <br /> in the html, before mw
-    conversion
   - adjust NOTE and WARNING, we want own formatting, eg. in the option lists
-* asciidoc to html
-* html to mediawiki
+* asciidoc to lightweight html that will be the final mw
 * postprocess mediawiki
   - add hyperlinks to external manpages
   - other visual artifacts that the conversion tools did not get right
   - clean whitespace
 
 Conversion tools:
+
+- tuned asciidoc config is the best option
+
+Previous attempts:
 
 - perl modules were most successful
 - pandoc can do direct conversion but did not understand nested lists

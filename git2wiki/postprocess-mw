@@ -14,41 +14,28 @@ sub man2url($$) {
 # header
 
 while (<>) {
-	# artificial newlines
-	if (/ MARKERNEWLINE/) {
-		s/ MARKERNEWLINE/<br \/>/g;
-	}
-	if (/\+\+/) {
-		s/\+\+/<br \/>/g;
-	}
-	# : in defintion breaks line
-	if (/^;+\s.*:/) {
-		s/:/<nowiki>:<\/nowiki>/g;
-	}
-	# fix broken nested definitions
-	s/^;;/:;/;
 	# man pages
 	my $looping = 1000;
-	while ( m{(<code>(btrfs[a-z_-]*)</code>(\(\d+\)))}) {
+	while ( m{(<tt>(btrfs[a-z_-]*)</tt>(\(\d+\)))}) {
 		print STDERR "REPLACED: $1\n" if $verbose;
-		s%<code>(btrfs[a-z_-]*)</code>(\(\d+\))%[[Manpage/$1|$1$2]]%;
+		s%<tt>(btrfs[a-z_-]*)</tt>(\(\d+\))%[[Manpage/$1|$1$2]]%;
 		if (!$looping--) {
 			die "FATAL: looping in replacement logic 1, $_\n";
 		}
 	}
 	$looping = 1000;
-	while ( m{(\<code\>((?:mkfs|fsck)\.btrfs)\</code\>(\(\d+\)))}) {
+	while ( m{(\<tt\>((?:mkfs|fsck)\.btrfs)\</tt\>(\(\d+\)))}) {
 		print STDERR "REPLACED: $1\n" if $verbose;
-		s%<code>((?:mkfs|fsck)\.btrfs)</code>(\(\d+\))%[[Manpage/$1|$1$2]]%;
+		s%<tt>((?:mkfs|fsck)\.btrfs)</tt>(\(\d+\))%[[Manpage/$1|$1$2]]%;
 		if (!$looping--) {
 			die "FATAL: looping in replacement logic 2, $_\n";
 		}
 	}
 	$looping = 1000;
-	while (m{(<code>([a-z._-]+)</code>\((\d+)\))}) {
+	while (m{(<tt>([a-z._-]+)</tt>\((\d+)\))}) {
 		print STDERR "REPLACED: $1\n" if $verbose;
 		my $url=&man2url($2,$3);
-		s%<code>([a-z._-]+)</code>(\(\d+\))%[$url $1$2]%;
+		s%<tt>([a-z._-]+)</tt>(\(\d+\))%[$url $1$2]%;
 		if (!$looping--) {
 			die "FATAL: looping in replacement logic 3, $_\n";
 		}
@@ -60,7 +47,7 @@ while (<>) {
 	print;
 	# after title warning
 	# capture page name for git link
-	if (/^=\s*([a-zA-Z0-9_\.-]+)\(.*Manual Page/) {
+	if (/^=\s*([a-zA-Z0-9_\.-]+)\(/) {
 		my $gitname=$1;
 		if ($gitname ne '') {
 			print "{{GeneratedManpage\n|name=$gitname}}\n";
@@ -69,6 +56,3 @@ while (<>) {
 		}
 	}
 }
-
-# footer
-print "[[Category:Manpage]]\n";
