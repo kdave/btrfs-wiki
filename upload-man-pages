@@ -3,9 +3,10 @@
 
 dodiff=True
 doedit=True
+doautoupload=True
 whoami='kdave'
 
-summary='Update from git, v4.4'
+summary='Update from git, v4.5.3'
 
 import os
 import sys
@@ -75,10 +76,13 @@ for page in cat.getAllMembersGen():
 			if hasdiff:
 				message("Found differences")
 				if doedit:
-					p=getpass("Really apply changes? [y/N]")
-					if p!='y':
-						message("Skip update of %s" % pn)
-						continue
+                                        if not doautoupload:
+                                            p=getpass("Really apply changes? [y/N]")
+                                            if p!='y':
+                                                    message("Skip update of %s" % pn)
+                                                    continue
+                                        else:
+                                            message("AUTOULPLOAD")
 					txt=''.join(files[pn])
 					message("Update wiki page %s" % pn)
 					res=page.edit(text=txt, summary=summary, notminor=True, bot=True)
