@@ -25,7 +25,9 @@ Debug-tree
 Debugging Btrfs with GDB
 Deduplication
 Design notes on Send/Receive
+Design notes on dedupe
 Developer's FAQ
+Development notes
 ENOSPC
 FAQ
 Gentoo ebuilds

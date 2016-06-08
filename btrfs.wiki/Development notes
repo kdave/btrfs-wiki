@@ -1,0 +1,90 @@
+'''page under construction'''
+
+Collection of various notes about development practices, how-to's or checklists.
+
+== Adding a new ioctl, extending an existing one ==
+
+* add code to ''strace'' so the ioctl calls are parsed into a human readable form, (reference: Jeff's patchset)
+
+== Development schedule ==
+
+A short overview of the development phases of linux kernel and what this means for developers regarding sending patches etc.
+
+=== Major release ===
+
+''Overall:'' a major release is done by Linus, the version bumps in the 2nd position of the version, eg. it's ''4.6''. This usually means distributions start to adopt the sources, the stable kernels are going to be released.
+
+''Developers:'' expect bugreports based on this version, this usually does not have other significance regarding development of new features or bugfixes
+
+=== Merge window ===
+
+''Overall:'' the time when pull requests from 1st level maintainers get sent to Linus, the merge window starts after the major release and usually takes two weeks
+
+''Developers:'' get ready with any bugfixes that were not part of the patches in the pull requests but are still relevant for the upcoming kernel
+
+There are usually one or two pull requests sent by the maintainer so it's OK to send the bugfixes to the mailinglist even during the merge window period. If the "deadline" is not met, the patches get merged in the next ''rc''.
+
+Sending big patchsets during this period is not discouraged, but feedback may be delayed.
+
+The amount of changes that go to ''master'' branch from the rest of the kernel is high, things can break due to reasons unrelated to btrfs changes. Testing is welcome, but the bugs could turn out not to be relevant to us.
+
+=== The rc1 ===
+
+''Overall:'' most of the kernel changes are now merged, no new features are allowed to be added, the following period until the major release is expected to fix only regressions
+
+''Developers:'' it's a good time to test extensively, changes in VFS, MM, scheduler, debugging features and other subsystems could introduce bugs or misbehaviour
+
+From now on until the late release candidates, it's a good time to post big patchsets that are supposed to land in the next kernel. There's time to let others to do review, discuss design goals, do patchset revisions based on feedback.
+
+Depending on the proposed changes, the patchset could be queued for the next release within that time. If the patchset is intrusive, it could stay in the ''for-next'' branches for some time.
+
+=== The late rcX (rc5 and up) ===
+
+''Overall:'' based on past experience, there are at least 5 release candidates, done on a weekly basis, so you can estimate the amount of time before the full release or merge window. The 5 seems like am minimum, usually there are 2 or 3 more release candidates.
+
+''Developers:'' new code for the upcoming kernel is supposed to be reviewed and tested, can be found in the ''for-next'' branch
+
+Sending intrusive changes at this point is not guaranteed to be reviewed or testd in time so it gets queued for the next kernel. This highly depends on the nature of the changes. Patch count should not be an issue if the patches are revieweable or do not do intrusive changes.
+
+=== Major release ===
+
+<tt>goto 1;</tt>
+
+= Kernel config options =
+
+== Testing ==
+
+Compile-time config options for kernel that can help debugging, testing.
+They usually take a hit on performance or resources (memory) so they should be
+selected wisely. The options in '''bold''' should be safe to use by default
+for debugging builds.
+
+Please refer to the option documentation for further details.
+
+* devices for testing
+** '''CONFIG_BLK_DEV_LOOP''' - enable loop device
+** for fstests: '''DM_FLAKEY''', '''CONFIG_FAIL_MAKE_REQUEST'''
+** '''CONFIG_SCSI_DEBUG''' - fake scsi block device
+* memory
+** '''CONFIG_SLUB_DEBUG''' - boot with slub_debug
+** CONFIG_DEBUG_PAGEALLOC + CONFIG_DEBUG_PAGEALLOC_ENABLE_DEFAULT (on newer kernels)
+** CONFIG_PAGE_POISONING
+** CONFIG_HAVE_DEBUG_KMEMLEAK
+** CONFIG_FAILSLAB
+* btrfs
+** '''CONFIG_BTRFS_DEBUG''', '''CONFIG_BTRFS_ASSERT''', '''CONFIG_BTRFS_FS_RUN_SANITY_TESTS'''
+** '''CONFIG_BTRFS_FS_CHECK_INTEGRITY'''
+* locking
+** CONFIG_DEBUG_SPINLOCK, CONFIG_DEBUG_MUTEXES
+** CONFIG_DEBUG_LOCK_ALLOC
+** CONFIG_PROVE_LOCKING, CONFIG_LOCKDEP
+** CONFIG_LOCK_STAT
+** CONFIG_PROVE_RCU
+* sanity checks
+** CONFIG_DEBUG_STACK_USAGE, CONFIG_HAVE_DEBUG_STACKOVERFLOW, CONFIG_DEBUG_STACKOVERFLOW
+** CONFIG_STACKTRACE
+** kasan
+* verbose reporting
+** CONFIG_DEBUG_BUGVERBOSE
+* tracing
+** CONFIG_TRACING etc

@@ -631,7 +631,7 @@ There is not a single answer to this question.  Here are the issues to think abo
 ** raw partitions can only be made bigger if there is free space after the partition, while LVM can expand an LV onto free space anywhere in the volume group - and it can do the resize online
 * subvolume/logical volume size constraints
 ** LVM is convenient for creating fixed size logical volumes (e.g. 10MB for each user, 20GB for each virtual machine image, etc)
-** subvolumes don't currently enforce such rigid size constraints, although the upcoming qgroups feature will address this issue
+** subvolumes don't currently enforce such rigid size constraints, although the upcoming [[Quota_support|qgroups]] quota feature will address this issue
 
 Based on the above, all of the following are valid strategies, depending upon whether your priority is performance or flexibility:
 

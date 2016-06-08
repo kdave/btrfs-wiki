@@ -53,6 +53,9 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 == News ==
 
+'''Linux v4.5.7 (Jun 2016)'''
+* stable kernel with several btrfs bugfixes
+
 '''Wiki updates (2016-05-20)'''
 * manual pages mass update from git (4.5.3), please report bad formatting or conversion artifacts
 
@@ -77,7 +80,6 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 * check: fix bytes_used accounting
 * documentation updates: mount options, scrub, send, receive, select-super, check, mkfs
 * testing: new fuzzed images, for superblock and chunks
-
 
 '''In coreutils 8.24'''
 * ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13] ([https://lists.gnu.org/archive/html/coreutils-announce/2015-07/msg00000.html release notes])

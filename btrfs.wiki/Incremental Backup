@@ -31,6 +31,12 @@ That said, many fixes have gone in btrfs send/receive and it is recommended to u
 ; snazzer [https://github.com/csirac2/snazzer/#snazzer]
 : Minimal-dependency btrfs snapshotting and backup system offering sha512sum/PGP snapshot measurement, ssh or local filesystem transport and non-linear pruning.
 
+; Just backup btrfs [https://github.com/nazar-pc/just-backup-btrfs] by Nazar Mokrynskyi
+: Snapshots creation within the same btrfs partition, backups to another partition, snapshots rotation separately for subvolumes within partition and for external on another partition (you can keep few snapshots on source partition and more on external bigger one); single PHP script without external dependencies, uses simple configuration file in JSON format
+
+; snapbtrex [https://github.com/yoshtec/snapbtrex]
+: Snapshot creation and transfer to remote systems via ssh, no config files just shell options. The only dependency is python. An extension of the [[SnapBtr]] script.
+
 == Doing it by hand, step by step ==
 When performing incremental backups, we will be working with two snapshots, one of them representing the time of the earlier backup, and the other representing the current backup. When the backup run completes, we can discard the earlier of the snapshots to prepare for the next incremental run.
 

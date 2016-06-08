@@ -1,0 +1,23 @@
+== Introduction ==
+
+This page is for documentation related to btrfs in-band de-duplication(dedupe for short).<br/>
+
+Btrfs in-band dedupe is still an out-of-tree experimental feature, but it's becoming
+more and more stable, and related currently trying to push it for mainline.<br/>
+
+== Overall Design ==
+TODO
+
+== Difference with normal write routine ==
+=== vs normal write ===
+TODO
+=== vs compression ===
+
+== Dedupe backends ==
+TODO
+
+== Ioctl interface ==
+TODO
+
+== Further plans ==
+TODO

@@ -51,7 +51,7 @@ from normal directories.</p>
 <p>
 Create a subvolume <em>&lt;name&gt;</em> in <em>&lt;dest&gt;</em>.
 </p>
-<p>If <em>&lt;dest&gt;</em> is not given, subvolume <em>&lt;name&gt;</em> will be created in the currently
+<p>If <em>&lt;dest&gt;</em> is not given, subvolume <em>&lt;name&gt;</em> will be created in the current
 directory.</p>
 <p><tt>Options</tt></p>
 <dl>

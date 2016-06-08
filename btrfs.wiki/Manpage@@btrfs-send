@@ -30,14 +30,6 @@ are exactly in the same state on both sides, the sender and the receiver.</p>
 <p><tt>Options</tt></p>
 <dl>
 <dt>
--v
-<dd>
-<p>
-enable verbose output, print generated commands in a readable form, (each
-occurrence of this option increases the verbosity level)
-</p>
-
-<dt>
 -e
 <dd>
 <p>
@@ -76,6 +68,21 @@ send in <em>NO_FILE_DATA</em> mode
 <p>The output stream does not contain any file
 data and thus cannot be used to transfer changes. This mode is faster and
 useful to show the differences in metadata.</p>
+
+<dt>
+-v|--verbose
+<dd>
+<p>
+enable verbose output, print generated commands in a readable form, (each
+occurrence of this option increases the verbosity level)
+</p>
+
+<dt>
+-q|--quiet
+<dd>
+<p>
+suppress all messagese except errors
+</p>
 
 </dl>
 ==EXIT STATUS==
