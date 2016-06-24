@@ -199,7 +199,9 @@ Note, if the ''fsck.btrfs'' utility is in fact ''btrfsck'', then the filesystem 
 
 == Can I use RAID[56] on my Btrfs filesystem? ==
 
-Parity RAID appeared in 3.9, and was considered experimental until 3.19, when recovery code to deal with bitrot/checksum errors was introduced. See [[RAID56]] for more details.
+The parity RAID feature is mostly implemented, but has some problems in the case of power failure (or other unclean shutdown) which lead to damaged data. It is recommended that parity RAID be used '''only''' for testing purposes.
+
+See [[RAID56]] for more details.
 
 == Is Btrfs optimized for SSD? ==
 

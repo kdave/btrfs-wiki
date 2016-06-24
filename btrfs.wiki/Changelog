@@ -160,6 +160,21 @@ Major features or significant feature enhancements by kernel version. For more i
 |text=Save creation time (otime) for all new files and directories. For future use, current tool cannot read it directly.
 }}
 {{FeatureMerged
+|name=rootid ioctl accessible
+|version=4.2
+|text=The INO_LOOKUP will return root id (id of the containing subvolume), unrestricted and to all users if the ''treeid'' is 0.
+}}
+{{FeatureMerged
+|name=dedupe possible on the same inode
+|version=4.2
+|text=The EXTENT_SAME ioctl will accept the same inode as source and destination (ranges must not overlap).
+}}
+{{FeatureMerged
+|name=trim all free space
+|version=4.3
+|text=Trim will be performed also on the space that's not allocated by the chunks, not only free space within the allocated chunks.
+}}
+{{FeatureMerged
 |name=balance filter updates
 |version=4.4
 |text=Enhanced syntax and new balance filters:
@@ -175,13 +190,56 @@ Major features or significant feature enhancements by kernel version. For more i
 {{FeatureMerged
 |name=balance filter updates
 |version=4.5
-|text=Conversion to data/DUP profile possible through balance filters.
+|text=Conversion to data/DUP profile possible through balance filters -- on single-device filesytem.
+|note=mkfs.btrfs allows creating DUP on single device in the non-mixed mode since 4.4
+}}
+{{FeatureMerged
+|name=max_inline default
+|version=4.6
+|text=The default value of max_inline changed to 2048.
+}}
+{{FeatureMerged
+|name=read features from control device
+|version=4.6
+|text=The existing ioctl GET_SUPPORTED_FEATURES can be now used on the control device (/dev/btrfs-control) and returns the supported features without any mounted filesystem.
+}}
+{{FeatureMerged
+|name=delete device by id
+|version=4.7
+|text=Add new ioctl RM_DEV_V2, pass device to be deleted by its ID.
+}}
+{{FeatureMerged
+|name=more renameat2 modes
+|version=4.7
+|text=Add support for RENAME_EXCHANGE and RENAME_WHITEOUT to ''renameat2'' syscall. This also means that ''overlayfs'' is now supported on top of btrfs.
+}}
+{{FeatureMerged
+|name=balance filter updates
+|version=4.7
+|text=Conversion to data/DUP profile possible through balance filters -- on multiple-device filesystems.
+|note=mkfs.btrfs allows creating DUP on multiple devices since 4.5.1
 }}
 |}
 
 = By version (btrfs-progs) =
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
+
+== btrfs-progs 4.6 (Jun 2016) ==
+
+* convert - major rewrite:
+** fix a long-standing bug that led to mixing data blocks into metadata block groups
+** the workaround was to do full balance after conversion, which was recommended practice anyway
+** explicitly set the lowest supported version of e2fstools to 1.41
+* provide and install udev rules file that addresses problems with device mapper devices, renames after removal
+* send: new option: quiet
+* dev usage: report slack space (device size minus filesystem area on the dev)
+* image: support DUP
+* build: short options to enable debugging builds
+* other:
+** code cleanups
+** build fixes
+** more tests and other enhancements
 
 == btrfs-progs 4.5 (Mar 2016) ==
 

@@ -1,10 +1,9 @@
 == Status ==
 
-From 3.19, the recovery and rebuild code was integrated. This brings the implementation to the point where it should be usable for most purposes. Since this is new code, you should expect it to stabilize over the next couple of kernel releases.
-
-The one missing piece, from a reliability point of view, is that it is still vulnerable to the parity RAID "write hole", where a partial write as a result of a power failure may result in inconsistent parity data.
+From 3.19, the recovery and rebuild code was integrated. The one missing piece, from a reliability point of view, is that it is still vulnerable to the parity RAID "write hole", where a partial write as a result of a power failure will result in inconsistent parity data.
 
 * Parity may be inconsistent after a crash (the "write hole")
+* Parity data is not checksummed
 * No support for discard? (possibly -- needs confirmation with cmason)
 * The algorithm uses as many devices as are available: No support for a fixed-width stripe (see note, below)
 

@@ -34,11 +34,11 @@ Terms in ''italics'' also appear in this glossary.
 ; '''cleaner'''
 : Usually referred to in context of deleted subvolumes. It's a background process that removes the actual data once a subvolume has been deleted. Cleaning can involve lots of IO and CPU activity depending on the fragmentation and amount of shared data with other subvolumes.
 
-; '''copy on write'''
+; '''copy-on-write'''
 : Also known as ''CoW''. The method that btrfs uses for modifying data. Instead of directly overwriting data in place, btrfs takes a copy of the data, alters it, and then writes the modified data back to a different (free) location on the disk. It then updates the ''metadata'' to reflect the new location of the data. In order to update the metadata, the affected metadata blocks are also treated in the same way. In CoW filesystems, files tend to fragment as they are modified. Copy-on-write is also used in the implementation of ''snapshots'' and ''reflink copies''. A copy-on-write filesystem is, in theory, '''always''' consistent, provided the underlying hardware supports ''barriers''.
 
 ; '''CoW'''
-: See ''copy on write''.
+: See ''copy-on-write''.
 
 ; '''default subvolume'''
 : The ''subvolume'' in a btrfs filesystem which is mounted when mounting the filesystem without using the <code>subvol=</code> [[Mount options|mount option]].
@@ -72,7 +72,7 @@ Terms in ''italics'' also appear in this glossary.
 : Btrfs doesn't track free space, it only tracks allocated space. Free space is by definition any holes in the allocated space, but finding these holes is actually fairly I/O intensive. The free space cache stores a compressed representation of what is free. It is updated on every ''transaction'' commit.
 
 ; '''fsync'''
-:
+: On Unix and Unix-like operating systems (of which Linux is the latter), the <code>fsync()</code> system call causes all buffered file descriptor related data changes to be flushed to the underlying block device. When a file is modified on a modern operating system the changes are generally not written to the disk immediately but rather those changes are buffered in memory for reasons of performance, calling <code>fsync()</code> causes any in-memory changes to be written to disk.
 
 ; '''generation'''
 : An internal counter which updates for each ''transaction''. When a ''metadata'' block is written (using ''copy on write''), current generation is stored in the block, so that blocks which are too new (and hence possibly inconsistent) can be identified.

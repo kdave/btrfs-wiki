@@ -191,13 +191,13 @@ Speed of the reflink copy is decent. After creating the subvolume, you can use i
 
 == How do I label a filesystem? ==
 
-The label on a filesystem can be set at creation time, using the <tt>-L</tt> option to ''mkfs.btrfs''.
+The label on a filesystem can be set:
 
-You can also use ''btrfs'' command. There are currently few limitations:
-* the filesystem has to be unmounted
-* the filesystem should not have more than one device
-
- btrfs filesystem label <dev> [newlabel]
+* at creation time
+ mkfs.btrfs -L LABEL /dev/sdx
+* on a mounted and unmounted filesystem
+ btrfs filesystem label /dev/sdx [newlabel]
+ btrfs filesystem label /path [newlabel]
 
 == How do I resize a partition? (shrink/grow) ==
 

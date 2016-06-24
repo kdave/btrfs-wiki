@@ -76,12 +76,11 @@ Changing the default subvolume with btrfs subvolume default will make the top le
 
 Subvolumes can be moved around in the filesystem.
 
-
 == Layout ==
 There are several ''basic'' schemas to layout subvolumes (including snapshots) as well as mixtures thereof.
 
-1) Flat
-Subvolumes are childs of the top level subvolume (ID 5), typically directly below in the hierarchy or below some directories belonging to the top level subvolume, but especially not nested below other subvolumes, for example:
+=== Flat ===
+Subvolumes are children of the top level subvolume (ID 5), typically directly below in the hierarchy or below some directories belonging to the top level subvolume, but especially not nested below other subvolumes, for example:
  toplevel
    +-- root       (subvolume, to be mounted at /)
    +-- home       (subvolume, to be mounted at /home)
@@ -91,20 +90,20 @@ Subvolumes are childs of the top level subvolume (ID 5), typically directly belo
 
 Here, the toplevel should not normally be visible to the system.
 Of course, the "www" subvolume could have also been placed directly below the top level subvolume (without an intermediate directory) and the "postgres" subvolume could have also been placed at a directory var/lib/postgresql; these are just examples and the actual layout depends largely on personal taste.
-All subvolumes are however direct childs of the top level subvolume.
+All subvolumes are however direct children of the top level subvolume.
 
 This has several implications (advantages and disadvantages):
 * Management of snapshots (especially rolling them) may be considered easier as the effective layout is more directly visible.
-* All subvolumes need to be mounted manually (e.g. via fstab) to their desired locations, e.g. in the above example this could look like:
-  LABEL=the-btrfs-fs-device   /                    subvol=/root,defaults,noatime  0  0
-  LABEL=the-btrfs-fs-device   /home                subvol=/home,defaults,noatime  0  0
-  LABEL=the-btrfs-fs-device   /var/www             subvol=/var/www,noatime        0  0
-  LABEL=the-btrfs-fs-device   /var/lib/postgresql  subvol=/postgres,noatime       0  0
+* All subvolumes need to be mounted manually (e.g. via fstab) to their desired locations, e.g. in the above example this would look like:
+ LABEL=the-btrfs-fs-device   /                    subvol=/root,defaults,noatime  0  0
+ LABEL=the-btrfs-fs-device   /home                subvol=/home,defaults,noatime  0  0
+ LABEL=the-btrfs-fs-device   /var/www             subvol=/var/www,noatime        0  0
+ LABEL=the-btrfs-fs-device   /var/lib/postgresql  subvol=/postgres,noatime       0  0
 * Each of these [[FAQ#Can_I_mount_subvolumes_with_different_mount_options.3F|subvolumes/mountpoints can be mounted with some options being different]].
 :This means however as well, that any typically useful mount options (for example "noatime") need to be specified again for each mountpoint.
 * Everything in the filesystem, that's not beneath a subvolume that has been mounted, is not accessible or even visible. This may be beneficial for security, especially when being used with snapshots, see below.
 
-2) Nested
+=== Nested ===
 Subvolumes are located anywhere in the file hierarchy, typically at their desired locations (that is where one would manually mount them at in the flat schema), especially below other subvolumes that are not the top-level subvolume, for example:
  toplevel                  (subvolume, to be mounted at /)
  +-- home                  (subvolume)
@@ -129,7 +128,7 @@ This makes changing the structure (for example to something more flat) more diff
            +-- lib               (directory)
                 \-- postgresql   (subvolume)
 
-3) Mixed
+=== Mixed ===
 Of course the above two basic schemas can be mixed at personal convenience, e.g. the base structure may follow a flat layout, with certain parts of the filesystem, being placed in nested subvolumes.
 But care must be taken when snapshots should be made (nested subvolumes are not part of a snapshot, and as of now, there are no recursive snapshots) as well when those are rotated, where the nested subvolumes would then need to be manually moved (either the "current" versions or a snaptshot thereof).
 

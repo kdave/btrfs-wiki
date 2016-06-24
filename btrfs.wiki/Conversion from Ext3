@@ -1,6 +1,6 @@
 == Btrfs Conversion from Ext3 or Ext4==
 
-'''Warning: As of 4.0 kernels this feature is not much used or well tested anymore, and there have been some reports that the conversion doesn't work reliably. Feel free to try it out, but make sure you have backups'''
+'''Warning: As of 4.0 kernels this feature is not often used or well tested anymore, and there have been some reports that the conversion doesn't work reliably. Feel free to try it out, but make sure you have backups'''.
 
 Btrfs has very few pieces of metadata that live in fixed locations, making it relatively easy to implement an in place conversion utility from other filesystems. Copy on write algorithms allow Btrfs to preserve an unmodified copy of the original FS, and allow administrator to undo the conversion, even after making changes in the resulting Btrfs filesystem.
 

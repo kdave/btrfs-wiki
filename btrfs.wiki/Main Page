@@ -1,23 +1,22 @@
-Btrfs is a new copy on write (CoW) filesystem for Linux aimed at implementing advanced features while focusing on fault tolerance, repair and easy administration. Jointly developed at [[Contributors|multiple companies]], Btrfs is licensed under the GPL and open for contribution from anyone.
+Btrfs is a modern copy on write (CoW) filesystem for Linux aimed at implementing advanced features while also focusing on fault tolerance, repair and easy administration. Jointly developed at [[Contributors|multiple companies]], Btrfs is licensed under the GPL and open for contribution from anyone.
 Not too many companies have said that they are using Btrfs in production, but we welcome those who can say so on the [[Production_Users|production users]] page.
 
 == Stability status ==
-The filesystem [[On-disk_Format|disk format]] is no longer unstable, and it's not expected to change unless there are strong reasons to do so. If there is a format change, file systems with a unchanged format will continue to be mountable and usable by newer kernels.
+The filesystem [[On-disk_Format|disk format]] is stable; this means it is not expected to change unless there are very strong reasons to do so. If there is a format change, filesystems which implement the previous disk format will continue to be mountable and usable by newer kernels.
 
-The Btrfs code base is under heavy development. Every effort is being made to keep it stable and fast. Due to the fast development speed, the state of development of the filesystem improves noticeably with every new Linux version, so it's recommended to run the most modern kernel possible.
+The Btrfs code base is under heavy development. Not only is every effort being made to ensure that it remains stable and fast but to make it more so with each and every commit. This rapid pace of development means that the filesystem improves ''noticeably'' with every new Linux release so it's ''highly'' recommended that users run the most modern kernel possible.
 
-For benchmarks, it's recommended to test the latest stable Linux version, and not any older. If possible, it's also recommendable to test the latest Linux development version. Also, it's recommended to test the [[Mount_options|different options]], f.e. different compression options.
+For benchmarks, it's recommended to test the latest stable Linux version, and not any older, as well as the latest Linux development versions. Also, it's recommended to test the various [[mount options]] such as different compression options.
 
-Newly added features may need a few releases to stabilize.
+As with all software, newly added features may need a few releases to stabilize.
 
-If you have any bug, problems, performance issues or questions while using Btrfs, please email the [[Btrfs mailing list]] (no subscription required). Please report bugs also on [[Problem_FAQ#How_do_I_report_bugs_and_issues.3F|Bugzilla]].
+If you find any behavior you suspect to be caused by a bug, performance issues, or have any questions about using Btrfs, please email the [[Btrfs mailing list]] (no subscription required). Please report bugs on [[Problem_FAQ#How_do_I_report_bugs_and_issues.3F|Bugzilla]].
 
 == Features ==
 
 Linux has a wealth of filesystems from which to choose, but we are facing a number of challenges with scaling to the large storage subsystems that are becoming common in today's data centers. Filesystems need to scale in their ability to address and manage large storage, and also in their ability to detect, repair and tolerate errors in the data stored on disk.
 
-'''The main Btrfs features available at the moment include:'''
-
+=== Major Features Currently Implemented ===
 * Extent based file storage
 * 2^64 byte == 16 EiB maximum file size (practical limit is 8 EiB due to Linux VFS)
 * Space-efficient packing of small files
@@ -27,11 +26,14 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 * Subvolumes (separate internal filesystem roots)
 * Checksums on data and metadata (crc32c)
 * [[Compression]] (zlib and LZO)
-* Integrated multiple device support
-** File Striping, File Mirroring, File Striping+Mirroring, Striping with Single and Dual Parity implementations
-* SSD (Flash storage) awareness (TRIM/Discard for reporting free blocks for reuse) and optimizations (e.g. avoiding unnecessary seek optimizations, sending writes in clusters, even if they are from unrelated files. This results in larger write operations and faster write throughput)
-* Efficient [[Incremental Backup]]
-* Background scrub process for finding and fixing errors on files with redundant copies
+* Integrated [[Multiple_Device_Support|multiple device support]]
+** File Striping
+** File Mirroring
+** File Striping+Mirroring
+** Single and Dual Parity implementations
+* SSD (flash storage) awareness (TRIM/Discard for reporting free blocks for reuse) and optimizations (e.g. avoiding unnecessary seek optimizations, sending writes in clusters, even if they are from unrelated files. This results in larger write operations and faster write throughput)
+* Efficient [[incremental backup]]
+* Background scrub process for finding and repairing errors of files with redundant copies
 * Online filesystem defragmentation
 * [[btrfsck|Offline filesystem check]]
 * In-place [[Conversion_from_Ext3|conversion]] of existing ext3/4 file systems
@@ -41,7 +43,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 ** Efficient incremental filesystem mirroring
 * Batch, or out-of-band [[deduplication]] (happens after writes, not during)
 
-'''Additional features in development, or planned, include:'''
+=== Features Currently in Development or Planned for Future Implementation ===
 
 * Fast offline filesystem check
 * Online filesystem check
@@ -52,6 +54,21 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 * Hot data tracking and moving to faster devices (currently being pushed as a generic feature available through VFS)
 
 == News ==
+
+'''btrfs-progs 4.6 (Jun 2016)'''
+* convert - major rewrite:
+** fix a long-standing bug that led to mixing data blocks into metadata block groups
+** the workaround was to do full balance after conversion, which was recommended practice anyway
+** explicitly set the lowest supported version of e2fstools to 1.41
+* provide and install udev rules file that addresses problems with device mapper devices, renames after removal
+* send: new option: quiet
+* dev usage: report slack space (device size minus filesystem area on the dev)
+* image: support DUP
+* build: short options to enable debugging builds
+* other:
+** code cleanups
+** build fixes
+** more tests and other enhancements
 
 '''Linux v4.5.7 (Jun 2016)'''
 * stable kernel with several btrfs bugfixes
@@ -70,16 +87,6 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 * preparatory work for subpage-blocksize patchset
 * fix bug when using overlayfs
 * fixes in readahead, log replay, fsync, and more
-
-'''btrfs-progs 4.5.3 (Mar 2016)'''
-* ioctl: fix unaligned access in buffer from TREE_SEARCH; might cause SIGBUS on architectures that do not support unaligned access and do not performa any fixups
-* improved validation checks of superblock and chunk-related structures
-* subvolume sync: fix handling of -s option
-* balance: adjust timing of safety delay countdown with --full-balance
-* rescue super-recover: fix reversed condition check
-* check: fix bytes_used accounting
-* documentation updates: mount options, scrub, send, receive, select-super, check, mkfs
-* testing: new fuzzed images, for superblock and chunks
 
 '''In coreutils 8.24'''
 * ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13] ([https://lists.gnu.org/archive/html/coreutils-announce/2015-07/msg00000.html release notes])
@@ -143,7 +150,8 @@ Links to Btrfs documentation of various Linux distributions:
 
 === Developer documentation ===
 
-* [[Developer's FAQ]] — hints and answers for contributors and developers
+* [[Developer's FAQ]] — hints and answers for contributors and developers, general information about patch formatting
+* [[Development notes]] — notes, hints, checklists for specific implementation tasks (eg. adding new ioctls)
 * [[Code documentation]] — trees, source files, sample code for manipulating trees
 * [[Data Structures]] — detailed on-disk data structures
 * [[Trees]] — detailed in-tree representation of files and directories
