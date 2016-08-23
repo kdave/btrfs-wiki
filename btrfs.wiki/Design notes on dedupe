@@ -1,23 +1,84 @@
 == Introduction ==
 
-This page is for documentation related to btrfs in-band de-duplication(dedupe for short).<br/>
+This page is for documentation related to btrfs in-band de-duplication(dedupe for short) and mainly for btrfs developers.
+For how to use btrfs in-band dedupe feature, please see [https://btrfs.wiki.kernel.org/index.php/User_notes_on_dedupe how to use in-band dedupe]
 
 Btrfs in-band dedupe is still an out-of-tree experimental feature, but it's becoming
 more and more stable, and related currently trying to push it for mainline.<br/>
 
 == Overall Design ==
-TODO
+Currently in-band dedupe only works in buffered write, and it only happens when btrfs starts to write data into disk.
+
+For a data range to be written to disk, in-band dedupe will divide it into many small data units, data unit's
+size is inband-dedupe block size, which also can be tuned by users. See [https://btrfs.wiki.kernel.org/index.php/User_notes_on_dedupe#Dedupe_block_size Dedupe block size] for detailed info.
+
+
+If a data unit goes through in-band dedupe, firstly we need to compute the hash value according data content using SHA256.
+Hash value will be stored in below struct:
+    struct btrfs_dedupe_hash {
+        u64 bytenr;
+        u32 num_bytes;
+        /* last field is a variable length array of dedupe hash */
+        u8 hash[];
+    };
+bytenr is extent's start position, num_bytes is extent's length. dedupe hash will be stored in in-memory hash pool.
+In-band dedupe will search, insert or delete dedupe hash within this hash pool.
+
+One can set either memory usage limit or number of hash limit.
+
+For in-memory backend, one can set either memory usage limit or number of hash limit. When current dedupe hash pool is larger
+than the limit, dedupe will drop hashes until the memory usage/hash number reaches to limit. The hash drop follows last-recently-use(LRU) behavior. Newly added hash or hash search hit will cause the hash to be the newest hash of the hash pool.
+
+To conveniently search a dedupe hash in in-memory hash pool, we maintain two red-black trees: one's key is data content's
+hash value, the other's key is extent's bytenr(start position). The second tree is used to delete a dedupe hash from the
+in-memory hash pool. When deleting a extent, we know the extent's bytenr, but don't know hash value.
+
+=== Hash search and insert ===
+
+For a data unit goes through in-band dedupe, we first compute its hash value, then use this hash as key to search in in-memory hash pool.
+If hash hits, that means we found a extent in disk, which has the same content with our current data unit and its start position is
+recorded in btrfs_dedupe_hash's bytenr. We can reuse it and do not need to do extra IO. '''Note now we need to add a extra reference(delayed ref) to this found extent for current data unit.'''
+
+If hash does't hit, we need to reserve new extent and start IO for this extent. '''But note only when this new extent has been written to disk, can we insert this new hash into in-memory hash_pool.''' btrfs_dedupe_hash's bytenr will record new extent's start position
+and btrfs_dedupe_hash's num_bytes record extent's length. So later data with same hash will find this extent and reuse it.
+
+As we said above, we maintain two red-black trees, so the insertion work will insert twice, one's key is hash value, the other's key
+is extent's bytenr.
+
+=== Hash deletion ===
+
+When eventually all references to a disk extent are dropped, we need to delete the corresponding dedupe hash.
+Use extent's bytenr to search in in-memory hash pool, if hash hits, delete the corresponding dedupe hash.
 
 == Difference with normal write routine ==
-=== vs normal write ===
-TODO
-=== vs compression ===
 
-== Dedupe backends ==
-TODO
+For normal buffered-write, file's max possible extent size is 128MB, but once in-band dedupe is enabled, for normal buffered-write,
+file's max extent size will be limited by in-band dedupe block size, that means many small fs fragmentation and may impact fs performance.
+
+Meanwhile for in-band dedupe, we also need extra CPU time to compute in-band dedupe hash value using SHA256 and do hash insertion, search and
+deletion work.
+
+Currently in-band dedupe works well for:
+* Storage with a lot of full backups
+* Storage for special file format which contains large similar pattern
 
 == Ioctl interface ==
-TODO
+
+We use ioctl(2) to operate in-band dedupe related arguments.
+Currently we implement 4 ioctl interfaces:
+* BTRFS_DEDUPE_CTL_ENABLE
+  enable in-band dedupe
+* BTRFS_DEDUPE_CTL_DISABLE
+  disable in-band dedupe
+
+* BTRFS_DEDUPE_CTL_STATUS
+  get some in-band dedupe statistical information.
+ 
+* BTRFS_DEDUPE_CTL_RECONF
+  re-configure some in-band dedupe arguments
 
 == Further plans ==
-TODO
+
+* implement on-disk back end for in-band dedupe, which will store all data's hash value in disk.
+
+* make in-band dedupe support compression.

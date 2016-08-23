@@ -38,6 +38,7 @@ Gotchas
 Incremental Backup
 Main Page
 Manpage/btrfs
+Manpage/btrfs(5)
 Manpage/btrfs-balance
 Manpage/btrfs-check
 Manpage/btrfs-convert
@@ -80,5 +81,6 @@ SnapBtr
 SysadminGuide
 Trees
 UseCases
+User notes on dedupe
 Using Btrfs with Multiple Devices
 Writing patch for btrfs

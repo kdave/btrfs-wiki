@@ -225,6 +225,22 @@ Major features or significant feature enhancements by kernel version. For more i
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
 
+== btrfs-progs 4.7 (Jul 2016) ==
+
+* convert: fix creating discontig extents
+* check: speed up traversing heavily reflinked extents within a file
+* check: verify qgroups of higher levels
+* check: repair can now fix wrong qgroup numbers
+* balance: new option to run in the background
+* defrag: default extent target size changed to 32MiB
+* du: silently skip non-btrfs dirs/files
+* documentation updates: btrfs(5), btrfs(8), balance, subvolume, scrub, filesystem, convert
+* bugfixes:
+** unaligned access (reported for sparc64) in raid56 parity calculations
+** use /bin/bash
+** other stability fixes and cleanups
+* more tests
+
 == btrfs-progs 4.6 (Jun 2016) ==
 
 * convert - major rewrite:
@@ -694,6 +710,18 @@ Bugfixes:
 * first release after 0.19 (2009/06) with a lot of changes
 
 = By version (linux kernel) =
+
+=== v4.7 (Jul 2016) ===
+* allow balancing to dup with multi-device
+* device deletion by id (additionally to by path)
+* renameat2: add support for RENAME_EXCHANGE and RENAME_WHITEOUT
+* enhanced selftests
+* more preparatory work for "blocksize < page size"
+* more validation checks of superblock (discovered by fuzzing)
+* advertise which crc32c implementation is being used at module load
+* fixed space report by ''df'' with mixed block groups
+* log replay fixes
+* device replace fixes
 
 === v4.6 (May 2016) ===
 * mount options:

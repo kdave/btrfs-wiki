@@ -609,6 +609,8 @@ Add more regression tests for the userspace tools.
 {{project
 |text=It would be nice to have a library for manipulating btrfs filesystem in a way that the ''btrfs'' tool does and make it available to other programs, or via language bindings.
 
+For python, there's [https://github.com/knorrie/python-btrfs python-btrfs], a python module that is in early development, exposing an easier to use interface for developers and system administrators to have a look into how their btrfs filesystems are internally organized.
+
 [[Deduplication|bedup]] has [https://github.com/g2p/bedup/blob/master/bedup/platform/btrfs.py a module] exposing some of the core btrfs functionality to Python. There is also a [https://hackage.haskell.org/package/btrfs btrfs library] for haskell.
 }}
 

@@ -132,7 +132,23 @@ build the extent tree from scratch
 <blockquote><b>Note:</b>
 Do not use unless you know what you&#8217;re doing.</blockquote>
 
+<dt>
+--mode=MODE
+<dd>
+<p>
+select mode of operation regarding memory and IO
+</p>
+<p>The <em>MODE</em> can be one of <em>original</em> and <em>lowmem</em>. The original mode is mostly
+unoptimized regarding memory consumpption and can lead to out-of-memory
+conditions on large filesystems. The possible workaround is to export the block
+device over network to a machine with enough memory. The low memory mode is
+supposed to address the memory consumption, at the cost of increased IO when it
+needs to re-read blocks when needed. This may increase run time.</p>
+
 </dl>
+<blockquote><b>Note:</b>
+<em>lowmem</em> mode does not work with <em>--repair</em> yet, and is still considered
+experimental.</blockquote>
 ==EXIT STATUS==
 
 <p><b>btrfs check</b> returns a zero exit status if it succeeds. Non zero is

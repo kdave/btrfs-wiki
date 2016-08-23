@@ -3,71 +3,48 @@
 |name=btrfs-device}}
 
 ==NAME==
-btrfs-device - control btrfs devices
+btrfs-device - manage devices of btrfs filesystems
 
 ==SYNOPSIS==
 
 <p><b>btrfs device</b> <em>&lt;subcommand&gt;</em> <em>&lt;args&gt;</em></p>
 ==DESCRIPTION==
 
-<p><b>btrfs device</b> is used to control the btrfs devices, since btrfs can be used
-across several devices, <b>btrfs device</b> is used for multiple device management.</p>
+<p>The <b>btrfs device</b> command group is used to manage devices of the btrfs filesystems.</p>
 ==DEVICE MANAGEMENT==
 
-<p>Btrfs filesystem is capable to manage multiple devices.</p>
-<p>Btrfs filesystem uses different profiles to manage different RAID level, and
-use balance to rebuild chunks, also devices can be added/removed/replace
-online.</p>
+<p>Btrfs filesystem can be created on top of single or multiple block devices.
+Data and metadata are organized in allocation profiles with various redundancy
+policies. There&#8217;s some similarity with traditional RAID levels, but this could
+be confusing to users familiar with the traditional meaning. Due to the
+similarity, the RAID terminology is widely used in the documentation.  See
+[[Manpage/mkfs.btrfs|mkfs.btrfs(9)]] for more details and the exact profile capabilities and
+constraints.</p>
+<p>The device management works on a mounted filesystem. Devices can be added,
+removed or replaced, by commands profided by <b>btrfs device</b> and <b>btrfs replace</b>.</p>
+<p>The profiles can be also changed, provided there&#8217;s enough workspace to do the
+conversion, using the <b>btrfs balance</b> comand and namely the filter <em>convert</em>.</p>
 <dl>
 <dt>
 Profile
 <dd>
 <p>
-Btrfs filesystem uses data/metadata profiles to manage allocation/duplication
-mechanism.<br/>
-Profiles like RAID level can be assigned to data and metadata separately.
+A profile describes an allocation policy based on the redundancy/replication
+constrants in connection with the number of devices. The profile applies to
+data and metadata block groups separately.
 </p>
-<p>See [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] for more details.</p>
 
 <dt>
 RAID level
 <dd>
 <p>
-Btrfs filesystem supports most of the standard RAID level: 0/1/5/6/10.<br/>
-RAID levels can be assigned at mkfs time or online.
+Where applicable, the level refers to a profile that matches constraints of the
+standard RAID levels. At the moment the supported ones are: RAID0, RAID1,
+RAID10, RAID5 and RAID6.
 </p>
-<p>See [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] for mkfs time RAID level assign and [[Manpage/btrfs-balance|btrfs-balance(8)]] for
-online RAID level assign.</p>
-<blockquote><b>Note:</b>
-Since btrfs is under heavy development especially the RAID5/6 support,
-it is <b>highly</b> recommended to read the follow btrfs wiki page to get more
-updated details on RAID5/6:<br/>
-https://btrfs.wiki.kernel.org/index.php/RAID56</blockquote>
-
-<dt>
-Balance
-<dd>
-<p>
-[[Manpage/btrfs-balance|btrfs-balance(8)]] subcommand can be used to balance or rebuild chunks to the
-desired profile.
-</p>
-<p>Due to the fact that balance can rebuild/recovery chunks according to its RAID
-duplication if possible, so when using RAID1/5/6/10 with some devices failed
-and you just added a new device to btrfs using [[Manpage/btrfs-device|btrfs-device(8)]], you should
-run [[Manpage/btrfs-balance|btrfs-balance(8)]] to rebuild the chunks.</p>
-<p>See [[Manpage/btrfs-balance|btrfs-balance(8)]] for more details.</p>
-
-<dt>
-Device add/remove/replace
-<dd>
-<p>
-Device can be added/removed using [[Manpage/btrfs-device|btrfs-device(8)]] subcommand and replaced
-using [[Manpage/btrfs-replace|btrfs-replace(8)]].
-</p>
-<p>When device is removed or replaced, btrfs will do the chunk rebuild if needed.</p>
-<p>See [[Manpage/btrfs-replace|btrfs-replace(8)]] man page for more details on device replace.</p>
 
 </dl>
+<p>See the section <b>TYPICAL USECASES</b> for some examples.</p>
 ==SUBCOMMAND==
 
 <dl>
@@ -77,14 +54,20 @@ using [[Manpage/btrfs-replace|btrfs-replace(8)]].
 <p>
 Add device(s) to the filesystem identified by <em>&lt;path&gt;</em>.
 </p>
-<p>If applicable, a whole device discard (TRIM) operation is performed.</p>
+<p>If applicable, a whole device discard (TRIM) operation is performed prior to
+adding the device. A device with existing filesystem detected by [http://man7.org/linux/man-pages/man8/blkid.8.html blkid(8)]
+will prevent device addition and has to be forced. Alternatively the filesystem
+can be wiped from the device using eg. the [http://man7.org/linux/man-pages/man8/wipefs.8.html wipefs(8)] tool.</p>
+<p>The operation is instant and does not affect existing data. The operation merely
+adds the device to the filesystem structures and creates some block groups
+headers.</p>
 <p><tt>Options</tt></p>
 <dl>
 <dt>
 -K|--nodiscard
 <dd>
 <p>
-do not perform discard by default
+do not perform discard (TRIM) by default
 </p>
 
 <dt>
@@ -100,8 +83,16 @@ force overwrite of existing filesystem on the given disk(s)
 <b>remove</b> <em>&lt;dev&gt;</em>|<em>&lt;devid&gt;</em> [<em>&lt;dev&gt;</em>|<em>&lt;devid&gt;</em>&#8230;] <em>&lt;path&gt;</em>
 <dd>
 <p>
-Remove device(s) from a filesystem identified by <em>&lt;path&gt;</em>.
+Remove device(s) from a filesystem identified by <em>&lt;path&gt;</em>
 </p>
+<p>Device removal must satisfy the profile constraints, otherwise the command
+fails. The filesystem must be converted to profile(s) that would allow the
+removal. This can typically happen when going down from 2 devices to 1 and
+using the RAID1 profile. See the example section below.</p>
+<p>The operation can take long as it needs to move all data from the device.</p>
+<blockquote><b>Note:</b>
+It is not possible to delete the device that was used to mount the
+filesystem. This is a limitation given by the VFS.</blockquote>
 
 <dt>
 <b>delete</b> <em>&lt;dev&gt;</em>|<em>&lt;devid&gt;</em> [<em>&lt;dev&gt;</em>|<em>&lt;devid&gt;</em>&#8230;] <em>&lt;path&gt;</em>
@@ -114,27 +105,34 @@ Alias of remove kept for backward compatibility
 <b>ready</b> <em>&lt;device&gt;</em>
 <dd>
 <p>
-Check device to see if it has all of it&#8217;s devices in cache for mounting.
+Wait until all devices of a multiple-device filesystem are scanned and registered
+within the kernel module.
 </p>
 
 <dt>
 <b>scan</b> [(--all-devices|-d)|<em>&lt;device&gt;</em> [<em>&lt;device&gt;</em>&#8230;]]
 <dd>
 <p>
-Scan devices for a btrfs filesystem.
+Scan devices for a btrfs filesystem and register them with the kernel module.
+This allows mounting multiple-device filesystem by specifying just one from the
+whole group.
 </p>
-<p>If one or more devices are passed, these are scanned for a btrfs filesystem.
-If no devices are passed, btrfs uses block devices containing btrfs
-filesystem as listed by blkid.
-Finally, <em>--all-devices</em> or <em>-d</em> is the deprecated option. If it is passed,
-its behavior is the same as if no devices are passed.</p>
+<p>If no devices are passed, all block devices that blkid reports to contain btrfs
+are scanned.</p>
+<p>The options <em>--all-devices</em> or <em>-d</em> are deprecated and kept for backward compatibility.
+If used, behavior is the same as if no devices are passed.</p>
+<p>The command can be run repeatedly. Devices that have been already registered
+remain as such. Reloading the kernel module will drop this information. There&#8217;s
+an alternative way of mounting multiple-device filesystem without the need for
+prior scanning. See the mount option <em>device</em>.</p>
 
 <dt>
 <b>stats</b> [-z] <em>&lt;path&gt;</em>|<em>&lt;device&gt;</em>
 <dd>
 <p>
-Read and print the device IO stats for all mounted devices of the filesystem
-identified by <em>&lt;path&gt;</em> or for a single <em>&lt;device&gt;</em>.
+Read and print the device IO error statistics for all devices of the given
+filesystem identified by <em>&lt;path&gt;</em> or for a single <em>&lt;device&gt;</em>. See section <b>DEVICE
+STATS</b> for more information.
 </p>
 <p><tt>Options</tt></p>
 <dl>
@@ -142,7 +140,7 @@ identified by <em>&lt;path&gt;</em> or for a single <em>&lt;device&gt;</em>.
 -z
 <dd>
 <p>
-Reset stats to zero after reading them.
+Print the stats and reset the values to zero afterwards.
 </p>
 
 </dl>
@@ -222,6 +220,112 @@ show sizes in TiB, or TB with --si
 
 </dl>
 <p>If conflicting options are passed, the last one takes precedence.</p>
+==TYPICAL USECASES==
+
+===STARTING WITH A SINGLE-DEVICE FILESYSTEM===
+
+<p>Assume we&#8217;ve created a filesystem on a block device <em>/dev/sda</em> with profile
+<em>single/single</em> (data/metadata), the device size is 50GiB and we&#8217;ve used the
+whole device for the filesystem. The mount point is <em>/mnt</em>.</p>
+<p>The amount of data stored is 16GiB, metadata have allocated 2GiB.</p>
+====ADD NEW DEVICE====
+
+<p>We want to increase the total size of the filesystem and keep the profiles. The
+size of the new device <em>/dev/sdb</em> is 100GiB.</p>
+<pre>$ btrfs device add /dev/sdb /mnt</pre>
+<p>The amount of free data space increases by less than 100GiB, some space is
+allocated for metadata.</p>
+====CONVERT TO RAID1====
+
+<p>Now we want to increase the redundancy level of both data and metadata, but
+we&#8217;ll do that in steps. Note, that the device sizes are not equal and we&#8217;ll use
+that to show the capabilities of split data/metadata and independent profiles.</p>
+<p>The constraint for RAID1 gives us at most 50GiB of usable space and exactly 2
+copies will be stored on the devices.</p>
+<p>First we&#8217;ll convert the metadata. As the metadata occupy less than 50GiB and
+there&#8217;s enough workspace for the conversion process, we can do:</p>
+<pre>$ btrfs balance start -mconvert=raid1 /mnt</pre>
+<p>This operation can take a while as the metadata have to be moved and all block
+pointers updated. Depending on the physical locations of the old and new
+blocks, the disk seeking is the key factor affecting performance.</p>
+<p>You&#8217;ll note that the system block group has been also converted to RAID1, this
+normally happens as the system block group also holds metadata (the physical to
+logial mappings).</p>
+<p>What changed:</p>
+<ul>
+<li>
+<p>
+available data space decreased by 3GiB, usable rougly (50 - 3) + (100 - 3) = 144 GiB
+</p>
+</li>
+<li>
+<p>
+metadata redundancy increased
+</p>
+</li>
+</ul>
+<p>IOW, the unequal device sizes allow for combined space for data yet improved
+redundancy for metadata. If we decide to increase redundancy of data as well,
+we&#8217;re going to lose 50GiB of the second device for obvious reasons.</p>
+<pre>$ btrfs balance start -dconvert=raid1 /mnt</pre>
+<p>The balance process needs some workspace (ie. a free device space without any
+data or metadata block groups) so the command could fail if there&#8217;s too much
+data or the block groups occupy the whole first device.</p>
+<p>The device size of <em>/dev/sdb</em> as seen by the filesystem remains unchanged, but
+the logical space from 50-100GiB will be unused.</p>
+==DEVICE STATS==
+
+<p>The device stats keep persistent record of several error classes related to
+doing IO. The current values are printed at mount time and updated during
+filesystem lifetime or from a scrub run.</p>
+<pre>$ btrfs device stats /dev/sda3
+[/dev/sda3].write_io_errs   0
+[/dev/sda3].read_io_errs    0
+[/dev/sda3].flush_io_errs   0
+[/dev/sda3].corruption_errs 0
+[/dev/sda3].generation_errs 0</pre>
+<dl>
+<dt>
+write_io_errs
+<dd>
+<p>
+Failed writes to the block devices, means that the layers beneath the
+filesystem were not able to satisfy the write request.
+</p>
+
+<dt>
+read_io_errors
+<dd>
+<p>
+Read request analogy to write_io_errs.
+</p>
+
+<dt>
+flush_io_errs
+<dd>
+<p>
+Number of failed writes with the <em>FLUSH</em> flag set. The flushing is a method of
+forcing a particular order between write requests and is crucial for
+implementing crash consistency. In case of btrfs, all the metadata blocks must
+be permanently stored on the block device before the superblock is written.
+</p>
+
+<dt>
+corruption_errs
+<dd>
+<p>
+A block checksum mismatched or a corrupted metadata header was found.
+</p>
+
+<dt>
+generation_errs
+<dd>
+<p>
+The block generation does not match the expected value (eg. stored in the
+parent node).
+</p>
+
+</dl>
 ==EXIT STATUS==
 
 <p><b>btrfs device</b> returns a zero exit status if it succeeds. Non zero is

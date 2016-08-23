@@ -3,7 +3,7 @@
 |name=btrfs-convert}}
 
 ==NAME==
-btrfs-convert - convert from ext2/3/4 filesystem to btrfs
+btrfs-convert - convert from ext2/3/4 filesystem to btrfs in-place
 
 ==SYNOPSIS==
 
@@ -24,26 +24,31 @@ might occupy several gigabytes on a hundreds-gigabyte filesystem.</p>
 steps to transform the btrfs filesystem to a more compact layout. The
 conversion inherits the original data block fragmentation and the metadata
 blocks are bound to the original free space layout.</p>
+<p>Due to different constraints, it&#8217;s possible to convert only filesystem that
+have supported data block size (ie. the same that would be valid for
+<em>mkfs.btrfs</em>). This is typically the system page size (4KiB on x86_64
+machines).</p>
 <p><b>REMOVE THE ORIGINAL FILESYSTEM METADATA</b></p>
 <p>By removing the <em>ext2_saved</em> subvolume, all metadata of the original filesystem
 will be removed:</p>
 <pre># btrfs subvolume delete /mnt/ext2_saved</pre>
 <p>At this point it&#8217;s not possible to do rollback. The filesystem is usable but may
-be impacted by the fragmentation.</p>
+be impacted by the fragmentation inherited from the original filesystem.</p>
 <p><b>MAKE FILE DATA MORE CONTIGUOUS</b></p>
 <p>An optional but recommended step is to run defragmentation on the entire
 filesystem. This will attempt to make file extents more contiguous.</p>
 <pre># btrfs filesystem defrag -v -r -f -t 32M /mnt/btrfs</pre>
-<p>Verbose recursive defragmentation (<em>-v</em>, <em>-r</em>), flush data per-file (<em>-f</em>) with target
-extent size 32M (<em>-t</em>).</p>
+<p>Verbose recursive defragmentation (<em>-v</em>, <em>-r</em>), flush data per-file (<em>-f</em>) with
+target extent size 32MiB (<em>-t</em>).</p>
 <p><b>ATTEMPT TO MAKE BTRFS METADATA MORE COMPACT</b></p>
 <p>Optional but recommended step.</p>
 <p>The metadata block groups after conversion may be smaller than the default size
 (256MiB or 1GiB). Running a balance will attempt to merge the block groups.
-This depends on the free space layout (and fragmentation) and may fail. This is
-a soft error leaving the filesystem usable but the block group layout may
-remain unchanged.</p>
-<p>Note that balance operation takes a lot of time.</p>
+This depends on the free space layout (and fragmentation) and may fail due to
+lack of enough work space. This is a soft error leaving the filesystem usable
+but the block group layout may remain unchanged.</p>
+<p>Note that balance operation takes a lot of time, please see also
+[[Manpage/btrfs-balance|btrfs-balance(8)]].</p>
 <pre># btrfs balance start -m /mnt/btrfs</pre>
 ==OPTIONS==
 
@@ -52,7 +57,7 @@ remain unchanged.</p>
 -d|--no-datasum
 <dd>
 <p>
-disable data checksum calculations and set NODATASUM file flag, this can speed
+disable data checksum calculations and set the NODATASUM file flag, this can speed
 up the conversion
 </p>
 
@@ -106,15 +111,28 @@ use label from the converted filesystem
 -O|--features <em>&lt;feature1&gt;</em>[,<em>&lt;feature2&gt;</em>&#8230;]
 <dd>
 <p>
-A list of filesystem features turned on at btrfs-convert time. Not all features
+A list of filesystem features turned on at conversion time. Not all features
 are supported by old kernels. To disable a feature, prefix it with <em>^</em>.
+Description of the features is in section <em>FILESYSTEM FEATURES</em> of
+[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]].
 </p>
 <p>To see all available features that btrfs-convert supports run:</p>
-<p><tt>btrfs-convert -O list-all</tt>
--p|--progress::
-show progress of conversion, on by default
---no-progress::
-disable detailed progress and show only the main phases of conversion</p>
+<p><tt>btrfs-convert -O list-all</tt></p>
+
+<dt>
+-p|--progress
+<dd>
+<p>
+show progress of conversion (a heartbeat indicator and number of inodes
+processed), on by default
+</p>
+
+<dt>
+--no-progress
+<dd>
+<p>
+disable progress and show only the main phases of conversion
+</p>
 
 </dl>
 ==EXIT STATUS==

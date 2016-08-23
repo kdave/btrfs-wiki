@@ -7,12 +7,12 @@ btrfs-receive - receive subvolumes from send stream
 
 ==SYNOPSIS==
 
-<p><b>btrfs receive</b> [options] <em>&lt;mount&gt;</em></p>
+<p><b>btrfs receive</b> [options] <em>&lt;path&gt;</em></p>
 ==DESCRIPTION==
 
 <p>Receive a stream of changes and replicate one or more subvolumes that were
 previously used with <b>btrfs send</b> The received subvolumes are stored to
-<em>mount</em>.</p>
+<em>path</em>.</p>
 <p><b>btrfs receive</b> will fail int the following cases:</p>
 <ol>
 <li>
@@ -54,7 +54,7 @@ use this option to read from a file instead
 -C|--chroot
 <dd>
 <p>
-confine the process to <em>mount</em> using [http://man7.org/linux/man-pages/man1/chroot.1.html chroot(1)]
+confine the process to <em>path</em> using [http://man7.org/linux/man-pages/man1/chroot.1.html chroot(1)]
 </p>
 
 <dt>

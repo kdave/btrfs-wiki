@@ -10,9 +10,10 @@ btrfs-filesystem - command group of btrfs that usually work on the whole filesys
 <p><b>btrfs filesystem</b> <em>&lt;subcommand&gt;</em> <em>&lt;args&gt;</em></p>
 ==DESCRIPTION==
 
-<p><b>btrfs filesystem</b> is used to do the whole filesystem level tasks, including
-all the regular filesystem operations like resizing, space stats, label
-setting/getting, and defragmentation.</p>
+<p><b>btrfs filesystem</b> is used to perform several whole filesystem level tasks,
+including all the regular filesystem operations like resizing, space stats,
+label setting/getting, and defragmentation. There are other whole filesystem
+taks like scrub or balance that are grouped in separate commands.</p>
 ==SUBCOMMAND==
 
 <dl>
@@ -206,10 +207,12 @@ defragment files recursively in given directories
 -f
 <dd>
 <p>
-flush data for each file before going to the next file. This will limit the amount
-of dirty data to current file, otherwise the amount cumulates from several files
-and may increase system load.
+flush data for each file before going to the next file.
 </p>
+<p>This will limit the amount of dirty data to current file, otherwise the amount
+cumulates from several files and will increase system load. This can also lead
+to ENOSPC if there&#8217;s too much dirty data to write and it&#8217;s not possible to make
+the reservations for the new data (ie. how the COW design works).</p>
 
 <dt>
 -s <em>&lt;start&gt;</em>[kKmMgGtTpPeE]
@@ -229,8 +232,11 @@ defragment only up to <em>len</em> bytes, default is the file size
 -t <em>&lt;size&gt;</em>[kKmMgGtTpPeE]
 <dd>
 <p>
-target extent size, do not touch extents bigger than <em>size</em>
+target extent size, do not touch extents bigger than <em>size</em>, default: 32M
 </p>
+<p>The value is only advisory and the final size of the extents may differ,
+depending on the state of the free space and fragmentation or other internal
+logic. Reasonable values are from tens to hundreds of megabytes.</p>
 
 </dl>
 

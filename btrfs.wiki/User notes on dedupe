@@ -1,0 +1,237 @@
+== Introduction ==
+
+This page is for end users/tester to try btrfs in-band de-duplication
+(dedupe for short).<br/>
+
+Btrfs in-band dedupe provides write time de-duplication, which will only
+write one copy of duplicated data into disk.
+Such behavior could save storage under specific write patter, like:
+ # mkfs.btrfs /dev/vdb
+ # mount /dev/vdb /mnt/btrfs
+ # btrfs dedup enable /mnt/btrfs
+ # xfs_io -f -c "pwrite 0 128K" -c "fsync" /mnt/btrfs/tmp
+ # xfs_io -f -c "pwrite 0 128M" /mnt/btrfs/file
+ # sync
+ # df -h | grep /mnt/btrfs
+ /dev/vdb5        10G   18M  8.0G   1% /mnt/test
+                        ^^^ Much smaller than 128M
+
+Compared to normal write:
+ # mkfs.btrfs /dev/vdb
+ # mount /dev/vdb /mnt/btrfs
+ # xfs_io -f -c "pwrite 0 128K" -c "fsync" /mnt/btrfs/tmp
+ # xfs_io -f -c "pwrite 0 128M" /mnt/btrfs/file
+ # sync
+ # df -h | grep /mnt/btrfs
+ /dev/vdb5        10G  146M  7.9G   2% /mnt/test
+
+Btrfs in-band dedupe is still an out-of-tree experimental feature,
+but it's becoming more and more stable, and developers are currently trying
+to push it for mainline.<br/>
+
+=== Sofware requirement for dedupe ===
+* Kernel support
+*: Can be fetched from https://github.com/adam900710/linux.git wang_dedupe_20160719
+* Kernel config
+*: Need '''CONFIG_BTRFS_DEBUG'''
+* Btrfs-progs support
+*: Can be fetched from https://github.com/adam900710/btrfs-progs.git dedupe_20160715
+
+=== Write pattern requirement for dedupe ===
+* Data copy-on-write
+*: For any case, if data cow is disabled, it won't go through dedupe.
+*: Data cow disabled cases include:
+*:* nodatacow mount option
+*:* per inode datacow control flag(C)
+*:* write into preallocated file extent(fallocate)
+*: If unsure, default btrfs setting enables data copy-on-write.
+* Buffered write
+*: Dedupe routine only affects buffered write.
+*: Direct IO won't go through dedupe routine.
+*: O_SYNC open flag will still go through dedupe though, as it's just
+*: calling fsync after each write.
+*: If unsure, default write is buffered write.
+* No compression
+*: Support for dedupe over compression is not implemented yet.
+*: If unsure, compression is disabled by default.
+* Extent size
+*: Only extent size larger than or equal to dedupe block size will go
+*: through dedupe routine.
+*: Check [[#Dedupe block size]] for more info.
+
+== Normal Usage ==
+=== Enable dedupe ===
+Enable dedupe on a mounted btrfs:
+ # btrfs dedupe enable <mnt_point>
+
+This will enable dedupe with 128K dedupe block size with in-memory
+backend.
+Memory limit will be 32K hashes.
+
+For more info about the dedupe parameters and their impact, check
+[[#Detail Notes]] section and '''btrfs-dedupe'''(5) man page.
+
+=== Disable dedupe ===
+ # btrfs dedupe disable <mnt_point>
+
+Disabling dedupe will trash all hashes. it may take some time.
+
+It's OK to execute '''btrfs dedupe disable''' on a btrfs whose dedupe is already
+disabled, however such operation won't have any effect though.
+
+=== Show status of dedupe===
+ # btrfs dedupe status <mnt_point>
+
+For dedupe enabled case, output would be like:
+ Status:			Enabled
+ Hash algorithm:		SHA-256
+ Backend:		In-memory
+ Dedup Blocksize:	131072
+ Number of hash: 	[128/32768]
+ Memory usage: 		[14.00KiB/3.50MiB]
+
+For dedupe disabled case, output would be like:
+ Status: 			Disabled
+
+=== Reconfigure dedupe ===
+Reconfigure any parameter other than memory usage or hash limit will
+trash all existing dedupe hash(es).
+
+There are 2 method to reconfigure one or more dedupe parameters.
+
+==== Stateful reconfigure ====
+Stateful reconfigure must be executed on dedupe enabled btrfs.
+Stateful reconfigure will only modify the specified parameter(s).
+
+ # btrfs dedupe enable -b 64k -l 1k /mnt/test/
+ # btrfs dedupe status /mnt/test/
+ Status:			Enabled
+ Hash algorithm:		SHA-256
+ Backend:		In-memory
+ Dedup Blocksize:	65536		<< 64K dedupe blocksize
+ Number of hash: 	[0/1024]	<< 1K hash number limit
+ Memory usage: 		[0.00B/112.00KiB]
+ # btrfs dedupe reconfigure -b 128K /mnt/test
+ # btrfs dedupe status /mnt/test/
+ Status:			Enabled
+ Hash algorithm:		SHA-256
+ Backend:		In-memory
+ Dedup  Blocksize:	131072		<< 128K dedupe blocksize
+ Number of hash: 	[0/1024]	<< 1K hash number limit stay
+ Memory usage: 		[0.00B/112.00KiB]
+
+==== Stateless reconfiguration ====
+Stateless reconfiguration doesn't rely on the current dedupe status,
+and that's why it's called stateless.
+
+To use stateless reconfiguration, user only need to call "enable" with
+"-f" option.
+
+Stateless reconfiguration will use default value to fill any
+parameter that is not specified.
+
+ # btrfs dedupe enable -b 64k -l 1k /mnt/test/
+ # btrfs dedupe status /mnt/test/
+ Status:			Enabled
+ Hash algorithm:		SHA-256
+ Backend:		In-memory
+ Dedup Blocksize:	65536		<< 64K dedupe blocksize
+ Number of hash: 	[0/1024]	<< 1K hash number limit
+ Memory usage: 		[0.00B/112.00KiB]
+ # btrfs dedupe enable -f -b 32K /mnt/test
+ # btrfs dedupe status /mnt/test/
+ Status:			Enabled
+ Hash algorithm:		SHA-256
+ Backend:		In-memory
+ Dedup Blocksize:	32768		<< 32K dedupe blocksize
+ Number of hash: 	[0/32768]	<< Reset to default 32K hash limit
+ Memory usage: 		[0.00B/3.50MiB]
+
+== Detail Notes ==
+=== Timing of dedupe ===
+Dedupe happens when btrfs writes data into disk.
+Or more specifically, at run_delalloc_range() time.
+
+The timing of writing data into disk includes:
+* Sync system call
+* Fsync system call (including O_SYNC open flag)
+* Memory pressure
+* Commit interval of each fs
+
+Unless one is calling fsync/sync manually, timing of dedupe is almost
+unpredictable.
+Considering the high CPU usage, it's recommended to use "thread_pool"
+mount option to limit the maximum CPU core dedupe can use.
+
+This timing also means normal small write under most case won't
+trigger dedupe to calculate hash immediately.
+
+=== Dedupe block size ===
+Dedupe is done in dedupe block size.
+This means, only continuous data whose length is larger than or equal to dedupe
+block size will go through dedupe routine.
+
+And dedupe write will extent size to be the same as dedupe block size,
+which is much smaller than normal file extent size.
+This behavior may cause a lot of small extents, leading to large metadata
+and long mount time.
+
+For example, under 64K dedupe block size, the following write pattern
+won't go through dedupe at all:
+
+ File A:
+ 0         16K          32K           48K           64K
+ |<-----New data------->|<////Hole///>|<--New Data->|
+
+And with 64K dedupe block size, the following write pattern will only
+cause the first 64K go through dedupe.
+
+ File B:
+ 0         16K          32K           48K           64K        80K
+ |<--------------------------New Data------------------------->|
+
+Will cause the following extent layout:
+ |<--------Extent A, dedupe write------------------>|<Extent B>|
+
+Only Extent A will go through dedupe routine, Extent B will go through
+normal write routine.
+
+=== Hash and memory limit ===
+For in-memory backend, one can set either memory usage limit or number
+of hash limit.
+
+When current dedupe hash pool is larger than the limit, dedupe will
+drop hashes until the memory usage/hash number drops to limit.
+
+The hash drop follows last-recent-use(LRU) behavior.
+Newly added hash or hash search hit will cause the hash to be the
+newest hash of the hash pool.
+
+   
+And the memory usage of dedupe grows with the dedupe hash pool size.
+Btrfs will not pre-allocating memory for dedupe at the enabling time.
+So it's possible to set a very huge dedupe pool size, as long as
+OOM is not triggered.
+
+=== Global hash pool  ===
+At the time of writing (wang_dedupe_20160719 branch), the dedupe hash
+pool is global, which means no matter which subvolume/snapshot user is
+writing data into, they all share the same dedupe hash pool.
+
+== Known Bugs ==
+Btrfs has several existing bugs that will affects both in-band and
+out-of-band dedupe (reflink).
+
+At the write time (v4.7 kernel), the following bugs are known:
+=== fiemap soft lockup ===
+If a file is consist of file extents pointing to the same extent,
+fiemap ioctl will cause soft lockup and hangs for a long long long time.
+
+4096 extents can already trigger it.
+
+The bug is highly possible to be fixed in v4.8-rc.
+
+=== send soft lockup or OOM ===
+Much like fiemap soft lockup, send will hang and cause soft lockup.
+And if the system doesn't have enough RAM, it will also trigger OOM.
+Increase swap won't help, as the memory btrfs is allocating is not swapable.

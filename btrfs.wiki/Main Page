@@ -30,7 +30,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 ** File Striping
 ** File Mirroring
 ** File Striping+Mirroring
-** Single and Dual Parity implementations
+** Single and Dual Parity implementations (experimental, not production-ready)
 * SSD (flash storage) awareness (TRIM/Discard for reporting free blocks for reuse) and optimizations (e.g. avoiding unnecessary seek optimizations, sending writes in clusters, even if they are from unrelated files. This results in larger write operations and faster write throughput)
 * Efficient [[incremental backup]]
 * Background scrub process for finding and repairing errors of files with redundant copies
@@ -45,51 +45,41 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 === Features Currently in Development or Planned for Future Implementation ===
 
-* Fast offline filesystem check
 * Online filesystem check
 * Object-level mirroring and striping
 * Alternative checksum algorithms
 * In-band [[deduplication]] (happens during writes)
-* Other compression methods (snappy, [[Project_ideas#Compression_enhancements|LZ4]])
+* Other compression methods ([[Project_ideas#Compression_enhancements|LZ4]])
 * Hot data tracking and moving to faster devices (currently being pushed as a generic feature available through VFS)
 
 == News ==
 
-'''btrfs-progs 4.6 (Jun 2016)'''
-* convert - major rewrite:
-** fix a long-standing bug that led to mixing data blocks into metadata block groups
-** the workaround was to do full balance after conversion, which was recommended practice anyway
-** explicitly set the lowest supported version of e2fstools to 1.41
-* provide and install udev rules file that addresses problems with device mapper devices, renames after removal
-* send: new option: quiet
-* dev usage: report slack space (device size minus filesystem area on the dev)
-* image: support DUP
-* build: short options to enable debugging builds
-* other:
-** code cleanups
-** build fixes
-** more tests and other enhancements
+'''btrfs-progs 4.7 (Jul 2016)'''
+* convert: fix creating discontig extents
+* check: speed up traversing heavily reflinked extents within a file
+* check: verify qgroups of higher levels
+* check: repair can now fix wrong qgroup numbers
+* balance: new option to run in the background
+* defrag: default extent target size changed to 32MiB
+* du: silently skip non-btrfs dirs/files
+* documentation updates: btrfs(5), btrfs(8), balance, subvolume, scrub, filesystem, convert
+* bugfixes:
+** unaligned access (reported for sparc64) in raid56 parity calculations
+** use /bin/bash
+** other stability fixes and cleanups
+* more tests
 
-'''Linux v4.5.7 (Jun 2016)'''
-* stable kernel with several btrfs bugfixes
-
-'''Wiki updates (2016-05-20)'''
-* manual pages mass update from git (4.5.3), please report bad formatting or conversion artifacts
-
-'''Linux v4.6 (May 2016)'''
-* mount options:
-** usebackuproot - replace 'recovery' (works but is deprecated)
-** logreplay, nologreplay - disable log replay at mount time, does no writes to the device
-** norecovery - synthetic option to disable recovery at mount time and disable writes (now does: nologreplay)
-* default inline limit is now 2048 (instead of page size, usually 4096)
-* /dev/btrfs-control now understands the GET_SUPPORTE_FEATURES ioctl
-* get rid of harmless message "''could not find root %llu''"
-* preparatory work for subpage-blocksize patchset
-* fix bug when using overlayfs
-* fixes in readahead, log replay, fsync, and more
-
-'''In coreutils 8.24'''
-* ''mv'' will attempt ''reflink'' before falling back to standard copy [http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commit;h=b47231be6813e6cb5305266e391b4bb745f27f13] ([https://lists.gnu.org/archive/html/coreutils-announce/2015-07/msg00000.html release notes])
+'''Linux v4.7 (Jul 2016)'''
+* allow balancing to dup with multi-device
+* device deletion by id (additionally to by path)
+* renameat2: add support for RENAME_EXCHANGE and RENAME_WHITEOUT
+* enhanced selftests
+* more preparatory work for "blocksize < page size"
+* more validation checks of superblock (discovered by fuzzing)
+* advertise which crc32c implementation is being used at module load
+* fixed space report by ''df'' with mixed block groups
+* log replay fixes
+* device replace fixes
 
 Read about past releases in the [[Changelog]]
 * [[Changelog#By_feature|features by kernel version]]
@@ -166,6 +156,10 @@ Links to Btrfs documentation of various Linux distributions:
 * [[Btree_Items]] - Mapping from Btrfs key to item-data
 
 * Original COW B-tree: Source code in C that implements the COW B-tree algorithms [https://github.com/orodeh/bt repository]. Written by Ohad Rodeh at IBM Research in 2006, and released under a BSD license. This is a reference implementation, that works in user space.
+
+* Unmerged features
+** In-band (write) time deduplication
+*** [[User notes on dedupe]] — User/tester notes for using in-band deduplication feature
 
 ==== Source code download ====
 

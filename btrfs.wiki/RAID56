@@ -1,11 +1,15 @@
 == Status ==
 
+{{Warning|The parity RAID code has '''multiple serious data-loss bugs''' in it. It should '''not''' be used for anything other than testing purposes.}}
+
 From 3.19, the recovery and rebuild code was integrated. The one missing piece, from a reliability point of view, is that it is still vulnerable to the parity RAID "write hole", where a partial write as a result of a power failure will result in inconsistent parity data.
 
 * Parity may be inconsistent after a crash (the "write hole")
 * Parity data is not checksummed
 * No support for discard? (possibly -- needs confirmation with cmason)
 * The algorithm uses as many devices as are available: No support for a fixed-width stripe (see note, below)
+
+The first two of these problems mean that the parity RAID code is not suitable for any system which might encounter unplanned shutdowns (power failure, kernel lock-up), and it should not be considered production-ready.
 
 If you'd like to learn btrfs raid5/6 and rebuilds by example (based on kernel 3.14), you can look at [http://marc.merlins.org/perso/btrfs/post_2014-03-23_Btrfs-Raid5-Status.html Marc MERLIN's page about btrfs raid 5/6].
 

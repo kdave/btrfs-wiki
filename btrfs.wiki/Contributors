@@ -64,12 +64,19 @@ The following companies have contributed and/or contribute to Btrfs (sorted alph
 | 99
 | +1801 -1206
 |-
-| 4.7-rc1
-| 27
-| 91652
-| 119588
-| 121
-| +2930 -2067
+| 4.7
+| 33
+| 91907
+| 119849
+| 160
+| +3721 -2502
+|-
+| 4.8-rc2
+| 20
+| 92411
+| 120464
+| 85
+| +1966 -1302
 |}
 
 Legend:

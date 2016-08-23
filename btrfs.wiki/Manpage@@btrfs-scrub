@@ -11,8 +11,22 @@ btrfs-scrub - scrub btrfs filesystem, verify block checksums
 ==DESCRIPTION==
 
 <p><b>btrfs scrub</b> is used to scrub a btrfs filesystem, which will read all data
-and metadata blocks from all disks and verify checksums. Automatically repair
+and metadata blocks from all devices and verify checksums. Automatically repair
 corrupted blocks if there&#8217;s a correct copy available.</p>
+<blockquote><b>Note:</b>
+Scrub is not a filesystem checker (fsck) and does not verify nor repair
+structural damage in the filesystem.</blockquote>
+<p>The user is supposed to run it manually or via a periodic system service. The
+recommended period is a month but could be less. The estimated device bandwidth
+utilization is about 80% on an idle filesytem. The IO priority class is by
+default <em>idle</em> so background scrub should not interfere with normal filesystem
+operation significantly.</p>
+<p>The scrubbing status is recorded in <em>/var/lib/btrfs/</em> in textual files named
+<em>scrub.status.UUID</em> for a filesystem identified by the given UUID. (An
+itermediate progress is communicated through a named pipe in file
+<em>scrub.progress.UUID</em> in the same directory.) The status file is updated
+periodically every 5 seconds. An resumed scrub will continue from the last
+saved position.</p>
 ==SUBCOMMAND==
 
 <dl>
@@ -22,9 +36,7 @@ corrupted blocks if there&#8217;s a correct copy available.</p>
 <p>
 If a scrub is running on the filesystem identified by <em>path&gt;</em> cancel it.
 </p>
-<p>Progress is saved in the scrub progress file (<em>/var/lib/btrfs/scrub.status.UUID</em>)
-and scrubbing can be resumed later using the <b>btrfs scrub resume</b> command.
-If a <em>device</em> is specified, the corresponding filesystem is found and
+<p>If a <em>device</em> is specified, the corresponding filesystem is found and
 <b>btrfs scrub cancel</b> behaves as if it was called on that filesystem.</p>
 
 <dt>
@@ -45,10 +57,7 @@ Resume a cancelled or interrupted scrub on the filesystem identified by
 Start a scrub on all devices of the filesystem identified by <em>path</em> or on
 a single <em>device</em>. If a scrub is already running, the new one fails.
 </p>
-<p>Without options, scrub is started as a background process.
-Progress can be obtained with the <b>btrfs scrub status</b> command. Scrubbing
-involves reading all data from all disks and verifying checksums. Errors are
-corrected along the way if possible.</p>
+<p>Without options, scrub is started as a background process.</p>
 <p>The default IO priority of scrub is the idle class. The priority can be
 configured similar to the [http://man7.org/linux/man-pages/man1/ionice.1.html ionice(1)] syntax using <em>-c</em> and <em>-n</em> options.</p>
 <p><tt>Options</tt></p>
@@ -64,7 +73,7 @@ do not background and print scrub statistics when finished
 -d
 <dd>
 <p>
-print separate statistics for each device of the filesystem (<em>-B</em> only)
+print separate statistics for each device of the filesystem (<em>-B</em> only) at the end
 </p>
 
 <dt>
@@ -78,7 +87,7 @@ be quiet, omit error messages and statistics
 -r
 <dd>
 <p>
-read only mode, do not attempt to correct anything, can be run on a read-only
+run in read-only mode, do not attempt to correct anything, can be run on a read-only
 filesystem
 </p>
 
@@ -108,8 +117,8 @@ set IO priority classdata (see [http://man7.org/linux/man-pages/man1/ionice.1.ht
 <dd>
 <p>
 force starting new scrub even if a scrub is already running,
-this is useful when scrub status file is damaged and reports a running
-scrub although it is not
+this can useful when scrub status file is damaged and reports a running
+scrub although it is not, but should not normally be necessary
 </p>
 
 </dl>
@@ -146,5 +155,6 @@ Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
 further details.</p>
 ==SEE ALSO==
 
-<p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],</p>
+<p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
+[http://man7.org/linux/man-pages/man1/ionice.1.html ionice(1)]</p>
 [[Category:Manpage]]

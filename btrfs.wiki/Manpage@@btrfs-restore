@@ -11,9 +11,19 @@ btrfs-restore - try to restore files from a damaged btrfs filesystem image
 ==DESCRIPTION==
 
 <p><b>btrfs restore</b> is used to try to salvage files from a damaged filesystem and
-restore them into <em>&lt;path&gt;</em> or just list the tree roots.</p>
-<p>Since current [[Manpage/btrfs-check|btrfs-check(8)]] or [[Manpage/btrfs-rescue|btrfs-rescue(8)]] only has very limited usage,
-<b>btrfs restore</b> is normally a better choice.</p>
+restore them into <em>&lt;path&gt;</em> or just list the subvolume tree roots. The filesystem
+image is not modified.</p>
+<p>If the filesystem is damaged and cannot be repaired by the other tools
+([[Manpage/btrfs-check|btrfs-check(8)]] or [[Manpage/btrfs-rescue|btrfs-rescue(8)]]), <b>btrfs restore</b> could be used to
+retrieve file data, as far as the metadata are readable. The checks done by
+restore are less strict and the process is usually able to get far enough to
+retrieve data from the whole filesystem. This comes at a cost that some data
+might be incomplete or from older versions if they&#8217;re available.</p>
+<p>There are several options to attempt restoration of various file metadata type.
+You can try a dry run first to see how well the process goes and use further
+options to extend the set of restored metadata.</p>
+<p>For images with damaged tree structures, there are several options to point the
+process to some spare copy.</p>
 <blockquote><b>Note:</b>
 It is recommended to read the following btrfs wiki page if your data is
 not salvaged with default option:<br/>
@@ -25,113 +35,117 @@ https://btrfs.wiki.kernel.org/index.php/Restore</blockquote>
 -s|--snapshots
 <dd>
 <p>
-get snapshots, btrfs restore skips snapshots in default.
+get also snapshots that are skippped by default
 </p>
 
 <dt>
 -x|--xattr
 <dd>
 <p>
-get extended attributes.
+get extended attributes
 </p>
 
 <dt>
 -m|--metadata
 <dd>
 <p>
-restore owner, mode and times.
+restore owner, mode and times for files and directories
 </p>
 
 <dt>
 -S|--symlinks
 <dd>
 <p>
-restore symbolic links as well as normal files.
+restore symbolic links as well as normal files
 </p>
 
 <dt>
 -v|--verbose
 <dd>
 <p>
-verbose.
+be verbose and print what is being restored
 </p>
 
 <dt>
 -i|--ignore-errors
 <dd>
 <p>
-ignore errors.
+ignore errors during restoration and continue
 </p>
 
 <dt>
 -o|--overwrite
 <dd>
 <p>
-overwrite directories/files in <em>&lt;path&gt;</em>.
+overwrite directories/files in <em>&lt;path&gt;</em>, eg. for repeated runs
 </p>
 
 <dt>
 -t <em>&lt;bytenr&gt;</em>
 <dd>
 <p>
-use <em>&lt;bytenr&gt;</em> to read root tree.
+use <em>&lt;bytenr&gt;</em> to read the root tree
 </p>
 
 <dt>
 -f <em>&lt;bytenr&gt;</em>
 <dd>
 <p>
-only restore files that are under specified root whose root bytenr is <em>&lt;bytenr&gt;</em>.
+only restore files that are under specified subvolume root pointed by <em>&lt;bytenr&gt;</em>
 </p>
 
 <dt>
 -u|--super <em>&lt;mirror&gt;</em>
 <dd>
 <p>
-use given superblock mirror identified by <em>&lt;mirror&gt;</em>, it can be 0,1,2.
+use given superblock mirror identified by <em>&lt;mirror&gt;</em>, it can be 0,1 or 2
 </p>
 
 <dt>
 -r|--root <em>&lt;rootid&gt;</em>
 <dd>
 <p>
-only restore files that are under specified root whose objectid is <em>&lt;rootid&gt;</em>.
+only restore files that are under a specified subvolume whose objectid is <em>&lt;rootid&gt;</em>
 </p>
 
 <dt>
 -d
 <dd>
 <p>
-find dir.
+find directory
 </p>
 
 <dt>
 -l|--list-roots
 <dd>
 <p>
-list tree roots.
+list subvolume tree roots, can be used as argument for <em>-r</em>
 </p>
 
 <dt>
 -D|--dry-run
 <dd>
 <p>
-dry run (only list files that would be recovered).
+dry run (only list files that would be recovered)
 </p>
 
 <dt>
 --path-regex <em>&lt;regex&gt;</em>
 <dd>
 <p>
-restore only filenames matching regex, you have to use following syntax (possibly quoted):
+restore only filenames matching a regular expression ([http://man7.org/linux/man-pages/man7/regex.7.html regex(7)]) with a
+mandatory format
 </p>
 <p><tt>^/(|home(|/username(|/Desktop(|/.*))))$</tt></p>
+<p>The format is not very comfortable and restores all files in the directories
+in the whole path, so this is not useful for restoring single file in a deep
+hierarchy.</p>
 
 <dt>
 -c
 <dd>
 <p>
-ignore case (--path-regex only).
+ignore case (--path-regex only)
 </p>
 
 </dl>
