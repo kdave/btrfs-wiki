@@ -2,7 +2,8 @@ Btrfs is a modern copy on write (CoW) filesystem for Linux aimed at implementing
 Not too many companies have said that they are using Btrfs in production, but we welcome those who can say so on the [[Production_Users|production users]] page.
 
 == Stability status ==
-The filesystem [[On-disk_Format|disk format]] is stable; this means it is not expected to change unless there are very strong reasons to do so. If there is a format change, filesystems which implement the previous disk format will continue to be mountable and usable by newer kernels.
+
+'''For a feature status and stability please refer to the [[Status]] page.''' The filesystem [[On-disk_Format|disk format]] is stable; this means it is not expected to change unless there are very strong reasons to do so. If there is a format change, filesystems which implement the previous disk format will continue to be mountable and usable by newer kernels.
 
 The Btrfs code base is under heavy development. Not only is every effort being made to ensure that it remains stable and fast but to make it more so with each and every commit. This rapid pace of development means that the filesystem improves ''noticeably'' with every new Linux release so it's ''highly'' recommended that users run the most modern kernel possible.
 
@@ -32,7 +33,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 ** File Striping+Mirroring
 ** Single and Dual Parity implementations (experimental, not production-ready)
 * SSD (flash storage) awareness (TRIM/Discard for reporting free blocks for reuse) and optimizations (e.g. avoiding unnecessary seek optimizations, sending writes in clusters, even if they are from unrelated files. This results in larger write operations and faster write throughput)
-* Efficient [[incremental backup]]
+* Efficient [[Incremental_Backup|incremental backup]]
 * Background scrub process for finding and repairing errors of files with redundant copies
 * Online filesystem defragmentation
 * [[btrfsck|Offline filesystem check]]
@@ -43,43 +44,45 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 ** Efficient incremental filesystem mirroring
 * Batch, or out-of-band [[deduplication]] (happens after writes, not during)
 
+=== Features by kernel version ===
+As part of the changelog you can also review
+
+* [[Changelog#By_feature|features by kernel version]]
+
 === Features Currently in Development or Planned for Future Implementation ===
 
 * Online filesystem check
 * Object-level mirroring and striping
 * Alternative checksum algorithms
-* In-band [[deduplication]] (happens during writes)
+* In-band deduplication (happes during writes)
+** [https://btrfs.wiki.kernel.org/index.php/Design_notes_on_dedupe In-band dedupe design document]
+** [https://btrfs.wiki.kernel.org/index.php/User_notes_on_dedupe How to use in-band dedupe]
 * Other compression methods ([[Project_ideas#Compression_enhancements|LZ4]])
 * Hot data tracking and moving to faster devices (currently being pushed as a generic feature available through VFS)
 
-== News ==
+== News and Changelog ==
 
-'''btrfs-progs 4.7 (Jul 2016)'''
-* convert: fix creating discontig extents
-* check: speed up traversing heavily reflinked extents within a file
-* check: verify qgroups of higher levels
-* check: repair can now fix wrong qgroup numbers
-* balance: new option to run in the background
-* defrag: default extent target size changed to 32MiB
-* du: silently skip non-btrfs dirs/files
-* documentation updates: btrfs(5), btrfs(8), balance, subvolume, scrub, filesystem, convert
-* bugfixes:
-** unaligned access (reported for sparc64) in raid56 parity calculations
-** use /bin/bash
-** other stability fixes and cleanups
-* more tests
+''' btrfs-progs v4.8.1 (Oct 2016)'''
+* build fixes
 
-'''Linux v4.7 (Jul 2016)'''
-* allow balancing to dup with multi-device
-* device deletion by id (additionally to by path)
-* renameat2: add support for RENAME_EXCHANGE and RENAME_WHITEOUT
-* enhanced selftests
-* more preparatory work for "blocksize < page size"
-* more validation checks of superblock (discovered by fuzzing)
-* advertise which crc32c implementation is being used at module load
-* fixed space report by ''df'' with mixed block groups
-* log replay fixes
-* device replace fixes
+''' btrfs-progs v4.8 (Oct 2016)'''
+* error handling improvements all over the place
+* new fuzzed images, test updates
+* doc fixups
+* minor cleanups and improvements
+* kernel library helpers moved to own directory
+* qgroup: fix regression leading to incorrect status after check, introduced in 4.7
+
+'''Linux v4.8 (Oct 2016)'''
+* space reservations and handling uses ticketed system, this should improve latency and fairness in case when there are several threads blocked on flushing
+* fixes of bugs triggered by fuzzed images
+* global ratelmit of all printed messages
+* several send, qgroup fixes
+* cleanups
+
+'''Wiki update'''
+
+[[Status|A comprehensive page with feature status]]
 
 Read about past releases in the [[Changelog]]
 * [[Changelog#By_feature|features by kernel version]]

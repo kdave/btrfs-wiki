@@ -187,6 +187,11 @@ References:
 range of the file attributes, similar to what FS_IOC_GETFLAGS does.
 }}
 
+=== Use fs/crypto API ===
+{{project
+|text=Generic VFS-level crypto API is available since 4.6, port btrfs.
+}}
+
 == Other projects ==
 
 === extent_io state ranges ===
@@ -554,7 +559,6 @@ Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 * audit code for use of backup superblocks and change it to read only the first unless told otherwise by a command-line option
 * write a ''mount.btrfs'' helper to scan devices on the fly (and use libblkid and libmount for that)
 * ('''claimed''') introduce subcommand ''debug'' and move there functionality from separate debugging utilities
-** (claimed) tree-stats from calc-size
 ** map-logical (not sure if this is not for inspect-internal)
 ** dump-image from btrfs-image
 * add API for tree search ioctl

@@ -79,6 +79,8 @@ Currently we implement 4 ioctl interfaces:
 
 == Further plans ==
 
+* Add weak hash support, which will use byte-by-byte comparison when hash hits.
+
 * implement on-disk back end for in-band dedupe, which will store all data's hash value in disk.
 
 * make in-band dedupe support compression.

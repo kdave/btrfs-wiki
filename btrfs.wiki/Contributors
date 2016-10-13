@@ -1,3 +1,5 @@
+__TOC__
+
 The following companies have contributed and/or contribute to Btrfs (sorted alphabetically):
 * Facebook
 * Fujitsu
@@ -71,12 +73,12 @@ The following companies have contributed and/or contribute to Btrfs (sorted alph
 | 160
 | +3721 -2502
 |-
-| 4.8-rc2
-| 20
-| 92411
-| 120464
-| 85
-| +1966 -1302
+| 4.8-rc5
+| 22
+| 92608
+| 120760
+| 108
+| +2430 -1470
 |}
 
 Legend:

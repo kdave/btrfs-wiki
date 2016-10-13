@@ -1,6 +1,7 @@
 = By feature =
-
 Major features or significant feature enhancements by kernel version. For more information look below.
+
+'''WARNING:''' The "Version" row states at which version a feature has been merged into the mainline kernel. It does not tell anything about at which kernel version it is considered mature enough for production use. For an estimation on stability of features see [[Status]] page.
 
 {| class="wikitable" border=1
 |-
@@ -185,7 +186,8 @@ Major features or significant feature enhancements by kernel version. For more i
 {{FeatureMerged
 |name=free space tree
 |version=4.5
-|text=Improved implementation of free space cache, using b-trees.
+|text=Improved implementation of free space cache (aka v2), using b-trees.
+|note=Kernel 4.9 fixes endianity bugs on big-endian machines, x86* is ok
 }}
 {{FeatureMerged
 |name=balance filter updates
@@ -225,7 +227,21 @@ Major features or significant feature enhancements by kernel version. For more i
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
 
+== btrfs-progs 4.8 (Oct 2016) ==
+
+* error handling improvements all over the place
+* new fuzzed images, test updates
+* doc fixups
+* minor cleanups and improvements
+* kernel library helpers moved to own directory
+* qgroup: fix regression leading to incorrect status after check, introduced in 4.7
+
+== btrfs-progs v4.8.1 (Oct 2016) ==
+* build fixes: 32bit, "no backtrace"
+
 == btrfs-progs 4.7 (Jul 2016) ==
+
+'''do not use, see 4.7.2'''
 
 * convert: fix creating discontig extents
 * check: speed up traversing heavily reflinked extents within a file
@@ -240,6 +256,51 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** use /bin/bash
 ** other stability fixes and cleanups
 * more tests
+
+=== btrfs-progs 4.7.1 (Aug 2016) ===
+
+'''do not use, see 4.7.2'''
+
+* check:
+** new optional mode: optimized for low memory usage (memory/io tradeoff)
+** --mode=lowmem, not default, still considered experimental
+** does not work with --repair yet
+* convert: regression fix, ext2_subvol/image rw permissions
+* mkfs/convert:
+** two-staged creation, partially created filesystem will not be recognized
+** improved error handling (fewer BUG_ONs)
+* convert: preparation for more filesystems to convert from
+* documentation updates: quota, qgroup
+* other
+** message updates
+** more tests
+** more build options, enhanced debugging
+
+=== btrfs-progs 4.7.2 (Sep 2016) ===
+* check:
+** '''urgent fix''': false report of backref mismatches; do not --repair, last unaffected version 4.6.1 (code reverted to that state)
+* fuzzing and fixes
+** added more sanity checks for various structures
+** testing images added
+* build: udev compatibility: do not install .rules on version < 190
+* other:
+** dump-super: do not crash on garbage value in csum_type
+** minor improvements in messages and help strings
+* documentation:
+** filesystem features
+
+=== btrfs-progs 4.7.3 (Sep 2016) ===
+* fixed free space tree compat status
+* check: low-mem mode: handle partially dropped snapshots
+* dump-super: consolidate options for superblock copy
+* tree-stats: check mount status
+* subvol delete: handle verbosity option
+* defrag: print correct error string
+* mkfs: fix reading rotational status
+* other:
+** UBSAN build option
+** documentation updates
+** enhanced tests: convert, fuzzed images, more tools to run on fuzzed images
 
 == btrfs-progs 4.6 (Jun 2016) ==
 

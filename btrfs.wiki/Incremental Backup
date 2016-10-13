@@ -78,3 +78,7 @@ But for instance, if you did want to keep a history of backups, perhaps you woul
     btrfs subvolume snapshot -r /backup/home/BACKUP /backup/home.$(date +%Y-%m-%d)
 
 This concludes the incremental backup step.
+
+== See also ==
+
+The FAQ on [[FAQ#What_is_the_difference_between_-c_and_-p_in_send.3F|the difference between -p and -c when sending]]

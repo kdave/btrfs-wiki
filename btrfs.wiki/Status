@@ -1,0 +1,169 @@
+= Overview =
+
+For a list of features by their introduction, please see the table [[Changelog#By_feature]].
+
+The following table aims to give an overview of the stability of the features BTRFS supports in the latest kernel version ('''4.7'''). This refers to functionality, not usability (as this would need to specify the usecase and expectations).
+
+{| class="wikitable" border=1
+|-
+! Feature !! Status !! Notes
+|-
+| Subvolumes, snapshots
+| style="background: lightgreen;" | OK
+|-
+| Trim (aka. discard)
+| style="background: lightgreen;" | OK
+| ''fstrim'' and mounted with ''-o discard'' (has performance implications)
+|-
+| Autodefrag
+| style="background: lightgreen;" | OK
+|-
+| Defrag
+| style="background: orange;" | mostly OK
+| extents get unshared ''(see below)''
+|-
+| Auto-repair
+| style="background: lightgreen;" | OK
+| automatically repair from a correct spare copy if possible (dup, raid1, raid10)
+|-
+| [[Compression]]
+| style="background: orange;" | mostly OK
+| ''(needs verification and source)'' auto-repair and compression may crash
+|-
+| Scrub
+| style="background: lightgreen;" | OK
+|-
+| Scrub + RAID56
+| style="background: FireBrick;" | Unstable
+| will verify but not repair
+|-
+| Filesystem resize
+| style="background: lightgreen;" | OK
+| shrink, grow
+|-
+| Send
+| style="background: lightgreen;" | OK
+| corner cases may still exist
+|-
+| Receive
+| style="background: lightgreen;" | OK
+|-
+| Single (block group profile)
+| style="background: lightgreen;" | OK
+|-
+| DUP (block group profile)
+| style="background: lightgreen;" | OK
+|-
+| RAID0
+| style="background: lightgreen;" | OK
+|-
+| RAID1
+| style="background: lightgreen;" | OK
+|-
+| RAID10
+| style="background: lightgreen;" | OK
+|-
+| [[RAID56]]
+| style="background: FireBrick;" | Unstable
+| write hole still exists, parity not checksummed
+|-
+| Seeding
+| style="background: lightgreen;" | OK
+| should be better documented
+|-
+| Device replace
+| style="background: orange;" | mostly OK
+| gets stuck on devices with bad sectors
+|-
+| Balance
+| style="background: lightgreen;" | OK
+|-
+| Quotas, qgroups
+| style="background: orange;" | mostly OK
+|-
+| Out-of-band dedupe
+| style="background: orange;" | mostly OK
+| performance issues
+|-
+| File range cloning
+| style="background: orange;" | mostly OK
+| (reflink), heavily referenced extents have a noticeable performance hit
+|-
+| Offline UUID change
+| style="background: lightgreen;" | OK
+|-
+| Free space tree
+| style="background: FireBrick;" | Unstable
+| see below
+|-
+| no-holes
+| style="background: lightgreen;" | OK
+| see documentation for compatibility
+|-
+| skinny-metadata
+| style="background: lightgreen;" | OK
+| see documentation for compatibility
+|-
+| extended-refs
+| style="background: lightgreen;" | OK
+| see documentation for compatibility
+|-
+| Mixed block groups
+| style="background: lightgreen;" | OK
+| see documentation
+|-
+| nodatacow
+| style="background: lightgreen;" | OK
+| ''(see below)''
+|}
+
+''Legend:''
+* '''OK''': should be safe to use, no known defficiencies
+* '''mostly OK''': safe for general use, there are some known problems
+* '''Unstable''': do not use for other then testing purposes, known severe problems, missing implementation of some core part
+
+'''Note to editors:''' please update the table if:
+* you're sure you know the answer, eg. a bug number for a bug that lowers the feature status
+* a particular feature combination that has a different status and is worth mentioning separately
+* there's a missing entry (put TBD to the status)
+* a reference could be enhanced by an actual link to documentation (wiki, manual pages)
+
+The page edits are watched by wiki admins, do not worry to edit.
+
+== Details that do not fit the table ==
+
+=== Defrag ===
+
+The data affected by the defragmentation process will be newly written and will consume new space, the links to the original extents will not be kept. See also [[Manpage/btrfs-filesystem]]. Though autodefrag affects newly written data, it can read a few adjacent blocks (up to 64k) and write the contiguous extent to a new location. The adjacent blocks will be unshared. This happens on a smaller scale than the on-demand defrag and doesn't have the same impact.
+
+=== Nodatacow ===
+
+Nodatacow does not checksum data, see [[Manpage/btrfs(5)]].
+
+=== Free space tree ===
+
+* btrfs-progs support is read-only, ie. fsck can check the filesystem but is not able to keep the FST consistent and thus cannot run in repair mode
+* btrfs-progs versions before v4.7.3 might accidentally do writes to the filesystem, but since there's no way to invalidate the FST, this causes inconsistency and possible corruption (using a piece of space twice). ''If'' you have made changes (btrfstune, repair, ...) to a FST enabled filesystem with btrfs progs, then mount with clear_cache,space_cache=v2 and hope the space written to was not reused yet. https://www.spinics.net/lists/linux-btrfs/msg59110.html
+* runtime support: fine on little-endian machines (x86*), known to be broken on big-endian (sparc64), https://bugzilla.kernel.org/show_bug.cgi?id=152111
+
+Fixes for the bitmap: kernel 4.9, btrsf-progs 4.7.3
+
+= Other =
+
+== On-disk format ==
+
+The filesystem disk format is stable. This means it is not expected to change
+unless there are very strong reasons to do so. If there is a format change,
+filesystems which implement the previous disk format will continue to be
+mountable and usable by newer kernels.
+
+The core of the on-disk format that comprises building blocks of the
+filesystem:
+
+* layout of the main data structures, eg. superblock, b-tree nodes, b-tree keys, block headers
+* the COW mechanism, based on the original design of Ohad Rodeh's paper "Shadowing and clones"
+
+Newly introduced features build on top of the above and could add specific
+structures. If a backward compatibility is not possible to maintain, a bit in
+the filesystem superblock denotes that and the level of incompatibility (full,
+read-only mount possible).

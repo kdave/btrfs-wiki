@@ -555,6 +555,32 @@ The size of global reserve is determined dynamically according to the
 filesystem size but is capped at 512MiB. The value ''used'' greater than 0
 means that it is in use.
 
+== What is the difference between -c and -p in send? ==
+
+It's easiest to understand if you look at what receive does. Receive takes a stream of instructions, creates a new subvolume, and uses the instructions to modify that subvolume until it looks like the one being sent.
+
+When you use -p, the receiver will take a snapshot of the corresponding subvol, and then use the send stream to modify it. So, if you do this:
+
+ btrfs sub snap -r /@A /snaps/@A.1
+ btrfs send /snaps/@A.1 | btrfs receive /backups
+ btrfs sub snap -r /@A /snaps/@A.2
+ btrfs send -p /snaps/@A.1 /snaps/@A.2 | btrfs receive /backups
+
+the second receive will first snapshot /backups/@A.1 to /backups/@A.2, and then use the information in the send stream to make it look like /snaps/@A.2.
+
+When you use -c, then receiver will simply use the clone range ioctl (i.e. reflink copies) from data held in the corresponding subvol. So, doing this:
+
+ btrfs sub snap -r /@A /snaps/@A.1
+ btrfs send /snaps/@A.1 | btrfs receive /backups
+ cp --reflink=always /@A/bigfile /@B/bigfile.copy
+ btrfs sub snap -r /@B /snaps/@B.1
+ btrfs send -c /snaps/@A.1 /snaps/@B.1 | btrfs receive /backups
+
+the second receive will start with a blank subvolume, and build it up from scratch. The send will send ''all'' of the metadata of @B.1, but will leave out the data for @B.1/bigfile, because it's already in the backups filesystem, and can be reflinked from there.
+
+So if you use -c on its own (without -p), ''all'' of the metadata of the subvol is sent, but some of the data is assumed to exist on the far side.
+If you use -p, then ''some'' of the metadata is assumed to exist on the other side as well, in the form of an earlier subvol that can be snapshotted.
+
 = Subvolumes =
 
 == What is a subvolume? ==

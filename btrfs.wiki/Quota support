@@ -15,6 +15,8 @@ Limits on quota groups can be applied either to the total data usage, un-shared 
 
 To set a limit, you use the command <code>btrfs qgroup limit</code>, you can apply it to any qgroup and set a total limit, unshared limit (-e) or compressed limit (-c).
 
+To show usage and limits for a given path within a filesystem use <code>btrfs qgroup show -reF /mountpoint/path1/path2/</code>.
+
 === Commands ===
  <at BTRFS root>
  mkdir test
