@@ -201,7 +201,7 @@ A corresponding fstab could look like this:
 
 Creating a ro-snapshot would work for example like this:
  # mount /root/btrfs-top-lvl
- # btrfs subvolume snapshot /root/btrfs-top-lvl/home /root/btrfs-top-lvl/snapshots/home/2015-12-01
+ # btrfs subvolume snapshot -r /root/btrfs-top-lvl/home /root/btrfs-top-lvl/snapshots/home/2015-12-01
  # umount /root/btrfs-top-lvl
 
 Rolling back a snapshot would work for example like this:

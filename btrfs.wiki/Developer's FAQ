@@ -238,6 +238,60 @@ for userspace tools add '''btrfs-progs:'''
  +++ b/fs/btrfs/volumes.c
  (rest of the patch)
 
+== Pull requests vs patches to mailinglist ==
+
+By default, all patches should be sent as mails to the mailinglist. The
+discussions or reviews happen there. Putting a patch series to a git branch
+may be convenient, but does not mean the exact unchanged branch will be
+pulled.
+
+There are some criteria that have to be met before this happens. The patches
+should meet/have:
+
+* no coding style violations
+* good quality of implementation, should not exhibit trivial mistakes, lack of comments
+* unspecified number of other things that usually get poitned out in review comments
+** this knowledge can be demonstrated by doing reviews of other developers' patches
+** doing reviews of other developers' patches is strongly recommended
+* good changelogs and subject lines
+* the base point of the git branch is well-defined (ie. a stable release point or last development point, that will not get rebased)
+
+The third point is vague, mostly refers to preferred coding patterns that we
+discover and use over time. This may also explain why the pull-based workflow
+is not used often. Both parties, developers and maintainers, need to know that
+the code to be pulled will be satisfactory in this regard.
+
+It should be considered normal to send more than one round of a patchset,
+based on review comments that hopefully do not need to point out issues in
+anything of the above. Rather focus on design or potential uses and other
+impact.
+
+=== Kernel patches ===
+
+If you think you're able to provide the expected quality of patches and are
+familiar with a bit more advanced git use, ask the maintainers. If you're a
+long-term developer, the maintainers can also ask you to start the pull-based
+workflow. The main point for the workflow is to make maintainers' life easier.
+
+Suggested branch names for patchsets for current development cycle:
+* '''base''' -- the last commit of the last pull (could be in branch named something like '''for-linus''' or '''integration'''), or some older head of pull request
+* '''for-current''' -- patches that have been reviewed and qualify for the upcoming '''rc'''
+
+Patches for next development cycle:
+* '''base''' -- the last release candidate tag in Linus' tree, be sure not to be ahead of the integration branches that will become the pull requests for the next dev cycle.
+* '''for-next''' -- patches should be in a good state, ie. don't complicate testing too much, workarounds or known problems should be documented (eg. in the patchset cover letter)
+* other names, for example a patchset for a given feature as a topic branch
+
+=== Btrfs-progs patches ===
+
+The first paragraph from previous section applies here as well.
+
+Unlike the kernel, there are no release candidates during development. If a
+patchset is independent, the ''master'' branch is a suitable point. In case
+there are other patches in ''devel'', a non-rebased development branch needs
+to be created. As this is not needed most of the time, this will happen only
+on-demand.
+
 = Development schedule =
 
 A short overview of the development phases of linux kernel and what this means for developers regarding sending patches etc.

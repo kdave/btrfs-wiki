@@ -232,9 +232,9 @@ The traversal and freeing of the tree may be done in pieces by inserting a progr
 
 Ohad Rodeh presented this reference counted snapshot algorithm at the 2007 Linux Filesystem and Storage Workshop:
 
-Slides: http://www.cs.huji.ac.il/~orodeh/papers/LinuxFS_Workshop.pdf
+Slides: [[Media:LinuxFS_Workshop.pdf|LinuxFS_Workshop.pdf]]
 
-Paper: http://www.cs.tau.ac.il/~ohadrode/papers/btree_TOS.pdf
+Paper: [[Media:Btree_TOS.pdf|Btree_TOS.pdf]]
 
 The Btrfs snapshotting implementation is based on the ideas he presented.
 

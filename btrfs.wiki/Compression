@@ -2,7 +2,7 @@ Btrfs supports transparent file compression. There are two algorithms available,
 
 = Compression FAQ =
 == How do I enable compression? ==
-Mount with ''compress'' or ''compress-force'', see [[Mount options]] for more.  Then write (or re-write) files, and they will be transparently compressed.  Some files may not compress very well, and these are typically not recompressed but still written uncompressed.  See the "what happens to incompressible files?" section, below.
+Mount with <code>[[Mount options#compress|-o compress]]</code> or <code>[[Mount options#compress|-o compress-force]]</code>.  Then write (or re-write) files, and they will be transparently compressed.  Some files may not compress very well, and these are typically not recompressed but still written uncompressed.  See the [[#incompressible|What happens to incompressible files?]] section, below.
 
 === What is the default compression method? ===
 As for kernels up to 3.6 it's ZLIB.
@@ -25,19 +25,21 @@ Snappy support (compresses slower than LZ0 but decompresses much faster) has als
 Yes. The compression algorithm is stored per-extent.
 
 == How can I determine compressed size of a file? ==
-There is a patch adding support fort that, currently it's not merged.  You can kind of guess at its compressed size by comparing the output from the "df" command before and after writing a file, if this is available to you.
+There is a patch adding support fort that, currently it's not merged.  You can kind of guess at its compressed size by comparing the output from the <code>df</code> command before and after writing a file, if this is available to you.
 
-=== Why does not ''du'' report the compressed size? ===
-Traditionally the UNIX/Linux filesystems did not support compression and there was no item in ''stat'' data structure allocated for a similar purpose. There's the file size, that denotes nominal file size independent of the actually allocated size on-disk. For that purpose, the ''stat.st_blocks'' item contains a value that corresponds to the number of blocks allocated, ie. in case of [http://en.wikipedia.org/wiki/Sparse_file sparse files]. However, when a compression is involved, the actually allocated size may be smaller than nominal, although the file is not sparse.<br>
-There are utilities that determine sparseness of a file by comparing the nominal and block-allocated size, this behaviour might cause bugs if ''st_blocks'' contained the amount after compression.<br>
-Another issue with backward compatibility is that up to now ''st_blocks'' always contains the uncompressed number of blocks. It's unclear what would happen if there are files with mixed types of the value. The proposed solution is to add another special call for that (via ''ioctl''), but this may be not the ideal solution.
+=== Why does not <code>du</code> report the compressed size? ===
+Traditionally the UNIX/Linux filesystems did not support compression and there was no item in <code>stat</code> data structure allocated for a similar purpose. There's the file size, that denotes nominal file size independent of the actually allocated size on-disk. For that purpose, the <code>stat.st_blocks</code> item contains a value that corresponds to the number of blocks allocated, i.e. in case of [http://en.wikipedia.org/wiki/Sparse_file sparse files]. However, when a compression is involved, the actually allocated size may be smaller than nominal, although the file is not sparse.<br>
+There are utilities that determine sparseness of a file by comparing the nominal and block-allocated size, this behaviour might cause bugs if <code>st_blocks</code> contained the amount after compression.<br>
+Another issue with backward compatibility is that up to now <code>st_blocks</code> always contains the uncompressed number of blocks. It's unclear what would happen if there are files with mixed types of the value. The proposed solution is to add another special call for that (via <code>ioctl</code>), but this may be not the ideal solution.
 
 == Can I determine what compression method was used on a file? ==
 Not directly, but this is possible from a userspace tool without any special kernel support (the code just has not been written).
 == Can I force compression on a file without using the ''compress'' mount option? ==
-Yes. The utility [http://en.wikipedia.org/wiki/Chattr chattr] supports setting file attribute ''c'' that  marks the inode to compress newly written data.
+Yes. The utility [http://en.wikipedia.org/wiki/Chattr chattr] supports setting file attribute ''c'' that  marks the inode to compress newly written data. Setting the compression property on a file using <code>btrfs property set <file> compression <zlib|lzo></code> will '''force''' compression to be used on that file using the specified algorithm.
+
 == Can I disable compression on a file? ==
-Currently not directly. There is no way how to do that from userspace and this will need extending the interface to file attributes. The ''enable compression'' via ''chattr +c'' works because the attribute has existed there for a long time and there is a bit reserved for that purpose in the file attribute ioctl.
+It is possible to disable compression of new extents on a file using the <code>btrfs property set <file> compression ""</code> command. This will set the "no compression" flag on the file and newly written extents will not be compressed until the flag is cleared either by <code>chattr +c</code> or by using the compression property to specify an algorithm. Already written extents will not be rewritten.
+
 == Can I set compression per-subvolume? ==
 Currently no, this is planned. You can simulate this by enabling compression on the subvolume directory and the files/directories will inherit the compression flag.
 <!--
@@ -48,25 +50,28 @@ It will be.
 
 Compression to newly written data happens:
 
-# ''always'' -- if the filesystem is mounted with ''compress-force''
-# ''never'' -- if the ''NOCOMPRESS'' flag is set per-file/-directory
-# ''if possible'' -- if the ''COMPRESS'' per-file flag (aka ''chattr +c'') is set, but it may get converted to ''NOCOMPRESS'' eventually
-# ''if possible'' -- if the ''compress'' mount option is specified
+# ''always'' -- if the filesystem is mounted with <code>[[Mount options#compress|-o compress-force]]</code>
+# ''never'' -- if the <code>NOCOMPRESS</code> flag is set per-file/-directory
+# ''if possible'' -- if the <code>COMPRESS</code> per-file flag (aka <code>chattr +c</code>) is set, but it may get converted to <code>NOCOMPRESS</code> eventually
+# ''if possible'' -- if the <code>[[Mount options#compress|-o compress]]</code> mount option is specified
 
-Note, that mounting with ''compress'' will not set the ''+c'' file attribute.
+Note, that mounting with <code>[[Mount options#compress|-o compress]]</code> will not set the <code>+c</code> file attribute.
 
 == How does compression interact with direct IO or COW? ==
 Compression does not work with DIO, does work with COW and does not work for NOCOW files. If a file is opened in DIO mode, it will fall back to buffered IO.
 === Are there speed penalties when doing random access to a compressed file? ===
 Yes. The compression processes ranges of a file of maximum size 128 KiB and compresses each 4 KiB (or page-sized) block separately. Accessing a byte in the middle of the given 128 KiB range requires to decompress the whole range. This is not optimal and is subject to optimizations and further development.
-== What happens to incompressible files? ==
-There is a simple decision logic: if the first portion of data being compressed is not smaller than the original, the compression of the file is disabled -- unless the filesystem is mounted with ''compress-force''. In that case it'll be compressed always regardless of the compressibility of the file. This is not optimal and subject to optimizations and further development.
+== <div id="incompressible">What happens to incompressible files?</div> ==
+There is a simple decision logic: if the first portion of data being compressed is not smaller than the original, the compression of the file is disabled -- unless the filesystem is mounted with <code>[[Mount options#compress|-o compress-force]]</code>. In that case it'll be compressed always regardless of the compressibility of the file. This is not optimal and subject to optimizations and further development.
 
-This means that many times, even if you have compression enabled, if the first portion of the file doesn't compress well, but the rest *does* it still won't compress the rest.  Recommend using ''compress-force'' if you really want compression enabled on a mounted filesystem, though if you have many differing types files, then just ''compress'' might work well for you.
+This means that many times, even if you have compression enabled, if the first portion of the file doesn't compress well, but the rest *does* it still won't compress the rest.  Recommend using <code>[[Mount options#compress|-o compress-force]]</code> if you really want compression enabled on a mounted filesystem, though if you have many differing types files, then just <code>[[Mount options#compress|-o compress]]</code> might work well for you.
 
 = New and unanswered questions =
 
 Add your question here. It'll be moved to previous section when answered.
 
+
+
+1. How can I recursively compress/uncompress a directory (including guessed/forced-compression)?
 
 [[Category:Features]]

@@ -236,6 +236,20 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 * kernel library helpers moved to own directory
 * qgroup: fix regression leading to incorrect status after check, introduced in 4.7
 
+== btrfs-progs v4.8.2 (Oct 2016) ==
+
+* convert: also convert file attributes
+* convert: fix wrong tree block alignment for unalianged block group
+* check: quota verify fixes, handle reloc tree
+* build: add stub for FIEMAP_EXTENT_SHARED, compiles on ancient kernels
+* build: add stub for BUILD_ASSERT when ioctl.h is included
+* dump-tree: don't crash on unrecognized tree id for -t
+* tests:
+** add more ioctl tests
+** convert: more symlink tests, attribute tests
+** quota verify for reloc tree
+* other cleanups
+
 == btrfs-progs v4.8.1 (Oct 2016) ==
 * build fixes: 32bit, "no backtrace"
 

@@ -62,16 +62,19 @@ As part of the changelog you can also review
 
 == News and Changelog ==
 
-''' btrfs-progs v4.8.1 (Oct 2016)'''
-* build fixes
+''' btrfs-progs v4.8.2 (Oct 2016)'''
 
-''' btrfs-progs v4.8 (Oct 2016)'''
-* error handling improvements all over the place
-* new fuzzed images, test updates
-* doc fixups
-* minor cleanups and improvements
-* kernel library helpers moved to own directory
-* qgroup: fix regression leading to incorrect status after check, introduced in 4.7
+* convert: also convert file attributes
+* convert: fix wrong tree block alignment for unalianged block group
+* check: quota verify fixes, handle reloc tree
+* build: add stub for FIEMAP_EXTENT_SHARED, compiles on ancient kernels
+* build: add stub for BUILD_ASSERT when ioctl.h is included
+* dump-tree: don't crash on unrecognized tree id for -t
+* tests:
+** add more ioctl tests
+** convert: more symlink tests, attribute tests
+** quota verify for reloc tree
+* other cleanups
 
 '''Linux v4.8 (Oct 2016)'''
 * space reservations and handling uses ticketed system, this should improve latency and fairness in case when there are several threads blocked on flushing

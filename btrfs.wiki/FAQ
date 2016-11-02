@@ -724,6 +724,10 @@ To learn more about using Raid 5 and Raid 6 with btrfs, see the [[RAID56]] page.
 
 = About the project =
 
+== What is your affiliation with WinBtrfs ==
+
+None.
+
 == What is CRFS? Is it related to Btrfs? ==
 
 [[http://en.wikipedia.org/wiki/CRFS CRFS]] is a network file system protocol. It was designed at around the same time as Btrfs. Its wire format uses some Btrfs disk formats and crfsd, a CRFS server implementation, uses Btrfs to store data on disk. More information can be found at http://oss.oracle.com/projects/crfs/ and http://en.wikipedia.org/wiki/CRFS.

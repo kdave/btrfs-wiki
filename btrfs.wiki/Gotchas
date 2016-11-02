@@ -9,10 +9,12 @@ Please add new things below, don't forget to add a comment on which version you 
 === Block-level copies of devices ===
 
 * Do not make a block-level copy of a btrfs filesystem to a block device, and then try to mount either the original or the copy while both are visible to the same kernel.
-* This means: don't use LVM snapshots, or any other kind of block level snapshots; don't make copies with dd.
+* This means: don't use LVM snapshots, or any other kind of block level snapshots; don't make copies with '''dd'''.
 * If you must do this, remove one copy from the system (physically, or by deletion of the block device or FS) before mounting the other copy.
-* It is safe to copy the data to a file (e.g. with dd), but not to make that file into a block device with the loopback driver.
+* It is safe to copy the data to a file (e.g. with '''dd'''), but not to make that file into a block device with the loopback driver.
 * This problem is due to the UUID on the original and the copy being the same. This confuses the kernel, and it can end up writing updates to the wrong filesystem, causing massive data corruption.
+
+The main issue here is that in most distributions '''udev''' runs '''btrfs device scan''' automagically when a block device is discovered, and this usually means that the copy of the original block device is "attached" to it which as a rule causes extensive volume damage.
 
 === Fragmentation ===
 

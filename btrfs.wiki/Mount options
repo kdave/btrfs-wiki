@@ -40,6 +40,7 @@ This means that (for example) you can't set per-subvolume ''nodatacow'', ''nodat
 |appeared=3.12
 |desc=Set the interval of periodic commit, 30 seconds by default. Higher values defer data being synced to permanent storage with obvious consequences when the system crashes. The upper bound is not forced, but a warning is printed if it's more than 300 seconds (5 minutes).
 }}
+<div id="compress">
 {{MountOption
 |name=compress,compress-force
 |desc=Enable compression. Starting with kernel 2.6.38 you can choose the algorithm for compression:
@@ -50,7 +51,7 @@ This means that (for example) you can't set per-subvolume ''nodatacow'', ''nodat
 compress-force=<method> - Enable compression even for files that don't compress well, like videos and dd images of disks. The options compress-force=zlib and compress-force=lzo works for kernels &gt;2.6.38.
 
 Note that old (before 2012) btrfs-progs versions will probably fail some operations (e.g. fsck) on filesystems with LZO compression.
-}}
+}}</div>
 {{MountOption
 |name=degraded
 |desc=This is used for multi-device filesystem, when raid levels require certain number of devices for successful mount. If some of the devices does not exist/has failed/has been replaced, you can mount the filesystem with this option and continue updating the device set. 
