@@ -236,7 +236,10 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 * kernel library helpers moved to own directory
 * qgroup: fix regression leading to incorrect status after check, introduced in 4.7
 
-== btrfs-progs v4.8.2 (Oct 2016) ==
+=== btrfs-progs v4.8.1 (Oct 2016) ===
+* build fixes: 32bit, "no backtrace"
+
+=== btrfs-progs v4.8.2 (Oct 2016) ===
 
 * convert: also convert file attributes
 * convert: fix wrong tree block alignment for unalianged block group
@@ -250,8 +253,57 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** quota verify for reloc tree
 * other cleanups
 
-== btrfs-progs v4.8.1 (Oct 2016) ==
-* build fixes: 32bit, "no backtrace"
+=== btrfs-progs v4.8.3 (Nov 2016) ===
+
+* check:
+** support for clearing space cache (v1)
+** size reduction of inode backref structure
+* send:
+** fix handling of multiple snapshots (-p and -c options)
+** transfer buffer increased (should reduce number of context switches)
+** reuse existing file for output (-f), eg. when root cannot create files (NFS)
+* dump-tree:
+** print missing items for various structures
+** new: dev stats, balance status item
+** sync key names with kernel (the persistent items)
+* subvol show: now able to print the toplevel subvolume -- the creation time might be wrong though
+* mkfs:
+** store the creation time of toplevel root inode
+** print UUID in the summary
+* build: travis CI for devel
+* other:
+** lots of cleanups and refactoring
+** switched to on-stack path structure
+** fixes from coverity, asan, ubsan
+** new tests
+** updates in testing infrastructure
+** fixed convert test 005
+
+=== btrfs-progs v4.8.4 (Nov 2016) ===
+
+* check: support for clearing space cache v2 (free-space-tree)
+* send:
+** more sanity checks (with tests), cleanups
+** fix for fstests/btrfs/038 and btrfs/117 failures
+* build:
+** fix compilation of standalone ioctl.h, pull NULL definition
+** fix library link errors introduced in 4.8.3
+* tests:
+** add more fuzzed images from bugzilla
+** add bogus send stream checks
+** fixups and enhancements for CI environment builds
+** misc refinements and updates of testing framework
+* other:
+** move sources for btrfs-image to own directory
+** deprecated and not build by default: btrfs-calc-size, btrfs-show-super
+** docs updates
+
+=== btrfs-progs v4.8.5 (Nov 2016) ===
+
+* receive: fix detection of end of stream (error reported even for valid streams)
+* other:
+** added test for the receive bug
+** fix linking of library-test
 
 == btrfs-progs 4.7 (Jul 2016) ==
 

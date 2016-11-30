@@ -8,13 +8,13 @@ Please add new things below, don't forget to add a comment on which version you 
 
 === Block-level copies of devices ===
 
-* Do not make a block-level copy of a btrfs filesystem to a block device, and then try to mount either the original or the copy while both are visible to the same kernel.
-* This means: don't use LVM snapshots, or any other kind of block level snapshots; don't make copies with '''dd'''.
+* Do not make a block-level copy of a Btrfs filesystem to a block device, and then try to mount either the original or the copy while both are visible to the same kernel.
+* This means: don't use LVM snapshots, or any other kind of block level snapshots; don't make copies with <tt>dd</tt>.
 * If you must do this, remove one copy from the system (physically, or by deletion of the block device or FS) before mounting the other copy.
-* It is safe to copy the data to a file (e.g. with '''dd'''), but not to make that file into a block device with the loopback driver.
+* It is safe to copy the data to a file (e.g. with <tt>dd</tt>), but not to make that file into a block device with the loopback driver.
 * This problem is due to the UUID on the original and the copy being the same. This confuses the kernel, and it can end up writing updates to the wrong filesystem, causing massive data corruption.
 
-The main issue here is that in most distributions '''udev''' runs '''btrfs device scan''' automagically when a block device is discovered, and this usually means that the copy of the original block device is "attached" to it which as a rule causes extensive volume damage.
+The main issue here is that in most distributions <tt>udev</tt> runs <tt>btrfs device scan</tt> automagically when a block device is discovered, and this usually means that the copy of the original block device is "attached" to it which as a rule causes extensive volume damage.
 
 === Fragmentation ===
 
@@ -27,8 +27,52 @@ The main issue here is that in most distributions '''udev''' runs '''btrfs devic
 
 == Version specific ==
 
+=== Parity RAID ===
+
+* Currently <tt>raid5</tt> and <tt>raid6</tt> profiles have flaws that make it strongly not recommended as per the [[Status]] page.
+** In less recent releases the parity of resynchronized blocks was not calculated correctly, this has been fixed in recent releases (TBD).
+** If a crash happens while a <tt>raid5</tt>/<tt>raid6</tt> volume is being written this can result in a "transid" mismatch as in <tt>transid verify failed</tt>.
+** The resulting corruption cannot be currently fixed.
+
+=== Free space cache ===
+
+* Currently sometimes the free space cache v1 and v2 lose track of free space and a volume can be reported as not having free space when it obviously does.
+** Fix: disable use of the free space cache with mount option <tt>nospace_cache</tt>.
+** Fix: remount the volume with <tt>-o remount,clear_cache</tt>.
+** Switch to to new free space tree.
+
+=== Incomplete chunk conversion ===
+
+Volumes created or converted with various profile can become read-only on the ''next'' mount if they become degraded, and then they will be stuck like that.
+
+This can be detected by running <tt>btrfs filesystem df</tt> and checking that all data and metadata chunkfs have the same profile. An incomplete conversion looks like:
+ <nowiki>
+#  btrfs fi df /mnt/sdb6
+Data, RAID10: total=174.00GiB, used=172.38GiB
+Data, single: total=8.00MiB, used=0.00B
+System, RAID10: total=96.00MiB, used=48.00KiB
+System, single: total=4.00MiB, used=0.00B
+Metadata, RAID10: total=3.00GiB, used=397.95MiB
+Metadata, single: total=8.00MiB, used=0.00B
+GlobalReserve, single: total=144.00MiB, used=0.00B
+</nowiki>
+
+* This is because older versions of '''btrfs-progs''' leave around on creation or conversion one chunk in the old profile by mistake, and then if a block device becomes missing Btrfs considers the volume fatally damaged if that old profile does not have redundancy.
+** This creation or conversion issue is solved in recent versions of '''btrfs-progs'''.
+** It can be fixed by running again (possibly repeatedly) <tt>btrfs balance soft -mconvert=$MPROFILE,soft -dconvert=$DPROFILE,soft ...</tt>
+** If the volume has already gone read-only, dump, recreate and restore it.
+
+=== <tt>raid1</tt> volumes only mountable once RW if degraded ===
+
+* Even if there are no <tt>single</tt> profile chunks, <tt>raid1</tt> volumes if they become degraded may only be mounted read-write ''once'' with the options <tt>-o degraded,rw</tt>.
+** When a <tt>raid1</tt> volume is stuck as read-only for either reason it can be recovered by dumping its contents, recreating it and restoring the contents.
+** This does not happen with <tt>raid10</tt> profile volumes.
+
+=== Conversion from <tt>ext4</tt> may not be undoable ===
 * In kernels '''4.0+''': the empty block groups are reclaimed automatically that can affect the following:
 ** a converted filesystem may not be able to do a rollback because of the removed block groups
+
+=== Some kernels had problems with "snapshot-aware defrag" ===
 
 * There were problems found with the ''snapshot-aware defrag'' that has been turned off in the following kernels:
 ** '''3.10.31''', '''3.12.12''', '''3.13.4'''

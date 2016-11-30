@@ -94,6 +94,8 @@ test/b                                  	0/966	10.04M	10.04M
 * Creating a qgroup from an existing directory will show a 0 usage until a full filesystem quota rescan is issued.
 * Using <code>btrfs subvolume delete</code> will break qgroup unshared space usage.
 * After deleting a subvolume, you must manually delete the associated qgroup.
+* Bugs in accounting code might cause false out of space situations.
+* Combining quota with (too many) snapshots of subvolumes can cause performance problems, for example when deleting snapshots.
 
 == /usr/local/bin/btrfsQuota.sh ==
 <pre>

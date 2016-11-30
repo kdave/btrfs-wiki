@@ -62,19 +62,12 @@ As part of the changelog you can also review
 
 == News and Changelog ==
 
-''' btrfs-progs v4.8.2 (Oct 2016)'''
+''' btrfs-progs v4.8.5 (Nov 2016)'''
 
-* convert: also convert file attributes
-* convert: fix wrong tree block alignment for unalianged block group
-* check: quota verify fixes, handle reloc tree
-* build: add stub for FIEMAP_EXTENT_SHARED, compiles on ancient kernels
-* build: add stub for BUILD_ASSERT when ioctl.h is included
-* dump-tree: don't crash on unrecognized tree id for -t
-* tests:
-** add more ioctl tests
-** convert: more symlink tests, attribute tests
-** quota verify for reloc tree
-* other cleanups
+* receive: fix detection of end of stream (error reported even for valid streams)
+* other:
+** added test for the receive bug
+** fix linking of library-test
 
 '''Linux v4.8 (Oct 2016)'''
 * space reservations and handling uses ticketed system, this should improve latency and fairness in case when there are several threads blocked on flushing
@@ -133,7 +126,7 @@ Links to Btrfs documentation of various Linux distributions:
 * [[Project_ideas#Cleanup_projects|Cleanup ideas]]
 * [[Project_ideas#Userspace_tools_projects|Userspace tools projects]]
 
-=== Using the built-in tools ===
+=== Manual pages ===
 
 * Manual pages generated from git ([[:Category:Manpage|complete list]]):
 ** [[Manpage/btrfs|btrfs]] — main administration tool
@@ -172,6 +165,10 @@ Links to Btrfs documentation of various Linux distributions:
 * [[Btrfs source repositories]]
 * [http://git.kernel.org/?p=linux/kernel/git/mason/linux-btrfs.git;a=tree;f=fs/btrfs;hb=HEAD Gitweb source viewer] of the main kernel repository
 * [https://git.kernel.org/cgit/linux/kernel/git/kdave/btrfs-progs.git/ Gitweb source viewer] of the userspace tools repository
+
+=== Wiki editing ===
+
+The wiki contributions are welcome! Please create an account and wait for approval (this is a necessary spam protection). You can try to catch some of the wiki admins on [[#Project_information.2FContact|IRC]] and expedite the account creation.
 
 == Articles, presentations, podcasts ==
 * '''Video:''' [https://www.youtube.com/watch?v=W3QRWUfBua8 NYLUG Presents: Chris Mason on Btrfs (May 14th 2015)] by Chris Mason at the 192nd meeting of the NYLUG

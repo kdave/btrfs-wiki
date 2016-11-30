@@ -294,7 +294,9 @@ See also the [[UseCases]] page.
 
 '''Long answer''': Nobody is going to magically stick a label on the btrfs code and say "yes, this is now stable and bug-free". Different people have different concepts of stability: a home user who wants to keep their ripped CDs on it will have a different requirement for stability than a large financial institution running their trading system on it. If you are concerned about stability in commercial production use, you should test btrfs on a testbed system under production workloads to see if it will do what you want of it. In any case, you should join the mailing list (and hang out in IRC) and read through problem reports and follow them to their conclusion to give yourself a good idea of the types of issues that come up, and the degree to which they can be dealt with. Whatever you do, we recommend keeping good, tested, off-system (and off-site) backups.
 
-'''Pragmatic answer''': (2012-12-19) Many of the developers and testers run btrfs as their primary filesystem for day-to-day usage, or with various forms of real data. With reliable hardware and up-to-date kernels, we see very few unrecoverable problems showing up. As always, keep backups, test them, and be prepared to use them.
+'''Pragmatic answer''': Many of the developers and testers run btrfs as their primary filesystem for day-to-day usage, or with various forms of real data. With reliable hardware and up-to-date kernels, we see very few unrecoverable problems showing up. As always, keep backups, test them, and be prepared to use them.
+
+When deciding if Btrfs is the right file system for your use case, don't forget to look at the [[Status]] page, which contains an overview of the general status of distinct features of the file system.
 
 == What version of btrfs-progs should I use for my kernel? ==
 
@@ -480,7 +482,7 @@ There are three possible approaches to this:
 
 # Restore from your backups (by far the easiest and most reliable method).
 # Unmount the filesystem ''as soon as possible'', and use [[Restore|btrfs-find-root and btrfs restore]] to find an earlier metadata root and restore the files.
-# Unmount the filesystem ''as soon as possible'', and use a file-carving tool (say, PhotoRec) to find data that looks like the file you deleted.
+# Unmount the filesystem ''as soon as possible'', and use a file-carving tool (say, PhotoRec or some other [http://forensicswiki.org/wiki/Tools:Data_Recovery#Carving carving tool]) to find data that looks like the file you deleted.
 
 There is no simple undelete tool for btrfs, and it is likely there never will be. The second and third approaches are unreliable at best. It is far better to ensure that you have good working backups in the first place.
 
@@ -659,7 +661,7 @@ There is not a single answer to this question.  Here are the issues to think abo
 ** raw partitions can only be made bigger if there is free space after the partition, while LVM can expand an LV onto free space anywhere in the volume group - and it can do the resize online
 * subvolume/logical volume size constraints
 ** LVM is convenient for creating fixed size logical volumes (e.g. 10MB for each user, 20GB for each virtual machine image, etc)
-** subvolumes don't currently enforce such rigid size constraints, although the upcoming [[Quota_support|qgroups]] quota feature will address this issue
+** per-subvolume quota can be set using the [[Quota_support|qgroups]] quota feature
 
 Based on the above, all of the following are valid strategies, depending upon whether your priority is performance or flexibility:
 

@@ -78,7 +78,7 @@ The following table aims to give an overview of the stability of the features BT
 | Balance
 | style="background: lightgreen;" | OK
 |-
-| Quotas, qgroups
+| [[Quota_support|Quotas, qgroups]]
 | style="background: orange;" | mostly OK
 |-
 | Out-of-band dedupe

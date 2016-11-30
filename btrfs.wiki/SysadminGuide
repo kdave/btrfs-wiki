@@ -44,7 +44,9 @@ A btrfs balance operation rewrites things at the level of chunks. It runs throug
 * The CoW operation is used on <u>all</u> writes to the filesystem (unless turned off, see below).
 * This makes it much easier to implement lazy copies, where the copy is initially just a reference to the original, but as the copy (or the original) is changed, the two versions diverge from each other in the expected way.
 * If you just write a file that didn’t exist before, then the data is written to empty space, and some of the metadata blocks that make up the filesystem are CoWed. In a "normal" filesystem, if you then go back and overwrite a piece of that file, then the piece you’re writing is put directly over the data it is replacing. In a CoW filesystem, the new data is written to a piece of free space on the disk, and only then is the file’s metadata changed to refer to the new data. At that point, the old data that was replaced can be freed up because nothing points to it any more.
-* If you make a snapshot (or a cp --reflink=always) of a piece of data, you end up with two files that both reference the same data. If you modify one of those files, the CoW operation I described above still happens: the new data is written elsewhere, and the file’s metadata is updated to point at it, but the original data is kept, because it’s still referenced by the other file. * This leads to fragmentation in heavily-written-to files like VM images and database stores, even if there is no second pointer to the file.
+* If you make a snapshot (or a cp --reflink=always) of a piece of data, you end up with two files that both reference the same data. If you modify one of those files, the CoW operation I described above still happens: the new data is written elsewhere, and the file’s metadata is updated to point at it, but the original data is kept, because it’s still referenced by the other file.
+** This leads to fragmentation in heavily updated-in-place files like VM images and database stores.
+** Note that this happens even if the data is not shared, because data is stored in segments, and only the newly updated part of a segment is subject to CoW.
 * If you mount the filesystem with <code>nodatacow</code>, or use <code>chattr +C</code> on the file, then it only does the CoW operation for data if there’s more than one copy referenced.
 * Some people insist that btrfs does "Redirect-on-write" rather than "Copy-on-write" because btrfs is based on a scheme for redirect-based updates of B-trees by Ohad Rodeh, and because understanding the code is easier with that mindset.
 
@@ -164,7 +166,7 @@ Similarly, especially on the system's "main" filesystem, the snapshot would cont
 
 === Managing Snapshots ===
 One typical structure for managing snapshots (particularly on a system's "main" filesystem) is based on the to flat schema from above.
-The top-level subvolume is mostly left empty except for subvolumes. It can be mounted temporarily while subvolume operations are being done and unmounted again afterwards. Alternatively an empty "snapshot" subvolume can be created (which in turn contains the actual snapshots) and permanently mounted at a convenient.
+The top-level subvolume is mostly left empty except for subvolumes. It can be mounted temporarily while subvolume operations are being done and unmounted again afterwards. Alternatively an empty "snapshot" subvolume can be created (which in turn contains the actual snapshots) and permanently mounted at a convenient directory path.
 
 The actual structure could look like this:
   toplevel
