@@ -18,7 +18,7 @@ Everyone tests with the latest btrfs code from git. Even the latest Linus kernel
 The sources of the userspace utilities can be obtained from these repositories:
 
 * git://git.kernel.org/pub/scm/linux/kernel/git/kdave/btrfs-progs.git ([http://git.kernel.org/?p=linux/kernel/git/kdave/btrfs-progs.git;a=summary gitweb access])
-* git://git.kernel.org/pub/scm/linux/kernel/git/mason/btrfs-progs.git ([http://git.kernel.org/?p=linux/kernel/git/mason/btrfs-progs.git;a=summary gitweb access])
+* git://git.kernel.org/pub/scm/linux/kernel/git/mason/btrfs-progs.git ([http://git.kernel.org/?p=linux/kernel/git/mason/btrfs-progs.git;a=summary gitweb access]) (apparently no longer synced)
 
 There are 2 repositories that get synced at the time of a release ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063 announcement]) and can be considered equal for non-development branches.
 

@@ -229,7 +229,7 @@ fiemap ioctl will cause soft lockup and hangs for a long long long time.
 
 4096 extents can already trigger it.
 
-The bug is highly possible to be fixed in v4.8-rc.
+The bug is already fixed in v4.8 mainline.
 
 === send soft lockup or OOM ===
 Much like fiemap soft lockup, send will hang and cause soft lockup.

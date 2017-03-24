@@ -6,30 +6,26 @@ Deduplication takes this a step further, by actively identifying when the same d
 
 Out of band / batch deduplication is deduplication done outside of the write path.  We've sometimes called it [http://www.ssrc.ucsc.edu/pub/jones-ssrctr-11-03.html offline] deduplication, but that can confuse people: btrfs dedup involves the kernel and always happens on ''mounted'' filesystems. To use out-of-band deduplication, you run a tool which searches your filesystem for identical blocks, and then deduplicates them.
 
-== duperemove ==
+== Dedicated btrfs deduplicators ==
 
-From the [https://github.com/markfasheh/duperemove/blob/master/README.md README] for [https://github.com/markfasheh/duperemove duperemove]:
+'''[https://github.com/markfasheh/duperemove duperemove]''' finds and lists duplicate extents, and optionally will submit the duplicates to the kernel for deduplication.  From the [https://github.com/markfasheh/duperemove/blob/master/README.md README]:
 
 <blockquote>
 Duperemove is a simple tool for finding duplicated extents and
 submitting them for deduplication. When given a list of files it will
 hash their contents on a block by block basis and compare those hashes
-to each other, finding and categorizing extents that match each
+to each other, finding and categorizing blocks that match each
 other. When given the -d option, duperemove will submit those
-extents for deduplication using the btrfs-extent-same ioctl.
+extents for deduplication using the Linux kernel extent-same ioctl.
 </blockquote>
 
-This tool finds and lists duplicate extents, and optionally will submit the duplicates to the kernel for deduplication.
+'''[https://github.com/g2p/bedup bedup]''' implements incremental whole-file batch deduplication for Btrfs.  It integrates deeply with btrfs so that scans are incremental and low-impact.  It uses the btrfs clone ioctl to do the deduplication, rather than the extent-same ioctl, due to concerns regarding kernel crashes with the latter as of kernel 4.2.
 
-== bedup ==
+'''[http://btrfs-dedupe.com/ btrfs-dedupe]''' implements incremental whole-file batch deduplication for Btrfs. It is written in rust for safety and performance and uses the kernel ioctls to offload the actual deduplication to the kernel for safety. It maintains state for efficient regular operation, scanning file metadata on every run, hashing contents for files with new metadata, hashing file extent maps for files with new contents, and performing defragmentation and deduplication of files with matching content but non-matching extent maps.
 
-'''[https://github.com/g2p/bedup bedup]''' implements incremental whole-file batch deduplication for Btrfs.
+== Duplicate file finders with btrfs support ==
 
-bedup supports mainline kernels (Linux 3.3 is required by the file locking implementation, 3.6 is required for cross-subvolume operation), using the clone ioctl (which exposes Btrfs's copy-on-write functionality).
-
-An ioctl dedicated to batch deduplication was merged in Linux 3.12.  It brings in-kernel locking (btrfs guarantees that the deduplicated data is identical without the need for outside locks), better support for read-only snapshots, and retains the features and much of the implementation of the clone ioctl.  There is an experimental [https://github.com/g2p/bedup/tree/wip/dedup-syscall bedup branch] using the new ioctl, but it is not the default because it can trigger kernel crashes as of Linux 4.2.
-
-== rmlint ==
+While any duplicate file finder utility (e.g. [https://github.com/adrianlopezroche/fdupes fdupes], [http://www.pixelbeat.org/fslint/ fslint], etc) can find files for deduplication using another tool (eg duperemove), the following duplicate file finders have build-in btrfs deduplication capabilities:
 
 '''[https://rmlint.readthedocs.io/en/latest/ rmlint]''' is a duplicate file finder with btrfs support.  To find and reflink duplicate files:
 
@@ -40,18 +36,6 @@ An ioctl dedicated to batch deduplication was merged in Linux 3.12.  It brings i
 Note if reflinking read-only snapshots, rmlint.sh must be run with -r option and with root priveleges, eg:
 
  $ sudo ./rmlint.sh -r
-
-== btrfs-dedupe ==
-
-'''[http://btrfs-dedupe btrfs-dedupe]''' implements incremental whole-file batch deduplication for Btrfs. It is written in rust for safety and performance and uses the ioctl to offload the actual deduplication to the kernel safely.
-
-It is at an early stage of development, in terms of features, but it works, and should not cause corruption unless there are bugs in the filesystem or hardware issues.
-
-== fdupes ==
-
-'''[https://github.com/adrianlopezroche/fdupes fdupes]''' is a tool for finding duplicate files, and it has a variety of actions it can take on finding them. It has no direct support for BTRFS deduplication, but it can be combined with another tool (eg '''duperemove'''), or a custom script, as part of a toolchain to perform custom deduplication tasks.
-
-== jdupes ==
 
 '''[https://github.com/jbruchon/jdupes jdupes]''' is a fork of '''fdupes''' which includes support for BTRFS deduplication when it identifies duplicate files.
 

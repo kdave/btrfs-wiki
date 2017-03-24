@@ -31,7 +31,7 @@ Note that in the diagram, the links from DIR_ITEM keys to their respective inode
 
 The extent tree contains extents: contiguous chunks of storage allocated for use in some way. It stores two distinct types of extent: block group extents, and data extents.
 
-Block group extents are the fundamental building blocks within the virtual address space of the filesystem, and indicate which virtual addresses are valid (i.e. have physical storage underlying them). A block group extent's key in the extent tree is (start, BLOCK_GROUP_ITEM, length), and the associated data item contains the objectid of the chunk (which can then be looked up in the chunk tree).
+Block group extents are the fundamental building blocks within the virtual address space of the filesystem, and indicate which virtual addresses are valid (i.e. have physical storage underlying them). A block group extent's key in the extent tree is <code>(start, BLOCK_GROUP_ITEM, length)</code>, and the associated data item contains the objectid of the chunk (which can then be looked up in the chunk tree).
 
 Data extents are always allocated from within block group extents, and represent the sequences of bytes that contain data (or metadata) managed by the filesystem. As with block group extents, data extents are keyed by their start position in the filesystem's virtual address space, and their length is the "offset" field of the key.
 

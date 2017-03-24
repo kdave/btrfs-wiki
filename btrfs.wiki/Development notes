@@ -2,9 +2,30 @@
 
 Collection of various notes about development practices, how-to's or checklists.
 
+= Misc notes =
+
 == Adding a new ioctl, extending an existing one ==
 
 * add code to [https://github.com/strace/strace strace] so the ioctl calls are parsed into a human readable form. Most of the ioctls are already [https://github.com/strace/strace/blob/master/btrfs.c implemented] and can be used a reference.
+
+== Tracepoints ==
+
+The tracepoint message format should be compact and consistent, so please
+stick to the following format:
+
+* ''key=value'' no spaces around ''=''
+* separated by spaces, not commas
+* named values: print value and string, like "%llu(%s)", no space between, string in parens
+* avoid abbreviating key values too much, (eg. use 'size' not 'sz')
+* hexadecimal values are always preceded by ''0x'' (use "0x%llx)
+
+'''Example:'''
+
+event: ''btrfs__chunk''
+
+string:
+
+   "root=%llu(%s) offset=%llu size=%llu num_stripes=%d sub_stripes=%d type=%s"
 
 = Kernel config options =
 
@@ -53,7 +74,8 @@ xfstests has very few "hard" requirements and will succeed without running many 
 * <code>CONFIG_FAULT_INJECTION=y</code>
 * <code>CONFIG_FAULT_INJECTION_DEBUG_FS=y</code>
 * <code>CONFIG_FAIL_MAKE_REQUEST=y</code>
-* <code>CONFIG_DM_FLAKEY=m</code> or<code> y</code>
+* <code>CONFIG_DM_FLAKEY=m</code> or <code>y</code>
+* <code>CONFIG_BLK_DEV_LOOP=m</code> or <code>y</code>
 
 == Kernel config options for better bug reports ==
 
@@ -76,6 +98,7 @@ Note: This list may be incomplete.
 
 == Storage environment ==
 * At least 4 identically sized partitions/disks/virtual disks, specified using <code>$SCRATCH_DEV_POOL</code>
+** some tests may require 6 such partitions
 
 == Other requirements ==
 * An <code>fsgqa</code> user and group must exist.

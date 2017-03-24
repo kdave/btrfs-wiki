@@ -68,22 +68,35 @@ From kernel 3.3 onwards, it is possible to change the raid level of data and met
 
 == I want to be able to do rollbacks with Btrfs ==
 
-If you use yum you can install the yum-plugin-fs-snapshot plugin and it will take a snapshot before doing any yum transaction. You can also take a snapshot manually by running
+To roll back a subvolume to an earlier one, you simply need to replace one with the other. There are several ways of achieving this, depending on where you have the subvolumes, and how they're accessed (mounted or not mounted).
 
- btrfs subvolume snapshot /path/to/subvolume /path/to/subvolume/snapshot_name
+If your snapshots are kept alongside the original subvolume, say:
 
-then if something goes wrong you can either mount using the mount option subvol=&lt;snapshot name&gt; or the subvolid=&lt;id&gt; option. You can determine the ID of a snapshot by running
+ /media/btrfs
+         |--- @home
+         `--- snapshots
+               `--- @home-20170105
 
- btrfs subvolume list /path/to/subvolume
+then you can simply rename the snapshots:
 
-If you wish to default to mounting from the rollback snapshot you can run either
+ # cd /media/btrfs
+ # mv @home @home.old
+ # mv snapshots/@home-20170105 @home
 
- btrfs subvolume set-default &lt;id&gt;
+If you want to keep the snapshot, or it is read-only, make another read/write snapshot instead:
 
-using the subvolume ID, or alternatively if you already have the snapshot mounted, you can run
+ # cd /media/btrfs
+ # mv @home @home.old
+ # btrfs sub snap snapshots/@home-20170105 @home
 
- btrfs subvolume set-default /path/to/snapshot
+After doing either of these, you will need to unmount and remount the subvol:
 
+ # umount /home
+ # mount /home
+
+Obviously, if this is your root subvol (mounted at /), then you will have to reboot in order to do this last step.
+
+If your / is also the top level of your filesystem, then you can't atomically roll back to an earlier snapshot. You should definitely consider reorganising your filesystem to one of the [[SysadminGuide#Layout|recommended patterns]].
 
 == How can I use btrfs for backups/time-machine? ==
 

@@ -218,9 +218,9 @@ Options grouped by subsystem or area they affect, one option may appear in more 
 
 === Performance ===
 
-* noatime - as discussed in the mailing list ''noatime'' mount option might speed up your file system, especially in case you have lots of snapshots. Each read access to a file is supposed to update its unix access time. COW will happen and will make even more writes. Default is now ''relatime'' which updates access times less often (see: http://kerneltrap.org/node/14148).
+* noatime - under read intensive work-loads, specifying ''noatime'' significantly improves performance because no new access time information needs to be written. Without this option, the default is ''relatime'', which only reduces the number of atime updates in comparison to the traditional ''strictatime''. The worst case for atime updates under ''relatime'' occurs when many files are read whose atime is older than 24 h and which are freshly snapshotted. In that case the atime is updated '''and''' COW happens - for each file - in bulk. See also [https://lwn.net/Articles/499293/ Atime and btrfs: a bad combination?] LWN, 2012-05-31.
 
-Note that ''noatime'' will break some applications like the venerable mutt (unless you use Maildir mailboxes).
+Note that ''noatime'' may break applications that rely on atime uptimes like the venerable Mutt (unless you use maildir mailboxes) or Debian's popcontest.
 
 === Debugging ===
 

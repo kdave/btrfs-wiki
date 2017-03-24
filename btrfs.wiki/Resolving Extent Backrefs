@@ -1,0 +1,863 @@
+=Purpose and Intended Audience=
+
+The indented audience of this document is someone who is already familiar with the general internal workings of btrfs but wants a deeper understanding of how ownership of extents is resolved from a byte address to subvolumes. We start with a broad overview, explain what back references are and how <i>implied</i> references must be tracked to determine ownership, how to resolve each type of back reference, and finally a more complex example that uses multiple forms of back references to determine shared ownership. In lieu of in-line documentation of the data structures and infrastructure used to interpret the file system, specific links to the [[On-disk_Format|On-Disk Format]] and [[Data_Structures|Data Structures]] entries are used frequently.
+
+=Summary=
+
+Every <b>extent</b> in use by btrfs has reference information associated with it. Every <b>tree</b> that uses a particular extent must hold a <b>reference</b> to it to ensure that it is properly tracked. For every reference to an extent, the extent record contains a <b>back reference</b> to the holder of that reference. Internal trees, like the <code>[[On-disk_Format#ROOT_TREE|ROOT_TREE]]</code> or the <code>[[On-disk_Format#CHUNK_TREE|CHUNK_TREE]]</code> only ever have extents with a single reference and never share references with other trees. <b>File trees</b>, starting with the <code>[[On-disk_Format#FS_TREE|FS_TREE]]</code> and any trees with objectids larger than <code>BTRFS_FIRST_FREE_OBJECTID [256]</code> may share extents between them. These extents can contain either file system metadata (<code>TREE_BLOCK</code>) or file data. Snapshots are one way those extents are shared and a snapshot of a subvolume means that nearly <i>every</i> extent, metadata and data alike, is shared between the source subvolume file tree and the new snapshot's file tree. 
+
+In order to make snapshots lightweight both in terms of wall clock time for creation and in space used on disk for each one, back references are not updated for every individual extent on disk. When a snapshot is created, a new objectid is allocated and used to create a new root item in the <code>ROOT_TREE</code>. The root node representing the top of the metadata tree for the target root is copied to a new location and used as the root node for the new snapshot. New back references are added for each node referenced by the new root node. Nodes and extents referenced by <i>those</i> nodes are not updated at all. The references the roots have on the extents they ultimately own but aren't explicitly stated within the lower levels of the tree are <i>implied</i>. As a result, the reference counts or ownership found directly in the back references for a given extent in the <code>[[On-disk_Format#EXTENT_TREE|EXTENT_TREE]]</code> are not authoritative. For routine reference counting, understanding that multiple references at a higher level in the tree implies that those references also apply to nodes lower in the tree is enough to ensure that extents aren't incorrectly released. The back references are also typically enough to assist repair tools when a broken portion of the file system must be reconstructed. There is another use case for the back references, though: quota groups.
+
+Quota groups are the functionality that btrfs contains to track how much disk space any given subvolume (or set of subvolumes) occupies either in total or exclusively. In order to keep those records updated properly, when a reference is added to or released from an extent, or a new extent is allocated, we must be able to determine <i>every</i> root that holds references to the extent.  Discovering ownership of any given extent given a byte address involves walking the back references up until all of the implied references have been resolved successfully. This is determined when we reach the root node of each tree.
+
+The following steps apply to file systems at rest and at runtime, but several other details need to be taken into account at runtime to ensure an accurate representation. The final section of this document discusses how to handle delayed references when working with extent back references.
+
+=Types of Back References=
+
+There are two kinds of back references, each represented differently for <code>DATA</code> and <code>TREE_BLOCK</code> extents.
+
+* Normal back references refer to the item in the tree that references the extent. For <code>DATA</code> extents, it is an <code>[[On-disk_Format#EXTENT_DATA|EXTENT_DATA]]</code> item belonging to a particular offset within a single file on a single root. For <code>TREE_BLOCK</code> tree blocks, it is the next level in the tree that refers to this tree block containing a tree node or leaf. In both, a tree lookup is required to resolve the byte address of the start of the extent. The additional lookup is why normal back references are also called indirect back references, especially in the btrfs code.
+
+* Shared back references (also called full back references) refer to the byte address of the metadata tree block that references this extent. For <code>DATA</code> extents, it is the byte address of the leaf that contains an <code>EXTENT_DATA</code> item that references this extent. For <code>TREE_BLOCK</code> tree blocks, it is the byte offset of the tree node that refers to this tree node or leaf.
+
+Normal back references are created when an extent or tree block is allocated. As references are added through snapshots or cloning, new normal back references may or may not be added to each extent record. When references to the extent are removed such that the normal back reference would be removed but implied references that were made through that normal reference still exist, the back reference is converted to a shared back reference. Other normal back references may still exist. Once a back reference is converted to a shared back reference, it cannot be restored to a normal back reference.
+
+Each type of back reference has positives and negatives, depending on what operation is being performed. When resolving back references for extent ownership, the shared back references are more efficient to use. However, a relocation operation is less efficient since any reference to the location being moved must also be updated.
+
+{|class="wikitable"
+!colspan="3"|Types of Back References
+|-
+!Extent Type
+!Back Reference Type
+!Description
+|-
+|<code>DATA</code>
+|indirect
+|Contains the <code>root</code>, <code>objectid</code>, and offset <code>offset</code> for an [[On-disk_Format#EXTENT_DATA|EXTENT_DATA]] item that refers to this extent.
+|-
+|<code>DATA</code>
+|full (shared)
+|Contains byte offset of file tree metadata leaf that contains an [[On-disk_Format#EXTENT_DATA|EXTENT_DATA]] item that refers to this extent
+|-
+|<code>TREE_BLOCK</code>
+|indirect
+|Contains tree <code>level</code> and <code>root</code> of a tree node that refers to this node or leaf.
+|-
+|<code>TREE_BLOCK</code>
+|full (shared)
+|Contains byte offset of metadata tree node that refers to this node or leaf.
+|}
+
+=Resolving Back References=
+
+Given any extent address, a combination of at most three of the back reference types will be encountered while resolving ownership of the extent. It is not possible to encounter both types of <code>DATA</code> back references for a single extent, but it is possible to encounter both types of <code>TREE_BLOCK</code> back references while resolving ownership. The natural algorithm for resolving these references is a typical tree recursion algorithm. Since the kernel has limited stack depth, recursion is generally discouraged, especially when the depth of the recursion is unknown at the outset. Instead, the kernel uses a <code>ulist</code> implementation that emulates the recursion by appending the next stage in resolution to the list and looping over the list until it is exhausted. The algorithm described below assumes that the reader will retain information from previous steps. In the kernel, that isn't always an option and redundant lookup or I/O operations may be required.
+
+The following steps refer to each stage of back reference resolution. The data back reference steps will only be executed once per data extent. The metadata back reference steps will be executed as many times as required until we have reached the root node of the file tree. Once we have reached the root node, we know we have found a valid extent owner.
+
+The following steps are for simple resolution of a single owner. A more complex example follows.
+
+==Resolving Normal Data Back References==
+
+Initial extent offset: <code>1073770065920</code>.
+
+Perform a lookup in the <code>EXTENT_TREE</code> for:
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>1073770065920</code>
+|<code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code>
+|<code>-1</code>
+|}
+
+This results in an <code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code> item of size 53 bytes being returned:
+
+*Formatted by btrfs-debug-tree:
+ key (1073770065920 [[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]] 8192) itemoff <offset> itemsize 53
+ extent refs 1 gen 1691 flags DATA
+ extent data backref root 258 objectid 489 offset 0 count 1
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>1073770065920</code>
+|<code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code>
+|<code>8192</code>
+|}
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_extent_item|struct btrfs_extent_item]]
+|-
+!<code>refs</code>
+|<code>1</code>
+|-
+!<code>generation</code>
+|<code>1691</code>
+|-
+!<code>flags</code>
+|<code>[[Data_Structures#btrfs_extent_item_flags|BTRFS_EXTENT_FLAG_DATA]]</code>
+|-
+|colspan="2"|
+{|class="wikitable" style="width:100%;"
+!colspan="2"|[[Data_Structures#btrfs_extent_inline_ref|struct btrfs_extent_inline_ref]]
+|-
+!<code>type</code>
+|<code>[[Data_Structures#btrfs_extent_inline_ref_types| BTRFS_EXTENT_DATA_REF_KEY]]</code>
+|-
+!<code><strike>offset</strike></code>
+|<i>this field is unused and the following structure is located at this location</i>
+|}
+|-
+|colspan="2"|
+{|class="wikitable" style="width:100%;"
+!colspan="2"|[[Data_Structures#btrfs_extent_data_ref|struct btrfs_extent_data_ref]]
+|-
+!<code>root</code>
+|<code>258</code>
+|-
+!<code>objectid</code>
+|<code>489</code>
+|-
+!<code>offset</code>
+|<code>0</code>
+|-
+!<code>count</code>
+|<code>1</code>
+|}
+|}
+
+Now we perform a search in file root <code>258</code> for:
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>489</code>
+|<code>EXTENT_DATA</code>
+|<code>0</code>
+|}
+
+Here we don't actually care about the contents of the item.  What we do care about is the location of that item, which is:
+ leaf 257561694208 items 10 free space 832 generation 1179315 owner 258
+ [...]
+         item 4 key (489 EXTENT_DATA 0) itemoff 3413 itemsize 53
+
+Now we have the offset of a metadata tree block that contains a leaf node. The resolution of the ownership of this extent continues as with a <code>TREE_BLOCK</code> tree block located at offset <code>257561694208</code>
+
+==Resolving Shared Data Back References==
+
+Initial extent offset: <code>1073771126784</code>.
+
+Perform a lookup in the <code>EXTENT_TREE</code> for:
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>1073771126784</code>
+|<code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code>
+|<code>-1</code>
+|}
+
+This results in an <code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code> item of size 37 bytes being returned:
+
+*Formatted by btrfs-debug-tree:
+ key (1073771126784 [[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]] 16384) itemoff 3545 itemsize 37
+ extent refs 1 gen 1691 flags DATA
+ shared data backref parent 3440606134272 count 1
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>1073771126784</code>
+|<code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code>
+|<code>16384</code>
+|}
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_extent_item|struct btrfs_extent_item]]
+|-
+!<code>refs</code>
+|<code>1</code>
+|-
+!<code>generation</code>
+|<code>1691</code>
+|-
+!<code>flags</code>
+|<code>[[Data_Structures#btrfs_extent_item_flags|BTRFS_EXTENT_FLAG_DATA]]</code>
+|-
+|colspan="2"|
+{|class="wikitable" style="width:100%;"
+!colspan="2"|[[Data_Structures#btrfs_extent_inline_ref|struct btrfs_extent_inline_ref]]
+|-
+!<code>type</code>
+|<code>[[Data_Structures#btrfs_extent_inline_ref_types| BTRFS_SHARED_DATA_REF_KEY]]</code>
+|-
+!<code>offset</code>
+|<code>3440606134272</code>
+|}
+|-
+|colspan="2"|
+{|class="wikitable" style="width:100%;"
+!colspan="2"|[[Data_Structures#btrfs_shared_data_ref|struct btrfs_shared_data_ref]]
+|-
+!<code>count</code>
+|<code>1</code>
+|}
+|}
+
+Now we have the offset of a metadata tree block that contains a leaf node. The resolution of the ownership of this extent continues as with a <code>TREE_BLOCK</code> tree block located at offset <code>3440606134272</code>.
+
+==Resolving Normal Metadata Back References==
+
+Initial extent offset: <code>257561694208</code>.
+
+Perform a lookup in the <code>EXTENT_TREE</code> for:
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>257561694208</code>
+|<code>TREE_BLOCK_ITEM</code>
+|<code>-1</code>
+|}
+
+Note: This search assumes that skinny metadata is enabled. If it is not, <code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code> should be used. The following example uses <code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code>.
+
+This results in an <code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code> item of size 51 bytes being returned:
+
+*Formatted by btrfs-debug-tree:
+ key (257561694208 [[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]] 4096) itemoff 3638 itemsize 51
+ extent refs 1 gen 1179315 flags TREE_BLOCK
+ tree block key (488 INODE_REF 257) level 0
+ tree block backref root 258
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>257561694208</code>
+|<code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code>
+|<code>4096</code>
+|}
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_extent_item|struct btrfs_extent_item]]
+|-
+!<code>refs</code>
+|<code>1</code>
+|-
+!<code>generation</code>
+|<code>1179315</code>
+|-
+!<code>flags</code>
+|<code>[[Data_Structures#btrfs_extent_item_flags| BTRFS_EXTENT_FLAG_TREE_BLOCK]]</code>
+|-
+|colspan="2"|
+{|class="wikitable" style="width:100%;"
+!colspan="2"|[[Data_Structures#btrfs_tree_block_info|struct btrfs_tree_block_info]]
+|-
+!<code><strike>key</strike></code>
+|<i>Although this value may be accurate, its unused. <code>TREE_BLOCK_ITEM</code> back references don't contain it at all.</i>
+|-
+!<code>level</code>
+|<code>0</code>
+|}
+{|class="wikitable" style="width:100%;"
+!colspan="2"|[[Data_Structures#btrfs_extent_inline_ref|struct btrfs_extent_inline_ref]]
+|-
+!<code>type</code>
+|<code>[[Data_Structures#btrfs_extent_inline_ref_types| BTRFS_TREE_BLOCK_REF_KEY]]</code>
+|-
+!<code>offset</code>
+|<code>258</code>
+|}
+|}
+
+Now we read the metadata tree block and retrieve the key of the first item in the node. This isn't performed earlier because it is only necessary for normal back references.
+
+ leaf 257561694208 items 10 free space 832 generation 1179315 owner 258
+ [...]
+         item 0 key (488 INODE_REF 257) itemoff 3977 itemsize 18
+                 inode ref index 29 namelen 8 name: .urlview
+
+Associated with each tree root is the highest level of the tree. For root 258, we see:
+        item 10 key (258 ROOT_ITEM 0) itemoff 1113 itemsize 439
+                generation 4805851 root_dirid 256 bytenr 1586053402624 level 4 refs 1
+                lastsnap 4019655 byte_limit 0 bytes_used 13752307712 flags 0x0(none)
+                uuid ec3cb4a6-405d-c342-a07a-e5214a535da8
+                ctransid 4805851 otransid 0 stransid 0 rtransid 0
+                drop key (0 UNKNOWN.0 0) level 0
+
+We see that the highest level of the tree is level 4. If one level higher than we are searching now is the same as the root level, we have successfully located all of the roots.
+
+Next we lookup the metadata tree node at one level higher than the one we retrieved earlier <code>level = 0</code> in the back reference. We will search for the following key in root 258, but stop at level 1, which will return a <code>[[On-disk_Format#btrfs_key_ptr|btrfs_key_ptr]]</code> that points to our starting block.
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>488</code>
+|<code>INODE_REF</code>
+|<code>257</code>
+|}
+
+Here we don't actually care about the contents of the item.  What we do care about is the location of that item, which is:
+ node 1586299265024 level 1 items 121 free 0 generation 4381566 owner 258
+ [...]
+         key (488 INODE_REF 257) block 257561694208 (62881273) gen 1179315
+
+Now we have the offset of a metadata tree block that contains a leaf node. The resolution of the ownership of this extent continues as with a <code>TREE_BLOCK</code> tree block located at offset <code>1586299265024</code>.
+
+==Resolving Shared Metadata Back References==
+
+NOTE: At the time of this writing, I did not have a file system that contains shared metadata back references. The following is what I believe it <i>should</i> look like.
+
+Initial extent offset: <code>257561694208</code>.
+
+Perform a lookup in the <code>EXTENT_TREE</code> for:
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>257561694208</code>
+|<code>METADATA_TIME</code>
+|<code>-1</code>
+|}
+
+Note: This search assumes that skinny metadata is enabled. If it is not, <code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code> should be used. The following example uses <code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code>.
+
+This results in an <code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code> item of size 51 bytes being returned:
+
+*Formatted by btrfs-debug-tree:
+ key (257561694208 [[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]] 4096) itemoff 3638 itemsize 51
+ extent refs 1 gen 1179315 flags TREE_BLOCK
+ tree block key (488 INODE_REF 257) level 0
+ shared block backref parent 1586299265024
+
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>257561694208</code>
+|<code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code>
+|<code>4096</code>
+|}
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_extent_item|struct btrfs_extent_item]]
+|-
+!<code>refs</code>
+|<code>1</code>
+|-
+!<code>generation</code>
+|<code>1179315</code>
+|-
+!<code>flags</code>
+|<code>[[Data_Structures#btrfs_extent_item_flags| BTRFS_EXTENT_FLAG_TREE_BLOCK]]</code>
+|-
+|colspan="2"|
+{|class="wikitable" style="width:100%;"
+!colspan="2"|[[Data_Structures#btrfs_tree_block_info|struct btrfs_tree_block_info]]
+|-
+!<code><strike>key</strike></code>
+|<i>Although this value may be accurate, its unused. <code>METADATA_ITEM</code> back references don't contain it at all.</i>
+|-
+!<code>level</code>
+|<code>0</code>
+|}
+{|class="wikitable" style="width:100%;"
+!colspan="2"|[[Data_Structures#btrfs_extent_inline_ref|struct btrfs_extent_inline_ref]]
+|-
+!<code>type</code>
+|<code>[[Data_Structures#btrfs_extent_inline_ref_types| BTRFS_SHARED_BLOCK_REF_KEY]]</code>
+|-
+!<code>offset</code>
+|<code>1586299265024</code>
+|}
+|}
+
+Now we have the offset of a metadata tree block that contains a leaf node. The resolution of the ownership of this extent continues as with a <code>TREE_BLOCK</code> located at offset <code>1586299265024</code>.
+
+
+==A more complex example==
+
+This example uses a file system created using the following process. This will create a variety of back reference combinations, including shared and normal back references for the same extent. It has the skinny metadata feature enabled. We create 100000 files so that the file tree that contains them will consist of 3 levels on a file system using 
+
+ #!/bin/sh
+ 
+ DEV=/dev/vdc5
+ MNT=/mnt
+ 
+ full_sync() {
+ btrfs fi sync $MNT
+ sync
+ }
+ 
+ mkfs.btrfs -f $DEV
+ mount $DEV $MNT
+ btrfs sub create $MNT/foo1
+ for n in $(seq 1 100000); do :> $MNT/foo1/$n; done
+ dd if=/dev/zero of=$MNT/foo1/tmpfile bs=4k count=100
+ full_sync
+ 
+ btrfs sub snap $MNT/foo1 $MNT/foo2
+ full_sync
+ 
+ btrfs sub del -c $MNT/foo1
+ full_sync
+ 
+ btrfs sub create $MNT/foo3
+ cp --reflink $MNT/foo2/tmpfile $MNT/foo3/tmpfile
+ full_sync
+ 
+ btrfs sub snap $MNT/foo2 $MNT/foo4
+ rm $MNT/foo2/*
+ full_sync
+ 
+ btrfs sub snap $MNT/foo4 $MNT/foo5
+ full_sync
+ umount $MNT
+
+===Initial Data Extent Lookup @ 13107200===
+Arbitrary initial extent offset: <code>13107200</code>.
+
+Perform a lookup in the <code>EXTENT_TREE</code> for:
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>13107200</code>
+|<code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code>
+|<code>-1</code>
+|}
+
+This results in an <code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code> item of size 66 bytes being returned:
+
+*Formatted by btrfs-debug-tree:
+        item 2 key (13107200 [[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]] 409600) itemoff 16140 itemsize 66
+                extent refs 2 gen 8 flags DATA
+                extent data backref root 259 objectid 257 offset 0 count 1
+                shared data backref parent 65634304 count 1
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>13107200</code>
+|<code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code>
+|<code>409600</code>
+|}
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_extent_item|struct btrfs_extent_item]]
+|-
+!<code>refs</code>
+|<code>2</code>
+|-
+!<code>generation</code>
+|<code>8</code>
+|-
+!<code>flags</code>
+|<code>[[Data_Structures#btrfs_extent_item_flags|BTRFS_EXTENT_FLAG_DATA]]</code>
+|-
+|colspan="2"|
+{|class="wikitable" style="width:100%;"
+!colspan="2"|[[Data_Structures#btrfs_extent_inline_ref|struct btrfs_extent_inline_ref]]
+|-
+!<code>type</code>
+|<code>[[Data_Structures#btrfs_extent_inline_ref_types| BTRFS_EXTENT_DATA_REF_KEY]]</code>
+|-
+!<code><strike>offset</strike></code>
+|<i>this field is unused and the following structure is located at this location</i>
+|}
+|-
+|colspan="2"|
+{|class="wikitable" style="width:100%;"
+!colspan="2"|[[Data_Structures#btrfs_extent_data_ref|struct btrfs_extent_data_ref]]
+|-
+!<code>root</code>
+|<code>259</code>
+|-
+!<code>objectid</code>
+|<code>257</code>
+|-
+!<code>offset</code>
+|<code>0</code>
+|-
+!<code>count</code>
+|<code>1</code>
+|}
+|-
+|colspan="2"|
+{|class="wikitable" style="width:100%;"
+!colspan="2"|[[Data_Structures#btrfs_extent_inline_ref|struct btrfs_extent_inline_ref]]
+|-
+!<code>type</code>
+|<code>[[Data_Structures#btrfs_extent_inline_ref_types| BTRFS_SHARED_DATA_REF_KEY]]</code>
+|-
+!<code>offset</code>
+|<code>65634304</code>
+|}
+|-
+|colspan="2"|
+{|class="wikitable" style="width:100%;"
+!colspan="2"|[[Data_Structures#btrfs_shared_data_ref|struct btrfs_shared_data_ref]]
+|-
+!<code>count</code>
+|<code>1</code>
+|}
+|}
+
+To resolve the normal back reference, we search in file root <code>259</code> for the following key.
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>257</code>
+|<code>EXTENT_DATA</code>
+|<code>0</code>
+|}
+
+Here, we don't actually care about the contents of the item. The information we need is the location of the tree block and the first key it contains. The location will be used to resolve any other references to this tree block and the key will be used to resolve the next highest node in the tree(s) that contains each of the references.
+ leaf 67010560 items 7 free space 15632 generation 13 owner 259
+ [...]
+        item 0 key (256 INODE_ITEM 0) itemoff 16123 itemsize 160
+ [...]
+        item 6 key (257 EXTENT_DATA 0) itemoff 15807 itemsize 53
+                extent data disk byte 13107200 nr 409600
+                extent data offset 0 nr 409600 ram 409600
+                extent compression(none)
+
+* The normal back reference resolves to <code>TREE_BLOCK</code> leaf node located at offset <code>67010560</code>. (Branch 1)
+* The shared back reference contains its parent <code>TREE_BLOCK</code> leaf node location: <code>65634304</code>. (Branch 2)
+
+Each of these back references will need to be resolved as described in the above sections.
+
+===Branch 1: Tree Block @ 67010560===
+
+We begin by looking up block <code>67010560</code> in the [[On-disk_Format#EXTENT_TREE|EXTENT_TREE]].
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>67010560</code>
+|<code>[[On-disk_Format#METADATA_ITEM|METADATA_ITEM]]</code>
+|<code>0</code>
+|}
+
+This results in a <code>[[On-disk_Format#METADATA_ITEM|METADATA_ITEM]]</code> item of size 33 bytes being returned.
+
+* Formatted by btrfs-debug-tree:
+        item 150 key (67010560 METADATA_ITEM 0) itemoff 11300 itemsize 33
+                extent refs 1 gen 13 flags TREE_BLOCK
+                tree block skinny level 0
+                tree block backref root 259
+
+The back reference is to root 259, level 0.
+
+===Branch 1a: ROOT_ITEM 259===
+
+We lookup root 259 in the [[On-disk_Format#ROOT_TREE|ROOT_TREE]]:
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>259</code>
+|<code>[[On-disk_Format#ROOT_ITEM|ROOT_ITEM]]</code>
+|<code>-1</code>
+|}
+
+This results in a [[On-disk_Format#ROOT_ITEM|ROOT_ITEM]] of 439 bytes being returned. We only care about a few fields:
+* Formatted by btrfs-debug-tree:
+        item 17 key (259 ROOT_ITEM 0) itemoff 12661 itemsize 439
+                root data bytenr 67010560 level 0 dirid 256 refs 1 gen 13 lastsnap 0
+                flags 0x0(none)
+                uuid 48fb413f-0199-724c-9cef-326ca6ff808e
+                ctransid 13 otransid 12 stransid 0 rtransid 0
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>259</code>
+|<code>[[On-disk_Format#ROOT_ITEM|ROOT_ITEM]]</code>
+|<code>0</code>
+|}
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_root_item|struct btrfs_root_item]]
+|-
+!level
+|<code>0</code>
+|}
+
+Here we see that the level of the root node for root 259 is 0 and the node we've read is at level 0, so we have completed the resolution of this branch.
+
+*The owner is root 259 and there are no additional owners.
+
+===Branch 2: Tree Block @ 65634304===
+
+We begin by looking up block <code>65634304</code> in the [[On-disk_Format#EXTENT_TREE|EXTENT_TREE]].
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>65634304</code>
+|<code>[[On-disk_Format#METADATA_ITEM|METADATA_ITEM]]</code>
+|<code>-1</code>
+|}
+
+This results in a [[On-disk_Format#METADATA_ITEM|METADATA_ITEM]] of size 33 being returned:
+
+        item 149 key (65634304 METADATA_ITEM 0) itemoff 11333 itemsize 33
+                extent refs 1 gen 8 flags TREE_BLOCK|FULL_BACKREF
+                tree block skinny level 0
+                shared block backref parent 58523648
+
+* It contains another shared back reference, this time to block <code>58523648</code>.
+
+As before, we use the offset directly to locate the next level in the tree.
+
+===Branch 2.1: Tree Block @58523648===
+We begin by looking up block <code>58523648</code> in the [[On-disk_Format#EXTENT_TREE|EXTENT_TREE]].
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>58523648</code>
+|<code>[[On-disk_Format#METADATA_ITEM|METADATA_ITEM]]</code>
+|<code>-1</code>
+|}
+
+This results in a [[On-disk_Format#METADATA_ITEM|METADATA_ITEM]] of size 42 being returned:
+        item 231 key (58523648 METADATA_ITEM 1) itemoff 8618 itemsize 42
+                extent refs 2 gen 8 flags TREE_BLOCK|FULL_BACKREF
+                tree block skinny level 1
+                tree block backref root 261
+                tree block backref root 260
+
+This extent record contains two normal back references to roots 260 and 261.
+
+As with in Branch 1, we look up the [[On-disk_Format#ROOT_ITEM|ROOT_ITEM]] items for each of these roots.
+
+===Branch 2.1a: ROOT_ITEM 260===
+
+We lookup root 260 in the [[On-disk_Format#ROOT_TREE|ROOT_TREE]]:
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>260</code>
+|<code>[[On-disk_Format#ROOT_ITEM|ROOT_ITEM]]</code>
+|<code>-1</code>
+|}
+
+* Formatted by btrfs-debug-tree
+        item 19 key (260 ROOT_ITEM 14) itemoff 12200 itemsize 439
+                root data bytenr 103350272 level 2 dirid 256 refs 1 gen 16 lastsnap 16 flags 0x0(none)
+                uuid 2c5c0955-e12d-9442-b116-0595679da6d5
+                parent_uuid ebfbd78b-99d1-4a44-9fa8-5071858f4e9d
+                ctransid 8 otransid 14 stransid 0 rtransid 0
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>260</code>
+|<code>[[On-disk_Format#ROOT_ITEM|ROOT_ITEM]]</code>
+|<code>14</code>
+|}
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_root_item|struct btrfs_root_item]]
+|-
+!level
+|<code>2</code>
+|}
+
+Here we see that the level of the root node for root 260 is 2, so we must continue to resolve higher levels of the tree to locate all owners.
+
+===Branch 2.1b: ROOT_ITEM 261===
+
+We lookup root 261 in the [[On-disk_Format#ROOT_TREE|ROOT_TREE]]:
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>261</code>
+|<code>[[On-disk_Format#ROOT_ITEM|ROOT_ITEM]]</code>
+|<code>-1</code>
+|}
+
+* Formatted by btrfs-debug-tree:
+        item 21 key (261 ROOT_ITEM 16) itemoff 11739 itemsize 439
+                root data bytenr 103366656 level 2 dirid 256 refs 1 gen 16 lastsnap 16
+                flags 0x0(none)
+                uuid bccd6fc5-6f8a-2247-94ad-01fb209b796a
+                parent_uuid 2c5c0955-e12d-9442-b116-0595679da6d5
+                ctransid 8 otransid 16 stransid 0 rtransid 0
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>261</code>
+|<code>[[On-disk_Format#ROOT_ITEM|ROOT_ITEM]]</code>
+|<code>16</code>
+|}
+
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_root_item|struct btrfs_root_item]]
+|-
+!level
+|<code>2</code>
+|}
+
+Here we see that the level of the root node for root 261 is also 2, so we must continue to resolve higher levels of the tree to locate all owners.
+
+===Branch 2.1c: Read block 58523648===
+
+In order to determine the next-higher level in the tree, we must read block <code>58523648</code> to retrieve the first in the block. This will be used in the next higher level to reference this block.
+
+ node 58523648 level 1 items 267 free 226 generation 8 owner 257
+ [...]
+         key (81081 INODE_ITEM 0) block 58621952 (3578) gen 8
+
+We can see that, as expected, this refers to level 1 of the tree.
+
+* The first key in the node is:
+{|class="wikitable"
+!colspan="3"|[[Data_Structures#btrfs_key|struct btrfs_key]]
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>81081</code>
+|<code>[[On-disk_Format#INODE_ITEM|INODE_ITEM]]</code>
+|<code>0</code>
+|}
+
+===Branch 2.1.1: Tree Node, level 2, root 260, key [81081, INODE_ITEM, 0]===
+
+Next we search root 260 for the key discovered in Branch 2.1c, stopping at level 2:
+
+ node 103350272 level 2 items 5 free 488 generation 16 owner 260
+ [...]
+        key (81081 INODE_ITEM 0) block 58523648 (3572) gen 8
+
+* This is level 2 of the tree, which is the top of the tree for this root. Subvolume 260 is an owner of the original extent.
+
+===Branch 2.1.2: Tree Node, level 2, root 261, key [81081, INODE_ITEM, 0]===
+
+Next we search root 261 for the key discovered in Branch 2.1c, stopping at level 2:
+
+ node 103366656 level 2 items 5 free 488 generation 16 owner 261
+ [...]
+        key (81081 INODE_ITEM 0) block 58523648 (3572) gen 8
+* This is level 2 of the tree, which is the top of the tree for this root. Subvolume 261 is an owner of the original extent.
+
+
+===End Result===
+The results from each branch are:
+* Root 259
+* Root 260
+* Root 261
+
+=Resolving back references at runtime=
+
+TODO: document transaction model. The following assumes working knowledge of the btrfs transaction model.
+
+There are several contexts within which back references can be resolved at runtime, depending on how accurate the ownership needs to be. For example, <code>FIEMAP</code> just needs to report whether an extent is shared. Having more than one reference <i>anywhere</i> is sufficient. Quota groups need perfect accuracy.
+
+==Without a transaction handle==
+
+Resolving back references without a transaction handle is essentially the process outlined above. A transaction can be running, but we can perform back reference resolution without joining it. The <code>commit_root</code> is used to perform lookups, which means that any back references are accurate at the time of the last transaction commit but any changes made during the running transaction will not be reported.
+
+==With a transaction handle==
+
+With an active transaction handle, take a tree mod log sequence number, which acts as a timestamp for modifications in the transaction. When locating the parent nodes for <code>TREE_BLOCK</code> nodes and leaves, the delayed references associated with the extent being handled will also be taken into account. Each delayed reference contains information similar to that tracked by a back reference, with the key difference that the counts may be negative. These references are merged with other references before processing and if the count drops to zero, the extent is ignored.
+
+==During transaction commit==
+
+The only back reference tracking that happens during commits is used by quota group accounting. It runs twice: Once using the <code>commit_root</code> and once using the regular root for each tree, with delayed reference processing happening between each run. The separate runs are required because quota groups need to account for when extents are released. Once the delayed references are processed and the last reference from a root is dropped, there would be no way to resolve ownership.

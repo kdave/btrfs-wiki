@@ -151,21 +151,8 @@ other filesystem specific to btrfs.
 * FALLOC_FL_COLLAPSE_RANGE
 * FALLOC_FL_INSERT_RANGE
 * FALLOC_FL_ZERO_RANGE
-* FALLOC_FL_INSERT_RANGE
+* FALLOC_FL_UNSHARE_RANGE
 }}
-
-=== Implement new RENAME_* modes ===
-
-{{project
-|who=Dan Fuhry
-|patch=[http://www.spinics.net/lists/linux-btrfs/msg51542.html]
-|text=There are new modes of ''rename'' syscall.
-
-* RENAME_EXCHANGE
-* RENAME_WHITEOUT
-}}
-
-Candidate for 4.7 ([https://git.kernel.org/cgit/linux/kernel/git/fdmanana/linux.git/log/?h=for-chris-4.7 submitted by fdmanana])
 
 === Swap file support ===
 {{project
@@ -704,23 +691,6 @@ Short wrappers or small simple helpers are not good candidates.
 The functions should be tagged with <code>noinline_for_stack</code>.
 }}
 
-=== Move nodesize/leafsize/sectorsize/stripesize to fs_info ===
-
-{{project
-|text=Patches: http://www.spinics.net/lists/linux-btrfs/msg14560.html
-
-There are some items in btrfs_root (and others) that are unnecessarily duplicated but one definition is enough.
-
-Move from btrfs_root to btrfs_fs_info:
-* nodesize, sectorsize, stripesize
-
-Other:
-* kill leafsize and unify usage to just nodesize, eg. btrfs_level_size
-* ''struct btrfs_block_group_cache'' also duplicates sectorsize, replace it with fs_info::sectorsize
-
-''Note: this may increase the .ko size and may add some runtime penalty due to increased pointer chasing''
-}}
-
 = '''Unbound or ongoing projects''' =
 
 == Documentation ==
@@ -999,6 +969,18 @@ scrub code.
 |patch=complete
 |text=Change the filesystem UUID on a given filesystem image. This is easier than the on-line variant. Go through all the metadata blocks reachable from the superblock, verify and rewrite the UUID.
 }}
+
+=== Implement new RENAME_* modes ===
+
+{{project
+|who=Dan Fuhry
+|patch=[http://www.spinics.net/lists/linux-btrfs/msg51542.html]
+|text=There are new modes of ''rename'' syscall.
+
+* RENAME_EXCHANGE
+* RENAME_WHITEOUT
+}}
+
 
 = Obsolete requests =
 

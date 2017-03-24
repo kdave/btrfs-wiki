@@ -280,7 +280,9 @@ Suggested branch names for patchsets for current development cycle:
 Patches for next development cycle:
 * '''base''' -- the last release candidate tag in Linus' tree, be sure not to be ahead of the integration branches that will become the pull requests for the next dev cycle.
 * '''for-next''' -- patches should be in a good state, ie. don't complicate testing too much, workarounds or known problems should be documented (eg. in the patchset cover letter)
-* other names, for example a patchset for a given feature as a topic branch
+* other names, for example a patchset for a given feature as a topic branch: '''feature-live-repair'''
+
+Experimental, unsafe or unreviewed patchsets are good candidates for topic branches as they could be added or removed from the for-next branches easily (compared to manually removing the patches from a long series).
 
 === Btrfs-progs patches ===
 

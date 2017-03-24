@@ -3,11 +3,13 @@ This document describes the Btrfs on‐disk format.
 
 == Overview ==
 
-Aside from the superblock, Btrfs consists entirely of several trees. The trees use copy-on-write.
+Aside from the superblock, Btrfs consists entirely of several trees. The trees use copy-on-write. Trees are stored in nodes, each of with belong to a level in the b-tree structure. Internal nodes contain references to other internal nodes on the next level, or to leaf nodes then the level reaches zero. Leaf nodes contain various types of data structures, depending on the tree.
 
-Btrfs makes a distinction between logical and physical addresses. Logical addresses are used in the filesystem structures, while physical addresses are simply byte offsets on a disk. One logical address may correspond to physical addresses on any number of disks, depending on RAID settings. The chunk tree is used to convert from logical addresses to physical addresses; the dev tree can be used for the reverse. For bootstrapping purposes, the superblock contains a subset of the chunk tree.
+Btrfs makes a distinction between logical and physical addresses. Logical addresses are used in the filesystem structures, while physical addresses are simply byte offsets on a disk. One logical address may correspond to physical addresses on any number of disks, depending on RAID settings. The chunk tree is used to convert from logical addresses to physical addresses; the dev tree can be used for the reverse.
 
-Subvolumes and snapshots.
+For bootstrapping purposes, the superblock contains a subset of the chunk tree, specifically it contains "chunk items" for all system chunks. The superblock also contains a logical reference to root nodes in the root and chunk trees, which can then be used to locate all the other trees and data stored.
+
+TODO Subvolumes and snapshots.
 
 == Basic Structures ==
 
@@ -247,7 +249,7 @@ logical address of the [[#Chunk tree .283.29|chunk tree]] root
 
 === Header ===
 
-TODO
+This is the data stored at the start of every node. The data following it depends on whether it is an internal or leaf node, both of which are described below.
 
 {| class="wikitable" border="1"
 |+  Header
@@ -353,7 +355,7 @@ In internal nodes, the node header is followed by a number of key pointers.
 
 === Leaf Node ===
 
-In leaf nodes, the node header is followed by a number of items. The items' data is stored at the end of the node.
+In leaf nodes, the node header is followed by a number of items. The items' data is stored at the end of the node, and the contents of the item data depends on the item type stored in the key.
 
 {| class="wikitable" border="1"
 |+  Item
@@ -402,11 +404,82 @@ TODO
 
 == Objects ==
 
-=== Root tree (1) ===
+=== <div id="ROOT_TREE">ROOT_TREE (1)</div> ===
 
 The root tree holds ROOT_ITEMs, ROOT_REFs, and ROOT_BACKREFs for every tree other than itself. It is used to find the other trees and to determine the subvolume structure. It also holds the items for the [[#Root tree directory|root tree directory]]. The logical address of the root tree is stored in the [[#Superblock|superblock]].
 
-=== EXTENT tree (2) ===
+====Reserved objectids====
+There are several well-known objectids that refer to internal trees.
+
+All root objectids between <code>[[#BTRFS_FIRST_FREE_OBJECTID|BTRFS_FIRST_FREE_OBJECTID]] = 256ULL</code> and <code>[[#BTRFS_LAST_FREE_OBJECTID|BTRFS_LAST_FREE_OBJECTID]] = -256ULL</code> refer to file trees.
+
+Otherwise, the objectid should be considered reserved for internal use.
+
+*<code><div id="BTRFS_ROOT_TREE_OBJECTID">BTRFS_ROOT_TREE_OBJECTID = 1</div></code>
+:The object id that refers to the <code>ROOT_TREE</code> itself.
+*<code><div id="BTRFS_EXTENT_TREE_OBJECTID">BTRFS_EXTENT_TREE_OBJECTID = 2</div></code>
+:The objectid that refers to the <code>[[#EXTENT_TREE|EXTENT_TREE]]</code>.
+*<code><div id="BTRFS_CHUNK_TREE_OBJECTID">BTRFS_CHUNK_TREE_OBJECTID = 3</div></code>
+:The objectid that refers to the root of the <code>[[#CHUNK_TREE|CHUNK_TREE]]</code>
+*<code><div id="BTRFS_DEV_TREE_OBJECTID">BTRFS_DEV_TREE_OBJECTID = 4</div></code>
+:The objectid that refers to the root of the <code>[[#DEV_TREE|DEV_TREE]]</code>.
+*<code><div id="BTRFS_FS_TREE_OBJECTID">BTRFS_FS_TREE_OBJECTID = 5</div></code>
+:The objectid that refers to the global <code>[[#FS_TREE|FS_TREE]] root.</code>
+*<code><div id="BTRFS_CSUM_TREE_OBJECTID">BTRFS_CSUM_TREE_OBJECTID = 7</div></code>
+:The objectid that refers to the <code>[[#CSUM_TREE|CSUM_TREE]]</code>.
+*<code><div id="BTRFS_QUOTA_TREE_OBJECTID">BTRFS_QUOTA_TREE_OBJECTID = 8</div></code>
+:The objectid that refers to the <code>[[#QUOTA_TREE|QUOTA_TREE]]</code>.
+*<code><div id="BTRFS_UUID_TREE_OBJECTID">BTRFS_UUID_TREE_OBJECTID = 9</div></code>
+:The objectid that refers to the <code>[[#UUID_TREE|UUID_TREE]]</code>.
+*<code><div id="BTRFS_FREE_SPACE_TREE_OBJECTID">BTRFS_FREE_SPACE_TREE_OBJECTID = 10</div></code>
+:The objectid that refers to the <code>[[#FREE_SPACE_TREE|FREE_SPACE_TREE]]</code>.
+*<code><div id="BTRFS_TREE_LOG_OBJECTID">BTRFS_TREE_LOG_OBJECTID = -7ULL</div></code>
+:The objectid that refers to the <code>[[#TREE_LOG|TREE_LOG]]</code> tree.
+*<code><div id="BTRFS_TREE_RELOC_OBJECTID">BTRFS_TREE_RELOC_OBJECTID = -8ULL</div></code>
+:The objectid that refers to the <code>[[#TREE_RELOC|TREE_RELOC]]</code> tree.
+*<code><div id="BTRFS_DATA_RELOC_TREE_OBJECTID">BTRFS_DATA_RELOC_TREE_OBJECTID = -9ULL</div></code>
+:The objectid that refers to the <code>[[#DATA_RELOC|DATA_RELOC]]</code> tree.
+
+
+The following are well-known objectids within the <code>ROOT_TREE</code> that do not refer to other trees.
+
+*<code><div id="BTRFS_ROOT_TREE_DIR_OBJECTID">BTRFS_ROOT_TREE_DIR_OBJECTID = 6</div></code>
+:The objectid that refers to the directory within the root tree. If it exists, it will have the usual items used to implement a directory associated with it.
+:There will only be a single entry called <code>default</code> that points to a key to be used as the <i>root directory</i> on the file system instead of the <code>[[#FS_TREE|FS_TREE]]</code>.
+*<code><div id="BTRFS_ORPHAN_OBJECTID">BTRFS_ORPHAN_OBJECTID = -5ULL</div></code>
+:The objectid used for [[#ROOT_TREE_orphans|orphan root]] tracking.
+
+<b>Developer note:</b> If implementing a feature that requires a new objectid in the reserved range, you <b>must</b> reserve the objectid via the mailing list before posting your code for general use. This is a <i>disk format change</i>.
+
+====<div id="ROOT_TREE_orphans">Orphans</div>====
+Removing a root is a multi-step process that may involve many transactions. References to every extent used by the tree must be decremented and, if they hit zero, the extents must be released. It is possible that the system crashes, loses power, or otherwise encounters an error during root removal. Without additional information, the file system could ultimately contain partially removed roots, which would make it <i>inconsistent</i>. When a root is removed, it performs several small operations in a single transaction in preparation for removal. This process should be familiar to those with an understanding of how orphans work when an inode is unlinked on any UNIX-style file system.
+
+#Unlink the root from the directory that contains it.
+#Initialize the <code>[[Data_Structures#btrfs_root_item|drop_progress]]</code> and <code>[[Data_Structures#btrfs_root_item|drop_level]]</code> fields and set the <code>[[Data_Structures#btrfs_root_item|refs]]</code> field to <code>0</code> in the <code>[[#ROOT_ITEM|ROOT_ITEM]]</code>.
+#If an orphan key for this root has not already been inserted into the tree, insert one.
+#Remove the UUID entries for this root and any associated received root from the <code>[[#UUID_TREE|UUID_TREE]]</code>.
+
+Ultimately, the cleaner thread handles the reference count adjustments and, once that is complete, the root has been successfully removed and it removes the orphan key for that root. As the cleaner progresses, the <code>drop_progress</code> and <code>drop_level</code> fields are updated to reflect the most recently processed item.
+
+This process may be interrupted at any time and it must be recoverable. The orphan key is how btrfs avoids inconsistencies when that occurs. The orphan key is located in the <code>ROOT_TREE</code> and is of the following form.
+
+{|class="wikitable"
+!colspan="3"|struct btrfs_key
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>BTRFS_ORPHAN_OBJECTID [-5ULL]</code>
+|<code>[[#BTRFS_ORPHAN_ITEM_KEY|BTRFS_ORPHAN_ITEM_KEY]] [48]</code>
+|objectid of the root to be removed
+|}
+
+*There is no item body associated with this key. All required information is contained within the key itself and the <code>[[#ROOT_ITEM|ROOT_ITEM]]</code> associated with the objectid contained in <code>offset</code>
+
+When the file system is mounted again after failure, the <code>ROOT_TREE</code> is searched for all orphan keys and the process is resumed for each one using the <code>drop_progress</code> and <code>drop_level</code> fields in the <code>[[#ROOT_ITEM|ROOT_ITEM]]</code>.
+
+=== <div id="EXTENT_TREE">EXTENT tree (2)</div> ===
 
 TODO
 
@@ -417,17 +490,21 @@ TODO
 
 TODO
 
-=== Chunk tree (3) ===
+=== <div id="CHUNK_TREE">CHUNK_TREE (3)</div> ===
 
 The chunk tree holds all [[#DEV ITEM .28d8.29|DEV_ITEMs]] and [[#CHUNK ITEM .28e4.29|CHUNK_ITEMs]], making it possible to determine the device(s) and physical address(es) corresponding to a given logical address. It is therefore crucial for access to the contents of the filesystem.
 
-The chunk tree resides entirely in SYSTEM block groups, and will therefore be accessible from the [[#CHUNK ITEM .28e4.29|CHUNK_ITEM]] array in the [[#Superblock|Superblock]]. It also has an entry in the ROOT tree.
+The chunk tree resides entirely in SYSTEM block groups, and will therefore be accessible from the [[#CHUNK ITEM|CHUNK_ITEM]] array in the [[#Superblock|Superblock]]. It also has an entry in the ROOT tree.
 
-=== Dev tree (4) ===
+====Reserved objectids====
+*<div id="BTRFS_FIRST_CHUNK_TREE_OBJECTID"><code>BTRFS_FIRST_CHUNK_TREE_OBJECTID = 256</code></div>
+:This objectid indicates the first available objectid in this <code>CHUNK_TREE</code>. In practice, it is the <i>only</i> objectid used in the tree. The <code>offset</code> field of the key is the only component used to distinguish separate <code>[[#CHUNK_ITEM|CHUNK_ITEM]]</code> items.
+
+=== <div if="DEV_TREE">Dev tree (4)</div> ===
 
 The dev tree holds all [[#DEV EXTENT .28cc.29|DEV_EXTENTs]], making it possible to determine the logical address corresponding to a given physical address. This is necessary when shrinking or removing devices. The dev tree has an entry in the [[#Root tree .281.29|root tree]].
 
-=== FS tree (5) ===
+=== <div id="FS_TREE">FS_TREE (5)</div> ===
 
 TODO
 
@@ -481,105 +558,27 @@ TODO
 
 === INODE_ITEM (01) ===
 
-(objectid, 01, 0)
+====Location====
+<code>INODE_ITEM</code> items are located primarily in file trees but are also found in the [[On-disk_Format#ROOT_TREE|ROOT_TREE]] to implement the free space cache (v1).
 
+====Usage====
+{|class="wikitable"
+!colspan="3"|struct btrfs_key
+|-
+!objectid
+!type
+!offset
+|-
+|objectid (Used as inode number)
+|<code>BTRFS_INODE_ITEM_KEY [0x1]</code>
+|0
+|}
+
+====Description====
 Contains the stat information for an inode; see [http://linux.die.net/man/2/stat stat(2)].
 
-{| class="wikitable" border="1"
-|+
-|-
-! Off
-! Size
-! Type
-! Description
-|-
-| align="right" | 0
-| align="right" | 8
-| UINT
-| generation (TODO)
-|-
-| align="right" | 8
-| align="right" | 8
-| UINT
-| transid that last touched this (TODO)
-|-
-| align="right" | 10
-| align="right" | 8
-| UINT
-| st_size. For a directory, this is twice the total number of characters in all the entries' filenames.
-|-
-| align="right" | 18
-| align="right" | 8
-| UINT
-| st_blocks, but in bytes. This is the sum of the offset fields of all EXTENT_DATA items for this inode. For a directory, this is 0.
-|-
-| align="right" | 20
-| align="right" | 8
-|
-| Block group (TODO)
-|-
-| align="right" | 28
-| align="right" | 4
-| UINT
-| st_nlink. This is the number of INODE_REF entries for the inode. For trees and other objects with no INODE_REFs, this is 1.
-|-
-| align="right" | 2c
-| align="right" | 4
-| UINT
-| st_uid
-|-
-| align="right" | 30
-| align="right" | 4
-| UINT
-| st_gid
-|-
-| align="right" | 34
-| align="right" | 4
-| UINT
-| st_mode
-|-
-| align="right" | 38
-| align="right" | 8
-| UINT
-| st_rdev. The lower 20 bits are the minor number, and the higher 44 bits are the major number.
-|-
-| align="right" | 40
-| align="right" | 8
-| UINT
-| Flags (TODO)
-|-
-| align="right" | 48
-| align="right" | 8
-| UINT
-| Sequence (for NFS compatibility): starts at 0 and increments whenever st_mtime is updated.
-|-
-| align="right" | 50
-| align="right" | 20
-|
-| Reserved
-|-
-| align="right" | 70
-| align="right" | c
-| TIME
-| st_atime
-|-
-| align="right" | 7c
-| align="right" | c
-| TIME
-| st_ctime. Also updated when xattrs change.
-|-
-| align="right" | 88
-| align="right" | c
-| TIME
-| st_mtime
-|-
-| align="right" | 94
-| align="right" | c
-| TIME
-| "otime" (reserved)
-|-
-| colspan="4" | a0
-|}
+====Item Contents====
+<code>INODE_ITEM</code> items contain a single <code>[[Data_Structures#btrfs_inode_item|btrfs_inode_item]]</code> structure.
 
 === INODE_REF (0c) ===
 
@@ -832,25 +831,32 @@ Otherwise, the structure continues:
     Contains one or more checksums of the type in the superblock for adjacent
     blocks starting at logical address (blocksize).
 
-=== ROOT_ITEM (84) ===
+=== <div id="ROOT_ITEM">ROOT_ITEM (84)</div> ===
 
-(?, transaction id) TODO
+====Location====
 
-           or (-7, -7) for LOG tree
-     0 a0 INODE_ITEM (gen=1 size=3 nlink=1 nbytes=leafsize mode=40755 other
-                      fields 0)
-    a0  8 UINT   expected generation
-    a8  8 UINT   Object ID in this tree of this tree's root directory (always
-                     100)
-    b0  8 UINT   block number of the root node
-    b8  8 UINT   byte_limit (always 0)
-    c0  8 UINT   bytes_used (can be negative?)
-    c8  8 UINT   The last generation a snapshot was taken of (0 for none)
-    d0  8 UINT   flags (can be negative?)
-    d8  4 UINT   Number of references
-    dc 11 KEY    drop_progress (always 0:00:0)
-    ed  1 UINT   drop_level (always 0)
-    ee  1 UINT   Level of the root of the tree
+<code>ROOT_ITEM</code> items are only located in the [[#ROOT_TREE|ROOT_TREE]].
+
+====Usage====
+{|class="wikitable"
+!colspan="3"|<code>struct btrfs_key</code>
+|-
+!objectid
+!type
+!offset
+|-
+|<code>objectid of root (TODO: document reserved objectids)</code>
+|<code>BTRFS_ROOT_ITEM_KEY [132]</code>
+|<code>0</code> for normal subvolume.
+Otherwise, <code>transid</code> of the transaction that created the snapshot.
+|}
+
+====Description====
+
+A fundamental component of btrfs is the btree. <code>ROOT_ITEM</code> items define the location and parameters of the root of a btree. 
+
+====Item Contents====
+<code>ROOT_ITEM</code> items contain a single <code>[[Data_Structures#btrfs_root_item|btrfs_root_item]]</code> structure.
 
 === ROOT_BACKREF (90) ===
 
@@ -867,21 +873,56 @@ Same content as [[#ROOT REF .289c.29|ROOT_REF]].
     10  2 UINT   (n)
     12  n ASCII  name
 
-=== EXTENT_ITEM (a8) ===
+=== <div id="EXTENT_ITEM">EXTENT_ITEM (a8)</div> ===
 
-(logical address, a8, size in bytes) TODO
+====Location====
+<code>EXTENT_ITEM</code> items are only located in the <code>[[#EXTENT_TREE|EXTENT_TREE]]</code>.
 
-    Maps logical extents to their contents.
-     0  8 UINT   reference count
-     8  8 UINT   generation
-    10  8 UINT   flags (1=DATA, 2=TREE_BLOCK)
-    18 11 KEY    key of first entry in tree? (TREE_BLOCK only)
-    29  1 UINT   level of node (TREE_BLOCK only)
-    Then inline refs (one for each in reference count) sorted as they would be
-    in a tree (by type, then for example by EXTENT_DATA_REF's hash):
-      0  1 UINT   type (must be TREE_BLOCK_REF, EXTENT_DATA_REF,
-                      SHARED_BLOCK_REF, or SHARED_DATA_REF)
-      1           contents
+====Usage====
+
+{|class="wikitable"
+!colspan="3"|<code>struct btrfs_key</code>
+|-
+!objectid
+!type
+!offset
+|-
+|<code>byte offset for start of extent</code>
+|<code>BTRFS_EXTENT_ITEM_KEY [168]</code>
+|<code>size of extent, in bytes</code>
+|}
+
+====Description====
+<code>EXTENT_ITEM</code> items describe the space allocated for metadata tree nodes and leafs as well as data extents. The space is allocated from block groups that define the appropriate regions. In addition to functioning as basic allocation records, <code>EXTENT_ITEM</code> items also contain back references that can be used to repair the file system or resolve extent ownership back to a set of one or more file trees. Although <code>EXTENT_ITEM</code> items can be used to describe both <code>DATA</code> and <code>TREE_BLOCK</code> extents, newer file systems with the [[Feature:Skinny_Metadata|skinny metadata]] feature enabled at mkfs time use [[#METADATA_ITEM|METADATA_ITEM]] items to represent metadata instead.
+
+
+====Item Contents====
+<code>EXTENT_ITEM</code> items begin with the <code>[[Data_Structures#btrfs_extent_item|btrfs_extent_item]]</code> structure and are followed by records that are defined by the <code>flags</code> field in that structure.
+
+=== <div id="METADATA_ITEM">METADATA_ITEM (a9)</div> ===
+
+====Location====
+<code>METADATA_ITEM</code> items are only located in the <code>[[#EXTENT_TREE|EXTENT_TREE]]</code>.
+
+====Usage====
+
+{|class="wikitable"
+!colspan="3"|<code>struct btrfs_key</code>
+|-
+!objectid
+!type
+!offset
+|-
+|<code>byte offset for start of extent</code>
+|<code>BTRFS_METADATA_ITEM_KEY [169]</code>
+|<code>level of block in the metadata tree that contains it</code>
+|}
+
+====Description====
+<code>METADATA_ITEM</code> items describe the space allocated for metadata tree nodes and leafs. The space is allocated from block groups that define metadata regions. In addition to functioning as basic allocation records, <code>METADATA_ITEM</code> items also contain back references that can be used to repair the file system or resolve extent ownership back to a set of one or more file trees.
+
+====Item Contents====
+<code>METADATA_ITEM</code> items begin with the <code>[[Data_Structures#btrfs_extent_item|btrfs_extent_item]]</code> structure and are followed by records that are defined by the <code>flags</code> field in that structure.
 
 === TREE_BLOCK_REF (b0) ===
 
@@ -949,44 +990,31 @@ TODO
 
 === BLOCK_GROUP_ITEM (c0) ===
 
-(logical address, c0, size in bytes)
+====Location====
 
-A block group: an allocated area of disk containing EXTENT_ITEMs. Block groups are oriented towards one single type of content (e.g. metadata). Found in the EXTENT tree.
+<code>BLOCK_GROUP_ITEM</code> items are only found in the <code>[[#EXTENT_TREE|EXTENT_TREE]]</code>.
 
-{| class="wikitable" border="1"
-|+
-|-
-! Off
-! Size
-! Type
-! Description
-|-
-| align="right" | 0
-| align="right" | 8
-| UINT
-| Used amount: the total size in bytes of EXTENT_ITEMs in this block group.
-|-
-| align="right" | 8
-| align="right" | 8
-| OBJID
-| chunk tree id (always 256)
-|-
-| align="right" | 10
-| align="right" | 8
-| FIELD
-|
-flags
+====Usage====
 
-  1: DATA oriented
-  2: SYSTEM oriented (the beginning of the disk, the superblock, and everything in tree 3)
-  4: METADATA oriented
-  8: RAID0
- 10: RAID1 (only exactly 2 disks)
- 20: has a duplicate (exactly 2 copies, not possible with RAID1)
- 40: RAID10
+{|class="wikitable"
+!colspan="3"|<code>struct btrfs_key</code>
 |-
-| colspan="4" | 18
+!objectid
+!type
+!offset
+|-
+|Starting offset in the space defined by the <code>[[#EXTENT_TREE|EXTENT_TREE]]</code>.
+|<code>BTRFS_BLOCK_GROUP_ITEM [192]</code>
+|Size of the block group, in bytes
 |}
+
+====Description====
+
+While the <code>[[#EXTENT_TREE|EXTENT_TREE]]</code> defines the address space used for extent allocations for the entire file system, block groups allocate and define the parameters within that space. Every <code>[[#EXTENT_ITEM|EXTENT_ITEM]]</code> or <code>[[#METADATA_ITEM|METADATA_ITEM]]</code> that describes an extent in use by the file system is apportioned from allocated block groups. Each block group can represent space used for <code>SYSTEM</code> objects (e.g. the <code>[[#CHUNK_TREE|CHUNK_TREE]]</code> and primary super block), <code>METADATA</code> trees and items, or <code>DATA</code> extents. It is possible to combine <code>METADATA</code> and <code>DATA</code> allocations within a single block group, though it is not recommended. This mixed allocation policy is typically only seen on file systems smaller than approximately 10 GiB in size.
+
+====Item Contents====
+
+<code>BTRFS_BLOCK_GROUP</code> items contain a single <code>[[Data_Structures#btrfs_block_group_item|struct btrfs_block_group_item]]</code>.
 
 === DEV_EXTENT (cc) ===
 

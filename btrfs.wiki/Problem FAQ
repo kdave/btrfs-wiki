@@ -242,7 +242,15 @@ Such errors should be fixable with "btrfs check --repair" provided you run a rec
 
 = Deciphering error messages from syslog =
 
-== parent transid verify failed ==
+== <tt>balance will reduce metadata integrity, use force if you want this</tt> ==
+
+This means that conversion will remove a degree of metadata redundancy, for example when going from profile <tt>raid1</tt> or <tt>dup</tt> to <tt>single</tt>
+
+== <tt>unable to start balance with target metadata profile 32</tt> ==
+
+This means that a conversion has been attempted from profile <tt>raid1</tt> to <tt>dup</tt> with <tt>btrfs-progs</tt> earlier than version 4.7.
+
+== <tt>parent transid verify failed</tt> ==
 
 Example:
 

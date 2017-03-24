@@ -1,0 +1,170 @@
+Corruption cases to verify Scrub with RAID5. Below cases targeted for RAID5 with 3 drives
+
+{| class="wikitable"
+|-
+! Name
+! Description
+! Expected Result
+! Comments (if any)
+|-
+| D0-corruption
+| 1. Create 128kb file.(f1.txt) <br/>  2. Corrupt D0 Stripe.   <br/>   3. Run Scrub<br/> 
+| D0 should have original un-corrupted content. <br/> Parity value should be valid. 
+| 
+|-
+| D1-corruption
+| 1. Create 128kb file.(f1.txt) <br/> 2. Corrupt D1 Stripe.    <br/> 3. Run Scrub
+| D1 should have original un-corrupted content.  <br/> Parity value should be valid. 
+|
+|-
+| P-corruption
+| 1. Create 128kb file.(f1.txt)  <br/>2. Corrupt Parity Stripe.     <br/>3. Run Scrub
+| P should have original un-corrupted content.                   
+|
+|-
+| D0-D1-corruption
+| 1. Create 128kb file. (f1.txt) <br/> 2. Corrupt both D0 and D1    <br/> 3. Run Scrub
+| Scrub expected to fail and should not recover f1.txt.
+|should Scrub display/log the filename f1.txt as unrecovered along with failed offset?
+|-
+| D0-D1-corruption2
+| 1. Create 128kb file. (f1.txt)  and another file with size 128kb (f2.txt) <br/> 2. Corrupt both D0 and D1  from f1.txt<br/> 3. Corrupt only D0  from f2.txt      <br/>  4. Run Scrub
+| Scrub expected not to recover f1.txt. It should recover f2.txt with valid parity.                 
+|
+|-
+| D1-D3-Corruption
+| 1. Create 256kb file.(f1.txt)  <br/>    2. Corrupt D1,D3 Stripe.<br/>    3. Run Scrub
+| D1,D3 should have original un-corrupted content.              Parity value should be valid. 
+|
+|-
+| 256kb-P-Corruption
+| 1. Create 256kb file.(f1.txt)     <br/>            2. Corrupt P1 Stripe.<br/>  3. Run Scrub
+|  Parity(P1,P2) value should be valid. 
+|
+|-
+| 256kb-P2-Corruption
+| 1. Create 256kb file.(f1.txt)  <br/> 2. Corrupt both P1,P2 Stripe.      <br/>     3. Run Scrub
+|  Parity(P1,P2) value should be valid. 
+|
+|-
+| D0-D1-256kb-Corruption
+| 1. Create 256kb file.(f1.txt)     <br/>         2. Corrupt D0,D1 Stripe.  <br/>          3. Run Scrub
+| Scrub expected to fail and should not recover f1.txt. Parity (P1,P2) should be valid
+|
+|-
+| D0-D1-256kb-Corruption2
+| 1. Create 256kb file.(f1.txt)   <br/>          2. Corrupt D0,D1,P1 Stripe.     <br/>          3. Run Scrub
+| Scrub expected to fail and should not recover f1.txt. Parity (P2) should be valid
+|
+|-
+| Odd-data-stripe-corruption
+| 1. Create 512kb file.(f1.txt)      <br/>        2. Corrupt odd data stripe. (D1,D3,D5..)   <br/> 3. Run Scrub
+| Odd data-stripe should have original un-corrupted content. Parity values should be valid. 
+|
+|-
+| Even-data-stripe-corruption
+| 1. Create 512kb file.(f1.txt)      <br/>            2. Corrupt even data stripe. (D2,D4,D6..)  <br/> 3. Run Scrub
+| Even data-stripe should have original un-corrupted content. Parity values should be valid. 
+|
+|-
+| Repeat-odd-even-corruption.
+| Re-run above odd-even corruption cases with different filesize: <br/> 1m,2mb,10mb,50mb
+| All corrupted blocks should have original un-corrupted content. Their coresponding Parity values should be valid. 
+|
+|-
+| Device-corruption.
+| 1. Create 100 - 1mb files.(f1..f100.txt)   <br/>  2. Corrupt all valid entires from 1st drive.    <br/>            3. Now replace 1st drive with new drive.  <br/>4. Start replace to migrate data from 1st drive. And remove old-corrupted-drive    <br/>  5. Run Scrub
+| Scrub should fix all corrupt blocks in the new drive and  parity values are valid.
+|
+|-
+| Repeat-drive-corruption
+| Re-run above device corruption for drive-2 and 3.
+| 
+|
+|-
+| Append-data
+| 1. Create large file 1GB.(f1.txt)   <br/>  2. Corrupt all odd-data  stripe blocks.   <br/> 3. Run Scrub <br/> 4. While Scrubbing process running, open the file in write mode and append 500MB data to it.
+| 
+|Need to check the expected and actual output. Guess output: Scrub fixes corruption for first 1GB. File size will be depend on which process finishes last?
+|-
+| Truncate-data
+| 1. Create large file 1GB.(f1.txt)      <br/>  2. Corrupt all odd-data  stripe blocks. <br/>3. Run Scrub  <br/>   4. While Scrubbing process running, open the file in write mode and truncate the file size to 500MB.
+|
+| Need to check the expected and actual output. Guess output: Scrub fixes corruption for first 1GB with open-fd. File size will be 500MB.
+|-
+| Delete-file
+| 1. Create large file 1GB.(f1.txt)   <br/> 2. Corrupt all odd-data  stripe blocks.   <br/> 3. Run Scrub   <br/> 4. While Scrubbing process running, delete the file.
+|
+| After scrubbing process, last-file handle will be released and file is removed?
+|-
+| Openfd-deleted-file
+| 1. Create large file 1GB.(f1.txt) <br/>        2. Corrupt all odd-data  stripe blocks.   <br/>3. Get file-descriptor for f1.txt and delete the file.<br/> 4. Run Scrub
+| 
+|Does scrub skip this 1GB file? Or spend time in fixing corruption.
+|-
+| Sparse-file-D0-corruption
+| 1. Create 256kb file with 64kb hole after each Data-stripe (f1.txt) (D0-Hole-D1-Hole-D2-Hole-D3)<br/>  2. Corrupt D0 Stripe.         <br/>  3. Run Scrub
+| D0 should have original un-corrupted content.                   Parity value should be valid. 
+|
+|-
+| Sparse-file-D1-corruption
+| 1. Create 256kb file with 64kb hole after each Data-stripe (f1.txt) (D0-Hole-D1-Hole-D2-Hole-D3)<br/> 2. Corrupt D1 Stripe.         <br/> 3. Run Scrub<br/>
+| D1 should have original un-corrupted content.                   Parity value should be valid. 
+|
+|-
+| Sparse-file-P-corruption
+| 1. Create 256kb file with 64kb hole after each Data-stripe (f1.txt) (D0-Hole-D1-Hole-D2-Hole-D3)<br/> 2. Corrupt Parity Stripe.         <br/> 3. Run Scrub
+| Parity should have original un-corrupted content. 
+|
+|-
+| Sparse-file-odd-D
+| 1. Create large file 1GB.(f1.txt)  with holes (ex: 2mb hole for every 50mb)  <br/>          2. Corrupt all odd-data  stripe.    <br/> 3. Run Scrub      
+| Odd data-stripe should have original un-corrupted content. Parity values should be valid. 
+|
+|-
+| Sparse-file-even-D
+| 1. Create large file 1GB.(f1.txt)  with holes (ex: 2mb hole for every 50mb)  <br/>            2. Corrupt all even-data  stripe.     <br/> 3. Run Scrub      <br/> 
+| Even data-stripe should have original un-corrupted content. Parity values should be valid. 
+|
+|-
+| Sparse-file-all-P
+| 1. Create large file 1GB.(f1.txt)  with holes (ex: 2mb hole for every 50mb)        <br/>       2. Corrupt all parity stripe.     <br/>  3. Run Scrub 
+| Parity values should be valid. 
+|
+|-
+| Repeat-Sparse-different-size
+| Re-run above 3 sparse corruption cases(Sparse-file-odd-D,Sparse-file-even-D,Sparse-file-all-P) with different hole size like:
+128kb,256kb,512kb,32kb,96kb,224kb,480kb.
+| 
+|-
+| Rebalance-corruption.
+| 1. Create 100 - 1mb files.(f1..f100.txt)   <br/>  2. Now add a new drive.  <br/>3. Start re-balance   <br/>  4. Run Scrub
+| Scrub shouldnot report any corruption.
+|
+|-
+| Other variants:
+| 
+| 
+|
+|-
+| Repeat-for-multi-extent
+| Re-run above corruption cases with file having multi-extents
+| 
+|
+|-
+| Repeat-for-odd-stripe
+| Re-run above corruption cases with file having odd-number of data-stripe. (ex: filesize=192kb) 
+| 
+|
+|-
+| Repeat-for-drive count
+| Re-run above corruption cases different no.of drive (ex: RAID5 with 4 drives)
+| 
+|
+|-
+| TODO : <br/> Stress test <br/> Negative test <br/>RAID5 + snapshot,quota etc <br/>RAID5 MetaData corruption<br/>Non-default mount options 
+| 
+| 
+|
+|-
+|}

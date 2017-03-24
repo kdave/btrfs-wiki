@@ -30,6 +30,7 @@ Developer's FAQ
 Development notes
 ENOSPC
 FAQ
+Feature:Skinny Metadata
 Features
 Gentoo ebuilds
 Getting started
@@ -74,7 +75,9 @@ Production Users
 Project ideas
 Quota support
 RAID56
+Resolving Extent Backrefs
 Restore
+Scrub corruption cases
 Seed-device
 Show-blocks
 SnapBtr

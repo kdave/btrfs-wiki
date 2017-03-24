@@ -25,6 +25,15 @@ The main issue here is that in most distributions <tt>udev</tt> runs <tt>btrfs d
 *** Workarounds include manually defragmenting your home directory using btrfs fi defragment. Auto-defragment (mount option autodefrag) should solve this problem in 3.0.
 ** Symptoms include btrfs-transacti and btrfs-endio-wri taking up a lot of CPU time (in spikes, possibly triggered by syncs). You can use filefrag to locate heavily fragmented files (may not work correctly with compression).
 
+=== 8TiB limit on 32-bit systems ===
+
+Because of various [http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg58970.html implementation limitations] on <em>32-bit systems</em>:
+
+* It is possible to create Btrfs volumes larger than 8TiB.
+* Various Btrfs tools, among them <tt>btrfs check</tt> and <tt>btrfs receive</tt> don't support however Btrfs volumes larger than 8TiB on 32-bit systems.
+
+It is also possible on 32-bit systems the limited address space per-process means that the tools cannot handle very complex (many inodes, many subvolumes, many hard links, ...) because they run out of memory on volumes smaller than 8TiB.
+
 == Version specific ==
 
 === Parity RAID ===
@@ -41,6 +50,24 @@ The main issue here is that in most distributions <tt>udev</tt> runs <tt>btrfs d
 ** Fix: remount the volume with <tt>-o remount,clear_cache</tt>.
 ** Switch to to new free space tree.
 
+=== Having many subvolumes can be very slow ===
+
+The cost of several operations, including currently <tt>balance</tt> and <tt> device delete</tt>, is proportional to the number of subvolumes, including snapshots, and (slightly super-linearly) the number of extents in the subvolumes.
+
+This is "obvious" for "pure" subvolumes, as each is an independent file tree and has independent extents anyhow (except for ref-linked ones). But in the case of snapshots metadata and extents are (usually) largely ref-linked with the ancestor subvolume, so the full scan of the snapshot need not happen, but currently this happens.
+
+This means that subvolumes with more than a dozen snapshots can greatly slow down <tt>balance</tt> and <tt>device delete</tt>. Some relevant quotes from the IRC channel:
+
+* "when you do device removes on file systems with a lot of snapshots, it is unbelievably slow ... took nearly a week to move 20GB of FS data from one device to the other using that method"
+* "a balance on 2TB of data that was heavily snapshotted - it took 3 months"
+* "try to avoid having more than 8 snapshots due to the overhead"
+* "when I have to do balances ... I delete all the snapshots and allow a few months for the balance to finish"
+
+The multiple tree walks involve both high CPU and IOPS usage.
+There is a [https://github.com/torvalds/linux/commit/1d57ee941692d0cc928526e21a1557b2ae3e11db commit] in kernel version <b>4.10-rc1</b> that greatly reduces CPU usage, but high IOPS usage remains.
+
+This means that schemes that snapshot a volume periodically should set a low upper limit on the number of those snapshots that are retained.
+
 === Incomplete chunk conversion ===
 
 Volumes created or converted with various profile can become read-only on the ''next'' mount if they become degraded, and then they will be stuck like that.
@@ -54,19 +81,53 @@ System, RAID10: total=96.00MiB, used=48.00KiB
 System, single: total=4.00MiB, used=0.00B
 Metadata, RAID10: total=3.00GiB, used=397.95MiB
 Metadata, single: total=8.00MiB, used=0.00B
-GlobalReserve, single: total=144.00MiB, used=0.00B
-</nowiki>
+GlobalReserve, single: total=144.00MiB, used=0.00B</nowiki>
 
 * This is because older versions of '''btrfs-progs''' leave around on creation or conversion one chunk in the old profile by mistake, and then if a block device becomes missing Btrfs considers the volume fatally damaged if that old profile does not have redundancy.
 ** This creation or conversion issue is solved in recent versions of '''btrfs-progs'''.
-** It can be fixed by running again (possibly repeatedly) <tt>btrfs balance soft -mconvert=$MPROFILE,soft -dconvert=$DPROFILE,soft ...</tt>
+** It can be fixed by running again (possibly repeatedly)
+ <tt>btrfs balance start -mconvert=$MPROFILE,soft -dconvert=$DPROFILE,soft ...</tt>
 ** If the volume has already gone read-only, dump, recreate and restore it.
 
 === <tt>raid1</tt> volumes only mountable once RW if degraded ===
 
-* Even if there are no <tt>single</tt> profile chunks, <tt>raid1</tt> volumes if they become degraded may only be mounted read-write ''once'' with the options <tt>-o degraded,rw</tt>.
-** When a <tt>raid1</tt> volume is stuck as read-only for either reason it can be recovered by dumping its contents, recreating it and restoring the contents.
-** This does not happen with <tt>raid10</tt> profile volumes.
+Even if there are no <tt>single</tt> profile chunks, <tt>raid1</tt> volumes if they become degraded may only be mounted read-write ''once'' with the options <tt>-o degraded,rw</tt>.
+
+Notes:
+* This does not happen (reportedly) when there are more than 2 devices.
+* This does not happen with <tt>raid10</tt> profile volumes.
+* This is often due to the "Incomplete chunk conversion" issue, where there are <tt>single</tt> chunks left.
+
+Possible recoveries:
+
+* If it is still read-write, you can convert the chunks from profile <tt>raid1</tt> to profile <tt>single</tt> (or profile <tt>dup</tt>) if you have enough space).
+* If it is still read-write, you can <tt>btrfs device replace</tt> the missing device.
+* When a <tt>raid1</tt> volume is stuck as read-only for either reason it can only be recovered by dumping its contents, recreating it and restoring the contents.
+
+=== Implicit conversion <tt>dup</tt> to <tt>raid1</tt> after adding a block device ===
+
+When all chunks of a single device volume are "allocated" a <tt>balance</tt> operation cannot start, and the suggested solution is to add a temporary block device of at least 1GiB (better 2-4GiB).
+
+The subsequent <tt>balance<tt> turns existing <tt>dup</tt> profile chunks, usually for metadata, into <tt>raid1</tt> profile chunks. This prevents the removal of the temporary block device. Workarounds:
+
+* Start the <tt>balance</tt> operation with <tt>-musage=0</tt> so metadata chunks are not balanced, so they are not converted to <tt>raid1</tt>.
+* Start the <tt>balance</tt> operation with *any* value of <tt>-musage=</tt>, even <tt>99</tt> or <tt>100</tt>, as the implicit conversion does not happen along with compaction if there is such a value.
+* If converted to <tt>raid1</tt>, convert them explicitly to <tt>single</tt>, remove the temporary block device, and convert them back to <tt>dup</tt>.
+* Use <tt>btrfs-progs</tt> version 4.7.2 or newer, as this allows converting back <tt>raid1</tt> chunks to <tt>dup</tt> even on a multidevice volume.
+
+Note: by itself adding a new device does not cause the conversion from <tt>dup</tt> to <tt>raid1</tt> profile, it is the <tt>balance</tt> without options that does it implicitly.
+
+=== Direct IO including NFS access  ===
+
+Direct IO reads and writes to Btrfs files are don't fully implement checksum semantics, particularly in the case of concurrent writes.
+This is the issue described in [http://www.spinics.net/lists/linux-btrfs/msg25940.html this email]: "where the application will modify the page while it's inflight" (see also this article on [https://lwn.net/Articles/442355/ stable  pages]).
+This results in checksum verification messages that are warnings instead of errors, as in for example:
+
+ BTRFS warning (device dm-1): csum failed ino 252784 off 62910578688 csum 802263983 expected csum 4110970844
+
+Details of affected versions TBD.
+
+The NFS kernel server accesses files by a mechanism equivalent to direct IO, so checksums semantics for non-direct IO access on an NFS client are not the same as for local access.
 
 === Conversion from <tt>ext4</tt> may not be undoable ===
 * In kernels '''4.0+''': the empty block groups are reclaimed automatically that can affect the following:

@@ -10,41 +10,119 @@ See also: [[Btree Items]], [[On-disk_Format]]
 
 = btrfs_block_group_item =
 
-; used 
-: The space used in this block group
-; chunk_objectid 
-: (?)
-; flags 
-: Type of data in this block group, and replication strategy (RAID level)
-: 1 Data
-: 2 System
-: 4 Metadata
-: 8 Striped (RAID-0)
-: 16 Mirrored (RAID-1)
-: 32 Duplicated (DUP)
-: 64 Striped and mirrored (RAID-10)
+This structure defines the location, properties, and usage of a block group. It is associated with the <code>[[On-disk_Format#BLOCK_GROUP_ITEM|BLOCK_GROUP_ITEM]]</code>. This structure is never used outside of this item.
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_block_group_item (24 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|<code>used</code>
+|The space used in this block group.
+|-
+|<code>8</code>
+|<code>__le64</code>
+|<code>chunk_objectid</code>
+|The objectid of the chunk backing this block group.
+|-
+|<code>16</code>
+|<code>__le64</code>
+|<code>flags</code>
+|See [[#btrfs_block_group_item_flags|below]].
+|}
+
+==<div id="btrfs_block_group_item_flags">Flags</div>==
+
+<b>Allocation Type</b>
+:The type of storage this block group offers. <code>SYSTEM</code> chunks cannot be mixed, but <code>DATA</code> and <code>METADATA</code> chunks can be mixed.
+*<code>BTRFS_BLOCK_GROUP_DATA [0x1]</code>
+*<code>BTRFS_BLOCK_GROUP_SYSTEM [0x2]</code>
+*<code>BTRFS_BLOCK_GROUP_METADATA [0x4]</code>
+
+<b>Replication Policy</b>
+:The allocation policy this block group implements. Only one of the following flags may be set in any single block group. It is not possible to combine policies to create [https://en.wikipedia.org/wiki/Nested_RAID_levels nested RAID levels] beyond the RAID-10 support offered below. If no flags are specified, the block group is not replicated beyond a single, unstriped copy.
+*<code>BTRFS_BLOCK_GROUP_RAID0 [0x8]</code>
+:Striping ([https://en.wikipedia.org/wiki/Standard_RAID_levels#RAID_0 RAID-0])
+*<code>BTRFS_BLOCK_GROUP_RAID1 [0x10]</code>
+:Mirror on a separate device  ([https://en.wikipedia.org/wiki/Standard_RAID_levels#RAID_1 RAID-1])
+*<code>BTRFS_BLOCK_GROUP_DUP [0x20]</code>
+:Mirror on a single device
+*<code>BTRFS_BLOCK_GROUP_RAID10 [0x40]</code>
+:Striping and mirroring  ([https://en.wikipedia.org/wiki/Nested_RAID_levels#RAID_10 RAID-10])
+*<code>BTRFS_BLOCK_GROUP_RAID5 [0x80]</code>
+:Parity striping with single-disk fault tolerance ([https://en.wikipedia.org/wiki/Standard_RAID_levels#RAID_5 RAID-5])
+*<code>BTRFS_BLOCK_GROUP_RAID6 [0x100]</code>
+:Parity striping with double-disk fault tolerance ([https://en.wikipedia.org/wiki/Standard_RAID_levels#RAID_6 RAID-6])
 
 = btrfs_chunk =
 
-References, via the array of struct btrfs_stripes, the dev_extents which make up this block group.
+This structure contains the mapping from a virtualized usable byte range within the backing storage to a set of one or more stripes on individual backing devices. In addition to the mapping, hints on optimal I/O parameters for this chunk.  It is associated with <code>[[On-disk_Format#CHUNK_ITEM|CHUNK_ITEM]]</code> items.
 
-; length 
-: Length of chunk (amount of space used, not the total storage available)
-; owner 
-: only set, not used?
-; stripe_len 
-:
-; type 
-:
-; io_align, io_width, sector_size 
-: Optimal alignment parameters for block I/O
-; num_stripes 
-: Number of stripes in this chunk
-; sub_stripes 
-: Number of sub-stripes (RAID-10 only)
-; stripe 
-: First element of an array of stripes
-: See [[Data_Structures#btrfs stripe|btrfs_stripe]]
+Although the structure definition only contains one <code>stripe</code> member, <code>[[On-disk_Format#CHUNK_ITEM|CHUNK_ITEM]]</code> items contain as many <code>[[#btrfs_stripe|struct btrfs_stripe]]</code> structures as specified in the <code>num_stripes</code> and <code>sub_stripes</code> fields.
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_chunk (80 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|<code>length</code>
+|Size of this chunk, in bytes.
+|-
+|<code>8</code>
+|<code>__le64</code>
+|<code>owner</code>
+|Objectid of the root referencing this chunk; Always <code>[[On-disk_Format#EXTENT_ROOT|EXTENT_ROOT]]</code>.
+|-
+|<code>16</code>
+|<code>__le64</code>
+|<code>stripe_len</code>
+|Replication stripe length.
+|-
+|<code>24</code>
+|<code>__le64</code>
+|<code>type</code>
+|Uses the same flags as [[#btrfs_block_group_item_flags|btrfs_block_group_item]].
+|-
+|<code>32</code>
+|<code>__le32</code>
+|<code>io_align</code>
+|Optimal I/O alignment for this chunk.
+|-
+|<code>36</code>
+|<code>__le32</code>
+|<code>io_width</code>
+|Optimal I/O width for this chunk.
+|-
+|<code>40</code>
+|<code>__le32</code>
+|<code>sector_size</code>
+|Minimal I/O size for this chunk.
+|-
+|<code>44</code>
+|<code>__le16</code>
+|<code>num_stripes</code>
+|Number of replication stripes.
+|-
+|<code>46</code>
+|<code>__le16</code>
+|<code>sub_stripes</code>
+|Number of replication sub-stripes (used only for RAID-10).
+|-
+|<code>48</code>
+|<code>[[#btrfs_stripe|struct btrfs_stripe]]</code>
+|<code>stripe</code>
+|The first of one or more stripes that map to device extents.
+|}
 
 = btrfs_csum_item =
 
@@ -55,15 +133,45 @@ No external references
 
 = btrfs_dev_extent =
 
-Maps a physical extent of storage (e.g. a range of bytes on a storage device) into a chunk.
+This structure is used to map physical extents on an individual backing device to a chunk. This extent may be the only one for a particular chunk or one of several. It is associated with the <code>[[On-disk_Format#DEV_ITEM|DEV_ITEM]]</code> item. This structure is never used outside of this item.
 
-; chunk_tree 
-: Unused? -- Expansion to allow for multiple chunk trees?
-; chunk_objectid, chunk_offset 
-: References chunk_tree/(chunk_objectid, BTRFS_CHUNK_ITEM_KEY, chunk_offset) → [[#btrfs chunk|struct btrfs_chunk]]
-: Note that the chunk_objectid will (currently) always be BTRFS_FIRST_CHUNK_TREE_OBJECTID == 256ULL
-; chunk_tree_uuid 
-: Double-check for which tree we're referring to
+{|class="wikitable"
+!colspan="4"|struct btrfs_dev_extent (48 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|<code>chunk_tree</code>
+|Objectid of the <code>[[On-disk_Format#CHUNK_TREE|CHUNK_TREE]]</code> that owns this extent.
+Always <code>[[On-disk_Format#BTRFS_CHUNK_TREE_OBJECTID|BTRFS_CHUNK_TREE_OBJECTID]]</code>.
+|-
+|<code>8</code>
+|<code>__le64</code>
+|<code>chunk_objectid</code>
+|Objectid of the <code>[[On-disk_Format#CHUNK_ITEM|CHUNK_ITEM]]</code> that references this extent.<br />
+In practice, it will always be <code>[[On-disk_Format#BTRFS_FIRST_CHUNK_TREE_OBJECTID|BTRFS_FIRST_CHUNK_TREE_OBJECTID]]</code>.
+|-
+|<code>16</code>
+|<code>__le64</code>
+|<code>chunk_offset</code>
+|Offset of the <code>[[On-disk_Format#CHUNK_ITEM|CHUNK_ITEM]]</code> that references this extent.
+|-
+|<code>24</code>
+|<code>__le64</code>
+|<code>length</code>
+|Length of this extent, in bytes.
+|-
+|<code>32</code>
+|<code>__u8[16]</code>
+|<code>chunk_tree_uuid</code>
+|UUID of the <code>[[On-disk_Format#CHUNK_TREE|CHUNK_TREE]]</code> that owns this extent.
+|}
+
+It is unclear whether the <code>chunk_tree</code> and <code>chunk_tree_uuid</code> fields are a remnant of an early design or included for potential future expansion.
 
 = btrfs_dev_item =
 
@@ -74,74 +182,186 @@ Represents a complete block device.
 
 = btrfs_dir_item =
 
-Represents an entry in a directory, or a named xattr.
+This structure represents the header for a directory entry item used for both standard user-visible directories and internal directories used to manage named extended attributes. It is associated with the <code>[[On-disk_Format#DIR_ITEM|DIR_ITEM]]</code> and <code>[[On-disk_Format#XATTR_ITEM|XATTR_ITEM]]</code> items. This structure is not used outside of these items.
 
-; location 
-: key pointing at item's inode data
-: (0, UNKNOWN, 0) for objects with no data outside the btrfs_dir_item
-; data_len 
-: Length of embedded data
-; name_len 
-: Length of item name
-; type
-: 0 == unknown
-: 1 == file
-: 2 == directory
-: 3 == char device
-: 4 == block device
-: 5 == fifo
-: 6 == socket
-: 7 == symlink
-: 8 == xattr
+It is immediately followed by the name. If it represents an extended attribute, the attribute data immediately follows the name.
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_dir_item (30 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>[[#btrfs_disk_key|struct btrfs_disk_key]]</code>
+|<code>location</code>
+|Key for the <code>[[On-disk_Format#INODE_ITEM|INODE_ITEM]]</code> or <code> [[On-disk_Format#ROOT_ITEM|ROOT_ITEM]]</code> associated with this entry. <br/>
+Unused and zeroed out when the entry describes an extended attribute.
+|-
+|<code>17</code>
+|<code>__le64</code>
+|<code>transid</code>
+|<code>transid</code> of the transaction that created this entry.
+|-
+|<code>25</code>
+|<code>__le16</code>
+|<code>data_len</code>
+|Length of the extended attribute associated with this entry.
+<code>0</code> for standard directories.
+|-
+|<code>27</code>
+|<code>__le16</code>
+|<code>name_len</code>
+|Length of directory entry name.
+|-
+|<code>29</code>
+|<code>__u8</code>
+|<code>type</code>
+|See [[#btrfs_dir_item_types|below]].
+|}
+
+==<div id="btrfs_dir_item_types">Types</div>==
+These directory entry types use the same values as the <code>d_type</code> field in <code>struct dirent</code> documented in the <code>readdir(3)</code> manual page.
+
+* <code>BTRFS_FT_UNKNOWN = 0</code>
+:The target object's type is unknown. Indicates corruption if used.
+*<code>BTRFS_FT_REG_FILE = 1</code>
+:The target object is an <code>[[On-disk_Format#INODE_ITEM|INODE_ITEM]]</code> representing a regular file.
+*<code>BTRFS_FT_DIR = 2</code>
+:The target object is an <code>[[On-disk_Format#INODE_ITEM|INODE_ITEM]]</code> representing a directory or a <code>[[On-disk_Format#ROOT_ITEM|ROOT_ITEM]]</code> that will be presented as a directory.
+*<code>BTRFS_FT_CHRDEV = 3</code>
+:The target object is an <code>[[On-disk_Format#INODE_ITEM|INODE_ITEM]]</code> representing a character device node.
+*<code>BTRFS_FT_BLKDEV = 4</code>
+:The target object is an <code>[[On-disk_Format#INODE_ITEM|INODE_ITEM]]</code> representing a block device node.
+*<code>BTRFS_FT_FIFO = 5</code>
+:The target object is an <code>[[On-disk_Format#INODE_ITEM|INODE_ITEM]]</code> representing a FIFO device node.
+*<code>BTRFS_FT_SOCK = 6</code>
+:The target object is an <code>[[On-disk_Format#INODE_ITEM|INODE_ITEM]]</code> representing a socket device node.
+*<code>BTRFS_FT_SYMLINK = 7</code>
+:The target object is an <code>[[On-disk_Format#INODE_ITEM|INODE_ITEM]]</code> representing a symbolic link.
+
+
+This value is used on-disk and internally but is not user-visible.
+*<code>BTRFS_FT_XATTR = 8</code>
+:The entry is an <code>[[On-disk_Format#XATTR_ITEM|XATTR_ITEM]]</code>.
 
 = btrfs_dir_log_item =
 
 = btrfs_extent_data_ref =
 
-Not indexed independently in any tree. Follows a [[#btrfs extent inline ref|struct btrfs_extent_inline_ref]].
+This structure contains an indirect back reference for a file data extent.
 
-This struct references an extent of a file.
+Follows a <code>[[#btrfs extent inline ref|btrfs_extent_inline_ref]]</code> of type <code>[[Data_Structures#btrfs_extent_inline_ref_types| BTRFS_EXTENT_DATA_REF_KEY]]</code> within an <code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code> item. It is never used separately outside of the item body. Note that this structure is located at the same offset as the <code>offset</code> member of the <code>[[#btrfs extent inline ref|btrfs_extent_inline_ref]]</code> that it follows. 
 
-; root 
-: Subvolume tree objectid.
-; objectid 
-: inode number of the file referenced
-; offset 
-: position within the file for the start of this extent data
-; count 
-: (?)
+{|class="wikitable"
+!colspan="4"|struct btrfs_extent_data_ref (28 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|<code>root</code>
+|The objectid for the file tree that references this extent.
+|-
+|<code>8</code>
+|<code>__le64</code>
+|<code>objectid</code>
+|The objectid of the inode that contains the [[On-disk_Format#EXTENT_DATA|EXTENT_DATA]] item that references this extent.
+|-
+|<code>16</code>
+|<code>__le64</code>
+|<code>offset</code>
+|The offset within the file that corresponds to this extent.
+|-
+|<code>24</code>
+|<code>__le32</code>
+|<code>count</code>
+|The number of references held.
+|}
+
+TODO: Document how count can be > 1 for a single [root, objectid, EXTENT_DATA, offset] item.
 
 = btrfs_extent_inline_ref =
 
-Header for a sequence of inline extent references.
+This structure functions as the header for several types of inline extent back references that are contained in [[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]] or [[On-disk_Format#METADATA_ITEM|METADATA_ITEM]] items. This structure is never used separately outside of these items.
 
-Not indexed independently in any tree. May follow a [[#btrfs extent item|struct btrfs_extent_item]] of type BTRFS_EXTENT_FLAG_DATA.
+{|class="wikitable"
+!colspan="4"|struct btrfs_extent_inline_ref (9 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>u8</code>
+|<code>type</code>
+|One of 4 key types, listed below.
+|-
+|<code>1</code>
+|<code>__le64</code>
+|<code>offset</code>
+|Contents depend on type of reference.
+|}
 
-; type
-: BTRFS_TREE_BLOCK_REF_KEY == 176: The extent is a tree block in a single tree.
-;; offset
-:: location of the root of the tree that the block lives in.
-: BTRFS_EXTENT_DATA_REF_KEY == 178: The extent is part of some file, or files.
-;; offset
-:: not used: is actually the first 8 bytes of the first [[#btrfs extent data ref|struct btrfs_extent_data_ref]] following this struct. Multiple such structs may follow, one for each file.
-: BTRFS_SHARED_BLOCK_REF_KEY == 182: The extent is a shared tree block in many trees.
-;; offset
-:: location of the block's parent (presumably also shared).
-: BTRFS_SHARED_DATA_REF_KEY == 184: The extent is file data shared among multiple files. Followed by a number of [[#btrfs shared data ref|struct btrfs_shared_data_refs]]. Multiple such structs may follow, one for each file.
-;; offset
-:: address of the parent object (?)
+==<div id="btrfs_extent_inline_ref_types">Types</div>==
+
+* <code>BTRFS_TREE_BLOCK_REF_KEY [176]</code>
+:The back reference is indirect for a tree block. <code>offset</code> contains the <code>objectid</code> of the tree root that allocated the block.
+*<code>BTRFS_SHARED_BLOCK_REF_KEY [182]</code>
+:The back reference is shared for a tree block. <code>offset</code> contains the byte offset of the node at the next higher level in the tree where this block is located.
+*<code>BTRFS_EXTENT_DATA_REF_KEY [178]</code>
+:The back reference is indirect for a data extent. <code>offset</code> is unused and a <code>[[#btrfs_extent_data_ref |btrfs_extent_data_ref]]</code> structure is located immediately after the <code>type</code> field.
+*<code>BTRFS_SHARED_DATA_REF_KEY [184]</code>
+:The back reference is shared for a data extent. <code>offset</code> contains the byte offset of the metadata block that contains the [[On-disk_Format#EXTENT_DATA|EXTENT_DATA]] item that describes this extent. Immediately following is a <code>[[#btrfs_shared_data_ref|btrfs_shared_data_ref]]</code> structure containing the reference count.
 
 = btrfs_extent_item =
 
-Counts the number of references to a particular extent range, and keeps track of which extents are for data and which for metadata (tree blocks).
+This structure functions as the header for extent record items. It is associated with the <code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code> and <code>[[On-disk_Format#METADATA_ITEM|METADATA_ITEM]]</code> types.
 
-This structure may be followed directly by a [[#btrfs extent inline ref|struct btrfs_extent_inline_ref]], or by a [[#btrfs tree block info|struct btrfs_tree_block_info]].
+One extent record item exists for each extent allocated on a btrfs file system. Each item tracks the number of explicit references to the extent (TODO: document implied references), records whether the extent contains file data or tree metadata and, if the latter, if the item contains a full back reference. It is followed by back reference records for each explicit reference held.
 
-; refs 
-: The number of references to this extent range
-; flags
-: BTRFS_EXTENT_FLAG_DATA == 1
-: BTRFS_EXTENT_FLAG_TREE_BLOCK == 2
+If the item type containing this item is <code>EXTENT_ITEM</code> and the <code>BTRFS_EXTENT_FLAG_TREE_BLOCK</code> flag is set, this item will be followed immediately by a <code>[[#btrfs tree block info|btrfs_tree_block_info]]</code>. Extent records follow this, as below.
+
+For all item types, a series of variable-length extent records will fill the rest of the item. Each of these records will begin with a <code>[[#btrfs extent inline ref|btrfs_extent_inline_ref]]</code>, with the contents of each record determined by the header's <code>type</code> field.
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_extent_item (24 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|<code>refs</code>
+|The number of explicit references to this extent
+|-
+|<code>8</code>
+|<code>__le64</code>
+|<code>generation</code>
+|<code>transid</code> of transaction that allocated this extent
+|-
+|<code>16</code>
+|<code>__le64</code>
+|<code>flags</code>
+|see [[#btrfs_extent_item_flags|below]]
+|}
+
+==<div id="btrfs_extent_item_flags">Flags</div>==
+*<code>BTRFS_EXTENT_FLAG_DATA [0x1]</code>
+:Flag to indicate that the following record refers to a data extent
+
+*<code>BTRFS_EXTENT_FLAG_TREE_BLOCK [0x2]</code>
+: Flag to indicate that the following record refers to a metadata tree block
+:*<code>BTRFS_BLOCK_FLAG_FULL_BACKREF [0x80]</code>
+:: Tree block back reference contains a full back reference.
 
 = btrfs_extent_ref_v0 =
 
@@ -184,10 +404,148 @@ For regular extents the structure contains several fields more:
 
 = btrfs_free_space_header =
 
-= btrfs_inode_item =
+=btrfs_inode_item=
 
-; block_group 
-: offset of chunk (in chunk tree) that the inode lives in
+This structure contains the information typically associated with a UNIX-style inode's <code>stat(2)</code> data. It is associated with the <code>[[On-disk_Format#INODE_ITEM|INODE_ITEM]]</code>.
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_inode_item (160 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|<code>generation</code>
+|
+|-
+|<code>8</code>
+|<code>__le64</code>
+|<code>transid</code>
+|
+|-
+|<code>16</code>
+|<code>__le64</code>
+|<code>size</code>
+|<code>stat.st_size</code>; Size of the file in bytes.
+|-
+|<code>24</code>
+|<code>__le64</code>
+|<code>nbytes</code>
+|<code>stat.st_blocks</code> in byte units. Size allocated to this file, in bytes; <br/>Sum of the offset fields of all <code>[[On-disk_Format#EXTENT_DATA|EXTENT_DATA]]</code> items for this inode. For directories: <code>0</code>.
+|-
+|<code>32</code>
+|<code>__le64</code>
+|<code>block_group</code>
+|Unused for normal inodes. Contains byte offset of block group when used as a free space inode.
+|-
+|<code>40</code>
+|<code>__le32</code>
+|<code>nlink</code>
+|<code>stat.st_nlink</code>; Count of <code>[[On-disk_Format#INODE_REF|INODE_REF]]</code> entries for the inode. When used outside of a file tree, <code>1</code>.
+|-
+|<code>44</code>
+|<code>__le32</code>
+|<code>uid</code>
+|<code>stat.st_uid</code>
+|-
+|<code>48</code>
+|<code>__le32</code>
+|<code>gid</code>
+|<code>stat.st_gid</code>
+|-
+|<code>52</code>
+|<code>__le32</code>
+|<code>mode</code>
+|<code>stat.st_mode</code>
+|-
+|<code>56</code>
+|<code>__le64</code>
+|<code>rdev</code>
+|<code>stat.st_rdev</code>
+|-
+|<code>64</code>
+|<code>__le64</code>
+|<code>flags</code>
+|Inode flags, see [[#btrfs_inode_item_flags|below]].
+|-
+|<code>72</code>
+|<code>__le64</code>
+|<code>sequence</code>
+|Sequence number used for NFS compatibility. Initialized to <code>0</code> and incremented each time <code>mtime</code> value is changed.
+|-
+|<code>80</code>
+|<code>__le64</code>
+|<code>reserved[4]</code>
+|<i>Reserved for future use.</i>
+|-
+|<code>112</code>
+|<code>struct btrfs_timespec</code>
+|<code>atime</code>
+|<code>stat.st_atime</code>
+|-
+|<code>124</code>
+|<code>struct btrfs_timespec</code>
+|<code>ctime</code>
+|<code>stat.st_ctime</code>
+|-
+|<code>136</code>
+|<code>struct btrfs_timespec</code>
+|<code>mtime</code>
+|<code>stat.st_mtime</code>
+|-
+|<code>148</code>
+|<code>struct btrfs_timespec</code>
+|<code>otime</code>
+|Timestamp of inode creation.
+|}
+
+==<div id="btrfs_inode_item_flags">Flags</div>==
+
+NOTE: The <i>unimplemented</i> status of any of these flags was evaluated against Linux 4.11-rc2.
+
+*<code>BTRFS_INODE_NODATASUM [0x1]</code>
+: Do not perform checksum operations on this inode.
+
+*<code>BTRFS_INODE_NODATACOW [0x2]</code>
+: Do not perform CoW for data extents on this inode when the reference count is <code>1</code>.
+
+*<code>BTRFS_INODE_READONLY [0x4]</code>
+: Inode is read-only regardless of UNIX permissions or ownership.
+:*This bit is still checked and returns <code>EACCES</code> but there is no way to set it. That suggests that it has been superseded by <code>BTRFS_INODE_IMMUTABLE</code>.
+
+*<code>BTRFS_INODE_NOCOMPRESS [0x8]</code>
+: Do not compress this inode.
+:* This flag may be changed by the kernel as compression ratios change. If the compression ratio for data associated with an inode becomes undesirable, this flag will be set. It may be cleared if the data changes and the compression ratio is favorable again.
+
+*<code>BTRFS_INODE_PREALLOC [0x10]</code>
+: Inode contains preallocated extents. This instructs the kernel to attempt to avoid CoWing those extents.
+
+*<code>BTRFS_INODE_SYNC [0x20]</code>
+: Operations on this inode will be performed synchronously.
+:*This flag is converted to a VFS-level inode flag but is not handled anywhere.
+
+*<code>BTRFS_INODE_IMMUTABLE [0x40]</code>
+: Inode is read-only regardless of UNIX permissions or ownership. Attempts to modify this inode will result in <code>EPERM</code> being returned to the user.
+
+*<code>BTRFS_INODE_APPEND [0x80]</code>
+: This inode is append-only.
+
+*<code>BTRFS_INODE_NODUMP [0x100]</code>
+: This inode is not a candidate for dumping using the <code>dump(8)</code> program.
+:*<i>This flag will be accepted on all kernels but is not implemented</i>
+
+*<code>BTRFS_INODE_NOATIME [0x200]</code>
+: Do not update <code>atime]</code> when this inode is accessed.
+
+*<code>BTRFS_INODE_DIRSYNC [0x400]</code>
+: Operations on directory operations will be performed synchronously.
+:*This flag is converted to a VFS-level inode flag but is not handled anywhere.
+
+*<code>BTRFS_INODE_COMPRESS [0x800]</code>
+: Compression is enabled on this inode.
 
 = btrfs_inode_ref =
 
@@ -207,17 +565,196 @@ Every tree block (leaf or node) starts with this header.
 ; owner 
 : the object id of the tree this block belongs to, for example BTRFS_ROOT_TREE_OBJECTID
 
+= <span id="btrfs_key">btrfs_key</span> / <span id="btrfs_disk_key">btrfs_disk_key</span> =
+
+The <code>btrfs_key</code> is one of the fundamental btrfs data structures. Every item in every tree in the file system is located using its key. The <code>btrfs_key</code> can be more accurately described as a 3-tuple used to locate any item in any tree in the file system.
+
+<code>btrfs_key</code> objects only exists in memory and is in CPU byte order. <code>btrfs_disk_key</code> is identical to <code>btrfs_key</code> except that <code>objectid</code> and <code>offset</code> are in little endian (disk) byte order and are part of the file system on-disk format.
+
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_key and struct btrfs_disk_key (17 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>u64 or __le64</code>
+|<code>objectid</code>
+|The object identifier for this item
+|-
+|<code>8</code>
+|<code>u8</code>
+|<code>type</code>
+|The type of the item this key describes
+|-
+|<code>9</code>
+|<code>u64 or __le64</code>
+|<code>offset</code>
+|More accurately described as "third component." It is literally an offset only in some contexts.
+|}
+
+
+The <code>objectid</code> field contains a value that is defined by the tree in which it is located. For example, in the [[On-disk_Format#EXTENT_TREE|EXTENT_TREE]], the <code>objectid</code> contains the starting byte offset of the extent it describes.
+
+The <code>type</code> field is universal. It always contains the type of the item identified by the key. There are no changes in usage or context that depend on the tree using the key.
+
+The <code>offset</code> field contains a value that is defined by the item type. For example, keys of <code>type = [[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code> use the <code>offset</code> to store the size of the extent the item describes.  Keys of <code>type = [[On-disk_Format#METADATA_ITEM|METADATA_ITEM]]</code> use the <code>offset</code> to store the level of the tree where the tree block is located.
+
 = btrfs_root_item =
 
-Holds information on the root of a btree
+This structure holds defines the the root of a btree. It is associated with the [[On-disk_Format#ROOT_ITEM|ROOT_ITEM]] type. This structure is never used outside of this item.
 
-; root_dirid
-: (For subvolumes) the inode number of the root dir of the filesystem (always 256?)
-: 0 for any other tree root
-; bytenr 
-: The address of the root of the tree
-; drop_progress 
-: Progress marker for dropping subvolume trees (?)
+{|class="wikitable"
+!colspan="4"|struct btrfs_root_item (439 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>[[#btrfs_inode_item|struct btrfs_inode_item]]</code>
+|<code>inode</code>
+|Several fields are initialized but only <code>flags</code> is interpreted at runtime.
+<code>generation=1</code>, <code>size=3</code>,<code>nlink=1</code>, <code>nbytes=<leafsize></code>, <code>mode=040755</code><br />
+<code>flags</code> depends on kernel version, see [[#btrfs_root_item_inode_flags|below]].
+|-
+|<code>160</code>
+|<code>__le64</code>
+|<code>generation</code>
+|<code>transid</code> of the transaction that created this root.
+|-
+|<code>168</code>
+|<code>__le64</code>
+|<code>root_dirid</code>
+|For file trees, the objectid of the root directory in this tree (always <code>256</code>).
+Otherwise, <code>0</code>.
+|-
+|<code>176</code>
+|<code>__le64</code>
+|<code>bytenr</code>
+|The disk offset in bytes for the root node of this tree.
+|-
+|<code>184</code>
+|<code>__le64</code>
+|<code>byte_limit</code>
+|<i>Unused</i>. Always <code>0</code>.
+|-
+|<code>192</code>
+|<code>__le64</code>
+|<code>bytes_used</code>
+|<i>Unused</i>.
+|-
+|<code>200</code>
+|<code>__le64</code>
+|<code>last_snapshot</code>
+|The last <code>transid</code> of the transaction that created a snapshot of this root.
+|-
+|<code>208</code>
+|<code>__le64</code>
+|<code>flags</code>
+|See [[#btrfs_root_item_flags|below]].
+|-
+|<code>216</code>
+|<code>__le32</code>
+|<code>refs</code>
+|Originally indicated a reference count. In modern usage, it is only <code>0</code> or <code>1</code>.
+|-
+|<code>220</code>
+|<code>[[#btrfs_disk_key|struct btrfs_disk_key]]</code>
+|<code>drop_progress</code>
+|Contains key of last dropped item during subvolume removal or relocation. Zeroed otherwise.
+|-
+|<code>237</code>
+|<code>__u8</code>
+|<code>drop_level</code>
+|The tree level of the node described in <code>drop_progress</code>.
+|-
+|<code>238</code>
+|<code>__u8</code>
+|<code>level</code>
+|The height of the tree rooted at <code>bytenr</code>.
+|-
+!colspan="4"|<i>The following fields depend on the subvol_uuids+subvol_times features</i>
+|-
+|<code>239</code>
+|<code>__le64</code>
+|<code>generation_v2</code>
+|If equal to <code>generation</code>, indicates validity of the following fields.<br />If the root is modified using an older kernel, this field and <code>generation</code> will become out of sync. This is normal and recoverable.
+|-
+|<code>247</code>
+|<code>u8[16]</code>
+|<code>uuid</code>
+|This subvolume's UUID.
+|-
+|<code>263</code>
+|<code>u8[16]</code>
+|<code>parent_uuid</code>
+|The parent's UUID (for use with send/receive).
+|-
+|<code>279</code>
+|<code>u8[16]</code>
+|<code>received_uuid</code>
+|The received UUID (for used with send/receive).
+|-
+|<code>295</code>
+|<code>__le64</code>
+|<code>ctransid</code>
+|The <code>transid</code> of the last transaction that modified this tree, with some exceptions (like the internal caches or relocation).
+|-
+|<code>303</code>
+|<code>__le64</code>
+|<code>otransid</code>
+|The <code>transid</code> of the transaction that created this tree.
+|-
+|<code>311</code>
+|<code>__le64</code>
+|<code>stransid</code>
+|The <code>transid</code> for the transaction that sent this subvolume. Nonzero for received subvolume.
+|-
+|<code>319</code>
+|<code>__le64</code>
+|<code>rtransid</code>
+|The <code>transid</code> for the transaction that received this subvolume. Nonzero for received subvolume.
+|-
+|<code>327</code>
+|<code>[[#btrfs_timespec|struct btrfs_timespec]]</code>
+|<code>ctime</code>
+|Timestamp for <code>ctransid</code>.
+|-
+|<code>339</code>
+|<code>[[#btrfs_timespec|struct btrfs_timespec]]</code>
+|<code>otime</code>
+|Timestamp for <code>otransid</code>.
+|-
+|<code>351</code>
+|<code>[[#btrfs_timespec|struct btrfs_timespec]]</code>
+|<code>stime</code>
+|Timestamp for <code>stransid</code>.
+|-
+|<code>363</code>
+|<code>[[#btrfs_timespec|struct btrfs_timespec]]</code>
+|<code>rtime</code>
+|Timestamp for <code>rtransid</code>.
+|-
+|<code>375</code>
+|<code>__le64[8]</code>
+|<code>ctime</code>
+|Reserved for future use.
+|}
+
+==Flags==
+<div id="btrfs_root_item_flags"><code>btrfs_root_item.flags</code></div>
+*<code>BTRFS_ROOT_SUBVOL_RDONLY [0x1]</code>
+:Flag to indicate that this root is read-only.
+
+<div id="btrfs_root_item_inode_flags"><code>btrfs_inode_item.flags</code></div>
+: In addition to flags documented at [[#btrfs_inode_item_flags|btrfs_inode_item]].
+* <code>BTRFS_INODE_ROOT_ITEM_INIT [1 << 31]</code>
+: Flag to indicate that the flags and byte_limit flags have been properly initialized.
 
 = btrfs_root_ref =
 
@@ -232,20 +769,66 @@ References a subvolume fs tree root. Used for both forward and backward root ref
 
 = btrfs_shared_data_ref =
 
-Not indexed independently in any tree, but instead follows a [[#btrfs extent inline ref|struct btrfs_extent_inline_ref]].
+This structure contains the count for a shared back reference for a file data extent.
 
-Contains a count of the number of references to this extent.
+Follows a btrfs_extent_inline_ref of type BTRFS_SHARED_DATA_REF_KEY within an EXTENT_ITEM item. It is never used separately outside of the item body. It immediately follows the <code>[[#btrfs extent inline ref|btrfs_extent_inline_ref]]</code> structure that contains the byte offset of the metadata leaf block that contains the [[On-disk_Format#EXTENT_DATA|EXTENT_DATA]] item that references this extent.
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_shared_data_ref (4 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le32</code>
+|<code>count</code>
+|Number of references held.
+|}
 
 = btrfs_stripe =
 
-; devid 
-: Device ID
-; offset 
-: Offset on device
-; dev_uuid 
-: UUID of device
+This structure is used to define the backing device storage that compose a btrfs <b>chunk</b>. It is associated with the <code>[[On-disk_Format#CHUNK_ITEM|CHUNK_ITEM]]</code> item. This structure is never used outside of this item.
 
-References the [[#btrfs dev item|btrfs_dev_item]] at device_tree/(devid, BTRFS_DEV_ITEM_KEY, offset)
+{|class="wikitable"
+!colspan="4"|struct btrfs_stripe (32 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|devid
+|Device ID that contains this stripe.
+|-
+|<code>8</code>
+|<code>__le64</code>
+|offset
+|Location of the start of the stripe, in bytes.<br />
+Size is determined by the <code>stripe_len</code> field in <code>[[#btrfs_chunk|struct btrfs_chunk]]</code>.
+|-
+|<code>16</code>
+|<code>__u8[16]</code>
+|dev_uuid
+|UUID of the device that contains this stripe. Used to confirm that the correct device has been retrieved.
+|}
+
+
+The <code>devid</code> and <code>offset</code> fields are used to construct a key to retrieve a <code>[[On-disk_Format#DEV_ITEM|DEV_ITEM]]</code> from the <code>[[On-disk_Format#DEV_TREE|DEV_TREE]]</code>. The key takes the following form.
+{|class="wikitable"
+!colspan="3"|struct btrfs_key
+|-
+!<code>objectid</code>
+!<code>type</code>
+!<code>offset</code>
+|-
+|<code>devid</code>
+|<code>BTRFS_DEV_ITEM_KEY [216]</code>
+|<code>offset</code>
+|}
 
 = btrfs_super_block =
 
@@ -253,13 +836,29 @@ References the [[#btrfs dev item|btrfs_dev_item]] at device_tree/(devid, BTRFS_D
 
 = btrfs_tree_block_info =
 
-Not indexed directly. Follows a [[#btrfs extent item|struct btrfs_extent_item]] of type BTRFS_EXTENT_FLAG_TREE_BLOCK. May be followed by one or more [[#btrfs extent inline ref|struct btrfs_extent_inline_refs]].
+This structure contains the level of tree at which the node described this back reference is located. It contains a field for the first key within the tree block it describes but the field is considered unused.
 
-Holds the key that references this block.
+This structure always follows a <code>[[#btrfs_extent_item|struct btrfs_extent_item]]</code> within an <code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code> with the <code>[[Data_Structures#btrfs_extent_item_flags|BTRFS_EXTENT_FLAG_TREE_BLOCK]]</code> flag set and is followed by one or more <code>[[#btrfs extent inline ref|struct btrfs_extent_inline_ref]] records</code>.
 
-; key 
-: Key that indexes this block.
-; level 
-: Depth within the tree of the key
+Newer file systems with the [[Feature:Skinny_Metadata|skinny metadata]] feature enabled use <code>[[On-disk_Format#METADATA_ITEM|METADATA_ITEM]]</code> items instead, which eliminate the need for this separate structure.
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_tree_block_info (18 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>struct btrfs_disk_key</code>
+|<code><strike>key</strike></code>
+|<i>Although this value may be accurate, it's unused.</i>
+|-
+|<code>17</code>
+|<code>__u8</code>
+|<code>level</code>
+|<code>Level of the tree that contains this node</code>
+|}
 
 [[Category:CodeDoc]]

@@ -34,6 +34,9 @@ That said, many fixes have gone in btrfs send/receive and it is recommended to u
 ; Just backup btrfs [https://github.com/nazar-pc/just-backup-btrfs] by Nazar Mokrynskyi
 : Snapshots creation within the same btrfs partition, backups to another partition, snapshots rotation separately for subvolumes within partition and for external on another partition (you can keep few snapshots on source partition and more on external bigger one); single PHP script without external dependencies, uses simple configuration file in JSON format
 
+; Btrfs sync subvolumes [https://github.com/nazar-pc/btrfs-sync-subvolumes] by Nazar Mokrynskyi
+: This is a pretty naive implementation of replication exact set of subvolumes from one location to another, plays nicely with Just backup btrfs
+
 ; snapbtrex [https://github.com/yoshtec/snapbtrex]
 : Snapshot creation and transfer to remote systems via ssh, no config files just shell options. The only dependency is python. An extension of the [[SnapBtr]] script.
 

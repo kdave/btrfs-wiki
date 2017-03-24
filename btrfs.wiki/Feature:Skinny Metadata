@@ -1,0 +1,7 @@
+=Skinny Metadata=
+
+Skinny Metadata is a feature [http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=3173a18f70554fe7880bb2d85c7da566e364eb3c added] to btrfs in Linux v3.10. The primary motivation is that the overhead imposed by the generic <code>EXTENT_ITEM</code> record is too great at large scale. 
+
+Even in the earliest back reference traversal code, the <code>key</code> field of the <code>btrfs_tree_block_info</code> was unused, leaving only the <code>level</code> field. Given that all tree blocks on a btrfs file system are of identical size, placing the extent size in the <code>offset</code> field of the key was redundant.
+
+The skinny metadata feature introduces a new <code>METADATA_ITEM [169]</code> item type. The <code>offset</code> field of the key represents the level of the tree that contains the extent. The <code>btrfs_tree_block_info</code> structure is completely removed from the item, saving 18 bytes (up to approximately 30% smaller) per metadata extent record of which there is one per metadata block <i>on the entire file system</i>.

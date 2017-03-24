@@ -8,6 +8,8 @@ The following companies use Btrfs in production:
 * Tripadvisor (mid term log storage)
 * NAS devices from [http://www.thecus.com Thecus] support Btrfs support since FW 2.05.04 ([http://www.thecus.com/Downloads/FW/64/X64_FWRN_2.05.04.pdf release notes])
 * [http://synology.com Synology] (NAS vendor) features Btrfs starting in [https://www.synology.com/en-global/dsm/Btrfs DiskStation Manager (DSM) v6.0]
+* [http://www.hostdime.com HostDime] (as of 2017/01, used for backup drives, underlying FS for OpenStack cloud, and primary FS of CentOS 7 shared server fleet)
+* [https://www.mendix.com/ Mendix] (since end 2014) for backup servers using snapshots and rsync (remotes are mostly ext4) and for incremental replication (fast and often) for disaster recovery purposes using snapshots and send/receive (btrbk)
 
 These companies are currently working on adding Btrfs to production products:
 * Netgear (ReadyNAS products)

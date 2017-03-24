@@ -1,7 +1,6 @@
 == Introduction ==
 This page is for documentation related to btrfs send/receive.<br/>
-Btrfs send/receive is currently in experimental state and some things still need to be done. Basic functionality is however already working. 
-The initial version of send/receive was posted to the list [http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg17512.html here]. Btrfs-progs part can be found [http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg17519.html here].<br/>
+Btrfs send/receive is currently stable. It was merged in the main Linux repository in 3.6. The initial version of send/receive was posted to the list [http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg17512.html here] (btrfs-progs part [http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg17519.html here]).<br/>
 
 == Btrfs send/receive design ==
 Only the send side is happening in-kernel. Receive is happening in user-space. The kernel generates a stream of instructions meant to be replayed 1:1 on the receiving side. These instructions cover the most important calls found for the vfs. Examples are create, mkdir, link, symlink, rename, unlink, write, and so on.
