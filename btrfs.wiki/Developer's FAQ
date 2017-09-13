@@ -338,6 +338,17 @@ Sending intrusive changes at this point is not guaranteed to be reviewed or test
 
 <tt>goto 1;</tt>
 
+= Development phase, linux-next, for-next =
+
+Patches and patchsets that are supposed to be merged in the next merge cycle are usually collected in the linux-next git tree. This gives an overview about potential conflicts and provides a central point for testing various patches. The btrfs patches for linux-next tree are hosted at https://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git in branch ''for-next''. The update period is irregular, usually a few times per week.
+
+Patches are added to for-next when they get a basic review and do not seriously decrease stability. Some level of breakage is allowed and inevitable so there's a possibility to get a tree for early testing. Also there are external services that provide compilation coverage for various arches and configurations.
+
+The for-next branch is rebased and rebuilt from scratch and cannot be used as base for patch development. Independent patches should use last -rc tag.
+
+* https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git -- daily snapshots
+* https://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git -- for-next
+
 = Misc information and hints =
 
 This section collects random pieces of advice from mailinglist that are given to newcomers.
@@ -386,8 +397,8 @@ for the sake of sending it and having your name in the git history.
 
 = References =
 
-* [https://events.linuxfoundation.org/sites/events/files/slides/clement-kernel-maintainership-oral-tradition.pdf Kernel maintainersip: an oral tradition] (pdf) a nice presentation from ELCE 2015 what does it mean to be a maintainre and what the developers can expect.
-* https://www.kernel.org/doc/Documentation/SubmittingPatches (must read)
-* https://www.kernel.org/doc/Documentation/CodingStyle (must read)
+* [https://events.linuxfoundation.org/sites/events/files/slides/clement-kernel-maintainership-oral-tradition.pdf Kernel maintainersip: an oral tradition] (pdf) a nice presentation from ELCE 2015 what does it mean to be a maintainer and what the developers can expect.
+* https://www.kernel.org/doc/html/v4.12/process/submitting-patches.html (must read)
+* https://www.kernel.org/doc/html/v4.12/process/coding-style.html (must read)
 * Pro Git by Scott Chacon http://progit.org/book/
 * Git project main page http://git-scm.com

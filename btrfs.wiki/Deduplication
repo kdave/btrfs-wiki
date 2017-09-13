@@ -21,7 +21,7 @@ extents for deduplication using the Linux kernel extent-same ioctl.
 
 '''[https://github.com/g2p/bedup bedup]''' implements incremental whole-file batch deduplication for Btrfs.  It integrates deeply with btrfs so that scans are incremental and low-impact.  It uses the btrfs clone ioctl to do the deduplication, rather than the extent-same ioctl, due to concerns regarding kernel crashes with the latter as of kernel 4.2.
 
-'''[http://btrfs-dedupe.com/ btrfs-dedupe]''' implements incremental whole-file batch deduplication for Btrfs. It is written in rust for safety and performance and uses the kernel ioctls to offload the actual deduplication to the kernel for safety. It maintains state for efficient regular operation, scanning file metadata on every run, hashing contents for files with new metadata, hashing file extent maps for files with new contents, and performing defragmentation and deduplication of files with matching content but non-matching extent maps.
+'''[http://btrfs-dedupe.com/ btrfs-dedupe]''' is a Rust library which implements incremental whole-file batch deduplication for Btrfs. It is written in Rust for safety and performance and uses the kernel ioctls to offload the actual deduplication to the kernel for safety. It maintains state for efficient regular operation, scanning file metadata on every run, hashing contents for files with new metadata, hashing file extent maps for files with new contents, and performing defragmentation and deduplication of files with matching content but non-matching extent maps.
 
 == Duplicate file finders with btrfs support ==
 

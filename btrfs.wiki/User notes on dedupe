@@ -29,13 +29,13 @@ Btrfs in-band dedupe is still an out-of-tree experimental feature,
 but it's becoming more and more stable, and developers are currently trying
 to push it for mainline.<br/>
 
-=== Sofware requirement for dedupe ===
+=== Software requirement for dedupe ===
 * Kernel support
-*: Can be fetched from https://github.com/adam900710/linux.git wang_dedupe_20160719
+*: Can be fetched from https://github.com/littleroad/linux.git dedupe_latest
 * Kernel config
 *: Need '''CONFIG_BTRFS_DEBUG'''
 * Btrfs-progs support
-*: Can be fetched from https://github.com/adam900710/btrfs-progs.git dedupe_20160715
+*: Can be fetched from https://github.com/littleroad/btrfs-progs.git dedupe_latest
 
 === Write pattern requirement for dedupe ===
 * Data copy-on-write

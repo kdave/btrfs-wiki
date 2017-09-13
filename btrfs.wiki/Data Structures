@@ -180,6 +180,188 @@ Represents a complete block device.
 ; devid 
 : Matches the devid in the filesystem's list of struct btrfs_devices.
 
+{|class="wikitable"
+!colspan="4"|struct btrfs_dev_item (98 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|<code>devid</code>
+|the internal btrfs device id
+|-
+|<code>8</code>
+|<code>__le64</code>
+|<code>total_bytes</code>
+|size of the device
+|-
+|<code>16</code>
+|<code>__le64</code>
+|<code>bytes_used</code>
+| bytes used
+|-
+|<code>24</code>
+|<code>__le32</code>
+|<code>io_align</code>
+|optimal io alignment for this device
+|-
+|<code>28</code>
+|<code>__le32</code>
+|<code>io_width</code>
+|optimal io width for this device
+|-
+|<code>32</code>
+|<code>__le32</code>
+|<code>sector_size</code>
+|minimal io size for this device
+|-
+|<code>36</code>
+|<code>__le64</code>
+|<code>type</code>
+|type and info about this device
+|-
+|<code>44</code>
+|<code>__le64</code>
+|<code>generation</code>
+|expected generation for this device
+|-
+|<code>52</code>
+|<code>__le64</code>
+|<code>start_offset</code>
+|starting byte of this partition on the device,
+to allow for stripe alignment in the future
+|-
+|<code>60</code>
+|<code>__le32</code>
+|<code>dev_group</code>
+|grouping information for allocation decisions
+|-
+|<code>64</code>
+|<code>__u8</code>
+|<code>seek_speed</code>
+|seek speed 0-100 where 100 is fastest
+|-
+|<code>65</code>
+|<code>__u8</code>
+|<code>bandwidth</code>
+|bandwidth 0-100 where 100 is fastest 
+|-
+|<code>66</code>
+|<code>__u8[16]</code>
+|<code>uuid</code>
+|btrfs generated uuid for this device
+|-
+|<code>82</code>
+|<code>__u8[16]</code>
+|<code>fsid</code>
+|uuid of FS who owns this device
+|}
+
+= btrfs_dev_stats_item =
+
+This device item holds various statistics about a device. This item type is contained only in the [[On-disk_Format#Dev_tree_.284.29|DEV_TREE]]
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_dev_stats_item (40 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>_le64</code>
+|<code>values[6]</code>
+|Array of stats values. See below
+|}
+
+== Stat items ==
+
+The codes below signify a direct disk I/O failures:
+
+* <code>BTRFS_DEV_STAT_WRITE_ERRS 0x1</code> 
+:Number of times we got EIO or EREMOTEIO from lower layers while performing writes
+   
+* <code>BTRFS_DEV_STAT_READ_ERRS 0x2</code>
+:Number of times we got EIO or EREMOTEIO from lower layers while performing reads   
+
+* <code>BTRFS_DEV_STAT_FLUSH_ERRS 0x3</code>
+:Number of times we got EIO or EREMOTEIO from lower layers while performing data flushes  
+                                                                                
+The codes below indicate an indirect I/O failure: 
+
+* <code>BTRFS_DEV_STAT_CORRUPTION_ERRS 0x4</code>
+:checksum error, bytenr error or  contents is illegal: this is an indication that the block was damaged during read or write, or written to  wrong location or read from wrong  location   
+                      
+* <code>BTRFS_DEV_STAT_GENERATION_ERRS 0x5</code>
+:an indication that blocks have not been written
+
+= btrfs_dev_replace_item = 
+
+This item holds necessary information to resume a device replace operation following a crash/suspend. It is contained in [[On-disk_Format#Dev_tree_.284.29|DEV_TREE]]
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_dev_replace_item (72 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|<code>src_devid</code>
+|Device id of the source device
+|-
+|<code>8</code>
+|<code>__le64</code>
+|<code>cursor_left</code>
+|
+|-
+|<code>16</code>
+|<code>__le64</code>
+|<code>cursor_right</code>
+|
+|-
+|<code>24</code>
+|<code>__le64</code>
+|<code>cont_reading_from_srcdev_mode</code>
+|
+|-
+|<code>32</code>
+|<code>__le64</code>
+|<code>replace_state</code>
+|State of replace operation. Can be one of: <code>BTRFS_IOCTL_DEV_REPLACE_STATE_STARTED, BTRFS_IOCTL_DEV_REPLACE_STATE_STARTED,
+BTRFS_IOCTL_DEV_REPLACE_STATE_STARTED, BTRFS_IOCTL_DEV_REPLACE_STATE_STARTED, BTRFS_IOCTL_DEV_REPLACE_STATE_STARTED</code>
+|-
+|<code>40</code>
+|<code>__le64</code>
+|<code>time_started</code>
+| 
+|-
+|<code>48</code>
+|<code>__le64</code>
+|<code>time_stopped</code>
+|
+|-
+|<code>56</code>
+|<code>__le64</code>
+|<code>num_write_errors</code>
+|expected generation for this device
+|-
+|<code>64</code>
+|<code>__le64</code>
+|<code>num_uncorrectable_read_errors</code>
+|
+|}
+
+= btrfs_balance_item =
+TODO
+
+
 = btrfs_dir_item =
 
 This structure represents the header for a directory entry item used for both standard user-visible directories and internal directories used to manage named extended attributes. It is associated with the <code>[[On-disk_Format#DIR_ITEM|DIR_ITEM]]</code> and <code>[[On-disk_Format#XATTR_ITEM|XATTR_ITEM]]</code> items. This structure is not used outside of these items.
@@ -248,6 +430,21 @@ This value is used on-disk and internally but is not user-visible.
 :The entry is an <code>[[On-disk_Format#XATTR_ITEM|XATTR_ITEM]]</code>.
 
 = btrfs_dir_log_item =
+TODO
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_dir_log_item (8 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|<code>end</code>
+|
+|}
 
 = btrfs_extent_data_ref =
 
@@ -369,40 +566,103 @@ For all item types, a series of variable-length extent records will fill the res
 
 Represents a chunk of data on disk belonging to a file. In the fs-trees, the corresponding key is ''(<inum> EXTENT_DATA <logical offset>)''. The ''<logical offset>'' is in (uncompressed) bytes within the file belonging to inode ''<inum>''.
 
-; generation 
-: transaction id that created this extent
-; ram_bytes 
-: Upper bound on the number of bytes of file content represented (without compression). Is not always lowered when it could be.
- 	btrfs_file_extent_ram_bytes()
-; compression
-; encryption
-; type
-: BTRFS_FILE_EXTENT_INLINE == 0
-: BTRFS_FILE_EXTENT_REG == 1
-: BTRFS_FILE_EXTENT_PREALLOC == 2
-
-For inline extents the file contents immediately follow the type byte. The length of the inline data block equals ''ram_bytes'', alternatively it can be read from the inode or computed as the size stored in the corresponding btrfs_item-structure less the (partial) size of the btrfs_file_extent_item-structure.
-
-For regular extents the structure contains several fields more:
-
-; disk_bytenr 
-: Logical address for the start of the extent data. Note: This is the key.''objectid'' for the corresponding EXTENT_ITEM.
- 	btrfs_file_extent_disk_bytenr()
-; disk_num_bytes 
-: Number of on-disk bytes of the extent (compressed). Note: This is the key.''offset'' for the corresponding EXTENT_ITEM.
- 	btrfs_file_extent_disk_num_bytes()
-; offset 
-: Offset into the extent item. Number of bytes to skip at the beginning (uncompressed).
- 	btrfs_file_extent_offset()
-; num_bytes 
-: Number of valid bytes within the file extent item (uncompressed)
- 	btrfs_file_extent_num_bytes()
+{|class="wikitable"
+!colspan="4"|struct btrfs_file_extent_item (53 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|<code>generation</code>
+|transaction id that created this extent
+|-
+|<code>8</code>
+|<code>__le64</code>
+|<code>ram_bytes</code>
+|size of the device
+|-
+|<code>16</code>
+|<code>__u8</code>
+|<code>compression</code>
+|Compression type. Can be one of: BTRFS_COMPRESS_NONE (0),  BTRFS_COMPRESS_ZLIB (1) and BTRFS_COMPRESS_LZO (2)
+|-
+|<code>17</code>
+|<code>__u8</code>
+|<code>encryption</code>
+|encryption type, currently always set to 0
+|-
+|<code>18</code>
+|<code>__le16</code>
+|<code>other_encoding</code>
+|Currently unused, allows for future expansion. 
+|-
+|<code>20</code>
+|<code>__u8</code>
+|<code>type</code>
+|Type of extent. Can be BTRFS_FILE_EXTENT_INLINE (0), BTRFS_FILE_EXTENT_REG (1) or BTRFS_FILE_EXTENT_PREALLOC (2). For inline extents the file contents immediately follow the type byte. The length of the inline data block equals ''ram_bytes'', alternatively it can be read from the inode or computed as the size stored in the corresponding btrfs_item-structure less the (partial) size of the btrfs_file_extent_item-structure.
+|-
+!colspan="4"|<i>The following fields apply to BTRFS_FILE_EXTENT_REG/BTRFS_FILE_EXTENT_PREALLOC extents only</i>
+|-
+|<code>21</code>
+|<code>__le64</code>
+|<code>disk_bytenr</code>
+|Logical address for the start of the extent data. Note: This is the key.''objectid'' for the corresponding EXTENT_ITEM.
+|-
+|<code>29</code>
+|<code>__le64</code>
+|<code>disk_num_bytes</code>
+|Number of on-disk bytes of the extent (compressed). Note: This is the key.''offset'' for the corresponding EXTENT_ITEM.
+|-
+|<code>37</code>
+|<code>__le64</code>
+|<code>offset</code>
+|Offset into the extent item. Number of bytes to skip at the beginning (uncompressed).
+|-
+|<code>45</code>
+|<code>__le64</code>
+|<code>num_bytes</code>
+|Number of valid bytes within the file extent item (uncompressed). This always reflects the size uncompressed and without encoding.
+|}
 
 = btrfs_file_extent_item_v0 =
+TODO
 
 = btrfs_free_space_entry =
+TODO
 
 = btrfs_free_space_header =
+TODO
+
+= btrfs_free_space_info =
+TODO
+
+= btrfs_inode_ref =
+TODO
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_inode_ref (10 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|<code>index</code>
+|Index of the inode this item's referencing in the directory
+|-
+|<code>8</code>
+|<code>__le16</code>
+|<code>name_len</code>
+|length of the name, following this item
+|}
+
+= btrfs_inode_extref = 
+TODO
 
 =btrfs_inode_item=
 
@@ -742,7 +1002,7 @@ Otherwise, <code>0</code>.
 |-
 |<code>375</code>
 |<code>__le64[8]</code>
-|<code>ctime</code>
+|<code>reserved</code>
 |Reserved for future use.
 |}
 
@@ -758,14 +1018,31 @@ Otherwise, <code>0</code>.
 
 = btrfs_root_ref =
 
-References a subvolume fs tree root. Used for both forward and backward root refs.
+References a subvolume fs tree root. Used for both forward and backward root refs. The name of the tree is stored after the end of the struct
 
-; dirid 
-: subtree ID
-; sequence 
-: directory sequence number of subtree entry
-; name 
-: name of subtree
+{|class="wikitable"
+!colspan="4"|struct btrfs_root_ref (18 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|<code>dirid</code>
+|Subtree ID.
+|-
+|<code>8</code>
+|<code>__le64</code>
+|<code>sequence</code>
+|Directory sequence number of subtree entry
+|-
+|<code>16</code>
+|<code>__le16</code>
+|<code>name_len</code>
+|Length of subtree name 
+|}
 
 = btrfs_shared_data_ref =
 
@@ -831,6 +1108,236 @@ The <code>devid</code> and <code>offset</code> fields are used to construct a ke
 |}
 
 = btrfs_super_block =
+The primary superblock is located at 0x1 0000 (64<sub>10</sub> KiB). Mirror copies of the superblock are located at physical addresses 0x400 0000 (64<sub>10</sub> MiB), 0x40 0000 0000 (256<sub>10</sub> GiB), and 0x4 0000 0000 0000 (1 PiB), if these locations are valid. btrfs normally updates all superblocks, but in SSD mode it will update only one at a time. The superblock with the highest generation is used when reading.
+
+Note that btrfs only recognizes disks with a valid 0x1 0000 superblock; otherwise, there would be confusion with other filesystems.
+
+TODO
+
+{| class="wikitable" border="1"
+!colspan="5"|struct btrfs_super_block 
+|-
+! Off
+! Size
+! Type
+! field
+! Description
+|-
+| align="right" | 0
+| align="right" | 20
+| u8[BTRFS_CSUM_SIZE]
+| csum
+| Checksum of everything past this field (from 20 to 1000)
+|-
+| align="right" | 20
+| align="right" | 10
+| u8[BTRFS_FSID_SIZE]
+| fsid
+| FS UUID
+|-
+| align="right" | 30
+| align="right" | 8
+| __le64
+| bytenr
+| physical address of this block (different for mirrors)
+|-
+| align="right" | 38
+| align="right" | 8
+|
+| __le64
+| flags
+|-
+| align="right" | 40
+| align="right" | 8
+| __le64
+| magic
+| magic ("_BHRfS_M")
+|-
+| align="right" | 48
+| align="right" | 8
+| __le64
+| generation
+| generation
+|-
+| align="right" | 50
+| align="right" | 8
+| __le64
+| root
+| logical address of the root tree root
+|-
+| align="right" | 58
+| align="right" | 8
+| __le64
+| chunck_root
+|
+logical address of the [[#Chunk tree .283.29|chunk tree]] root
+|-
+| align="right" | 60
+| align="right" | 8
+| __le64
+| log_root
+| logical address of the log tree root
+|-
+| align="right" | 68
+| align="right" | 8
+| __le64
+| log_root_transid
+| log_root_transid
+|-
+| align="right" | 70
+| align="right" | 8
+| __le64
+| total_bytes
+| total_bytes
+|-
+| align="right" | 78
+| align="right" | 8
+| __le64
+| bytes_used
+| bytes_used
+|-
+| align="right" | 80
+| align="right" | 8
+| __le64
+| root_dir_objectid
+| root_dir_objectid (usually 6)
+|-
+| align="right" | 88
+| align="right" | 8
+| __le64
+| num_devices
+| num_devices
+|-
+| align="right" | 90
+| align="right" | 4
+| __le64
+| sectorsize
+| sectorsize
+|-
+| align="right" | 94
+| align="right" | 4
+| __le64
+| nodesize
+| nodesize
+|-
+| align="right" | 98
+| align="right" | 4
+| __le64
+| __unused_leafsize
+| leafsize
+|-
+| align="right" | 9c
+| align="right" | 4
+| __le64
+| stripesize
+| stripesize
+|-
+| align="right" | a0
+| align="right" | 4
+| __le64
+| sys_chunk_array_size
+| sys_chunk_array_size
+|-
+| align="right" | a4
+| align="right" | 8
+| __le64
+| chunk_root_generation
+| chunk_root_generation
+|-
+| align="right" | ac
+| align="right" | 8
+| __le64
+| compat_flags
+| compat_flags
+|-
+| align="right" | b4
+| align="right" | 8
+| __le64
+| compat_ro_flags
+| compat_ro_flags - only implementations that support the flags can write to the filesystem
+|-
+| align="right" | bc
+| align="right" | 8
+| __le64
+| incompat_flags
+| incompat_flags - only implementations that support the flags can use the filesystem
+|-
+| align="right" | c4
+| align="right" | 2
+| __le64
+| csum_type
+| csum_type - Btrfs currently uses the CRC32c little-endian hash function with seed -1.
+|-
+| align="right" | c6
+| align="right" | 1
+| u8
+| root_level
+| root_level
+|-
+| align="right" | c7
+| align="right" | 1
+| u8
+| chunk_root_level
+| chunk_root_level
+|-
+| align="right" | c8
+| align="right" | 1
+| u8
+| log_root_level
+| log_root_level
+|-
+| align="right" | c9
+| align="right" | 62
+| btrfs_dev_item
+| dev_item
+|
+[[#DEV ITEM .28d8.29|DEV_ITEM]] data for this device
+|-
+| align="right" | 12b
+| align="right" | 100
+| char[BTRFS_LABEL_SIZE]
+| label
+| label (may not contain '/' or '\\')
+|-
+| align="right" | 22b
+| align="right" | 8
+| __le64
+| cache_generation
+| cache_generation
+|-
+| align="right" | 233
+| align="right" | 8
+| __le64
+| uuid_tree+generation
+| uuid_tree_generation
+|-
+| align="right" | 23b
+| align="right" | f0
+| __le64
+| reserved[30]
+| reserved /* future expansion */
+|-
+| align="right" | 32b
+| align="right" | 800
+| u8
+| sys_chunk_array[BTRFS_SYSTEM_CHUNK_ARRAY_SIZE]
+|
+sys_chunk_array:(''n'' bytes valid) Contains (KEY, [[#CHUNK ITEM .28e4.29|CHUNK_ITEM]]) pairs for all SYSTEM chunks. This is needed to bootstrap the mapping from logical addresses to physical.
+|-
+| align="right" | b2b
+| align="right" | 2a0
+| btrfs_root_backup
+| super_roots[BTRFS_NUM_BACKUP_ROOTS]
+| Contain super_roots (4 btrfs_root_backup)
+|-
+| align="right" | dcb
+| align="right" | 235
+|
+|
+| current unused
+|-
+| colspan="5" | 1000
+|}
 
 = btrfs_timespec =
 
@@ -861,4 +1368,143 @@ Newer file systems with the [[Feature:Skinny_Metadata|skinny metadata]] feature 
 |<code>Level of the tree that contains this node</code>
 |}
 
+= btrfs_qgroup_status_item =
+
+One item per quota tree. Holds information about quota state. 
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_qgroup_status_item (32 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|<code>version</code>
+|Quota version. Currently always set to 1 (BTRFS_QGROUP_STATUS_VERSION)
+|-
+|<code>8</code>
+|<code>__le64</code>
+|<code>generation</code>
+|Number updated during every commit. Used to check for inconsistencies
+|-
+|<code>16</code>
+|<code>__le64</code>
+|<code>flags</code>
+|See [[#btrfs_qgroup_status_item_flags|below]].
+|-
+|<code>24</code>
+|<code>__le64</code>
+|<code>rescan</code>
+|Used during rescan to record the progress. It contains a logical address.
+|}
+
+== Flags ==
+*<code>BTRFS_QGROUP_STATUS_FLAG_ON [0x1]</code>
+: subvolume quota turned on.
+
+*<code>BTRFS_QGROUP_STATUS_FLAG_RESCAN [0x2]</code>
+: Signals whether rescan is in progress.                   
+
+*<code>BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT [0x4]</code>
+: Turned on when some qgroup entries are known to be out of date, either because the configuration has changed in a certain way that requires rescan or because the fs has been mounted with a non-qgroup-aware version. Turning qouta off and on again makes it inconsistent, too.
+
+= btrfs_qgroup_info_item =
+
+One item per qgroup. Holds information about number of bytes used by this qgroup. 
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_qgroup_info_item (40 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|<code>generation</code>
+|Id of transaction that modified this qgroup item
+|-
+|<code>8</code>
+|<code>__le64</code>
+|<code>rfer</code>
+|Referenced bytes (including shared data)
+|-
+|<code>16</code>
+|<code>__le64</code>
+|<code>rfer_cmpr</code>
+|Referenced bytes compressed
+|-
+|<code>24</code>
+|<code>__le64</code>
+|<code>excl</code>
+|Exclusive data referenced
+|-
+|<code>32</code>
+|<code>__le64</code>
+|<code>excl_cmpr</code>
+|Exclusive compressed bytes
+|}
+
+= btrfs_qgroup_limit_item =
+
+One item per qgroup (pairs with btrfs_qgroup_info_item). Holds information about enabled limits for a qgroup
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_qgroup_limit_item (40 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le64</code>
+|<code>flags</code>
+|Contains information about enabled limits. See [[#btrfs_qgroup_limit_item|below]]
+|-
+|<code>8</code>
+|<code>__le64</code>
+|<code>max_rfer</code>
+|Maximum amount of referenced data allowed
+|-
+|<code>16</code>
+|<code>__le64</code>
+|<code>max_excl</code>
+|Maximum amount of exclusive data allowed
+|-
+|<code>24</code>
+|<code>__le64</code>
+|<code>rsv_rfer</code>
+|Unused 
+|-
+|<code>32</code>
+|<code>__le64</code>
+|<code>rsv_excl</code>
+|Unused
+|}
+
+== Flags ==
+
+*<code>BTRFS_QGROUP_LIMIT_MAX_RFER [0x1]</code>
+: Limit on maximum referenced data enabled
+
+*<code>BTRFS_QGROUP_LIMIT_MAX_EXCL [0x2]</code>
+: Limit on maximum eclusive data enabled                 
+
+*<code>BTRFS_QGROUP_LIMIT_RSV_RFER [0x4]</code>
+: Unused
+
+*<code>BTRFS_QGROUP_LIMIT_RSV_EXCL [0x8]</code>
+: Unused
+
+*<code>BTRFS_QGROUP_LIMIT_RFER_CMPR [0x10]</code>
+: Limit on maximum compressed referenced data enabled
+
+*<code>BTRFS_QGROUP_LIMIT_EXCL_CMPR [0x20]</code>
+: Limit on maximum exclusive compressed data size enabled
+                    
 [[Category:CodeDoc]]

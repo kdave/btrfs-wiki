@@ -50,6 +50,8 @@ Next, get the code and build it in your UML guest.
 
   git clone git://git.kernel.org/pub/scm/linux/kernel/git/mason/btrfs-progs.git
   cd btrfs-progs
+  ./autogen.sh
+  ./configure
   make
 
 == Preparing a Loop Device ==

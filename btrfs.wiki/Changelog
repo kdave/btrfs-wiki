@@ -221,11 +221,81 @@ Major features or significant feature enhancements by kernel version. For more i
 |text=Conversion to data/DUP profile possible through balance filters -- on multiple-device filesystems.
 |note=mkfs.btrfs allows creating DUP on multiple devices since 4.5.1
 }}
+{{FeatureMerged
+|name=raid56: auto repair
+|version=4.12
+|text=Scrub will attempt auto-repair (similar to raid1/raid10)
+}}
+{{FeatureMerged
+|name=statx
+|version=4.13
+|text=Support for the enhanced statx syscall; file creation timestamp
+}}
+{{FeatureMerged
+|name=sysfs qgroups override
+|version=4.13
+|text=qgroups: new sysfs control file to allow temporary quota override with CAP_SYS_RESOURCE
+}}
+{{FeatureMerged
+|name=''deprecated mount option alloc_start
+|version=4.13
+|text=That was a debugging helper, not used and not supposed to be used nowadays.
+}}
 |}
 
 = By version (btrfs-progs) =
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
+
+== btrfs-progs v4.12 (Jul 2017) ==
+
+* subvol show: new options --rootid, --uuid to show subvol by the given spec
+* convert: progress report fixes, found by tsan
+* image: progress report fixes, found by tsan
+* fix infinite looping in find-root, or when looking for free extents
+* other:
+** code refactoring
+** docs updates
+** build: ThreadSanitizer support
+** tests: stricter checks for mounted filesystem
+
+=== btrfs-progs v4.12.1 (Aug 2017) ===
+
+* build:
+** fix cross-compilation
+** use gnu90 explicitly
+* dump-tree: more relaxed checks so -b can print block on a damaged fs
+* convert: fix the 1MB range exclusion
+* check: more dir_item hash checks
+* other
+** added missing getopt spec for some options
+** doc fixes
+** cleanups
+** test updates
+
+== btrfs-progs v4.11 (May 2017) ==
+
+* receive: fix handling empty stream with -e (multi-stream)
+* send dump: fix printing long file names
+* stability fixes for: dump-super, print-tree, check
+* option parser updates: global options are parsed before the subcommand name (old xfstests will fail)
+* new and updated tests
+* documentation updates
+
+=== btrfs-progs v4.11.1 (Jun 2017) ===
+
+* image: restoring from multiple devices
+* dev stats: make --check option work
+* check: fix false alert with extent hole on a NO_HOLE filesystem
+* check: lowmem mode, fix false alert in case of mixed inline and compressed extent
+* convert: work with large filesystems (many TB)
+* convert: fix overwriting of eb header flags
+* convert: do not clear NODATASUM flag in inodes when run with --no-datasum
+* docs updates
+* build: sync Android.mk with Makefile
+* tests:
+** new tests
+** fix 008 and 009, shell quotation mistake
 
 == btrfs-progs 4.10 (Mar 2017) ==
 
@@ -249,6 +319,12 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 * build: fix build of 3rd party tools, missing <linux/sizes.h>
 * dump-tree: print log trees
 * other: new and updated tests
+
+== btrfs-progs 4.10.2 (Mar 2017) ==
+
+* check: lowmem mode fix for false alert about lost backrefs
+* convert: minor bugfix
+* library: fix build, misisng symbols, added tests
 
 == btrfs-progs 4.9 (Dec 2016) ==
 
@@ -894,6 +970,58 @@ Bugfixes:
 * first release after 0.19 (2009/06) with a lot of changes
 
 = By version (linux kernel) =
+
+=== v4.13 (Sep 2017) ===
+
+* deprecated: mount option ''alloc_start''
+* qgroups: new sysctl to allow temporary quota override with CAP_SYS_RESOURCE
+* statx syscall support
+* nowait AIO support
+* lots of cleanups around bio processing and error handling
+* memory allocation constraint cleanups and improvements
+* more sanity checks (for dir_item)
+* compression will be skipped if there's no improvement (at least one block)
+* fix invalid extent maps due to hole punching
+* fix: sgid not cleared when changing acls
+* some enospc corner case fixes
+* send fixes
+* other cleanups
+
+=== v4.12 (Jul 2017) ===
+
+* new tracepoints: file item
+* fix qgoup accounting when inode_cache is in use
+* fix incorrect number report in stat::t_blocks under certain conditions
+* raid56 fixes:
+** enable auto-repair during read (ie. similar to what raid1 and raid10 do)
+** fix potential crash with concurrent scrub and dev-replace
+** fix potential crash when cancelling dev-replace
+** fix false reports during scrub when it's possible to do repair
+** fix wrong mirror report during repair
+* many cleanups
+
+=== v4.11 (May 2017) ===
+
+* mostly a cleanup release
+* improved csum mismatch messages
+* move some qgroup work out of transaction commit
+* let unlink temporarily exceed quotas
+* fix truncate and lockless DIO writes
+* incremental send fixes
+* fix remount using ssd and nossd combinations
+
+=== v4.10 (Feb 2017) ===
+
+* balance: human readable block group descripion in the log
+* balance: fix storing of stripes_min, stripes_max filters to the on-disk item
+* qgroup: fix accounting bug during concurrent balance run
+* better worker thread resource limit checks
+* fix ENOSPC during hole punching
+* fix ENOSPC when reflinking a heavily fragmented file
+* fix crash when certain tracepoints are enabled
+* fix compat ioctl calls on non-compat systems
+* improved delayed ref iteration performance
+* many cleanups
 
 === v4.9 (Dec 2016) ===
 * improved performance of extent sharing detection in FIEMAP

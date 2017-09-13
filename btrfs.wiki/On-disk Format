@@ -175,7 +175,7 @@ logical address of the [[#Chunk tree .283.29|chunk tree]] root
 | align="right" | a0
 | align="right" | 4
 |
-| ''n''
+| sys_chunk_array_size
 |-
 | align="right" | a4
 | align="right" | 8
@@ -229,20 +229,35 @@ logical address of the [[#Chunk tree .283.29|chunk tree]] root
 | label (may not contain '/' or '\\')
 |-
 | align="right" | 22b
-| align="right" | 100
+| align="right" | 8
 |
-| reserved
+| cache_generation
+|-
+| align="right" | 233
+| align="right" | 8
+|
+| uuid_tree_generation
+|-
+| align="right" | 23b
+| align="right" | f0
+|
+| reserved /* future expansion */
 |-
 | align="right" | 32b
 | align="right" | 800
 |
 |
-(''n'' bytes valid) Contains (KEY, [[#CHUNK ITEM .28e4.29|CHUNK_ITEM]]) pairs for all SYSTEM chunks. This is needed to bootstrap the mapping from logical addresses to physical.
+sys_chunk_array:(''n'' bytes valid) Contains (KEY, [[#CHUNK ITEM .28e4.29|CHUNK_ITEM]]) pairs for all SYSTEM chunks. This is needed to bootstrap the mapping from logical addresses to physical.
 |-
 | align="right" | b2b
-| align="right" | 4d5
+| align="right" | 2a0
 |
-| Currently unused
+| Contain super_roots (4 btrfs_root_backup)
+|-
+| align="right" | dcb
+| align="right" | 235
+|
+| current unused
 |-
 | colspan="4" | 1000
 |}
@@ -654,12 +669,34 @@ From an inode to a name in a directory. Used if the regarding INODE_REF array ra
 
 This structure can be repeated...?
 
-=== XATTR_ITEM (18) ===
+=== <div id="XATTR_ITEM">XATTR_ITEM (18)</div> ===
 
-(inode_id, hash of xattr name) TODO
+====Location====
+<code>XATTR_ITEM</code> items are only located in file trees.
 
-    From an inode to extended attribute(s) by name. Same contents as DIR_ITEM;
-    the name and data are the xattr name and data, and location is NULL.
+====Usage====
+
+{|class="wikitable"
+!colspan="3"|<code>struct btrfs_key</code>
+|-
+!objectid
+!type
+!offset
+|-
+|<code>objectid of owning inode</code>
+|<code>BTRFS_XATTR_ITEM_KEY [24]</code>
+|<code>hash of name</code>
+|}
+
+====Description====
+<code>XATTR_ITEM</code> items contain extended attributes. Each name is hashed using the name hash and that value is used in the key for locating the entry quickly. Each <code>XATTR_ITEM</code> item contains one or more extended attributes with names represented by the same hash. All extended attributes that share the same name hash must fit in a single leaf.
+
+====Item Contents====
+<code>XATTR_ITEM</code> items consist of a series of one or more extended attribute entries with names that share a hash value.  Each entry consists of a <code>[[Data_Structures#btrfs_dir_item|btrfs_dir_item]]</code> structure immediately followed by the name and the attribute data.  The length of each name is contained in <code>[[Data_Structures#btrfs_dir_item|btrfs_dir_item.name_len]]</code>. The data payload begins immediately after the name. The data payload length is contained in <code>[[Data_Structures#btrfs_dir_item|btrfs_dir_item.data_len]]</code>. <code>[[Data_Structures#btrfs_dir_item|btrfs_dir_item.data_len.location]]</code> is unused and must be zeroed. <code>[[Data_Structures#btrfs_dir_item|btrfs_dir_item.type]]</code> contains a shorthand value referring to the type of item to which an entry refers it must always be be <code>BTRFS_FT_XATTR</code> when used to describe an extended attribute.
+
+When there is more than one entry for a single hash value, the offset of each entry must be calculating using the lengths of the preceding entries including names and data. 
+
+For more details, please see: <code>[[Data_Structures#btrfs_dir_item|struct btrfs_dir_item]]</code> and <code>[[#DIR_ITEM|DIR_ITEM]]</code>.
 
 === ORPHAN_ITEM (30) ===
 
@@ -680,59 +717,34 @@ This structure can be repeated...?
 
     Same as DIR_LOG_ITEM.
 
-=== DIR_ITEM (54) ===
+=== <div id="DIR_ITEM">DIR_ITEM (54)</div> ===
 
-(parent objectid, 54, hash of name)
+====Location====
+<code>DIR_ITEM</code> items are only located in file trees.
 
-Allows looking up a directory item by name.
+====Usage====
 
-{| class="wikitable" border="1"
-|+
+{|class="wikitable"
+!colspan="3"|<code>struct btrfs_key</code>
 |-
-! Off
-! Size
-! Type
-! Description
+!objectid
+!type
+!offset
 |-
-| align="right" | 0
-| align="right" | 11
-| KEY
-| location of child
-|-
-| align="right" | 11
-| align="right" | 8
-| UInt
-| transid
-|-
-| align="right" | 19
-| align="right" | 2
-| UInt
-| (''m'')
-|-
-| align="right" | 1b
-| align="right" | 2
-| UInt
-| (''n'')
-|-
-| align="right" | 1d
-| align="right" | 1
-| UInt
-| type of child (0=Unknown, 1=Regular File, 2=Directory, 3=character device, 4=block device, 5=FIFO, 6=socket, 7=symbolic link, 8=extended attribute)
-|-
-| align="right" | 1e
-| align="right" | ''n''
-| Text
-| name of item in directory
-|-
-| align="right" |
-| align="right" | ''m''
-|
-| data of item in directory (empty for normal directory items)
-|-
-| colspan="4" | 1e+''n''+''m''
+|<code>objectid of owning inode</code>
+|<code>BTRFS_DIR_ITEM_KEY [84]</code>
+|<code>hash of name</code>
 |}
 
-This structure can be repeated multiple times within one DIR_ITEM if multiple items have the same hash.
+====Description====
+<code>DIR_ITEM</code> items contain directory entries. Each name is hashed using the name hash and that value is used in the key for locating the entry quickly. Each <code>DIR_ITEM</code> item contains one or more directory entries with names represented by the same hash. All directory entries that share the same name hash must fit in a single leaf.
+
+====Item Contents====
+<code>DIR_ITEM</code> items consist of a series of one or more directory entries with names that share a hash value.  Each entry consists of a <code>[[Data_Structures#btrfs_dir_item|btrfs_dir_item]]</code> structure immediately followed by the name.  The length of each name is contained in <code>[[Data_Structures#btrfs_dir_item|btrfs_dir_item.name_len]]</code>. The location of the item to which this entry refers is contained in <code>[[Data_Structures#btrfs_dir_item|btrfs_dir_item.location]]</code> and must refer to a valid item in the same file tree. <code>[[Data_Structures#btrfs_dir_item|btrfs_dir_item.type]]</code> contains a shorthand value referring to the type of item to which an entry refers. It will never be <code>BTRFS_FT_XATTR</code> when used in a standard directory. <code>[[Data_Structures#btrfs_dir_item|btrfs_dir_item.data_len]]</code> is unused and must be <code>0</code>
+
+When there is more than one entry for a single hash value, the offset of each entry must be calculating using the lengths of the preceding entries including names. 
+
+For more details, please see: <code>[[Data_Structures#btrfs_dir_item|struct btrfs_dir_item]]</code>.
 
 === DIR_INDEX (60) ===
 
@@ -865,6 +877,9 @@ A fundamental component of btrfs is the btree. <code>ROOT_ITEM</code> items defi
 Same content as [[#ROOT REF .289c.29|ROOT_REF]].
 
 === ROOT_REF (9c) ===
+
+====Location====
+<code>ROOT_REF</code> items are only located in the <code>[[#ROOT_TREE|ROOT_TREE]]</code>.
 
 (tree id, subtree id) TODO
 

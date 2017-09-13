@@ -1,0 +1,27 @@
+Currently qgroups have very basic support for limiting used. Contrary to the reality its design and data structures support quite a lot more which is currently unused. As a result there are certain portions of the code which are bitrotting and serve as additional cognitive load to poor souls who read the code. The idea of this page is to list some such observation and serve as a focal point which might result in a document for coherent qgroups architecture. 
+
+The main reason why things are in this state is that the original authors had ambitious plans but eventually the most basic stuff were implemented and qgroup's todo items haven't really reduced in a long time. One way to progress things is if there is agreement across the development community of what's the bare minimum of features which make sense in supporting and ripping/simplifying the code as a result. 
+
+=Compressed/uncompressed distinction=
+
+Currently btrfs has the ability (in terms of data structure support, not necessarily code being correctly wired) to track used disk space based on compressed and uncompressed extents. At present times the userspace tools have support to set limits based on that distinction but in kernel land the compressed value are not used. A pertinent question is whether such distinction is necessary for the purposes of limiting disk space usage. Generally the admin of a server would be interested in limiting the actual used diskspace irrespective of whether it's made up of compressed/uncompressed extents. As such the used space on disk should really be the sum of compressed + uncompressed extents. 
+
+Keeping this in mind it's worth investigating how qgroups design can be simplified if the compressed/uncompressed distinction is removed. Some people are of the opinion that it might be beneficial to keep the distinction for informational purposes only i.e. if one wants to know how much space is used in compressed/uncompressed separately. 
+
+The userpsace tools also make it sounds as if the compressed limits are integral part to setting the limits but closer inspection of the code disprove this. It's entirely possible to set limits only on uncompressed extents if the '-c' options of 'btrfs qgroup limit' command
+
+=Unused/never implemented features=
+
+The current incarnation of the btrfs_qgroup_limit item holds 2 members which have never been used, namely the rsv_excl/rsv_refr. Presumably the plan was to implement some sort of reservation but this never materialized. 
+
+=Implementation detail=
+
+* When space is requested it's first reserved on the basis of the uncompressed size, however btrfs is able to dynamically determine whether data should be compressed. This can result in less data written on disk than was actually reserved. In this case the extra reserved space is just released. It is not possible for pathological data to cause the compressed size be larger than the uncompressed reservation since in such situations btrfs has to determine that no compression is needed and just store the data.
+
+There are certain situation which require the existing qgroup limits to be breached. We should ideally document all of those and include some rationale for this. 
+
+* One should always be able to delete files. Hence the unlink syscall is always allowed to exceed the set limits. The idea is that sometimes the filesystem will have to allocate some ephemeral space to handle the deletion.
+ 
+* Defrag is also another operation which can exceed the existing space limits. If a filesystem's settings for compression are changed and defrag is run it's within right to rewrite some existing extents. This might result in extents becoming larger (e.g. due to different compression algorithm setting). In such cases we'd like for defrag to finish successfully, potentially blocking further operations if quota is exceeded. 
+
+* List more such scenarios

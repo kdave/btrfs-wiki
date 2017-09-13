@@ -353,7 +353,7 @@ Perform a lookup in the <code>EXTENT_TREE</code> for:
 !<code>offset</code>
 |-
 |<code>257561694208</code>
-|<code>METADATA_TIME</code>
+|<code>METADATA_ITEM</code>
 |<code>-1</code>
 |}
 
@@ -414,7 +414,6 @@ This results in an <code>[[On-disk_Format#EXTENT_ITEM|EXTENT_ITEM]]</code> item 
 |}
 
 Now we have the offset of a metadata tree block that contains a leaf node. The resolution of the ownership of this extent continues as with a <code>TREE_BLOCK</code> located at offset <code>1586299265024</code>.
-
 
 ==A more complex example==
 

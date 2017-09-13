@@ -37,11 +37,11 @@ The git repositories on ''kernel.org'' are not used for development or integrati
 
 == Integration branches ==
 
-'''Integration branches''' collect patches that may need public testing and are provided for conveniece to developers or users willing to test unstable version. The patches in these branches are not guaranteed to be merged. The branches are assembled from scratch and serve more like a snapshots than stable bases for other development.
+'''Integration branches''' collect patches that may need public testing and are provided for convenience to developers or users willing to test unstable version. The patches in these branches are not guaranteed to be merged. The branches are assembled from scratch and serve more like a snapshots than stable bases for other development.
 
  git://repo.or.cz/btrfs-progs-unstable/devel.git integration-''YYYYMMDD''
 
-where ''YYYMMDD'' is the date of the branch.
+where ''YYYYMMDD'' is the date of the branch.
 
 To check out this repository, and select the latest branch, use:
 

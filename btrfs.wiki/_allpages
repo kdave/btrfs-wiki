@@ -32,7 +32,6 @@ ENOSPC
 FAQ
 Feature:Skinny Metadata
 Features
-Gentoo ebuilds
 Getting started
 Glossary
 Gotchas
@@ -66,13 +65,13 @@ Manpage/fsck.btrfs
 Manpage/mkfs.btrfs
 Mkfs.btrfs
 Mount options
-Multi-device Benchmarks
 Multiple Device Support
 On-disk Format
 OpenSuSE support
 Problem FAQ
 Production Users
 Project ideas
+Qgroups status quo
 Quota support
 RAID56
 Resolving Extent Backrefs

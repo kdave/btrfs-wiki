@@ -1,14 +1,18 @@
+This page collects project ideas that could be implemented in btrfs. As its is open to anybody to edit, this does not necessarily mean that everything will be implemented. Status of the projects might be obsolete, lack enough about the usecase or implementation hints.
+
 Quick links:
 
-* unclaimed projects: [[Project_ideas#Unclaimed_projects]]
 * userspace tools (btrfs-progs): [[Project_ideas#Userspace_tools_projects]]
 * ongoing projects: [[Project_ideas#Unbound_or_ongoing_projects]]
 
-= '''Unclaimed projects''' =
+= '''Project idea pool''' =
 
-If you are actually going to implement an idea/feature, read the notes at the [[#Development notes.2C please read|end of this page]].
+Note, that some of the ideas may not be up-to-date with current state of btrfs
+implementation, or the projects are claimed but without any visible progress,
+always '''ask on IRC or in the mailinglist''' before starting an
+implementation.
 
-Note, that some of the ideas may not be up-to-date with current state of btrfs implementation, or the projects are claimed but without any visible progress, always '''ask on IRC or in the mailinglist''' before starting an implementation.
+
 
 == Multiple Devices ==
 
@@ -87,7 +91,8 @@ Hugo Mill worked on [http://thread.gmane.org/gmane.comp.file-systems.btrfs/34792
 
 === Allow device-replace accept smaller device than original ===
 {{project
-|text=Requested in https://bugzilla.kernel.org/show_bug.cgi?id=112741, we don't need to insist on the same devaice size as long as the moved data fit to the new device and reaid constraints are satisfied. This has been verified to work, we need to extend the checks and command line UI. Eg. add a warning and only allow replace to smaller device with an extra option.
+|text=Requested in https://bugzilla.kernel.org/show_bug.cgi?id=112741, we don't need to insist on the same device size as long as the moved data fit to the new device and RAID constraints are satisfied. This has been verified to work, we need to extend the checks and command line UI. Eg. add a warning and only allow replace to smaller device with an extra option.
+}}
 
 === Device IO Priorities ===
 {{project
@@ -131,73 +136,136 @@ It is possible to fix the allocation logic so it is more even while (almost almo
 The HDD industry currently supports 512 byte blocks. We can expect HDDs in the future to support 4K Byte blocks
 }}
 
-=== Chunk tree backups ===
+=== Hot spare support ===
 {{project
-|patch=on mailinglist
-|text=The chunk tree is critical to mapping logical block numbers to physical locations on the drive. We need to make the mappings discoverable via a block device scan so that we can recover from corrupted chunk trees.
+|who=Anand Jain
+|patch=[http://thread.gmane.org/gmane.comp.file-systems.btrfs/49985 Global hotspare]
+|text=It should be possible to add a drive and flag it as a hot spare.
 }}
 
 
 
-== Feature parity, upstream changes ==
+== Core updates ==
 
-Projects that bring generic changes and new interfaces provided by VFS, MM or
-other filesystem specific to btrfs.
+=== Track link count for directories ===
 
-=== Implement new FALLOC_FL_* modes ===
 {{project
-|text=Note: Depends on the generic implementation that is on it's way to kernel. Extension to ''fallocate'' that chops the given range from a file and does not leave a hole, the offsets to the right of the range are shifted.
+|who=Praveen
+|text=The link count for directories is traditionally used to count the number of subdirectores iff the link count is >= 2. Btrfs sets this to 1 and does not track the link count at all. The link count could be used by some utilities to do optimizations when traversing the file hierarchy (at least <tt>find</tt> does that).
 
-* FALLOC_FL_COLLAPSE_RANGE
-* FALLOC_FL_INSERT_RANGE
-* FALLOC_FL_ZERO_RANGE
-* FALLOC_FL_UNSHARE_RANGE
+It seems that the link count can be tracked like the other filesystems do. This will be even backward compatible:
+
+* for new directories and subvolumes , set the initial link count to 2
+* a mkdir/rmdir/move/snapshot will update the link count accordingly iff the current link count is not 1
 }}
 
-=== Swap file support ===
+=== RichACLs / NFS4 ACLS ===
 {{project
-|who=Omar Sandoval
-|patch=patch in development
-|text=Implement swapfile support on top of swap-over-nfs infrastructure that has been merged in 3.7. Use the exported an API to manage the extents.
-
-There is a patchset (swap-over-nfs) which enhances the swapfile API and btrfs could build swap support on top of the infrastructure. The patchset has been merged into 3.6.
-
-References:
-* http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=35054394c4b3cecd52577c2662c84da1f3e73525 plus surrounding patches
-* http://www.spinics.net/lists/linux-btrfs/msg05042.html
-
+|text=POSIX.1e ACLs (which btrfs supports already) are rather limited. So it would be nice if btrfs could eventually support [http://en.wikipedia.org/wiki/Richacls RichACLs] / NFS4 ACLs, if any specific support for that is needed from the btrfs side.
+See also [http://www.bestbits.at/richacl/ RichACLs project site].
 }}
 
-=== Extended file attributes FS_XFLAG_* ===
+=== More checksumming algorithms ===
 {{project
-|text=Defined in include/uapi/linux/fs.h in the namespace FS_XFLAG_. Extended
-range of the file attributes, similar to what FS_IOC_GETFLAGS does.
+|text=Currently crc32c is used, we may offer more alternatives with different speed/strength characteristics. The considered ones are xxHash and SHA1.
 }}
 
-=== Use fs/crypto API ===
+=== Btree lock contention ===
 {{project
-|text=Generic VFS-level crypto API is available since 4.6, port btrfs.
+|text=The btree locks, especially on the root block can be very hot. We need to improve this, especially in read mostly workloads.
 }}
 
-== Other projects ==
-
-=== extent_io state ranges ===
+=== Make helper threads NUMA aware ===
 {{project
-|text=The extent_io locking code works on [start, end] tuples. This should be changed to [start, length] tuples and all users should be updated.
+|text=The helper threads are used to offload computation-heavy tasks and access lots of memory. This brings performance hit on NUMA machines where pages from other nodes are accessed. Extend the workers to be more NUMA-aware for the most exposed tasks, namely checksumming.
+
+''Note: this may be obsoleted by recent patches that replace home-grown worker management with workqueues available in kernel. ([http://thread.gmane.org/gmane.comp.file-systems.btrfs/28382 patchset])
 }}
 
-=== Limiting btree failure domains ===
+=== RBtree lock contention ===
 {{project
-|text=One way to limit the time required for filesystem rebuilds is to limit the number of places that might reference a given area of the drive. One recent discussion of these issues is Val Henson's chunkfs work.
+|who=Liu Bo
+|text=Btrfs uses a number of rbtrees to index in-memory data structures. Some of these are dominated by reads, and the lock contention from searching them is showing up in profiles. We need to look into an RCU and sequence counter combination to allow lockless reads.
+}}
 
-There are a few cases where chunkfs still breaks down to O(N) rebuild, and without making completely separate filesystems it is very difficult to avoid these in general. Btrfs has a number of options that fit in the current design:
+=== Distinguish EIO and EUCLEAN types of errors ===
+{{project
+|text=Right now we use EIO as error code even for errors that are not directly
+related to IO failures from the lower layers. Other filesystems use EUCLEAN
+for corruptions or inconsistencies not caused by genuine IO errors. We'd like
+to gradually start using EUCLEAN as well where applicable.
+}}
 
-* Tie chunks of space to Subvolumes and snapshots of those subvolumes
-* Tie chunks of space to tree roots inside a subvolume
+=== Improve self-tests and error messages ===
+{{project
+|text=There are self-tests run at module load time that verify bitmap
+operatios, extent tree manipulations, etc. The error messages are not always
+useful for and should be enhanced, eg.
 
-But these still allow a single large subvolume to span huge amounts of data. We can either place responsibility for limiting failure domains on the admin, or we can implement a key range restriction on allocations.
+* switch all error case messages from test_msg to test_err that will also print the line and stack (use WARN_ON)
+* drop the ending "\n" where applicable
+* enhance messages with the values of last failed condition
+* drop ifdefs from generic code that's used only from tests/*.c and move it there
+}}
 
-The key range restriction would consist of a new btree that provided very coarse grained indexing of chunk allocations against key ranges. This could provide hints to fsck in order to limit consistency checking.
+== New features ==
+
+=== Online fsck ===
+{{project
+|patch=[http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg10864.html initial patch submitted]
+|text=Online fsck includes a number of difficult decisions around races and coherency. Given that back references allow us to limit the total amount of memory required to verify a data structure, we should consider simply implementing fsck in the kernel.
+
+Intial work by Li Zefan.
+}}
+
+=== Filesystem UUID change - on-line ===
+
+{{project
+|text=Allow to change the UUID of a filesystem at the mount time. The filesystem UUID is stored in all metadata blocks so it's necessary to rewrite all of them. Additionally, the device items also contain the filesystem UUID and need to be updated.
+
+The process goes in three phases. First the new UUID replaces the old one that is backed up somewhere. This also sets a temporary incompatibility bit that means that the filesystem now accepts two UUIDs from the metadata blocks.
+
+Second phase is to rewrite all metadata blocks. Scrub is used for that, ie. rewrite UUID of each block that still has the old one.
+
+Third phase is to drop the incompat bit after verification that the filesystem is fully converted.
+
+The intermediate state of "2 UUIDs" interacts with other feautres:
+* device scanning - we need to update the device-stored UUIDs as soon as possible, consistenly
+* seeding devices - the seeding devices do some UUID conversion magic, so the uuid= option will be probably forbidden here
+* drop the incompat bit - extend scrub with an option to drop the bit after a full scrub runs without problems
+* ''possibly others''
+}}
+
+=== block devices 'btrvols' ===
+{{project
+|text='''Likely to be rejected: layering violation, can be replaced by scsi target backed by file'''
+
+Allow block devices to be allocated from the filesystem. They take advantage of COW, snapshots, etc but can be formatted and used by other filesystems. This is similar to ZFS's zvols. See http://pthree.org/2012/12/21/zfs-administration-part-xiv-zvols/ for an idea.}}
+
+=== Bad block tracking ===
+
+{{project
+|text=Currently btrfs doesn't keep track of bad blocks, disk blocks that are very likely to lose data written to them.  Btrfs should accept a list in badblocks' output format, store it in a new btree (or maybe in the current extent tree, with a new flag), relocate whatever data the blocks contain, and reserve these blocks so they can't be used for future allocations.  Additionally, scrub could be taught to test for bad blocks when a checksum error is found.  This would make scrub much more useful; checksum errors are generally caused by the disk, but while scrub detects afflicted files, which in a backup scenario gives the opportunity to recreate them, the next file to reuse the bad blocks will just start getting errors instead.  These two items would match an ext4 feature (used through e2fsck).}}
+
+=== Clear unallocated space ===
+{{project
+|patch=alpha prototype, not posted yet
+|text=This is similar to TRIM on SSD devices, but for any device. Simply go through unallocated space and rewrite with zeros (or maybe with some poison pattern so we could recognize when data from free block end up being used). The trim code could be enhanced to submit either TRIM command or writing a zeroed block to the disk. As trim is supported by more filesystems, a new REQ_ flag could be introduced to block layer to perform the zeroing, so other filesystems can enhance their trim support also to clear the free space.
+
+Note: Preliminary patches implementing zeroing exist, not yet posted. The interface needs a cleanup, but it basically works.
+http://repo.or.cz/w/linux-2.6/btrfs-unstable.git/shortlog/refs/heads/dev/clear-free-space-v0
+}}
+
+=== Compressed file size ===
+{{project
+|who=David Sterba
+|patch=[http://thread.gmane.org/gmane.linux.file-systems/78671]
+|text=Find actual size of a compressed file. This has evolved into a more generic solution, the compressed size will be returned via FIEMAP ioctl call instead of a btrfs-specific ioctl.
+}}
+
+=== Allow to access/fixup/delete damaged files from the filesystem ===
+{{project
+|text=A recovery mode that would enable to delete remainders of damaged files without the need of copying the data out and recreating the filesystem. This may arise from a lost device in 'single' or 'raid0' modes. This operation could be implemented as a special mode of ''fsck'' or as an operation on a mounted filesystem. The level of damage and potential recovery is varied, for example wiping the files completely, removing the broken extents, ignoring checksum mismatches or forcing checksum rewrite.
 }}
 
 === Content based storage ===
@@ -219,60 +287,6 @@ Another configurable is reading the existing block to compare with any matches o
 This work is related to stripe granular IO, which would make it possible to configure the size of the extent indexed.
 }}
 
-=== Rsync integration ===
-{{project
-|text=Now that we have code to efficiently find newly updated files, we need to tie it into tools such as rsync and dirvish. (For bonus points, we can even allow rsync to use btrfs's builtin checksums and, when a file has changed, tell rsync _which blocks_ inside that file have changed. Would need to work with the rsync developers on that one.)
-
-Update rsync to preserve NOCOW file status.
-
-'''Reference to other backup tools'''
-
-Not exactly an implementation of this, but I (A. v. Bidder) have patched dirvish to use btrfs snapshots instead of hardlinked directory trees. Discussion archived on the [http://www.dirvish.org/pipermail/dirvish/2010-December/002357.html Dirvish mailing list].
-}}
-
-=== Snapshot-aware updatedb/locate ===
-{{project
-|text=It is desirable to be able to locate content inside snapshots. At present, it happens often that the daily updatedb has a multiplied amount of work as a result of the number of snapshots. This is at least until the administrator configures updatedb to ignore the snapshots entirely. Some systems have hundreds of snapshots resulting in updatedb requiring a lot more than one day to complete.
-If the updatedb tool were aware of the snapshots (also whether or not they are read-only) then, perhaps utilising the btrfs-send logic, it could simply query the changed content, greatly reducing the amount of work required to update the database. An optional flag for updatedb could allow it to ignore a volume's snapshots. An optional flag for locate could allow a user to specify that they also want results from a volume's snapshots.
-}}
-
-=== Random write performance ===
-{{project
-|text=Random writes introduce small extents and fragmentation. We need new file layout code to improve this and defrag the files as they are being changed.
-|who=Chris Mason
-|patch=somehow done by the ''autodefrag'' mount option
-}}
-
-=== Clear unallocated space ===
-{{project
-|patch=alpha prototype, not posted yet
-|text=This is similar to TRIM on SSD devices, but for any device. Simply go through unallocated space and rewrite with zeros (or maybe with some poison pattern so we could recognize when data from free block end up being used). The trim code could be enhanced to submit either TRIM command or writing a zeroed block to the disk. As trim is supported by more filesystems, a new REQ_ flag could be introduced to block layer to perform the zeroing, so other filesystems can enhance their trim support also to clear the free space.
-
-Note: Preliminary patches implementing zeroing exist, not yet posted. The interface needs a cleanup, but it basically works.
-http://repo.or.cz/w/linux-2.6/btrfs-unstable.git/shortlog/refs/heads/dev/clear-free-space-v0
-}}
-
-=== Cancellable operations ===
-{{project
-|text=There are a few operations that may take long, cause umount to stall or slow down filesystem. It is possible and would be nice to add some support for cancelling to ''device del'' or ''filesystem balance''.
-
-There are two ways how to cancel an operation:
-* synchronous &ndash; when the operation is called from userspace and all the processing is done from the context of this process (like the case of ''btrfs fi defrag FILE''), then pressing Ctrl-C will raise a signal and this will be checked inside the defrag loop. It should be discussed whether to allow Ctrl-C or only ''kill -9''.
-* asynchronous &ndash; when the processing is done in a kernel thread, this would need same command support like ''scrub'' or ''balance'' have
-
-There are more places when a check whether the filesystem is being unmounted will improve responsiveness, like during ''free space cache'' writeout. However, one has to be sure that cancelling such opeations is safe.
-}}
-
-=== Unlimited extended attributes ===
-{{project
-|text=Currently size of value of an extended attribute must fit into inline space (~3900 on 4k leaf size), while other filesystems do not limit the size. Add a new b-tree item to hold the xattr value in extents.
-}}
-
-=== Bad block tracking ===
-
-{{project
-|text=Currently btrfs doesn't keep track of bad blocks, disk blocks that are very likely to lose data written to them.  Btrfs should accept a list in badblocks' output format, store it in a new btree (or maybe in the current extent tree, with a new flag), relocate whatever data the blocks contain, and reserve these blocks so they can't be used for future allocations.  Additionally, scrub could be taught to test for bad blocks when a checksum error is found.  This would make scrub much more useful; checksum errors are generally caused by the disk, but while scrub detects afflicted files, which in a backup scenario gives the opportunity to recreate them, the next file to reuse the bad blocks will just start getting errors instead.  These two items would match an ext4 feature (used through e2fsck).}}
-
 === Hybrid Storage ===
 {{project
 |text=It should be possible to use very fast devices as a front end to traditional storage. The most used blocks should be kept hot on the fast device and they should be pushed out to slower storage in large sequential chunks.
@@ -280,38 +294,9 @@ There are more places when a check whether the filesystem is being unmounted wil
 The latest generation of SSD drives can achieve high iops/sec rates at both reading and writing. They will be very effective front end caches for slower (and less expensive) spinning media. A caching layer could be added to Btrfs to store the hottest blocks on faster devices to achieve better read and write throughput. This cache could also make use of other spindles in the existing spinning storage, for example why not store frequently used random-heavy data mirrored on all drives if space is available. A similar mechanism could allow frequent random read patterns (such as booting a system) as a series of sequential blocks in this cache.
 }}
 
-=== Encryption ===
-{{project
-|text=Implement a similar encryption scheme to that of ZFS which features
 
-* Encryption is integrated with the btrfs command set. Like other btrfs operations, encryption operations such as key changes and rekey are performed online.
-* You can use your existing storage pools as long as they are upgraded. You have the flexibility of encrypting specific file systems.
-* Encryption is inheritable to descendent file systems. Key management can be delegated through delegated administration.
-* Data is encrypted using the ciphers and block modes implemented in the kernel.
-* [http://www.wfu.edu/~rollins/truecrypt/doc/html/ Escrow] [http://www.wfu.edu/~rollins/truecrypt/ passphrase] support so it have be used for enterprise desktop computers and laptops.
 
-The encryption capability is embedded into the I/O pipeline. During writes a block may be compressed, encrypted, checksummed and then deduplicated in that order. The policy for encryption is set at the dataset level when datasets (file systems or VOLs) are created.
-
-The wrapping keys provided by the user/administrator can be changed at any time without taking the file system off line. The default behaviour is for the wrapping key to be inherited by any child data sets. The data encryption keys are randomly generated at dataset creation time. Only descendant datasets (snapshots and clones) share data encryption keys. A command to switch to a new data encryption key for the clone or at any time is provided — this does not re-encrypt already existing data, instead utilising an encrypted master-key mechanism.
-}}
-
-=== Allow to access/fixup/delete damaged files from the filesystem ===
-{{project
-|text=A recovery mode that would enable to delete remainders of damaged files without the need of copying the data out and recreating the filesystem. This may arise from a lost device in 'single' or 'raid0' modes. This operation could be implemented as a special mode of ''fsck'' or as an operation on a mounted filesystem. The level of damage and potential recovery is varied, for example wiping the files completely, removing the broken extents, ignoring checksum mismatches or forcing checksum rewrite.
-}}
-
-=== block devices 'btrvols' ===
-{{project
-|text='''Likely to be rejected: layering violation, can be replaced by scsi target backed by file'''
-
-Allow block devices to be allocated from the filesystem. They take advantage of COW, snapshots, etc but can be formatted and used by other filesystems. This is similar to ZFS's zvols. See http://pthree.org/2012/12/21/zfs-administration-part-xiv-zvols/ for an idea.}}
-
-=== Make helper threads NUMA aware ===
-{{project
-|text=The helper threads are used to offload computation-heavy tasks and access lots of memory. This brings performance hit on NUMA machines where pages from other nodes are accessed. Extend the workers to be more NUMA-aware for the most exposed tasks, namely checksumming.
-
-''Note: this may be obsoleted by recent patches that replace home-grown worker management with workqueues available in kernel. ([http://thread.gmane.org/gmane.comp.file-systems.btrfs/28382 patchset])
-}}
+== Enhancements to existing features ==
 
 === Scrub free space ===
 {{project
@@ -323,118 +308,43 @@ identify hardware that is going to fail in the near future.
 This could be merged with the 'clear unused space' project as a special case.
 }}
 
-=== Btree lock contention ===
+=== Per-subvolume mount options ===
 {{project
-|text=The btree locks, especially on the root block can be very hot. We need to improve this, especially in read mostly workloads.
+|who=David Sterba
+|text=Allow to specify mount options that apply only to the given subvolume. 
 }}
 
-=== Improve subvolume usability ===
+=== Block group reclaim ===
+{{project
+|text=The split between data and metadata block groups means that we sometimes have mostly empty block groups dedicated to only data or metadata. As files are deleted, we should be able to reclaim these and put the space back into the free space pool.
 
-==== Accept arbitrary directories with the mount-time <tt>subvol</tt> flag ====
+(See also [[#Fine-grained balances]], [[#Block_group_reclaim]])
+}}
 
-<tt>subvol=</tt> is a mount option to mount a subvolume other than the default.
-It currently only allows subvolumes; but vfsmounts can start at any path, allowing to mount any directory.
-
-: ''Note from kdave: this is intentionally disabled, see the patch that added the subvol test. It makes the snapshotting semantics unclear.''
-:: ''Gabriel: Thanks for the info. The snapshot ioctl, and other volume ioctls, need to validate that they have a subvolume rather than any vfsmount. Currently this check is in btrfs-progs but missing on the kernel side; the subvol= check didn't address the root cause of the bogus semantics and the snapshot ioctl is still problematic with bind mounts.''
-
-==== Snapshot arbitrary directories ====
-
-Currently the most efficient way to snapshot a non-subvolume is either:
-
-* to snapshot its parent volume and remove the extra bits.
-* to make a reflink copy
-
-Neither option is as efficient as it could be.
-<tt>copy_root</tt> should be updated to copy from a non-root directory (<tt>copy_root_at_dir</tt>).
-
-==== Take recursive snapshots ====
-
-Snapshots of volumes don't include nested subvolumes;
+=== Take recursive snapshots ===
+{{project
+|text=Snapshots of volumes don't include nested subvolumes;
 allowing this would make it easier to make sure that a
 snapshot contains everything the source appears to contain.
 
 Even with userspace help, it isn't currently possible to do recursive snapshots that are atomic or read-only.
 A new ioctl would solve that.
 
-==== Hide the subvolume/directory distinction ====
-
-That distinction in data structures makes snapshotting efficient, but it may not be necessary to expose it to userspace.
-Transparent snapshots would encode the subvolume rootid (which non-transparent snapshots expose in <tt>st_dev</tt>) by reserving bits from the inode number. rename() and link() would reuse <tt>copy_root_at_dir</tt> when crossing a subvolume boundary.
-
-==== (Atomically) convert directories into subvolumes and vice versa ====
-
-Probably not the most important feature, but if it would be easily possible to implement (or even technically possible at all) then it may help to make systems more easily administrable, when directories could be converted atomically (especially without stopping any service, moving the dir/subvol, creating a subvol/dir of it's name, ref-link moving the data from/to the subvol, and removing the dir/subvol) into a subvolume and vice versa (that is a subvolume being "merged" atomically into it's parent subvolume).
-And example would be, that there is a system with one subvolume, including /var/lib/postgresql, and the administrator decides that he rather wants to have that moved into a separate subvolume at that location (for whatever reason, e.g. to exclude it from snapshots or to set nodatacow on that subvol)... and that ''this should be done ideally without requiring a downtime of PosgreSQL''.
-
-=== More checksumming algorithms ===
+=== Compression enhancements ===
 {{project
-|text=Currently crc32c is used, we may offer more alternatives with different speed/strength characteristics. The considered ones are xxHash and SHA1.
+|who=David Sterba
+|text=Started with simply adding more compression algorithms, like LZ4, that itself does not bring a significant improvement without other changes.
+
+* add more compression algorithms
+** LZ4 -- fast compression, very fast decompression; for general use
+** LZ4HC -- slow mode with better compression ratio, decompressor stays the same, the expected usecase is for write-once/read-many files
+** LZMA -- very slow compression with high compression ratio, aimed for backups and infrequently accessed data
+* enhanced container format -- currently a page-sized chunk is compressed at a time, enhance the container header with version and flags to store the chunk length or the actual way how the chunks were stored
+* longer compression chunk -- now it's 128k to limit the read time of random data in the middle of the file
+* heuristics -- try to learn in a simple way how well the file data compress, or not
+
+Related to that, all the bootloaders that support btrfs should support the enhanced container format and compression algorithms.
 }}
-
-=== Make bootloaders aware of incompat bits and features ===
-{{project
-|text=Bootloaders (grub2, syslinux) that support btrfs do not check the incompatibility bits and boot may fail due to lack of support, eg. compression, skinny metadata, no-extent-hole, etc. The bootloader should verify that there are no unknown bits and at least issue a warning.
-}}
-
-=== Online fsck ===
-{{project
-|patch=[http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg10864.html initial patch submitted]
-|text=Online fsck includes a number of difficult decisions around races and coherency. Given that back references allow us to limit the total amount of memory required to verify a data structure, we should consider simply implementing fsck in the kernel.
-
-Intial work by Li Zefan.
-}}
-
-=== RichACLs / NFS4 ACLS ===
-{{project
-|text=POSIX.1e ACLs (which btrfs supports already) are rather limited. So it would be nice if btrfs could eventually support [http://en.wikipedia.org/wiki/Richacls RichACLs] / NFS4 ACLs, if any specific support for that is needed from the btrfs side.
-See also [http://www.bestbits.at/richacl/ RichACLs project site].
-}}
-
-=== Audit btrfs code in bootloaders ===
-{{project
-|text=The bootloaders do not share the code from linux source tree and usually lack support for new features or the checks that would at least warn that booting could fail, neither regularly backport fixes from linux. The consequences are obvious.
-
-The bootloaders in question:
-* grub2
-* SYSLINUX
-* LILO (maybe)
-
-Things to audit/fix:
-* bugfixes to code touching the core datastructures
-* check that new features like ''skinny-metadata'' or ''no-holes'' are handled properly, or
-* ... add warnings if the bootloader does not understand the incompat bits
-}}
-
-=== Filesystem UUID change - on-line ===
-
-{{project
-|text=Allow to change the UUID of a filesystem at the mount time. The filesystem UUID is stored in all metadata blocks so it's necessary to rewrite all of them. Additionally, the device items also contain the filesystem UUID and need to be updated.
-
-The process goes in three phases. First the new UUID replaces the old one that is backed up somewhere. This also sets a temporary incompatibility bit that means that the filesystem now accepts two UUIDs from the metadata blocks.
-
-Second phase is to rewrite all metadata blocks. Scrub is used for that, ie. rewrite UUID of each block that still has the old one.
-
-Third phase is to drop the incompat bit after verification that the filesystem is fully converted.
-
-The intermediate state of "2 UUIDs" interacts with other feautres:
-* device scanning - we need to update the device-stored UUIDs as soon as possible, consistenly
-* seeding devices - the seeding devices do some UUID conversion magic, so the uuid= option will be probably forbidden here
-* drop the incompat bit - extend scrub with an option to drop the bit after a full scrub runs without problems
-* ''possibly others''
-}}
-
-=== Track link count for directories ===
-
-{{project
-|text=The link count for directories is traditionally used to count the number of subdirectores iff the link count is >= 2. Btrfs sets this to 1 and does not track the link count at all. The link count could be used by some utilities to do optimizations when traversing the file hierarchy (at least <tt>find</tt> does that).
-
-It seems that the link count can be tracked like the other filesystems do. This will be even backward compatible:
-
-* for new directories and subvolumes , set the initial link count to 2
-* a mkdir/rmdir/move/snapshot will update the link count accordingly iff the current link count is not 1
-}}
-
 
 === Per-object default mount-options / btrfs-properties / chattr(1) attributes and reasonable userland defaults ===
 The following more or less belongs together respectively has common motivations.
@@ -445,7 +355,6 @@ and:
 * attributes (as in chattr(1)), again really per object (this time: inodes only),
 
 Both classes are quite useful in different cases, therefore the following separate ideas may be worth being implemented:
-
 
 ==== Handle (or at least document) conflict cases ====
 Right now it's completely undocumented, AFAICS, what happens if different mechanisms specify different options, e.g.
@@ -470,13 +379,11 @@ Possible solutions:
 
 As you can see, this would all need to be properly thought through, which I, the proposer of this, haven't done here for that part of the whole feature request.
 
-
 ==== Support inheritance of properties ====
 E.g., AFAIU, chattr sets the attributes only per file. So newly added files won't get e.g. "noatime" set.
 Properties, in a way, have inheritance, e.g. by setting the property for the subvolume, and it would be applied for everything below (again the question: what if a object below sets another property?).
 
 So maybe some inheritance mechanism would make sense, eventually. E.g. setting "noatime" on a dir, and have that inherited by all newly created files below. As well as ways to "break out" of inheritance.
-
 
 ==== Add more btrfs-properties ====
 Right now we have ro, label and compression.
@@ -513,7 +420,6 @@ Having these three options as subvolumes, might even be used in other scenarios.
 
 Another idea would be to allow for user/nouser and user= options to be set at subvolumes. On systems with many subvolumes this might allow to keep /etc/fstab small, while still allowing ordinary users to mount "their" subvols.
 
-
 ==== Make reasonable use of newly added btrfs properties ====
 If the above should get implemented, and e.g. noatime,noexec,nodev,nosuid options be implemented. Then one should consider whether or not it makes sense to have these automatically used in some cases.
 
@@ -524,7 +430,6 @@ Further, there's the well known issue, that when having many snapshots and noati
 For that reason it ''may'' make sense to have snapshots subvols marked with a noatime property per default, again offering a switch not to do so.
 Whether it makes sense for ro-snapshots, depends on whether ro-snapshots have atime updates at all.
 
-
 ==== Default [subvolume] mount options ====
 Speaking of what e.g. ext2/3/4 has in form of tune2fs' -E mount_opts=string and the -o option.
 
@@ -534,13 +439,179 @@ This may have some motivations:
 * Mount options, AFAIU, are "inherited" to any nested subvolume. So unless property-inheritance (as proposed above) would get implemented, this could be kinda abused for something similar.
 * Similar to why e.g. noatime,nodev,noexec,nosuid,etc. properties were motivated above (i.e.making sure wherever the object appears, it has these properties) it would allow one to make sure that when subvol foo is mounted (wherever) it gets e.g. nodev set... but unlike to properties it would still allow one to make intentional exceptions, by mounting with the "opposite" mount-option, thereby overriding the default mount option.
 
+
+=== Cancellable operations ===
+{{project
+|text=There are a few operations that may take long, cause umount to stall or slow down filesystem. It is possible and would be nice to add some support for cancelling to ''device del'' or ''filesystem balance''.
+
+There are two ways how to cancel an operation:
+* synchronous &ndash; when the operation is called from userspace and all the processing is done from the context of this process (like the case of ''btrfs fi defrag FILE''), then pressing Ctrl-C will raise a signal and this will be checked inside the defrag loop. It should be discussed whether to allow Ctrl-C or only ''kill -9''.
+* asynchronous &ndash; when the processing is done in a kernel thread, this would need same command support like ''scrub'' or ''balance'' have
+
+There are more places when a check whether the filesystem is being unmounted will improve responsiveness, like during ''free space cache'' writeout. However, one has to be sure that cancelling such opeations is safe.
+}}
+
+=== Unlimited extended attributes ===
+{{project
+|text=Currently size of value of an extended attribute must fit into inline space (~3900 on 4k leaf size), while other filesystems do not limit the size. Add a new b-tree item to hold the xattr value in extents.
+}}
+
+=== Encryption ===
+{{project
+|text=Implement a similar encryption scheme to that of ZFS which features
+
+* Encryption is integrated with the btrfs command set. Like other btrfs operations, encryption operations such as key changes and rekey are performed online.
+* You can use your existing storage pools as long as they are upgraded. You have the flexibility of encrypting specific file systems.
+* Encryption is inheritable to descendent file systems. Key management can be delegated through delegated administration.
+* Data is encrypted using the ciphers and block modes implemented in the kernel.
+* [http://www.wfu.edu/~rollins/truecrypt/doc/html/ Escrow] [http://www.wfu.edu/~rollins/truecrypt/ passphrase] support so it have be used for enterprise desktop computers and laptops.
+
+The encryption capability is embedded into the I/O pipeline. During writes a block may be compressed, encrypted, checksummed and then deduplicated in that order. The policy for encryption is set at the dataset level when datasets (file systems or VOLs) are created.
+
+The wrapping keys provided by the user/administrator can be changed at any time without taking the file system off line. The default behaviour is for the wrapping key to be inherited by any child data sets. The data encryption keys are randomly generated at dataset creation time. Only descendant datasets (snapshots and clones) share data encryption keys. A command to switch to a new data encryption key for the clone or at any time is provided — this does not re-encrypt already existing data, instead utilising an encrypted master-key mechanism.
+}}
+
+=== Random write performance ===
+{{project
+|text=Random writes introduce small extents and fragmentation. We need new file layout code to improve this and defrag the files as they are being changed.
+|patch=somehow done by the ''autodefrag'' mount option
+}}
+
+=== Improve subvolume usability ===
+
+==== Accept arbitrary directories with the mount-time <tt>subvol</tt> flag ====
+
+<tt>subvol=</tt> is a mount option to mount a subvolume other than the default.
+It currently only allows subvolumes; but vfsmounts can start at any path, allowing to mount any directory.
+
+: ''Note from kdave: this is intentionally disabled, see the patch that added the subvol test. It makes the snapshotting semantics unclear.''
+:: ''Gabriel: Thanks for the info. The snapshot ioctl, and other volume ioctls, need to validate that they have a subvolume rather than any vfsmount. Currently this check is in btrfs-progs but missing on the kernel side; the subvol= check didn't address the root cause of the bogus semantics and the snapshot ioctl is still problematic with bind mounts.''
+
+==== Snapshot arbitrary directories ====
+
+Currently the most efficient way to snapshot a non-subvolume is either:
+
+* to snapshot its parent volume and remove the extra bits.
+* to make a reflink copy
+
+Neither option is as efficient as it could be.
+<tt>copy_root</tt> should be updated to copy from a non-root directory (<tt>copy_root_at_dir</tt>).
+
+==== Hide the subvolume/directory distinction ====
+
+That distinction in data structures makes snapshotting efficient, but it may not be necessary to expose it to userspace.
+Transparent snapshots would encode the subvolume rootid (which non-transparent snapshots expose in <tt>st_dev</tt>) by reserving bits from the inode number. rename() and link() would reuse <tt>copy_root_at_dir</tt> when crossing a subvolume boundary.
+
+==== (Atomically) convert directories into subvolumes and vice versa ====
+
+Probably not the most important feature, but if it would be easily possible to implement (or even technically possible at all) then it may help to make systems more easily administrable, when directories could be converted atomically (especially without stopping any service, moving the dir/subvol, creating a subvol/dir of it's name, ref-link moving the data from/to the subvol, and removing the dir/subvol) into a subvolume and vice versa (that is a subvolume being "merged" atomically into it's parent subvolume).
+And example would be, that there is a system with one subvolume, including /var/lib/postgresql, and the administrator decides that he rather wants to have that moved into a separate subvolume at that location (for whatever reason, e.g. to exclude it from snapshots or to set nodatacow on that subvol)... and that ''this should be done ideally without requiring a downtime of PosgreSQL''.
+
+=== Limiting btree failure domains ===
+{{project
+|text=One way to limit the time required for filesystem rebuilds is to limit the number of places that might reference a given area of the drive. One recent discussion of these issues is Val Henson's chunkfs work.
+
+There are a few cases where chunkfs still breaks down to O(N) rebuild, and without making completely separate filesystems it is very difficult to avoid these in general. Btrfs has a number of options that fit in the current design:
+
+* Tie chunks of space to Subvolumes and snapshots of those subvolumes
+* Tie chunks of space to tree roots inside a subvolume
+
+But these still allow a single large subvolume to span huge amounts of data. We can either place responsibility for limiting failure domains on the admin, or we can implement a key range restriction on allocations.
+
+The key range restriction would consist of a new btree that provided very coarse grained indexing of chunk allocations against key ranges. This could provide hints to fsck in order to limit consistency checking.
+}}
+
+
+
+== Feature parity, upstream changes ==
+
+Projects that bring generic changes and new interfaces provided by VFS, MM or
+other filesystem specific to btrfs.
+
+=== Implement new FALLOC_FL_* modes ===
+{{project
+|text=Note: Depends on the generic implementation that is on it's way to kernel. Extension to ''fallocate'' that chops the given range from a file and does not leave a hole, the offsets to the right of the range are shifted.
+
+* FALLOC_FL_COLLAPSE_RANGE
+* FALLOC_FL_INSERT_RANGE
+* FALLOC_FL_ZERO_RANGE
+* FALLOC_FL_UNSHARE_RANGE
+}}
+
+=== Swap file support ===
+{{project
+|patch=patch in development
+|text=Implement swapfile support on top of swap-over-nfs infrastructure that has been merged in 3.7. Use the exported an API to manage the extents.
+
+There is a patchset (swap-over-nfs) which enhances the swapfile API and btrfs could build swap support on top of the infrastructure. The patchset has been merged into 3.6.
+
+References:
+* http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=35054394c4b3cecd52577c2662c84da1f3e73525 plus surrounding patches
+* http://www.spinics.net/lists/linux-btrfs/msg05042.html
+
+TODO: add reference to the RFC patches
+
+}}
+
+=== Extended file attributes FS_XFLAG_* ===
+{{project
+|text=Defined in include/uapi/linux/fs.h in the namespace FS_XFLAG_. Extended
+range of the file attributes, similar to what FS_IOC_GETFLAGS does.
+
+Preliminary patches in the mailinglist 03/2017.
+}}
+
+=== Use fs/crypto API ===
+{{project
+|text=Generic VFS-level crypto API is available since 4.6, port btrfs.
+}}
+
+
+
+== Integration with userspace tools ==
+
+=== Rsync integration ===
+{{project
+|text=Now that we have code to efficiently find newly updated files, we need to tie it into tools such as rsync and dirvish. (For bonus points, we can even allow rsync to use btrfs's builtin checksums and, when a file has changed, tell rsync _which blocks_ inside that file have changed. Would need to work with the rsync developers on that one.)
+
+Update rsync to preserve NOCOW file status.
+
+'''Reference to other backup tools'''
+
+Not exactly an implementation of this, but I (A. v. Bidder) have patched dirvish to use btrfs snapshots instead of hardlinked directory trees. Discussion archived on the [http://www.dirvish.org/pipermail/dirvish/2010-December/002357.html Dirvish mailing list].
+}}
+
+
+=== Snapshot-aware updatedb/locate ===
+{{project
+|text=It is desirable to be able to locate content inside snapshots. At present, it happens often that the daily updatedb has a multiplied amount of work as a result of the number of snapshots. This is at least until the administrator configures updatedb to ignore the snapshots entirely. Some systems have hundreds of snapshots resulting in updatedb requiring a lot more than one day to complete.
+If the updatedb tool were aware of the snapshots (also whether or not they are read-only) then, perhaps utilising the btrfs-send logic, it could simply query the changed content, greatly reducing the amount of work required to update the database. An optional flag for updatedb could allow it to ignore a volume's snapshots. An optional flag for locate could allow a user to specify that they also want results from a volume's snapshots.
+}}
+
+=== Make bootloaders aware of incompat bits and features ===
+{{project
+|text=Bootloaders (grub2, syslinux) that support btrfs do not check the incompatibility bits and boot may fail due to lack of support, eg. compression, skinny metadata, no-extent-hole, etc. The bootloader should verify that there are no unknown bits and at least issue a warning.
+}}
+
+=== Audit btrfs code in bootloaders ===
+{{project
+|text=The bootloaders do not share the code from linux source tree and usually lack support for new features or the checks that would at least warn that booting could fail, neither regularly backport fixes from linux. The consequences are obvious.
+
+The bootloaders in question:
+* grub2
+* SYSLINUX
+
+Things to audit/fix:
+* bugfixes to code touching the core datastructures
+* check that new features like ''skinny-metadata'' or ''no-holes'' are handled properly, or
+* ... add warnings if the bootloader does not understand the incompat bits
+}}
+
 == Userspace tools projects ==
 
 Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 
 === btrfs ===
-* show meaning of various error codes, eg. for the incompatibility bits
-* error messages need to be cleaned up: wording, spelling, consistent format, error codes where missing
 * merge functionality of ''btrfstune''
 ** for the reasons stated under [https://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg36259.html], the functionality should be implemented with the ''properties'' rather than a separate subcommand
 * audit code for use of backup superblocks and change it to read only the first unless told otherwise by a command-line option
@@ -548,53 +619,12 @@ Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 * ('''claimed''') introduce subcommand ''debug'' and move there functionality from separate debugging utilities
 ** map-logical (not sure if this is not for inspect-internal)
 ** dump-image from btrfs-image
-* add API for tree search ioctl
-* add heuristics to defrag
-** use ''libmagic'' to guess file type and skip incompressible files -- the library dependency should be probably only run-time, not compile-time
 * improve error handling
 ** start with the easy ones that are not in the code shared with kernel
 ** similar to what's done in kernel code, but beware of differences
-* scrub status: print percentage completed (use get_df for total size)
-* allow to undelete a subvolume that is still left intact on the device
-** constraints: on an unmounted filesystem, drop key is 0, must find a free directory/name
-* scrub: print ETA guessed on reported scrubbed bytes and time
 * subvolume listing: overhaul, see Hugo's mail
 * check: make more verbose about the phases, more verbosity levels
-* (prototype exists) print block groups aka chunks in detail
-* use libsmartcolumns -- backward compatibility issues but would be a big improvement all over
-* alternate output formats -- eg. json, structured data, tables etc; libsmartcols knows that already but we'd need to cover output that's not only tables
 * balance: allow to run it in background (fork) and report status periodically
-* (maybe) provide a utility to do ''dd and uuid change'' in one go, should be easy to copy a modified superblock first with new uuid, then simply dd the rest and then run btrfstune on to finish the uuid conversion
-* convert custom code for formatting columns to use libsmartcols
-
-=== btrfs-restore ===
-* an option to skip paths by pattern (inverse to [[Restore#How to Run|--path-regex]]) and/or interactive mode asking to add inclusion and exclusion patterns ([https://bugzilla.kernel.org/show_bug.cgi?id=66911 a feature request in Bugzilla], [[Talk:Restore#How to exclude some paths matching a pattern|a detailed description of the idea at this wiki]])
-* add more tests to cover all features and recovery option combinations
-
-=== fsck ===
-
-* optimize data structures and decrease memory consumption on large filesystems
-
-=== btrfs-convert ===
-
-* pre-create a subvolume and put there contents of the root instead of filling the toplevel subvolume
-* convert from other filesystems ([http://www.spinics.net/lists/linux-btrfs/msg04985.html reiserfs], XFS)
-* convert from md configurations (ie, ext4-on-md converted into btrfs without md)
-* make more verbose about the phases, make it possible to identify at which inode it failed
-
-=== mkfs.btrfs ===
-
-* pre-create a subvolume and put there contents of ''--rootdir'' instead of filling the toplevel subvolume
-* enable quotas during mkfs
-* allow to compress the files with ''--rootdir'' option
-
-=== Testsuite ===
-
-Add more regression tests for the userspace tools.
-
-* all: option coverage
-* mkfs: option combinations
-* fsck: add more broken filesystem images
 
 === Provide a library covering 'btrfs' functionality ===
 {{project
@@ -619,15 +649,14 @@ Some tools have to run under root but still may need some level of restrictions 
 
 === Documentation ===
 
-* update man page of ''mount'' to contain btrfs options (use [[Mount_options]] as a source)
 * this very wiki needs updates and removal of obsolete information, work here is highly appreciated as this is one of the frequently consulted sources of information about btrfs
-* document ioctls: parameters, return values, expected effects
 * document send stream format, RFC, validator, dumper; see far-progs
 
 === strace ===
 {{project
 |text=Add support for btrfs-specific ioctls. Currently raw numbers are printed, teach ''strace'' btrfs ioctl names, how to parse btrfs ioctl structs and how to print a human readable output for them.
 }}
+
 
 
 == Cleanup projects ==
@@ -648,7 +677,6 @@ Examples:
 
 {{project
 |text=Lots of functions get a root passed, but only need the fs_info part of it. This is confusing, as it is unclear if a specific root is needed or if any root will do.
-|who=Daniel Dressler
 |patch=Patches in flight
 }}
 
@@ -663,13 +691,12 @@ Examples:
 {{project
 |text=The user mode utilities have a local copy of the kernel code, with some small adjustments for running in user mode. The fork of the sources was quite a while ago, so many kernel features are now missing in user mode. Also maintaining two copies is burdensome. Expand the wrappers instead so the true kernel code can be used.
 These helpers could also generically make use of the upcoming readahead API.
-|who=Eric Sandeen has started working on this (Apr 2013)
 }}
 
 === Remove unused parameters (in general) ===
 
 {{project
-|text=Eg. like this [http://git.kernel.org/linus/b3b4aa74b58bded92 [1]] or [http://git.kernel.org/linus/ba14419264684b [2]] . To find more, enable -Wunused-parameter in scripts/Makefile.build and run
+|text=Eg. like this [http://git.kernel.org/linus/b3b4aa74b58bded92 [1]] or [http://git.kernel.org/linus/ba14419264684b [2]] . To find more, enable -Wunused-parameter in scripts/Makefile.extrawarn and run
 
  make W=1 fs/btrfs/
 
@@ -691,6 +718,13 @@ Short wrappers or small simple helpers are not good candidates.
 The functions should be tagged with <code>noinline_for_stack</code>.
 }}
 
+=== Move rcu_string out of btrfs to lib/ ===
+{{project
+|who=Omar Sandoval
+|patch=patch in development
+|text=rcu-string.h implements helpers and wrappers around RCU-friendly strings. This is a generic piece of code and should live in the generic library (linux.git/lib/). The task involves documenting API and pushing through lkml and updating according to the feedback.
+}}
+
 = '''Unbound or ongoing projects''' =
 
 == Documentation ==
@@ -698,7 +732,6 @@ The functions should be tagged with <code>noinline_for_stack</code>.
 The userbase is growing, we need to improve the documentation. The project ("official") sources comprise:
 
 * this wiki
-* [http://lxr.free-electrons.com/source/Documentation/filesystems/btrfs.txt linux.git/Documentation/filesystem/btrfs.txt] - mainly mount options
 * btrfs-progs.git/Documentation - commandline tool man pages
 * btrfs-progs.git/ - help texts in the commandline tools, error messages
 
@@ -739,94 +772,7 @@ There are several [https://en.wikipedia.org/wiki/Static_program_analysis static 
 
 Please note that the level of false positives varies and not every issue reported is an actual bug. A review is always required.
 
-= Projects claimed and in progress =
 
-Projects that are under development. Patches may exist, but have not been pulled into the mainline kernel.
-
-Note: projects without any known/apparent activity might be moved back to
-unclaimed after some period.
-
-== Other projects ==
-
-=== RBtree lock contention ===
-{{project
-|who=Liu Bo
-|text=Btrfs uses a number of rbtrees to index in-memory data structures. Some of these are dominated by reads, and the lock contention from searching them is showing up in profiles. We need to look into an RCU and sequence counter combination to allow lockless reads.
-}}
-
-=== Compressed file size ===
-{{project
-|who=David Sterba
-|patch=[http://thread.gmane.org/gmane.linux.file-systems/78671]
-|text=Find actual size of a compressed file. This has evolved into a more generic solution, the compressed size will be returned via FIEMAP ioctl call instead of a btrfs-specific ioctl.
-}}
-
-=== Block group reclaim ===
-{{project
-|who=Ilya Dryomov
-|text=The split between data and metadata block groups means that we sometimes have mostly empty block groups dedicated to only data or metadata. As files are deleted, we should be able to reclaim these and put the space back into the free space pool.
-
-(See also [[#Fine-grained balances]], [[#Block_group_reclaim]])
-}}
-
-=== Per-subvolume mount options ===
-{{project
-|who=David Sterba
-|text=Allow to specify mount options that apply only to the given subvolume. 
-}}
-
-=== Filesystem object properties ===
-{{project
-|who=Filipe Manana
-|text=Interface to set/get properties of object types like filesytem, subvolume, device, file. The properties are eg. compression, raid type, cow/nocow status.
-
-Some initial work started by Alexander Block in the past:
-
-http://thread.gmane.org/gmane.comp.file-systems.btrfs/18287
-
-|patch=[http://thread.gmane.org/gmane.comp.file-systems.btrfs/18179 mailinglist]
-}}
-
-=== Compression enhancements ===
-{{project
-|who=David Sterba
-|text=Started with simply adding more compression algorithms, like LZ4, that itself does not bring a significant improvement without other changes.
-
-* add more compression algorithms
-** LZ4 -- fast compression, very fast decompression; for general use
-** LZ4HC -- slow mode with better compression ratio, decompressor stays the same, the expected usecase is for write-once/read-many files
-** LZMA -- very slow compression with high compression ratio, aimed for backups and infrequently accessed data
-* enhanced container format -- currently a page-sized chunk is compressed at a time, enhance the container header with version and flags to store the chunk length or the actual way how the chunks were stored
-* longer compression chunk -- now it's 128k to limit the read time of random data in the middle of the file
-* heuristics -- try to learn in a simple way how well the file data compress, or not
-
-Related to that, all the bootloaders that support btrfs should support the enhanced container format and compression algorithms.
-}}
-
-=== Atomic write API ===
-{{project
-|who=Chris Mason, Josef Bacik
-|patch=[http://www.spinics.net/lists/linux-fsdevel/msg69925.html Atomic IO]
-|text=The Btrfs implementation of data=ordered only updates metadata to point to new data blocks when the data IO is finished. This makes it easy for us to implement atomic writes of an arbitrary size. Some hardware is coming out that can support this down in the block layer as well.
-}}
-
-=== Hot spare support ===
-{{project
-|who=Anand Jain
-|patch=[http://thread.gmane.org/gmane.comp.file-systems.btrfs/49985 Global hotspare]
-|text=It should be possible to add a drive and flag it as a hot spare.
-}}
-
-
-
-== Cleanup projects ==
-
-=== Move rcu_string out of btrfs to lib/ ===
-{{project
-|who=Omar Sandoval
-|patch=patch in development
-|text=rcu-string.h implements helpers and wrappers around RCU-friendly strings. This is a generic piece of code and should live in the generic library (linux.git/lib/). The task involves documenting API and pushing through lkml and updating according to the feedback.
-}}
 
 = Finished =
 
@@ -914,6 +860,18 @@ Given an inode, the Btrfs metadata can find all the directories that point to th
 |patch=complete
 }}
 
+=== Filesystem object properties ===
+{{project
+|who=Filipe Manana
+|text=Interface to set/get properties of object types like filesytem, subvolume, device, file. The properties are eg. compression, raid type, cow/nocow status.
+
+Some initial work started by Alexander Block in the past:
+
+http://thread.gmane.org/gmane.comp.file-systems.btrfs/18287
+
+|patch=[http://thread.gmane.org/gmane.comp.file-systems.btrfs/18179 mailinglist]
+}}
+
 === Implement O_TMPFILE support ===
 {{project
 |who=Filipe Manana
@@ -925,13 +883,13 @@ Given an inode, the Btrfs metadata can find all the directories that point to th
 === Raid5/6 ===
 {{project
 |who=Chris Mason
-|appeared=3.9
+|upstream=3.9
+|patch=complete
 |text=The multi-device code needs a raid6 implementation, and perhaps a raid5 implementation. This involves a few different topics including extra code to make sure writeback happens in stripe sized widths, and stripe aligning file allocations.
 
 Metadata blocks are currently clustered together, but extra code will be needed to ensure stripe efficient IO on metadata. Another option is to leave metadata in raid1 mirrors and only do raid5/6 for data.
 
 The existing raid0/1/10 code will need minor refactoring to provide dedicated chunk allocation and lookup functions per raid level. It currently happens via a collection of if statements.
-|patch=complete
 }}
 
 === Scrub with RAID 5/6 ===
@@ -974,13 +932,21 @@ scrub code.
 
 {{project
 |who=Dan Fuhry
-|patch=[http://www.spinics.net/lists/linux-btrfs/msg51542.html]
+|patch=complete
+|upstream=4.11
 |text=There are new modes of ''rename'' syscall.
 
 * RENAME_EXCHANGE
 * RENAME_WHITEOUT
 }}
 
+=== statx ===
+{{project
+|who=Yonghong Song
+|upstream=4.13
+|patcho=complete
+|text=Implement support for the new statx() syscall
+}}
 
 = Obsolete requests =
 
@@ -1018,33 +984,9 @@ http://thread.gmane.org/gmane.comp.file-systems.btrfs/27452
 |text=[[Btrfstune|btrfstune]] currently can be used to update the seeding value. This project would add on to that and make btrfstune a generic tool to tune various FS parameters.
 }}
 
-= Development notes, please read =
-
-It's quite normal that there are several features being developed, and some of them can be utilized by a ''ioctl'' call, identified by a number. '''Please, check that your feature does not use already claimed number.'''
-
-Tentative list:
-
-{| border="1" cellpadding="2"
-! Ioctl range
-! Feature
-! Owner
-| Notes
-|-
-| 21
-| ''free''
-| 
-|-
-| 55
-| ''in-band dedup''
-| Liu Bo
-|
-|-
-| 56
-| ''exclusive operation status''
-| Anand Jain
-|
-|-
-| 58
-| first free
-|
-|}
+=== Atomic write API ===
+{{project
+|who=Chris Mason, Josef Bacik
+|patch=[http://www.spinics.net/lists/linux-fsdevel/msg69925.html Atomic IO]
+|text=The Btrfs implementation of data=ordered only updates metadata to point to new data blocks when the data IO is finished. This makes it easy for us to implement atomic writes of an arbitrary size. Some hardware is coming out that can support this down in the block layer as well.
+}}

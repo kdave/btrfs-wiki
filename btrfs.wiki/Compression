@@ -25,6 +25,8 @@ Snappy support (compresses slower than LZ0 but decompresses much faster) has als
 Yes. The compression algorithm is stored per-extent.
 
 == How can I determine compressed size of a file? ==
+compsize takes a list of files on a btrfs filesystem and measures used compression types and effective compression ratio: https://github.com/kilobyte/compsize
+
 There is a patch adding support fort that, currently it's not merged.  You can kind of guess at its compressed size by comparing the output from the <code>df</code> command before and after writing a file, if this is available to you.
 
 === Why does not <code>du</code> report the compressed size? ===
@@ -57,6 +59,17 @@ Compression to newly written data happens:
 
 Note, that mounting with <code>[[Mount options#compress|-o compress]]</code> will not set the <code>+c</code> file attribute.
 
+== How can I recursively compress/uncompress a directory (including guessed/forced-compression) ==
+
+Uset the <tt>btrfs filesystem defrag</tt> command, the option ''-r'' will
+process the files recursively in a directory. This is independent of the mount
+options ''compress'' or ''compress-force'', and using the option ''-c'' you
+can set the compression algorithm.
+
+Currently (4.14), it's not possible to select "no compression", using the
+defrag command. This may change in the future.
+
+
 == How does compression interact with direct IO or COW? ==
 Compression does not work with DIO, does work with COW and does not work for NOCOW files. If a file is opened in DIO mode, it will fall back to buffered IO.
 === Are there speed penalties when doing random access to a compressed file? ===
@@ -65,13 +78,5 @@ Yes. The compression processes ranges of a file of maximum size 128 KiB and comp
 There is a simple decision logic: if the first portion of data being compressed is not smaller than the original, the compression of the file is disabled -- unless the filesystem is mounted with <code>[[Mount options#compress|-o compress-force]]</code>. In that case it'll be compressed always regardless of the compressibility of the file. This is not optimal and subject to optimizations and further development.
 
 This means that many times, even if you have compression enabled, if the first portion of the file doesn't compress well, but the rest *does* it still won't compress the rest.  Recommend using <code>[[Mount options#compress|-o compress-force]]</code> if you really want compression enabled on a mounted filesystem, though if you have many differing types files, then just <code>[[Mount options#compress|-o compress]]</code> might work well for you.
-
-= New and unanswered questions =
-
-Add your question here. It'll be moved to previous section when answered.
-
-
-
-1. How can I recursively compress/uncompress a directory (including guessed/forced-compression)?
 
 [[Category:Features]]

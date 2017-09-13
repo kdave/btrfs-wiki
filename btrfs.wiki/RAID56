@@ -4,7 +4,7 @@
 
 From 3.19, the recovery and rebuild code was integrated. The one missing piece, from a reliability point of view, is that it is still vulnerable to the parity RAID "write hole", where a partial write as a result of a power failure will result in inconsistent parity data.
 
-* Parity may be inconsistent after a crash (the "write hole")
+* Parity may be inconsistent after a crash (the "write hole"). The problem born when after "an unclean shutdown" a disk failure happens. But these  are *two* distinct failures. These together break the BTRFS raid5 redundancy. If you run a scrub process after "an unclean shutdown" (with no disk failure in between) those data which match their checksum can still be read out while the mismatched data are lost forever.
 * Parity data is not checksummed
 * No support for discard? (possibly -- needs confirmation with cmason)
 * The algorithm uses as many devices as are available: No support for a fixed-width stripe (see note, below)
@@ -12,6 +12,8 @@ From 3.19, the recovery and rebuild code was integrated. The one missing piece, 
 The first two of these problems mean that the parity RAID code is not suitable for any system which might encounter unplanned shutdowns (power failure, kernel lock-up), and it should not be considered production-ready.
 
 If you'd like to learn btrfs raid5/6 and rebuilds by example (based on kernel 3.14), you can look at [http://marc.merlins.org/perso/btrfs/post_2014-03-23_Btrfs-Raid5-Status.html Marc MERLIN's page about btrfs raid 5/6].
+
+On '''01 Aug 2017''' a RFC patch to fix write hole was posted in the mailing list: [http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg66472.html Btrfs: Add journal for raid5/6 writes]
 
 == Note ==
 

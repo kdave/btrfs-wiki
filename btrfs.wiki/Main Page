@@ -57,34 +57,43 @@ As part of the changelog you can also review
 * In-band deduplication (happes during writes)
 ** [https://btrfs.wiki.kernel.org/index.php/Design_notes_on_dedupe In-band dedupe design document]
 ** [https://btrfs.wiki.kernel.org/index.php/User_notes_on_dedupe How to use in-band dedupe]
-* Other compression methods ([[Project_ideas#Compression_enhancements|LZ4]])
 * Hot data tracking and moving to faster devices (currently being pushed as a generic feature available through VFS)
 
 == News and Changelog ==
 
-''' btrfs-progs v4.10.1 (Mar 2017)'''
-* receive: handle subvolume in path clone
-* convert: rollback fixed (rewrite was needed to address previous design issues)
-* build: fix build of 3rd party tools, missing <linux/sizes.h>
-* dump-tree: print log trees
-* other: new and updated tests
+''' btrfs-progs v4.13 (Sep 2017)'''
 
-''' btrfs-progs v4.10 (Mar 2017)'''
-* send: dump output fixes: missing newlies
-* check: several fixes for the lowmem mode, improved error reporting
-* build
-** removed some library deps for binaries that not use them
-** ctags, cscope
-** split Makefile to the autotool generated part and the rest, not needed to autogen.sh after adding a file
-* shared code: sync easy parts with kernel sources
-* other
-** lots of cleanups
-** source file reorganization: convert, mkfs, utils
-** lots of spelling fixes in docs, other updates
-** more tests
+* convert: reiserfs support
+* check: new option --force to allow check of a mounted filesystem (no repair)
+* mkfs: --rootdir will now copy special files
+* dump-tree: minor output changes
+* inspect rootid: accept file as arugment
+* dev usage: don't calculate slack space for missing devices
+* fi du: don't print error on EMPTY_SUBVOL (inode number 2)
+* build:
+** fixed support for sanitization features on gcc (tsan, asan, ubsan)
+** fix PIE build
+* other:
+** misc cleanups and stability fixes
+** travis CI enhancements
+** new tests, fuzzed images
+** testsuite cleanups
 
-'''Linux v4.10 (Dec 2016)'''
-* TBD
+''' Linux v4.13 (Sep 2017) '''
+
+* deprecated: mount option ''alloc_start''
+* qgroups: new sysctl to allow temporary quota override with CAP_SYS_RESOURCE
+* statx syscall support
+* nowait AIO support
+* lots of cleanups around bio processing and error handling
+* memory allocation constraint cleanups and improvements
+* more sanity checks (for dir_item)
+* compression will be skipped if there's no improvement (at least one block)
+* fix invalid extent maps due to hole punching
+* fix: sgid not cleared when changing acls
+* some enospc corner case fixes
+* send fixes
+* other cleanups
 
 Read about past releases in the [[Changelog]]
 * [[Changelog#By_feature|features by kernel version]]
@@ -155,10 +164,12 @@ Links to Btrfs documentation of various Linux distributions:
 * [[Multiple Device Support]] — design notes
 * [[ENOSPC]] — Current ENOSPC design issues
 * [[Design_notes_on_Send/Receive]] — notes from initial impelentation, protocol V2 updates draft
+* [[Qgroups status quo]] - notes on some qgroups observations/pain points
 
 * [[Debugging Btrfs with GDB]]
 * [[Writing patch for btrfs]]
 * [[Btree_Items]] - Mapping from Btrfs key to item-data
+* [[Resolving_Extent_Backrefs]] - How back references are resolved to root owners
 
 * Original COW B-tree: Source code in C that implements the COW B-tree algorithms [https://github.com/orodeh/bt repository]. Written by Ohad Rodeh at IBM Research in 2006, and released under a BSD license. This is a reference implementation, that works in user space.
 
@@ -215,22 +226,10 @@ Links to old or obsolete documentation, articles. Kept for historical reasons. S
 * '''2012-10''' [http://www.ilsistemista.net/index.php/linux-a-unix/36-btrfs-mount-options-and-virtual-machines-an-in-depth-look.html BTRFS, mount options and virtual machines: an in-depth look] (Ilsistemista.net)
 * '''2012-06''' [http://www.ilsistemista.net/index.php/linux-a-unix/34-btrfs-ext3-ext4-xfs-and-kvm-virtual-machine-a-host-side-filesystem-comparison.html BTRFS EXT3 EXT4 XFS and KVM virtual machine: a host-side filesystem comparison] (Ilsistemista.net)
 * '''2012-06''' [http://www.ilsistemista.net/index.php/linux-a-unix/33-btrfs-vs-ext3-vs-ext4-vs-xfs-performance-on-fedora-17.html BTRFS vs EXT3 vs EXT4 vs XFS performance on Fedora 17] (Ilsistemista.net)
-* '''2012-05''' [http://www.phoronix.com/scan.php?page=article&item=linux_34_fs&num=1 XFS, Btrfs, EXT4 Battle It Out On Linux 3.4] (Phoronix.com)
 * '''2012-05''' [http://cd34.com/blog/scalability/ext4-xfs-and-btrfs-benchmark-redux/ Ext4, XFS and Btrfs benchmark redux]
-* '''2012-03''' [http://www.phoronix.com/scan.php?page=article&item=linux_btrfs_options&num=1 Testing Out The Btrfs Mount Options On Linux 3.2] (Phoronix.com)
-* '''2012-03''' [http://www.phoronix.com/scan.php?page=article&item=ubuntu_1204_fs&num=1 Ubuntu 12.04 LTS - Benchmarking All The Linux File-Systems] (Phoronix.com)
 * '''2011-12''' [http://btrfs.boxacle.net Btrfs Performance Analysis]
-* '''2011-11''' [http://www.phoronix.com/vr.php?view=16773 Testing The "Pretty Beefy" Btrfs Changes In Linux 3.2] (Phoronix.com)
 * '''2011-10''' [http://www.ilsistemista.net/index.php/linux-a-unix/21-ext3-ext4-xfs-and-btrfs-filesystems-comparison-on-linux-kernel-300.html EXT3 vs EXT4 vs XFS vs BTRFS - filesystems comparison on Linux kernel 3.0.0] (Ilsistemista.net)
-* '''2011-09''' [http://www.phoronix.com/scan.php?page=article&item=btrfs_linux31_ssd&num=1 Testing EXT4 & Btrfs On A Serial ATA 3.0 SSD] (Phoronix.com)
-* '''2011-05''' [http://www.phoronix.com/scan.php?page=article&item=linux_2639_fs&num=1 Linux 2.6.39: XFS Speeds-Up, EXT4 &amp; Btrfs Unchanged] (Phoronix.com)
-* '''2011-03''' [http://www.phoronix.com/scan.php?page=article&item=btrfs_lzo_2638&num=1 Btrfs LZO Compression Performance] (Phoronix.com)
-* '''2010-12''' [http://www.phoronix.com/scan.php?page=article&item=btrfs_space_cache&num=1 Benchmarks Of The Btrfs Space Cache Option] (Phoronix.com) Comparing the performance of Btrfs using the default mount options, using the space_cache mount option, using the compress mount option for Btrfs file compression, and lastly using both the space_cache and compression mount options to benefit from the free space caching and Zlib compression.
 * '''2010''' [http://www.mayrhofer.eu.org/ssd-linux-benchmark SSD Linux benchmarking: Comparing filesystems and encryption method]
 * '''2010-11''' [http://www.ilsistemista.net/index.php/linux-a-unix/6-linux-filesystems-benchmarked-ext3-vs-ext4-vs-xfs-vs-btrfs.html EXT3 vs EXT4 vs XFS vs BTRFS linux filesystems benchmark] (Ilsistemista.net)
-* '''2010-11''' [http://www.phoronix.com/scan.php?page=article&item=linux_2637_ext4btrfs&num=1 Phoronix: The Linux 2.6.37 Kernel With EXT4 &amp; Btrfs] (Phoronix.com) Comparison between Btrfs and Ext4.
 * '''2010-10''' [http://www.linux-mag.com/id/7876 One Billion Files] Btrfs performs well in comparison to other filesystems, when there are a billion files in the filesystem.
-* '''2009-05''' [http://www.phoronix.com/scan.php?page=article&item=btrfs_ssd_mode&num=1 Phoronix Test With SSD Mode] (Phoronix.com) This test show that btrfs is slower with ssd option activated. Ssd code has been updated during 2.6.30-rc and is expected to be faster.
-* '''2009-04''' [http://www.phoronix.com/scan.php?page=article&item=btrfs_benchmarks&num=1 Phoronix Performance Test on Fedora 11 Preview] (Phoronix.com) The phoronix workload is mostly CPU based, but they do have a few filesystem benchmarks. Btrfs performs well, but you can see the checksumming and metadata duplication show up on their single disk streaming write workload. dbench in general measures lots of different caching effects, and is not a great measure of everyday performance.
 * '''2008-10''' [http://btrfs.boxacle.net Btrfs performance analysis by Steven Pratt and IBM] The benchmarks from IBM demonstrate some bottlenecks we have in the extent recording on large workloads. We're working on fixes for these.
-* '''2008-04''' [[Multi-device Benchmarks]]

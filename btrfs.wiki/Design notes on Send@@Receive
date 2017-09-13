@@ -143,6 +143,7 @@ Missing from v1:
 ** (FS_IOC_GETFLAGS/FS_IOC_SETFLAGS), the receiving side misses NOCOW and the other attributes like append-only, immutable etc.
 ** setting the flags on receiving side is tricky as the flags affects if/how the data are stored
 * optionally send owner/group as strings
+* block device is not sent over the stream, undecided if we want that or not
 
 Other:
 * stream version recognition

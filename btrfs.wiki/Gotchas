@@ -2,23 +2,40 @@ This page lists problems one might face when trying btrfs, some of these are not
 
 Please add new things below, don't forget to add a comment on which version you observed this.
 
+'''Please note that most of this page was not written by the btrfs developer community and may be entirely inaccurate.'''
+
 = Issues =
 
 == Affecting all versions ==
 
 === Block-level copies of devices ===
 
-* Do not make a block-level copy of a Btrfs filesystem to a block device, and then try to mount either the original or the copy while both are visible to the same kernel.
-* This means: don't use LVM snapshots, or any other kind of block level snapshots; don't make copies with <tt>dd</tt>.
-* If you must do this, remove one copy from the system (physically, or by deletion of the block device or FS) before mounting the other copy.
-* It is safe to copy the data to a file (e.g. with <tt>dd</tt>), but not to make that file into a block device with the loopback driver.
-* This problem is due to the UUID on the original and the copy being the same. This confuses the kernel, and it can end up writing updates to the wrong filesystem, causing massive data corruption.
+'''Do NOT'''
+* make a block-level copy of a Btrfs filesystem to another block device...
+* use LVM snapshots, or any other kind of block level snapshots...
+* turn a copy of a filesystem that is stored in a file into a block device with the loopback driver...
+... and then try to mount either the original or the snapshot while both are visible to the same kernel.
 
-The main issue here is that in most distributions <tt>udev</tt> runs <tt>btrfs device scan</tt> automagically when a block device is discovered, and this usually means that the copy of the original block device is "attached" to it which as a rule causes extensive volume damage.
+'''Why?'''
+
+If there are multiple block devices visible at the same time, and those block devices have the same filesystem UUID, then they're treated as part of the same filesystem.
+
+If they are actually copies of each other (copied by dd or LVM snapshot, or any other method), then mounting either one of them could cause data corruption in one or both of them.
+
+If you for example make an LVM snapshot of a btrfs filesystem, you can't mount either the LVM snapshot or the original, because the kernel will get confused, because it thinks it's mounting a Btrfs filesystem that consists of two disks, after which it runs into two devices which have the same device number.
+
+'''Is there no way out of this?'''
+
+While it's technically possible to have block device copies around as long as you don't try to use mount, you have to be extremely careful with this. In most distributions <tt>udev</tt> runs <tt>btrfs device scan</tt> automatically when a block device is discovered. Also, programs like <tt>os-prober</tt> exist which will try to look into filesystems when you might not expect it. So, don't leave anything to chance when trying this.
+
+Some options you have to hide filesystem copies are:
+* Copying a filesystem into a file, which is harmless in itself, because the file will not be visible as a block device.
+* Remove one copy from the system (physically, or by deletion of the block device or FS) before mounting the other copy
+* When using LVM, <tt>lvchange -a n <vg>/<lv></tt> can be used to make the block device disappear temporarily. But beware of the fact that it can be auto-activated again.
 
 === Fragmentation ===
 
-* Files with a lot of random writes can become heavily fragmented (10000+ extents) causing trashing on HDDs and excessive multi-second spikes of CPU load on systems with an SSD or large amount a RAM.
+* Files with a lot of random writes can become heavily fragmented (10000+ extents) causing thrashing on HDDs and excessive multi-second spikes of CPU load on systems with an SSD or large amount a RAM.
 ** On servers and workstations this affects databases and virtual machine images.
 *** The nodatacow [[Mount_options|mount option]] may be of use here, with associated gotchas.
 ** On desktops this primarily affects application databases (including Firefox and Chromium profiles, GNOME Zeitgeist, Ubuntu Desktop Couch, Banshee, and Evolution's datastore.)
@@ -43,16 +60,9 @@ It is also possible on 32-bit systems the limited address space per-process mean
 ** If a crash happens while a <tt>raid5</tt>/<tt>raid6</tt> volume is being written this can result in a "transid" mismatch as in <tt>transid verify failed</tt>.
 ** The resulting corruption cannot be currently fixed.
 
-=== Free space cache ===
-
-* Currently sometimes the free space cache v1 and v2 lose track of free space and a volume can be reported as not having free space when it obviously does.
-** Fix: disable use of the free space cache with mount option <tt>nospace_cache</tt>.
-** Fix: remount the volume with <tt>-o remount,clear_cache</tt>.
-** Switch to to new free space tree.
-
 === Having many subvolumes can be very slow ===
 
-The cost of several operations, including currently <tt>balance</tt> and <tt> device delete</tt>, is proportional to the number of subvolumes, including snapshots, and (slightly super-linearly) the number of extents in the subvolumes.
+The cost of several operations, including currently <tt>balance</tt>, <tt>device delete</tt> and <tt>fs resize</tt>, is proportional to the number of subvolumes, including snapshots, and (slightly super-linearly) the number of extents in the subvolumes.
 
 This is "obvious" for "pure" subvolumes, as each is an independent file tree and has independent extents anyhow (except for ref-linked ones). But in the case of snapshots metadata and extents are (usually) largely ref-linked with the ancestor subvolume, so the full scan of the snapshot need not happen, but currently this happens.
 
@@ -85,9 +95,10 @@ GlobalReserve, single: total=144.00MiB, used=0.00B</nowiki>
 
 * This is because older versions of '''btrfs-progs''' leave around on creation or conversion one chunk in the old profile by mistake, and then if a block device becomes missing Btrfs considers the volume fatally damaged if that old profile does not have redundancy.
 ** This creation or conversion issue is solved in recent versions of '''btrfs-progs'''.
-** It can be fixed by running again (possibly repeatedly)
- <tt>btrfs balance start -mconvert=$MPROFILE,soft -dconvert=$DPROFILE,soft ...</tt>
+** It can be fixed by running again (possibly repeatedly): <tt>btrfs balance start -mconvert=$MPROFILE,soft -dconvert=$DPROFILE,soft ...</tt>
 ** If the volume has already gone read-only, dump, recreate and restore it.
+
+This [https://www.spinics.net/lists/linux-btrfs/msg63365.html mailing list message] describes some recovery patches that might help avoid dumping, recreating and restoring, at your risk.
 
 === <tt>raid1</tt> volumes only mountable once RW if degraded ===
 
@@ -104,11 +115,13 @@ Possible recoveries:
 * If it is still read-write, you can <tt>btrfs device replace</tt> the missing device.
 * When a <tt>raid1</tt> volume is stuck as read-only for either reason it can only be recovered by dumping its contents, recreating it and restoring the contents.
 
+This [https://www.spinics.net/lists/linux-btrfs/msg63365.html mailing list message] describes some recovery patches that might help avoid dumping, recreating and restoring, at your risk.
+
 === Implicit conversion <tt>dup</tt> to <tt>raid1</tt> after adding a block device ===
 
 When all chunks of a single device volume are "allocated" a <tt>balance</tt> operation cannot start, and the suggested solution is to add a temporary block device of at least 1GiB (better 2-4GiB).
 
-The subsequent <tt>balance<tt> turns existing <tt>dup</tt> profile chunks, usually for metadata, into <tt>raid1</tt> profile chunks. This prevents the removal of the temporary block device. Workarounds:
+The subsequent <tt>balance</tt> turns existing <tt>dup</tt> profile chunks, usually for metadata, into <tt>raid1</tt> profile chunks. This prevents the removal of the temporary block device. Workarounds:
 
 * Start the <tt>balance</tt> operation with <tt>-musage=0</tt> so metadata chunks are not balanced, so they are not converted to <tt>raid1</tt>.
 * Start the <tt>balance</tt> operation with *any* value of <tt>-musage=</tt>, even <tt>99</tt> or <tt>100</tt>, as the implicit conversion does not happen along with compaction if there is such a value.
@@ -117,17 +130,16 @@ The subsequent <tt>balance<tt> turns existing <tt>dup</tt> profile chunks, usual
 
 Note: by itself adding a new device does not cause the conversion from <tt>dup</tt> to <tt>raid1</tt> profile, it is the <tt>balance</tt> without options that does it implicitly.
 
-=== Direct IO including NFS access  ===
+=== Direct IO and CRCs  ===
 
-Direct IO reads and writes to Btrfs files are don't fully implement checksum semantics, particularly in the case of concurrent writes.
-This is the issue described in [http://www.spinics.net/lists/linux-btrfs/msg25940.html this email]: "where the application will modify the page while it's inflight" (see also this article on [https://lwn.net/Articles/442355/ stable  pages]).
+Direct IO writes to Btrfs files can result in checksum warnings. This can happen with other filesystems, but most don't have checksums, so a mismatch between (updated) data and (out-of-date) checksum cannot arise.
+
+This is the issue described in [http://www.spinics.net/lists/linux-btrfs/msg25940.html this email]: "where the application will modify the page while it's inflight" (see also this article on [https://lwn.net/Articles/442355/ stable writes]).
 This results in checksum verification messages that are warnings instead of errors, as in for example:
 
- BTRFS warning (device dm-1): csum failed ino 252784 off 62910578688 csum 802263983 expected csum 4110970844
+<pre>BTRFS warning (device dm-1): csum failed ino 252784 off 62910578688 csum 802263983 expected csum 4110970844</pre>
 
 Details of affected versions TBD.
-
-The NFS kernel server accesses files by a mechanism equivalent to direct IO, so checksums semantics for non-direct IO access on an NFS client are not the same as for local access.
 
 === Conversion from <tt>ext4</tt> may not be undoable ===
 * In kernels '''4.0+''': the empty block groups are reclaimed automatically that can affect the following:

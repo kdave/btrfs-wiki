@@ -18,7 +18,7 @@ See the [[Gotchas]] page for some current issues when using btrfs with multiple 
 
 Please read the parity RAID status page first: [[RAID56]].
 
-Note that the minimum number of devices required for RAID5 is 2. In case of a 2 device RAID5 filesystem, one device has data and the other has parity data. Similarly, for RAID6, the minimum is 3 devices.
+Note that the minimum number of devices required for RAID5 is 3. For a RAID6, the minimum is 4 devices.
 
 === Filesystem creation ===
 

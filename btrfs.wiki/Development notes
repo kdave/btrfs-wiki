@@ -1,5 +1,3 @@
-'''page under construction'''
-
 Collection of various notes about development practices, how-to's or checklists.
 
 = Misc notes =
@@ -18,6 +16,10 @@ stick to the following format:
 * named values: print value and string, like "%llu(%s)", no space between, string in parens
 * avoid abbreviating key values too much, (eg. use 'size' not 'sz')
 * hexadecimal values are always preceded by ''0x'' (use "0x%llx)
+* use ''struct btrfs_inode'' for inode types, not plain ''struct inode''
+* inode number type is ''u64'', use ''btrfs_ino'' if needed
+* key can be printed as ''[%llu,%u,%llu]''
+* enum types need to be exported as ''TRACE_DEFINE_ENUM''
 
 '''Example:'''
 
@@ -26,6 +28,21 @@ event: ''btrfs__chunk''
 string:
 
    "root=%llu(%s) offset=%llu size=%llu num_stripes=%d sub_stripes=%d type=%s"
+
+=== Error messages ===
+
+* use ''btrfs_*'' helpers (btrfs_err, btrfs_info, ...), they print a filesystem identification like
+ BTRFS info (device sdb): ...
+* first letter in the string is lowercase
+* message contents
+** be descriptive
+** keep the text length reasonable
+** no typos
+** print values that refer to what happend (inode number, subvolume id, path, offset, ...)
+** print error value from the last call
+* message level
+** btrfs_err -- such messages have high visibility so use them for serious problems
+** btrfs_info -- use for informative messages that might help debugging problems in the future and are worth keeping in the logs
 
 = Kernel config options =
 
@@ -66,7 +83,7 @@ Please refer to the option documentation for further details.
 * tracing
 ** CONFIG_TRACING etc
 
-= xfstests =
+= (x)fstests =
 
 xfstests has very few "hard" requirements and will succeed without running many of the tests.  In order to ensure full test coverage, your test environment should provide the following. 
 
@@ -75,7 +92,11 @@ xfstests has very few "hard" requirements and will succeed without running many 
 * <code>CONFIG_FAULT_INJECTION_DEBUG_FS=y</code>
 * <code>CONFIG_FAIL_MAKE_REQUEST=y</code>
 * <code>CONFIG_DM_FLAKEY=m</code> or <code>y</code>
+* <code>CONFIG_DM_THIN_PROVISIONING=m</code> or <code>y</code>
+* <code>CONFIG_DM_SNAPSHOT=m</code> or <code>y</code>
 * <code>CONFIG_BLK_DEV_LOOP=m</code> or <code>y</code>
+* <code>CONFIG_EXT4_FS=m</code> or <code>y</code>
+* <code>CONFIG_SCSI_DEBUG=m</code>
 
 == Kernel config options for better bug reports ==
 
@@ -102,3 +123,4 @@ Note: This list may be incomplete.
 
 == Other requirements ==
 * An <code>fsgqa</code> user and group must exist.
+* An <code>123456-fsgqa</code> user and group must exist.

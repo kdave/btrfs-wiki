@@ -44,4 +44,7 @@ and mount it at /mnt/restore, in /etc/fstab:
 That way, all users can use the backups in /mnt/restore, but cannot
 exploit security-bugs or tamper with the content.
 
-Source: [[Media:snapbtr.txt]] (Wiki does not allow .py uploads)
+
+Old Source: [[Media:snapbtr.txt]] (Wiki does not allow .py uploads)
+
+A updated version can be found at: [https://github.com/hp197/snapbtr Github]

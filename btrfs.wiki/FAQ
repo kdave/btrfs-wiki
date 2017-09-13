@@ -170,6 +170,20 @@ Shell commands may look like this:
 
 will produce file suitable for a raw VM image -- the blocks will be updated in-place and are preallocated.
 
+== Can I have nodatacow (or chattr +C) but still have checksumming? ==
+
+No.
+
+With normal CoW operations, the atomicity is achieved by constructing a completely new metadata tree containing both changes (references to the data, and the csum metadata), and then atomically changing the superblock to point to the new tree.
+                                                                                
+With nodatacow, that approach doesn't work, because the new data replaces the old on the physical medium, so you'd have to make the data write atomic with the superblock write -- which can't be done, because it's (at least) two distinct writes. This means that you have to write the two separately, which then means that there's a period between the two writes where things can go wrong.
+
+When you write data and metadata separately (which you have to do in the nodatacow case), and the system halts between the two writes, then you either have the new data with the old csum, or the old csum with the new data. Both data and csum are "good", but good from different states of the FS. In both orderings (write data first or write metadata first), the csum doesn't match the data, and so you now have an I/O error reported when trying to read that data.
+
+You can't easily fix this, because when the data and csum don't match, you need to know the ''reason'' they don't match -- is it because the machine was interrupted during write (in which case you can simply compute a good csum from the data and carry on as normal), or is it because the hard disk has been corrupted in some way, completely independently of the crash, and the data is now toast (in which case you shouldn't fix the I/O error)?
+
+Basically, nodatacow bypasses the very mechanisms that are meant to provide consistency in the filesystem.
+
 = Features =
 
 (See also the [[Project ideas]] page)
@@ -205,7 +219,11 @@ See [[RAID56]] for more details.
 
 == Is Btrfs optimized for SSD? ==
 
-There are some optimizations for SSD drives, and you can enable them by mounting with -o ssd. As of 2.6.31-rc1, this mount option will be enabled if Btrfs is able to detect non-rotating storage. SSD is going to be a big part of future storage, and the Btrfs developers plan on tuning for it heavily. Note that -o ssd will not enable TRIM/discard.
+There are some optimizations for SSD drives, and you can enable them by mounting with -o ssd. As of 2.6.31-rc1, this mount option will be enabled if Btrfs is able to detect non-rotating storage.
+
+However, the optimizations seem to primarily apply to old SSD models which do not have a FTL (Flash Translation Layer) yet. For pretty almost all SSDs sold nowadays, the -o ssd option will have a negative impact on usability and lifetime of the SSD. Also see [[Gotchas#The_ssd_mount_option|the ssd section in Gotchas]] about this.
+
+Note that -o ssd will not enable TRIM/discard.
 
 == Does Btrfs support TRIM/discard? ==
 
@@ -403,7 +421,7 @@ An all-in-one tool for reporting on free space is available in btrfs-progs from 
    /dev/sdc1 	  23.99GiB
    /dev/sdd1 	  23.99GiB
 
-This is showing the space usage for the same filesystem at the end of the previous section, with two 40 GiB devices. The "Overall" section shows aggregate information for the whole filesystem: There are 80 GiB of raw storage in total, with 32.02 GiB allocated, and 29.33 GiB of that allocation used. The "data ratio" and "metadata ratio" values are the proprtion of raw disk space that is used for each byte of data written. For a RAID-1 or RAID-10 filesystem, this should be 2.0; for RAID-5 or RAID-6, this should be somewhere between 1.0 and 1.5. In the example here, the value of 2.0 for data indicates that the 29.34 GiB of used space is holding 14.67 GiB of actual data (29.34 / 2.0).
+This is showing the space usage for the same filesystem at the end of the previous section, with two 40 GiB devices. The "Overall" section shows aggregate information for the whole filesystem: There are 80 GiB of raw storage in total, with 32.02 GiB allocated, and 29.33 GiB of that allocation used. The "data ratio" and "metadata ratio" values are the proportion of raw disk space that is used for each byte of data written. For a RAID-1 or RAID-10 filesystem, this should be 2.0; for RAID-5 or RAID-6, this should be somewhere between 1.0 and 1.5. In the example here, the value of 2.0 for data indicates that the 29.34 GiB of used space is holding 14.67 GiB of actual data (29.34 / 2.0).
 
 The "free" value is an estimate of the amount of data that can still be written to this FS, based on the current usage profile. The "min" value is the ''minimum'' amount of data that you can expect to be able to get onto the filesystem.
 
@@ -425,7 +443,7 @@ There are several things meant by this. One is the out-of-space issues discussed
 
 There are several considerations:
 
-* The default raid level for the metadata group is dup on single drive systems, and raid1 on multi drive systems. The meaning is the same in both cases: there's two copies of everything in that group. This can be disabled at mkfs time, and it will eventually be possible to migrate raid levels online.
+* The default raid level for the metadata group is dup on single drive systems, and raid1 on multi drive systems. The meaning is the same in both cases: there are two copies of everything in that group. This can be disabled at mkfs time, and it is possible to migrate raid levels online using the [[Balance_filters]].
 * There an overhead to maintaining the checksums (approximately 0.1% – 4 bytes for each 4k block)
 * Small files are also written inline into the metadata group. If you have several gigabytes of very small files, this will add up.
 
@@ -504,7 +522,7 @@ We strongly recommend that you keep up-to-date with the latest released kernels 
 
 == How long will the Btrfs disk format keep changing? ==
 
-The Btrfs disk format is not finalized, but it won't change unless a critical bug is found and no workarounds are possible. Not all the features have been implemented, but the current format is extensible enough to add those features later without requiring users to reformat.
+The Btrfs disk format is not immutable. However, any changes that are made will not invalidate existing filesystems. If a new feature results in a change to the filesystem format, it will be implemented in a way which is both safe and compatible: filesystems made with the new feature will safely refuse to mount on older kernels which do not support the feature, and existing filesystems will not have the new feature enabled without explicit manual intervention to add the feature to the filesystem.
 
 == How do I upgrade to the 2.6.31 format? ==
 
@@ -513,8 +531,9 @@ The 2.6.31 kernel can read and write Btrfs filesystems created by older kernels,
 We don't want to force people into 2.6.31 only, and so the newformat code is available against 2.6.30 as well. All fixes will also be maintained against 2.6.30. For details on downloading, see the [[Btrfs source repositories]].
 
 == Can I find out compression ratio of a file? ==
+compsize takes a list of files on a btrfs filesystem and measures used compression types and effective compression ratio: https://github.com/kilobyte/compsize
 
-Currently no. There's a patchset http://thread.gmane.org/gmane.comp.file-systems.btrfs/37312 that extends the FIEMAP interface to return the physical length of an extent (ie. the compressed size). 
+There's a patchset http://thread.gmane.org/gmane.comp.file-systems.btrfs/37312 that extends the FIEMAP interface to return the physical length of an extent (ie. the compressed size). 
 
 The size obtained is not exact and is rounded up to block size (4KB). The real amount of compressed bytes is not reported and recorded by the filesystem (only the block count) in it's structures. It is saved in the disk blocks but solely processed by the compression code.
 
@@ -525,7 +544,7 @@ Note, that this will likely never be implemented because it would require major 
 
 == Why do I have "single" chunks in my RAID filesystem? ==
 
-After mkfs and writing some data to the filesystem, <code>btrfs filesystem df /mountpoint</code> will show something like this:
+After mkfs with an old version of mkfs.btrfs, and writing some data to the filesystem, <code>btrfs filesystem df /mountpoint</code> will show something like this:
 
  Data, RAID1: total=3.08TiB, used=3.02TiB
  Data, single: total=8.00MiB, used=0.00B
@@ -540,6 +559,8 @@ The <code>single</code> chunks are perfectly normal, and are a result of the way
  $ btrfs balance start -dusage=0 -musage=0 /mountpoint
 
 (but don't do this ''immediately'' after running mkfs, as you may end up losing your RAID configuration and reverting to single mode -- put at least some data on the FS first).
+
+This issue has been fixed in mkfs.btrfs since v4.2.
 
 == What is the GlobalReserve and why does 'btrfs fi df' show it as ''single'' even on RAID filesystems? ==
 
@@ -582,6 +603,41 @@ the second receive will start with a blank subvolume, and build it up from scrat
 
 So if you use -c on its own (without -p), ''all'' of the metadata of the subvol is sent, but some of the data is assumed to exist on the far side.
 If you use -p, then ''some'' of the metadata is assumed to exist on the other side as well, in the form of an earlier subvol that can be snapshotted.
+
+== How do I recover from a "parent transid verify failed" error? ==
+
+For example:
+
+ parent transid verify failed on 29360128 wanted 1486656 found 1486662
+
+If the second two numbers (''wanted 1486656'' and ''found 1486662'') are close together (within about 20 of each other), then mounting with
+
+ -o ro,usebackuproot
+
+may help. If it's successful with a read-only mount, then try again without the <code>ro</code> option, for a read-write mount.
+
+If the usebackuproot doesn't work, then the FS is basically unrecoverable in its current state with current tools. You should use <code>btrfs restore</code> to refresh your backups, and then restore from them.
+
+== What does "parent transid verify failed" mean? ==
+
+"Parent transid verify failed" is the result of a failed internal consistency check of the filesystem's metadata.
+
+The way that btrfs works -- CoW, or Copy-on-Write -- means that when any item of data or metadata is modified, it's not overwritten in place, but instead is written to some other location, and then the metadata which referenced it is updated to point at the new location. The changed metadata is also updated in the same way: a new copy is written elsewhere, and the things that referenced that item are updated. This process ultimately bubbles up all the btrfs trees, until only the superblock is left to be updated. The superblock(s) are the only things which are overwritten in place, and each one can be done atomically. This process ensures that if you follow the filesystem structures downwards from the superblock, you will always see a completely consistent structure for the filesystem.
+
+Now, if this cascade of writes happened for every single update, btrfs would be orders of magnitude slower than it is. So, for performance reasons, the updates are cached in memory, and every so often the in-memory data is written to disk in a consistent way, and the superblocks on the disk are then updated to point at the new structures. This update of the superblocks is called a ''transaction'' in btrfs. Each transaction is given a number, called the ''transid'' (or sometimes ''generation''). These transids increase by one on every transaction.
+
+Now, when writing metadata, every metadata block has the current transid embedded in it. The upwards-cascading effect of the CoW process means that in the metadata trees, the transid of every block in the metadata ''must'' be lower than or equal to the transid of the block above it in the tree. This is a fundamental property of the design of the filesystem -- if it's not true, then something has broken very badly, and the FS rightly complains (and may prevent the FS from being mounted at all).
+
+=== How does this happen? ===
+
+The fundamental problem identified by transid failures is that some metadata block is referenced by an older metadata block. This can happen in a couple of ways.
+
+# The superblock got written out before it should have been, before the trees under it were completely consistent (i.e. before all the cached metadata in RAM was flushed to permanent storage), and then the FS was interrupted in writing out the remainder of the metadata. To ensure that this is the case, btrfs uses a feature called a barrier to impose an ordering on the writes to the hardware. The barrier should ensure that the superblock can't get written out before all the other metadata has reached the permanent storage. However, (a) the hardware may not implement barriers correctly, or at all -- most common on USB storage devices, but has also been seen directly on some drives and controllers, or (b) there might be a bug in btrfs (unlikely, because it's tested quite thoroughly using tools written specifically to identify this problem).
+# The data written to disk was modified (corrupted) in RAM before it was written out to disk. If the transid in a metadata block was modified, or a pointer to another block was changed in a way that happened to hit another metadata block (but an older one, or just the wrong one), then you can see transid failures. This could happen with a faulty computing device (bad RAM, CPU, PSU or power regulation), or it could happen as a result of a bug in some part of the kernel which allowed another part of the kernel to write on data it shouldn't have written to.
+
+If you see transids close together, then it's probably the first case above, and mounting with <code>-o usebackuproot</code> ''may'' be able to step backwards and use an earlier superblock with a slightly older, non-broken set of trees in it.
+
+If you see wildly different transids, or a transid which is hugely out of proportion, then you probably have the second case, and there's little hope for in-place recovery (transids don't increase very fast -- once every 30s is the normal behaviour, although it might be somewhat faster than that with lots of snapshotting).
 
 = Subvolumes =
 
