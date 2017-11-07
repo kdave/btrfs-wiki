@@ -15,7 +15,7 @@ of a btrfs filesystem. The quota groups (qgroups) are managed by the subcommand
 <tt>btrfs qgroup</tt>(8).</p>
 <blockquote><b>Note:</b>
 the qgroups are different than the traditional user quotas and designed
-to track shared and exlusive data per-subvolume.  Plese refer to the section
+to track shared and exclusive data per-subvolume.  Please refer to the section
 <em>HIERARCHICAL QUOTA GROUP CONCEPTS</em> for a detailed description.</blockquote>
 ===PERFORMANCE IMPLICATIONS===
 
@@ -43,7 +43,7 @@ on the fly.</p>
 restrict directories.
 At installation time, the harddisk can be partitioned so that every directory
 (eg. /usr, /var/, &#8230;) that needs a limit gets its own partition.  The obvious
-problem is, that those limits cannot be changed without a reinstall ation.  The
+problem is, that those limits cannot be changed without a reinstallation.  The
 btrfs subvolume feature builds a bridge.  Subvolumes correspond in many ways to
 partitions, as every subvolume looks like its own filesystem.  With subvolume
 quota, it is now possible to restrict each subvolume like a partition, but keep
@@ -58,7 +58,7 @@ belong to the same user home.  I just want to limit the total space used by
 both! But somebody else might not want to charge the snapshots to the users.</p>
 <p>Btrfs subvolume quota solves these problems by introducing groups of subvolumes
 and let the user put limits on them.  It is even possible to have groups of
-groups.  In the following, we refer to them as <em>qgruops</em>.</p>
+groups.  In the following, we refer to them as <em>qgroups</em>.</p>
 <p>Each qgroup primarily tracks two numbers, the amount of total referenced
 space and the amount of exclusively referenced space.</p>
 <dl>
@@ -81,16 +81,32 @@ from within this qgroup.
 </dl>
 ===SUBVOLUME QUOTA GROUPS===
 
-<p>The basic notion of the Subvolume Quota feature is the qouta group, short
+<p>The basic notion of the Subvolume Quota feature is the quota group, short
 qgroup.  Qgroups are notated as <em>level/id</em>, eg.  the qgroup 3/2 is a qgroup of
 level 3. For level 0, the leading <em>0/</em> can be omitted.
 Qgroups of level 0 get created automatically when a subvolume/snapshot gets
 created.  The ID of the qgroup corresponds to the ID of the subvolume, so 0/5
 is the qgroup for the root subvolume.
 For the <b>btrfs qgroup</b> command, the path to the subvolume can also be used
-instead of <em>0/ID</em>.  For all higher levels, the ID can be choosen freely.</p>
+instead of <em>0/ID</em>.  For all higher levels, the ID can be chosen freely.</p>
 <p>Each qgroup can contain a set of lower level qgroups, thus creating a hierarchy
 of qgroups. Figure 1 shows an example qgroup tree.</p>
+<pre>                          +---+
+                          |2/1|
+                          +---+
+                         /     \
+                   +---+/       \+---+
+                   |1/1|         |1/2|
+                   +---+         +---+
+                  /     \       /     \
+            +---+/       \+---+/       \+---+
+qgroups     |0/1|         |0/2|         |0/3|
+            +-+-+         +---+         +---+
+              |          /     \       /     \
+              |         /       \     /       \
+              |        /         \   /         \
+extents       1       2            3            4</pre>
+<p>Figure1: Sample qgroup hierarchy</p>
 <p>At the bottom, some extents are depicted showing which qgroups reference which
 extents.  It is important to understand the notion of <em>referenced</em> vs
 <em>exclusive</em>.  In the example, qgroup 0/2 references extents 2 and 3, while 1/2
@@ -157,7 +173,7 @@ when the subvolume is deleted.</p>
 <p><tt>Restricting homes</tt></p>
 <p>When you have several users on a machine, with home directories probably under
 /home, you might want to restrict /home as a whole, while restricting every
-user to an indiviual limit as well.  This is easily accomplished by creating a
+user to an individual limit as well.  This is easily accomplished by creating a
 qgroup for /home , eg. 1/1, and assigning all user subvolumes to it.
 Restricting this qgroup will limit /home, while every user subvolume can get
 its own (lower) limit.</p>

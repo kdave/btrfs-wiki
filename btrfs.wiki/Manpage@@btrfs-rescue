@@ -80,8 +80,6 @@ verbose mode.
 <p>
 clear the filesystem log tree
 </p>
-
-</dl>
 <p>This command will clear the filesystem log tree. This may fix a specific
 set of problem when the filesystem mount fails due to the log replay. See below
 for sample stacktraces that may show up in system log.</p>
@@ -105,6 +103,8 @@ backtrace:</p>
 the log and the filesystem may be mounted normally again. The keywords to look
 for are <em>open_ctree</em> which says that it&#8217;s during mount and function names
 that contain <em>replay</em>, <em>recover</em> or <em>log_tree</em>.</p>
+
+</dl>
 ==EXIT STATUS==
 
 <p><b>btrfs rescue</b> returns a zero exit status if it succeeds. Non zero is

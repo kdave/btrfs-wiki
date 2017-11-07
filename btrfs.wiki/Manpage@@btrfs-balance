@@ -53,15 +53,15 @@ See the section <em>ENOSPC</em> for more details.</blockquote>
 <blockquote><b>Note:</b>
 The balance subcommand also exists under the <b>btrfs filesystem</b>
 namespace. This still works for backward compatibility but is deprecated and
-should not be used any more.</blockquote>
+should not be used anymore.</blockquote>
 <blockquote><b>Note:</b>
 A short syntax <b>btrfs balance <em>&lt;path&gt;</em></b> works due to backward compatibility
-but is deprecated and should not be used anymore. Use <b>btrfs balance start</b>
+but is deprecated and should not be used any more. Use <b>btrfs balance start</b>
 command instead.</blockquote>
+
 ==PERFORMANCE IMPLICATIONS==
 
 <p>Balancing operations are very IO intensive and can also be quite CPU intensive, impacting other ongoing filesystem operations. Typically large amounts of data are copied from one location to another, with corresponding metadata updates.</p>
-
 <p>Depending upon the block group layout, it can also be seek heavy. Performance on rotational devices is noticeably worse compared to SSDs or fast arrays.</p>
 
 ==SUBCOMMAND==
@@ -103,7 +103,7 @@ filesystem size. To prevent starting a full balance by accident, the user is
 warned and has a few seconds to cancel the operation before it starts. The
 warning and delay can be skipped with <em>--full-balance</em> option.</blockquote>
 <p>Please note that the filters must be written together with the <em>-d</em>, <em>-m</em> and
-<em>-s</em> options, because they&#8217;re optional and bare <em>-d</em> etc alwo work and mean no
+<em>-s</em> options, because they&#8217;re optional and bare <em>-d</em> etc also work and mean no
 filters.</p>
 <p><tt>Options</tt></p>
 <dl>
@@ -161,6 +161,7 @@ Show status of running or paused balance.
 <p>If <em>-v</em> option is given, output will be verbose.</p>
 
 </dl>
+
 ==FILTERS==
 
 <p>From kernel 3.3 onwards, btrfs balance can limit its action to a subset of the
@@ -200,7 +201,7 @@ The minimum range boundary is inclusive, maximum is exclusive.</p>
 <dd>
 <p>
 Balances only block groups which have at least one chunk on the given
-device. To list devices with ids use <b>btrfs fi show</b>.
+device. To list devices with ids use <b>btrfs filesystem show</b>.
 </p>
 
 <dt>
@@ -312,7 +313,7 @@ can be found in section <em>TYPICAL USECASES</em> of [[Manpage/btrfs-device|btrf
 summarized numbers of free or used space, but there are still some hints
 provided.</p>
 <p>Let&#8217;s use the following real life example and start with the output:</p>
-<pre>$ btrfs fi df /path
+<pre>$ btrfs filesystem df /path
 Data, single: total=75.81GiB, used=64.44GiB
 System, RAID1: total=32.00MiB, used=20.00KiB
 Metadata, RAID1: total=15.87GiB, used=8.84GiB
@@ -341,7 +342,7 @@ data and thus will be faster. A typical filter command would look like:</p>
 <pre># btrfs balance start -dusage=50 /path
 Done, had to relocate 2 out of 97 chunks
 
-$ btrfs fi df /path
+$ btrfs filesystem df /path
 Data, single: total=74.03GiB, used=64.43GiB
 System, RAID1: total=32.00MiB, used=20.00KiB
 Metadata, RAID1: total=15.87GiB, used=8.84GiB
@@ -352,7 +353,7 @@ usage filter.</p>
 <pre># btrfs balance start -dusage=85 /path
 Done, had to relocate 13 out of 95 chunks
 
-$ btrfs fi df /path
+$ btrfs filesystem df /path
 Data, single: total=68.03GiB, used=64.43GiB
 System, RAID1: total=32.00MiB, used=20.00KiB
 Metadata, RAID1: total=15.87GiB, used=8.85GiB
@@ -368,7 +369,7 @@ reflinks updated frequently.</p>
 <pre># btrfs balance start -musage=50 /path
 Done, had to relocate 4 out of 89 chunks
 
-$ btrfs fi df /path
+$ btrfs filesystem df /path
 Data, single: total=68.03GiB, used=64.43GiB
 System, RAID1: total=32.00MiB, used=20.00KiB
 Metadata, RAID1: total=14.87GiB, used=8.85GiB
@@ -382,7 +383,7 @@ further compaction:</p>
 <pre># btrfs balance start -musage=70 /path
 Done, had to relocate 13 out of 88 chunks
 
-$ btrfs fi df .
+$ btrfs filesystem df .
 Data, single: total=68.03GiB, used=64.43GiB
 System, RAID1: total=32.00MiB, used=20.00KiB
 Metadata, RAID1: total=11.97GiB, used=8.83GiB
@@ -398,7 +399,7 @@ groups is automatic since 3.18. The same can be achieved manually with a
 notable exception that this operation does not require the work space. Thus it
 can be used to reclaim unused block groups to make it available.</p>
 <pre># btrfs balance start -dusage=0 /path</pre>
-<p>This should lead to decrease in the <em>total</em> numbers in the <b>btrfs fi df</b> output.</p>
+<p>This should lead to decrease in the <em>total</em> numbers in the <b>btrfs filesystem df</b> output.</p>
 ==EXIT STATUS==
 
 <p><b>btrfs balance</b> returns a zero exit status if it succeeds. Non zero is

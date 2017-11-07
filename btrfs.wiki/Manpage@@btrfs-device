@@ -18,19 +18,19 @@ Data and metadata are organized in allocation profiles with various redundancy
 policies. There&#8217;s some similarity with traditional RAID levels, but this could
 be confusing to users familiar with the traditional meaning. Due to the
 similarity, the RAID terminology is widely used in the documentation.  See
-[[Manpage/mkfs.btrfs|mkfs.btrfs(9)]] for more details and the exact profile capabilities and
+[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] for more details and the exact profile capabilities and
 constraints.</p>
 <p>The device management works on a mounted filesystem. Devices can be added,
-removed or replaced, by commands profided by <b>btrfs device</b> and <b>btrfs replace</b>.</p>
+removed or replaced, by commands provided by <b>btrfs device</b> and <b>btrfs replace</b>.</p>
 <p>The profiles can be also changed, provided there&#8217;s enough workspace to do the
-conversion, using the <b>btrfs balance</b> comand and namely the filter <em>convert</em>.</p>
+conversion, using the <b>btrfs balance</b> command and namely the filter <em>convert</em>.</p>
 <dl>
 <dt>
 Profile
 <dd>
 <p>
 A profile describes an allocation policy based on the redundancy/replication
-constrants in connection with the number of devices. The profile applies to
+constraints in connection with the number of devices. The profile applies to
 data and metadata block groups separately.
 </p>
 
@@ -49,7 +49,7 @@ RAID10, RAID5 and RAID6.
 
 <dl>
 <dt>
-<b>add</b> [-Kf] <em>&lt;dev&gt;</em> [<em>&lt;dev&gt;</em>&#8230;] <em>&lt;path&gt;</em>
+<b>add</b> [-Kf] <em>&lt;device&gt;</em> [<em>&lt;device&gt;</em>&#8230;] <em>&lt;path&gt;</em>
 <dd>
 <p>
 Add device(s) to the filesystem identified by <em>&lt;path&gt;</em>.
@@ -80,7 +80,7 @@ force overwrite of existing filesystem on the given disk(s)
 </dl>
 
 <dt>
-<b>remove</b> <em>&lt;dev&gt;</em>|<em>&lt;devid&gt;</em> [<em>&lt;dev&gt;</em>|<em>&lt;devid&gt;</em>&#8230;] <em>&lt;path&gt;</em>
+<b>remove</b> <em>&lt;device&gt;</em>|<em>&lt;devid&gt;</em> [<em>&lt;device&gt;</em>|<em>&lt;devid&gt;</em>&#8230;] <em>&lt;path&gt;</em>
 <dd>
 <p>
 Remove device(s) from a filesystem identified by <em>&lt;path&gt;</em>
@@ -90,12 +90,12 @@ fails. The filesystem must be converted to profile(s) that would allow the
 removal. This can typically happen when going down from 2 devices to 1 and
 using the RAID1 profile. See the example section below.</p>
 <p>The operation can take long as it needs to move all data from the device.</p>
-<blockquote><b>Note:</b>
-It is not possible to delete the device that was used to mount the
-filesystem. This is a limitation given by the VFS.</blockquote>
+<p>It is possible to delete the device that was used to mount the filesystem. The
+device entry in mount table will be replaced by another device name with the
+lowest device id.</p>
 
 <dt>
-<b>delete</b> <em>&lt;dev&gt;</em>|<em>&lt;devid&gt;</em> [<em>&lt;dev&gt;</em>|<em>&lt;devid&gt;</em>&#8230;] <em>&lt;path&gt;</em>
+<b>delete</b> <em>&lt;device&gt;</em>|<em>&lt;devid&gt;</em> [<em>&lt;device&gt;</em>|<em>&lt;devid&gt;</em>&#8230;] <em>&lt;path&gt;</em>
 <dd>
 <p>
 Alias of remove kept for backward compatibility
@@ -105,8 +105,11 @@ Alias of remove kept for backward compatibility
 <b>ready</b> <em>&lt;device&gt;</em>
 <dd>
 <p>
-Wait until all devices of a multiple-device filesystem are scanned and registered
-within the kernel module.
+Wait until all devices of a multiple-device filesystem are scanned and
+registered within the kernel module. This is to provide a way for automatic
+filesystem mounting tools to wait before the mount can start. The device scan
+is only one of the preconditions and the mount can fail for other reasons.
+Normal users usually do not need this command and may safely ignore it.
 </p>
 
 <dt>
@@ -127,20 +130,30 @@ an alternative way of mounting multiple-device filesystem without the need for
 prior scanning. See the mount option <em>device</em>.</p>
 
 <dt>
-<b>stats</b> [-z] <em>&lt;path&gt;</em>|<em>&lt;device&gt;</em>
+<b>stats</b> [options] <em>&lt;path&gt;</em>|<em>&lt;device&gt;</em>
 <dd>
 <p>
 Read and print the device IO error statistics for all devices of the given
-filesystem identified by <em>&lt;path&gt;</em> or for a single <em>&lt;device&gt;</em>. See section <b>DEVICE
-STATS</b> for more information.
+filesystem identified by <em>&lt;path&gt;</em> or for a single <em>&lt;device&gt;</em>. The filesystem must
+be mounted.  See section <b>DEVICE STATS</b> for more information about the reported
+statistics and the meaning.
 </p>
 <p><tt>Options</tt></p>
 <dl>
 <dt>
--z
+-z|--reset
 <dd>
 <p>
 Print the stats and reset the values to zero afterwards.
+</p>
+
+<dt>
+-c|--check
+<dd>
+<p>
+Check if the stats are all zeros and return 0 it it is so. Set bit 6 of the
+return code if any of the statistics is no-zero. The error values is 65 if
+reading stats from at least one device failed, otherwise it&#8217;s 64.
 </p>
 
 </dl>
@@ -250,12 +263,12 @@ pointers updated. Depending on the physical locations of the old and new
 blocks, the disk seeking is the key factor affecting performance.</p>
 <p>You&#8217;ll note that the system block group has been also converted to RAID1, this
 normally happens as the system block group also holds metadata (the physical to
-logial mappings).</p>
+logical mappings).</p>
 <p>What changed:</p>
 <ul>
 <li>
 <p>
-available data space decreased by 3GiB, usable rougly (50 - 3) + (100 - 3) = 144 GiB
+available data space decreased by 3GiB, usable roughly (50 - 3) + (100 - 3) = 144 GiB
 </p>
 </li>
 <li>
@@ -330,6 +343,8 @@ parent node).
 
 <p><b>btrfs device</b> returns a zero exit status if it succeeds. Non zero is
 returned in case of failure.</p>
+<p>If the <em>-s</em> option is used, <b>btrfs device stats</b> will add 64 to the
+exit status if any of the error counters is non-zero.</p>
 ==AVAILABILITY==
 
 <p><b>btrfs</b> is part of btrfs-progs.

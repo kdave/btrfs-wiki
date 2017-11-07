@@ -3,20 +3,35 @@
 |name=btrfs-convert}}
 
 ==NAME==
-btrfs-convert - convert from ext2/3/4 filesystem to btrfs in-place
+btrfs-convert - convert from ext2/3/4 or reiserfs filesystem to btrfs in-place
 
 ==SYNOPSIS==
 
 <p><b>btrfs-convert</b> [options] <em>&lt;device&gt;</em></p>
 ==DESCRIPTION==
 
-<p><b>btrfs-convert</b> is used to convert existing ext2/3/4 filesystem image to a
-btrfs filesystem in-place.  The original filesystem image is accessible
-subvolume named <em>ext2_saved</em> as file <em>image</em>.</p>
+<p><b>btrfs-convert</b> is used to convert existing source filesystem image to a btrfs
+filesystem in-place.  The original filesystem image is accessible in subvolume
+named like <em>ext2_saved</em> as file <em>image</em>.</p>
+<p>Supported filesystems:</p>
+<ul>
+<li>
+<p>
+ext2, ext3, ext4&#8201;&#8212;&#8201;original feature, always built in
+</p>
+</li>
+<li>
+<p>
+reiserfs&#8201;&#8212;&#8201;since version 4.13, opptinally built, requires libreiserfscore 3.6.27
+</p>
+</li>
+</ul>
+<p>The list of supported source filesystem by a given binary is listed at the end
+of help (option <em>--help</em>).</p>
 <blockquote><b>Warning:</b>
-If you are going to perform rollback to ext2/3/4, you should not
-execute <b>btrfs balance</b> command on the converted filesystem. This will change
-the extent layout and make <b>btrfs-convert</b> unable to rollback.</blockquote>
+If you are going to perform rollback to the original filesystem, you
+should not execute <b>btrfs balance</b> command on the converted filesystem. This
+will change the extent layout and make <b>btrfs-convert</b> unable to rollback.</blockquote>
 <p>The conversion utilizes free space of the original filesystem. The exact
 estimate of the required space cannot be foretold. The final btrfs metadata
 might occupy several gigabytes on a hundreds-gigabyte filesystem.</p>
@@ -28,9 +43,12 @@ blocks are bound to the original free space layout.</p>
 have supported data block size (ie. the same that would be valid for
 <em>mkfs.btrfs</em>). This is typically the system page size (4KiB on x86_64
 machines).</p>
+<blockquote><b>Note:</b>
+The source filesystem should be clean, you are encouraged to run the
+<em>fsck</em> tool if you&#8217;re not sure.</blockquote>
 <p><b>REMOVE THE ORIGINAL FILESYSTEM METADATA</b></p>
-<p>By removing the <em>ext2_saved</em> subvolume, all metadata of the original filesystem
-will be removed:</p>
+<p>By removing the subvolume named like <em>ext2_saved</em> or <em>reiserfs_saved</em>, all
+metadata of the original filesystem will be removed:</p>
 <pre># btrfs subvolume delete /mnt/ext2_saved</pre>
 <p>At this point it&#8217;s not possible to do rollback. The filesystem is usable but may
 be impacted by the fragmentation inherited from the original filesystem.</p>

@@ -232,6 +232,14 @@ list qgroups in order of <em>&lt;attr&gt;</em>.
 If no prefix is given, use ascending order by default.</p>
 <p>If multiple <em>&lt;attr&gt;</em>s is given, use comma to separate.</p>
 
+<dt>
+--sync
+<dd>
+<p>
+To retrieve information after updating the state of qgroups,
+force sync of the filesystem identified by <em>&lt;path&gt;</em> before getting information.
+</p>
+
 </dl>
 
 </dl>

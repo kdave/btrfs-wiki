@@ -35,7 +35,7 @@ https://btrfs.wiki.kernel.org/index.php/Restore</blockquote>
 -s|--snapshots
 <dd>
 <p>
-get also snapshots that are skippped by default
+get also snapshots that are skipped by default
 </p>
 
 <dt>

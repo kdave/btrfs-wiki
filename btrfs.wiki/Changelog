@@ -237,15 +237,86 @@ Major features or significant feature enhancements by kernel version. For more i
 |text=qgroups: new sysfs control file to allow temporary quota override with CAP_SYS_RESOURCE
 }}
 {{FeatureMerged
-|name=''deprecated mount option alloc_start
+|name=''deprecated mount option alloc_start''
 |version=4.13
 |text=That was a debugging helper, not used and not supposed to be used nowadays.
+}}
+{{FeatureMerged
+|name=ZSTD compression
+|version=4.14
+|text=New compression algorithm ZSTD, supposedly better ratio/speed performance.
+}}
+{{FeatureMerged
+|name=improved degraded mount
+|version=4.14
+|text=Allow degraded mount based on the chunk constraints, not device number constraints. Eg. when one device is missing but the remaining one holds all ''single'' chunks.
+}}
+{{FeatureMerged
+|name=''deprecated user transaction ioctl''
+|version=4.14
+|text=BTRFS_IOC_TRANS_START and BTRFS_IOC_TRANS_END, no known users, tricky to use; scheduled to be removed in 4.17
+}}
+{{FeatureMerged
+|name=refine SSD optimizations
+|version=4.14
+|text=The mount option ''ssd'' does not make any assumptions about block layout or management by the device anymore, leaving only the speedups based on low seek cost active.
+This could avoid some corner cases leading to excessive fragmentation. [https://git.kernel.org/linus/583b723151794e2ff1691f1510b4e43710293875 The story so far.]
 }}
 |}
 
 = By version (btrfs-progs) =
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
+
+== btrfs-progs v4.13 (Sep 2017) ==
+
+* convert: reiserfs support
+* check: new option --force to allow check of a mounted filesystem (no repair)
+* mkfs: --rootdir will now copy special files
+* dump-tree: minor output changes
+* inspect rootid: accept file as arugment
+* dev usage: don't calculate slack space for missing devices
+* fi du: don't print error on EMPTY_SUBVOL (inode number 2)
+* build:
+** fixed support for sanitization features on gcc (tsan, asan, ubsan)
+** fix PIE build
+* other:
+** misc cleanups and stability fixes
+** travis CI enhancements
+** new tests, fuzzed images
+** testsuite cleanups
+
+=== btrfs-progs v4.13.1 (Sep 2017) ===
+
+* image: speed up generating the sanitized names, do not generate unprintable chars
+* completion: add missing commands, better mount point detection
+* restore: add zstd support; libzstd detected automatically, will be requested by default in the future, or can be configured out
+* other:
+** misc fixes found by sparse
+** doc enhancements, ioctl manual page started
+** updated and new tests
+** build fixes
+
+=== btrfs-progs v4.13.2 (Oct 2017) ===
+
+* subvol list:
+** don't list toplevel subvolume among deleted (broken since 4.8.3)
+** minor adjustments of uuid print format
+* subvol delete:
+** fix swapped behaviour of --commit-each and --commit-after
+** fix potentially lost sync if subvolumes are from different filesystems
+* check: add cache for metadata blocks, should improve performance
+* other:
+** new tests, testsuite updates
+** doc updates
+** cleanups
+
+=== btrfs-progs v4.13.3 (Oct 2017) ===
+
+* check: fix --force, wrong check for a mounted block device
+* build: fix --with-convert parsing
+* subvol list: don't list TOPLEVEL
+* other: update tests
 
 == btrfs-progs v4.12 (Jul 2017) ==
 
@@ -312,7 +383,7 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** lots of spelling fixes in docs, other updates
 ** more tests
 
-== btrfs-progs 4.10.1 (Mar 2017) ==
+=== btrfs-progs 4.10.1 (Mar 2017) ===
 
 * receive: handle subvolume in path clone
 * convert: rollback fixed (rewrite was needed to address previous design issues)
@@ -320,7 +391,7 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 * dump-tree: print log trees
 * other: new and updated tests
 
-== btrfs-progs 4.10.2 (Mar 2017) ==
+=== btrfs-progs 4.10.2 (Mar 2017) ===
 
 * check: lowmem mode fix for false alert about lost backrefs
 * convert: minor bugfix

@@ -1,25 +1,36 @@
-Btrfs supports transparent file compression. There are two algorithms available, [http://en.wikipedia.org/wiki/Zlib ZLIB] and [http://en.wikipedia.org/wiki/Lzo LZO].  Basically, compression is on a file by file basis.  You can have a single btrfs mount point that has some files that are uncompressed, some that are compressed with LZO, some with ZLIB, for instance (though you may not '''want''' it that way, it is supported).
+Btrfs supports transparent file compression. There are three algorithms available: [http://en.wikipedia.org/wiki/Zlib ZLIB], [http://en.wikipedia.org/wiki/Lzo LZO] and [https://en.wikipedia.org/wiki/Zstandard ZSTD](since v4.14). Basically, compression is on a file by file basis. You can have a single btrfs mount point that has some files that are uncompressed, some that are compressed with LZO, some with ZLIB, for instance (though you may not '''want''' it that way, it is supported).
 
 = Compression FAQ =
 == How do I enable compression? ==
 Mount with <code>[[Mount options#compress|-o compress]]</code> or <code>[[Mount options#compress|-o compress-force]]</code>.  Then write (or re-write) files, and they will be transparently compressed.  Some files may not compress very well, and these are typically not recompressed but still written uncompressed.  See the [[#incompressible|What happens to incompressible files?]] section, below.
 
 === What is the default compression method? ===
-As for kernels up to 3.6 it's ZLIB.
+ZLIB. The 'default' means if it's specified by the mount option 'compress' or
+'compress-force', or via <tt>chattr +c</tt>, or <tt>btrfs filesystem defrag
+-c</tt>.
+
+=== Can I set the compression level? ===
+
+The level support of ZLIB has been added in v4.14, LZO does not support levels (the kernel implementation provides only one), ZSTD level support is planned.
+
+There are 9 levels of ZLIB supported (1 to 9), mapping 1:1 from the mount option to the algorithm defined level. The default is level 3, which provides the highest compression ratio and is still reasonably fast. The difference in compression gain of levels 7, 8 and 9 is comparable but the higher levels take longer. The level can be specified as the mount option, as "compress=zlib:1". Level 0 maps to the default.
 
 == What are the differences between compression methods? ==
 There's a speed/ratio trade-off:
 
 * ZLIB -- slower, higher compression ratio (uses zlib level 3 setting, you can see the zlib level difference between 1 and 6 in zlib sources).
 * LZO -- faster compression and decompression than zlib, worse compression ratio, designed to be fast
+* ZSTD -- '(since v4.14)' compression comparable to zlib with higher compression/decompression speeds and different ratio levels ([https://git.kernel.org/pub/scm/linux/kernel/git/mason/linux-btrfs.git/commit/?h=next&id=5c1aab1dd5445ed8bdcdbb575abc1b0d7ee5b2e7 details])
 
 The differences depend on the actual data set and cannot be expressed by a single number or recommendation. Do your own benchmarks. LZO seems to give satisfying results for general use.
 
 === Are there other compression methods supported? ===
 
-Currently no, there is a work in progress to add [http://code.google.com/p/lz4/ LZ4].  The difference is a plan to add also its ''high compression'' mode that is slow but achieves better compression ratio while the decompressor remains the same and the decompression speed is unaffected (see [http://fastcompression.blogspot.com/p/lz4.html here] and also the High Compression (HC) mode [https://code.google.com/p/lz4/ here]).  It has not yet been accepted, however, see [https://btrfs.wiki.kernel.org/index.php/FAQ#Will_btrfs_support_LZ4.3F here].
+Currently no, and with ZSTD, there are no further plans to add more. The [http://code.google.com/p/lz4/ LZ4] algorithm was considered but has not brought significant gains.
 
-Snappy support (compresses slower than LZ0 but decompresses much faster) has also been [http://article.gmane.org/gmane.comp.file-systems.btrfs/15316 proposed].  Some work has been done toward adding lzma (very slow, high compression) support as well.  Current status is "not considered anymore"
+Snappy support (compresses slower than LZ0 but decompresses much faster) has also been [http://article.gmane.org/gmane.comp.file-systems.btrfs/15316 proposed].
+
+Some work has been done toward adding lzma (very slow, high compression) support as well.  Current status is "not considered anymore".
 
 === Can a file data be compressed with different methods? ===
 Yes. The compression algorithm is stored per-extent.
@@ -66,14 +77,15 @@ process the files recursively in a directory. This is independent of the mount
 options ''compress'' or ''compress-force'', and using the option ''-c'' you
 can set the compression algorithm.
 
-Currently (4.14), it's not possible to select "no compression", using the
+Currently (v4.14), it's not possible to select "no compression", using the
 defrag command. This may change in the future.
 
 
 == How does compression interact with direct IO or COW? ==
-Compression does not work with DIO, does work with COW and does not work for NOCOW files. If a file is opened in DIO mode, it will fall back to buffered IO.
+Compression does not work with direct IO (DIO), does work with COW (the default) and does not work for NOCOW files. If a file is opened in DIO mode, it will fall back to buffered IO.
 === Are there speed penalties when doing random access to a compressed file? ===
 Yes. The compression processes ranges of a file of maximum size 128 KiB and compresses each 4 KiB (or page-sized) block separately. Accessing a byte in the middle of the given 128 KiB range requires to decompress the whole range. This is not optimal and is subject to optimizations and further development.
+
 == <div id="incompressible">What happens to incompressible files?</div> ==
 There is a simple decision logic: if the first portion of data being compressed is not smaller than the original, the compression of the file is disabled -- unless the filesystem is mounted with <code>[[Mount options#compress|-o compress-force]]</code>. In that case it'll be compressed always regardless of the compressibility of the file. This is not optimal and subject to optimizations and further development.
 

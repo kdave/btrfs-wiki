@@ -3,7 +3,7 @@
 |name=btrfs-check}}
 
 ==NAME==
-btrfs-check - check or repair an unmounted btrfs filesystem
+btrfs-check - check or repair a btrfs filesystem
 
 ==SYNOPSIS==
 
@@ -11,12 +11,14 @@ btrfs-check - check or repair an unmounted btrfs filesystem
 ==DESCRIPTION==
 
 <p>The filesystem checker is used to verify structural integrity of a filesystem
-and attempt to repair it if requested. The filesystem must be unmounted.</p>
+and attempt to repair it if requested.  It is recommended to unmount the
+filesystem prior to running the check, but it is possible to start checking a
+mounted filesystem (see <em>--force</em>).</p>
 <p>By default, <b>btrfs check</b> will not modify the device but you can reaffirm that
 by the option <em>--readonly</em>.</p>
 <p><b>btrfsck</b> is an alias of <b>btrfs check</b> command and is now deprecated.</p>
 <blockquote><b>Warning:</b>
-Do not use <em>--repair</em> unless you are adviced to by a developer, an
+Do not use <em>--repair</em> unless you are advised to by a developer, an
 experienced user or accept the fact that <em>fsck</em> cannot possibly fix all sorts
 of damage that could happen to a filesystem because of software and hardware
 bugs.</blockquote>
@@ -24,10 +26,10 @@ bugs.</blockquote>
 data structures satisfy the constraints, point to the right objects or are
 correctly connected together.</p>
 <p>There are several cross checks that can detect wrong reference counts of shared
-extents, backrefrences, missing extents of inodes, directory and inode
+extents, backreferences, missing extents of inodes, directory and inode
 connectivity etc.</p>
 <p>The amount of memory required can be high, depending on the size of the
-filesystem, smililarly the run time.</p>
+filesystem, similarly the run time.</p>
 ==SAFE OR ADVISORY OPTIONS==
 
 <dl>
@@ -47,7 +49,7 @@ verify checksums of data blocks
 </p>
 <p>This expects that the filesystem is otherwise
 OK, so this is basically and offline <em>scrub</em> but does not repair data from
-spare coipes.</p>
+spare copies.</p>
 
 <dt>
 --chunk-root <em>&lt;bytenr&gt;</em>
@@ -71,7 +73,7 @@ indicate progress at various checking phases
 </p>
 
 <dt>
---qgroup-report
+-Q|--qgroup-report
 <dd>
 <p>
 verify qgroup accounting and compare against filesystem accounting
@@ -102,6 +104,21 @@ respective superblock offset is within the device size
 </p>
 <p>This can be used to use a different starting point if some of the primary
 superblock is damaged.</p>
+
+<dt>
+--clear-space-cache v1|v2
+<dd>
+<p>
+completely wipe all free space cache of given type
+</p>
+<p>For free space cache <em>v1</em>, the <em>clear_cache</em> kernel mount option only rebuilds
+the free space cache for block groups that are modified while the filesystem is
+mounted with that option. Thus, using this option with <em>v1</em> makes it possible
+to actually clear the entire free space cache.</p>
+<p>For free space cache <em>v2</em>, the <em>clear_cache</em> kernel mount option does destroy
+the entire free space cache. This option with <em>v2</em> provides an alternative
+method of clearing the free space cache that doesn&#8217;t require mounting the
+filesystem.</p>
 
 </dl>
 ==DANGEROUS OPTIONS==
@@ -139,7 +156,7 @@ Do not use unless you know what you&#8217;re doing.</blockquote>
 select mode of operation regarding memory and IO
 </p>
 <p>The <em>MODE</em> can be one of <em>original</em> and <em>lowmem</em>. The original mode is mostly
-unoptimized regarding memory consumpption and can lead to out-of-memory
+unoptimized regarding memory consumption and can lead to out-of-memory
 conditions on large filesystems. The possible workaround is to export the block
 device over network to a machine with enough memory. The low memory mode is
 supposed to address the memory consumption, at the cost of increased IO when it
@@ -149,6 +166,18 @@ needs to re-read blocks when needed. This may increase run time.</p>
 <blockquote><b>Note:</b>
 <em>lowmem</em> mode does not work with <em>--repair</em> yet, and is still considered
 experimental.</blockquote>
+<dl>
+<dt>
+--force
+<dd>
+<p>
+allow to work on a mounted filesystem. Note that this should work fine on a
+quiescent or read-only mounted filesystem but may crash if the device is
+changed externally, eg. by the kernel module.  Repair without mount checks is
+not supported right now.
+</p>
+
+</dl>
 ==EXIT STATUS==
 
 <p><b>btrfs check</b> returns a zero exit status if it succeeds. Non zero is

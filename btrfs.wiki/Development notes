@@ -29,7 +29,7 @@ string:
 
    "root=%llu(%s) offset=%llu size=%llu num_stripes=%d sub_stripes=%d type=%s"
 
-=== Error messages ===
+== Error messages ==
 
 * use ''btrfs_*'' helpers (btrfs_err, btrfs_info, ...), they print a filesystem identification like
  BTRFS info (device sdb): ...
@@ -43,6 +43,17 @@ string:
 * message level
 ** btrfs_err -- such messages have high visibility so use them for serious problems
 ** btrfs_info -- use for informative messages that might help debugging problems in the future and are worth keeping in the logs
+
+== Error handling and transaction abort ==
+
+Please keep all transaction abort exactly at the place where they happen and
+do not merge them to one. This pattern should be used everwhere and is
+important when debugging because we can pinpoint the line in the code from the
+syslog message and do not have to guess which way it got to the merged call.
+
+== BCP ==
+
+* do not use <tt>spin_is_locked</tt> but <tt>lockdep_assert_held</tt>
 
 = Kernel config options =
 

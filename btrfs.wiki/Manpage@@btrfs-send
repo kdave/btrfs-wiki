@@ -3,7 +3,7 @@
 |name=btrfs-send}}
 
 ==NAME==
-btrfs-send - generate a stream of changes between two subvolumes
+btrfs-send - generate a stream of changes between two subvolume snapshots
 
 ==SYNOPSIS==
 
@@ -11,17 +11,18 @@ btrfs-send - generate a stream of changes between two subvolumes
 ==DESCRIPTION==
 
 <p>This command will generate a stream of instructions that describe changes
-between two subvolumes. The stream can be consumed by the <b>btrfs receive</b>
-command to replicate the sent subvolume on a different filesystem.
+between two subvolume snapshots. The stream can be consumed by the <b>btrfs
+receive</b> command to replicate the sent snapshot on a different filesystem.
 The command operates in two modes: full and incremental.</p>
-<p>All subvolumes involved in one send command must be read-only (ie. the
-read-only snapshots and this status cannot be changed if there&#8217;s a running send
-operation that uses the subvolume).</p>
-<p>In the full mode, the entire subvolume data and metadata will end up in the
+<p>All snapshots involved in one send command must be read-only, and this status
+cannot be changed as long as there&#8217;s a running send operation that uses the
+snapshot.</p>
+<p>In the full mode, the entire snapshot data and metadata will end up in the
 stream.</p>
-<p>In the incremental mode (options <em>-p</em> and <em>-c</em>), there can be one or more
-parent subvolumes that will establish the base for determining the changes.
-The final stream will be smaller compared to the full mode.</p>
+<p>In the incremental mode (options <em>-p</em> and <em>-c</em>), previously sent snapshots that
+are available on both the sending and receiving side can be used to reduce the
+amount of information that has to be sent to reconstruct the sent snapshot on a
+different filesystem.</p>
 <p>It is allowed to omit the <em>-p <em>&lt;parent&gt;</em></em> option when <em>-c <em>&lt;clone-src&gt;</em></em> options
 are given, in which case <b>btrfs send</b> will determine a suitable parent among the
 clone sources itself.</p>
@@ -55,8 +56,8 @@ use this snapshot as a clone source for an incremental send (multiple allowed)
 -f <em>&lt;outfile&gt;</em>
 <dd>
 <p>
-output is normally written to standard outout so it can be eg. piped to
-receive, use this option to write it to a file
+output is normally written to standard output so it can be, for example, piped
+to btrfs receive. Use this option to write it to a file instead.
 </p>
 
 <dt>
@@ -81,7 +82,7 @@ occurrence of this option increases the verbosity level)
 -q|--quiet
 <dd>
 <p>
-suppress all messagese except errors
+suppress all messages except errors
 </p>
 
 </dl>

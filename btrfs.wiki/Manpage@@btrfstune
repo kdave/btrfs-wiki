@@ -7,7 +7,7 @@ btrfstune - tune various filesystem parameters
 
 ==SYNOPSIS==
 
-<p><b>btrfstune</b> [options] <em>&lt;dev&gt;</em> [<em>&lt;dev&gt;</em>&#8230;]</p>
+<p><b>btrfstune</b> [options] <em>&lt;device&gt;</em> [<em>&lt;device&gt;</em>&#8230;]</p>
 ==DESCRIPTION==
 
 <p><b>btrfstune</b> can be used to enable, disable or set various filesystem
@@ -15,7 +15,10 @@ parameters. The filesystem must be unmounted.</p>
 <p>The common usecase is to enable features that were not enabled at mkfs time.
 Please make sure that you have kernel support for the features.  You can find a
 complete list of features and kernel version of their introduction at
-https://btrfs.wiki.kernel.org/index.php/Changelog#By_feature .</p>
+https://btrfs.wiki.kernel.org/index.php/Changelog#By_feature .  Also, the
+manual page [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] contains more details about the features.</p>
+<p>Some of the features could be enabled on a mounted filesystem. Please refer to
+the respective section in [[Manpage/btrfs|btrfs(5)]].</p>
 ==OPTIONS==
 
 <dl>
@@ -32,25 +35,31 @@ to the filesystem and will capture all writes keeping the seeding device intact.
 -r
 <dd>
 <p>
-Enable extended inode refs (hardlink limit per file in a directory is 65536),
-enabled by mkfs feature <em>extref</em>. Since kernel 3.7.
+(since kernel: 3.7)
 </p>
+<p>Enable extended inode refs (hardlink limit per file in a directory is 65536),
+enabled by mkfs feature <em>extref</em>.</p>
 
 <dt>
 -x
 <dd>
 <p>
-Enable skinny metadata extent refs (more efficient representation of extents),
-enabled by mkfs feature <em>skinny-metadata</em>. Since kernel 3.10.
+(since kernel: 3.10)
 </p>
+<p>Enable skinny metadata extent refs (more efficient representation of extents),
+enabled by mkfs feature <em>skinny-metadata</em>.</p>
+<p>All newly created extents will use the new representation. To completely switch
+the entire filesystem, run a full balance of the metadata. Please refer to
+[[Manpage/btrfs-balance|btrfs-balance(8)]].</p>
 
 <dt>
 -n
 <dd>
 <p>
-Enable no-holes feature (more efficient representation of file holes), enabled
-by mkfs feature <em>no-holes</em>. Since kernel 3.14.
+(since kernel: 3.14)
 </p>
+<p>Enable no-holes feature (more efficient representation of file holes), enabled
+by mkfs feature <em>no-holes</em>.</p>
 
 <dt>
 -f
@@ -102,5 +111,7 @@ functionality is about to be merged to the main tool someday and <b>btrfstune</b
 will become deprecated and removed afterwards.</p>
 ==SEE ALSO==
 
-<p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]]</p>
+<p>[[Manpage/btrfs|btrfs(5)]],
+[[Manpage/btrfs-balance|btrfs-balance(8)]],
+[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]]</p>
 [[Category:Manpage]]

@@ -17,6 +17,11 @@ mount options
 </li>
 <li>
 <p>
+filesystem features
+</p>
+</li>
+<li>
+<p>
 file attributes
 </p>
 </li>
@@ -44,18 +49,6 @@ options please refer to [http://man7.org/linux/man-pages/man8/mount.8.html mount
 [http://man7.org/linux/man-pages/man5/acl.5.html acl(5)] manual page for more information about ACLs.</p>
 <p>The support for ACL is build-time configurable (BTRFS_FS_POSIX_ACL) and
 mount fails if <em>acl</em> is requested but the feature is not compiled in.</p>
-
-<dt>
-<b>alloc_start=<em>bytes</em></b>
-<dd>
-<p>
-(default: 1M, minimum: 1M)
-</p>
-<p>Debugging option to force all block allocations above a certain
-byte threshold on each block device.  The value is specified in
-bytes, optionally with a K, M, or G suffix (case insensitive).</p>
-<p>This option was used for testing and has no practical use, it&#8217;s slated to be
-removed in the future.</p>
 
 <dt>
 <b>autodefrag</b>
@@ -158,12 +151,16 @@ but a warning is printed if it&#8217;s more than 300 seconds (5 minutes).</p>
 (default: off)
 </p>
 <p>Control BTRFS file data compression.  Type may be specified as <em>zlib</em>,
-<em>lzo</em> or <em>no</em> (for no compression, used for remounting).  If no type
+<em>lzo</em>, <em>zstd</em> or <em>no</em> (for no compression, used for remounting).  If no type
 is specified, <em>zlib</em> is used.  If <em>compress-force</em> is specified,
-all files will be compressed, whether or not they compress well. Otherwise
-some simple heuristics are applied to detect an incompressible file. If the
-first blocks written to a file are not compressible, the whole file is
-permanently marked to skip compression.</p>
+the compression will allways be attempted, but the data may end up uncompressed
+if the compression would make them larger.</p>
+<p>Otherwise some simple heuristics are applied to detect an incompressible file.
+If the first blocks written to a file are not compressible, the whole file is
+permanently marked to skip compression. As this is too simple, the
+<em>compress-force</em> is a workaround that will compress most of the files at the
+cost of some wasted CPU cycles on failed attempts. The heuristics of <em>compress</em>
+will improve in the future so this will not be necessary.</p>
 <blockquote><b>Note:</b>
 If compression is enabled, <em>nodatacow</em> and <em>nodatasum</em> are disabled.</blockquote>
 
@@ -283,14 +280,16 @@ parameters, eg. <em>panic</em>, <em>oops</em> or <em>crashkernel</em>.
 <b>noflushoncommit</b>
 <dd>
 <p>
-(default: on)
+(default: off)
 </p>
 <p>This option forces any data dirtied by a write in a prior transaction to commit
-as part of the current commit.  This makes the committed state a fully
-consistent view of the file system from the application&#8217;s perspective (i.e., it
-includes all completed file system operations).  This was previously the
-behavior only when a snapshot was created.</p>
-<p>Disabling flushing may improve performance but is not crash-safe.</p>
+as part of the current commit, effectively a full filesystem sync.</p>
+<p>This makes the committed state a fully consistent view of the file system from
+the application&#8217;s perspective (i.e., it includes all completed file system
+operations). This was previously the behavior only when a snapshot was
+created.</p>
+<p>When off, the filesystem is consistent but buffered writes may last more than
+one transaction commit.</p>
 
 <dt>
 <b>fragment=<em>type</em></b>
@@ -369,16 +368,6 @@ workload is supposed to be metadata intense (snapshots, reflinks, xattrs,
 inlined files).</p>
 
 <dt>
-<b>recovery</b>
-<dd>
-<p>
-(since: 3.2, default: off, deprecated since: 4.5)
-</p>
-<blockquote><b>Note:</b>
-this option has been replaced by <em>usebackuproot</em> and should not be used
-but will work on 4.5+ kernels.</blockquote>
-
-<dt>
 <b>norecovery</b>
 <dd>
 <p>
@@ -407,65 +396,60 @@ normally be needed.</p>
 <p>
 (since: 3.3, default: off)
 </p>
-<p>Skip automatic resume of interrupted balance operation after mount.
-May be resumed with <b>btrfs balance resume</b> or the paused state can be removed
-by <b>btrfs balance cancel</b>. The default behaviour is to start interrutpd balance.</p>
+<p>Skip automatic resume of an interrupted balance operation. The operation can
+later be resumed with <b>btrfs balance resume</b>, or the paused state can be
+removed with <b>btrfs balance cancel</b>. The default behaviour is to resume an
+interrupted balance immediately after a volume is mounted.</p>
 
 <dt>
 <b>space_cache</b>
 <dt>
-<b>space_cache=v2</b>
+<b>space_cache=<em>version</em></b>
 <dt>
 <b>nospace_cache</b>
 <dd>
 <p>
-(<em>nospace_cache</em> since: 3.2, <em>space_cache=v2</em> since 4.5, default: on)
+(<em>nospace_cache</em> since: 3.2, <em>space_cache=v1</em> and <em>space_cache=v2</em> since 4.5, default: <em>space_cache=v1</em>)
 </p>
-<p>Options to control the free space cache.  This affects performance as searching
-for new free blocks could take longer if the space cache is not enabled. On the
-other hand, managing the space cache consumes some resources.  It can be
-disabled without clearing at mount time.</p>
-<p>There are two implementations of how the space is tracked. The safe default is
-<em>v1</em>.  On large filesystems (many-terabytes) and certain workloads the <em>v1</em>
-performance may degrade.  This problem is addressed by <em>v2</em>, that is based on
-b-trees, sometimes referred to as <em>free-space-tree</em>.</p>
-<p><em>Compatibility notes:</em></p>
-<ul>
-<li>
-<p>
-the <em>v2</em> has to be enabled manually at mount time, once
-</p>
-</li>
-<li>
-<p>
-kernel without <em>v2</em> support will be able to mount the filesystem in read-only mode
-</p>
-</li>
-<li>
-<p>
-<em>v2</em> can be removed by mounting with <em>clear_cache</em>
-</p>
-</li>
-</ul>
+<p>Options to control the free space cache. The free space cache greatly improves
+performance when reading block group free space into memory. However, managing
+the space cache consumes some resources, including a small amount of disk
+space.</p>
+<p>There are two implementations of the free space cache. The original
+implementation, <em>v1</em>, is the safe default. The <em>v1</em> space cache can be disabled
+at mount time with <em>nospace_cache</em> without clearing.</p>
+<p>On very large filesystems (many terabytes) and certain workloads, the
+performance of the <em>v1</em> space cache may degrade drastically. The <em>v2</em>
+implementation, which adds a new B-tree called the free space tree, addresses
+this issue. Once enabled, the <em>v2</em> space cache will always be used and cannot
+be disabled unless it is cleared. Use <em>clear_cache,space_cache=v1</em> or
+<em>clear_cache,nospace_cache</em> to do so. If <em>v2</em> is enabled, kernels without <em>v2</em>
+support will only be able to mount the filesystem in read-only mode. The
+<tt>btrfs(8)</tt> command currently only has read-only support for <em>v2</em>. A read-write
+command may be run on a <em>v2</em> filesystem by clearing the cache, running the
+command, and then remounting with <em>space_cache=v2</em>.</p>
+<p>If a version is not explicitly specified, the default implementation will be
+chosen, which is <em>v1</em> as of 4.9.</p>
 
 <dt>
 <b>ssd</b>
 <dt>
-<b>nossd</b>
-<dt>
 <b>ssd_spread</b>
+<dt>
+<b>nossd</b>
 <dd>
 <p>
 (default: SSD autodetected)
 </p>
 <p>Options to control SSD allocation schemes.  By default, BTRFS will
 enable or disable SSD allocation heuristics depending on whether a
-rotational or non-rotational disk is in use (contents of
-<em>/sys/block/DEV/queue/rotational</em>).  The <em>ssd</em> and <em>nossd</em> options
-can override this autodetection.</p>
+rotational or non-rotational device is in use (contents of
+<em>/sys/block/DEV/queue/rotational</em>). If it is, the <em>ssd</em> option is turned on.
+The option <em>nossd</em> will disable the autodetection.</p>
 <p>The <em>ssd_spread</em> mount option attempts to allocate into bigger and aligned
 chunks of unused space, and may perform better on low-end SSDs.  <em>ssd_spread</em>
-implies <em>ssd</em>, enabling all other SSD heuristics as well.</p>
+implies <em>ssd</em>, enabling all other SSD heuristics as well. The option <em>nossd</em>
+will disable all SSD options.</p>
 
 <dt>
 <b>subvol=<em>path</em></b>
@@ -487,15 +471,6 @@ This mount option overrides the default subvolume set for the given filesystem.
 <blockquote><b>Note:</b>
 if both <em>subvolid</em> and <em>subvol</em> are specified, they must point at the
 same subvolume, otherwise mount will fail.</blockquote>
-
-<dt>
-<b>subvolrootid=<em>objectid</em></b>
-<dd>
-<p>
-(irrelevant since: 3.2, formally deprecated since: 3.10)
-</p>
-<p>A workaround option from times (pre 3.2) when it was not possible to mount a
-subvolume that did not reside directly under the toplevel subvolume.</p>
 
 <dt>
 <b>thread_pool=<em>number</em></b>
@@ -548,6 +523,174 @@ This option has replaced <em>recovery</em>.</blockquote>
 root user can do that.</p>
 
 </dl>
+===DEPRECATED MOUNT OPTIONS===
+
+<p>List of mount options that have been removed, kept for backward compatibility.</p>
+<dl>
+<dt>
+<b>alloc_start=<em>bytes</em></b>
+<dd>
+<p>
+(default: 1M, minimum: 1M, deprecated since: 4.13)
+</p>
+<p>Debugging option to force all block allocations above a certain
+byte threshold on each block device.  The value is specified in
+bytes, optionally with a K, M, or G suffix (case insensitive).</p>
+
+<dt>
+<b>recovery</b>
+<dd>
+<p>
+(since: 3.2, default: off, deprecated since: 4.5)
+</p>
+<blockquote><b>Note:</b>
+this option has been replaced by <em>usebackuproot</em> and should not be used
+but will work on 4.5+ kernels.</blockquote>
+
+<dt>
+<b>subvolrootid=<em>objectid</em></b>
+<dd>
+<p>
+(irrelevant since: 3.2, formally deprecated since: 3.10)
+</p>
+<p>A workaround option from times (pre 3.2) when it was not possible to mount a
+subvolume that did not reside directly under the toplevel subvolume.</p>
+
+</dl>
+==FILESYSTEM FEATURES==
+
+<p>The basic set of filesystem features gets extended over time. The backward
+compatibility is maintained and the features are optional, need to be
+explicitly asked for so accidental use will not create incompatibilities.</p>
+<p>There are several classes and the respective tools to manage the features:</p>
+<dl>
+<dt>
+at mkfs time only
+<dd>
+<p>
+This is namely for core structures, like the b-tree nodesize, see
+[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] for more details.
+</p>
+
+<dt>
+after mkfs, on an unmounted filesystem
+<dd>
+<p>
+Features that may optimize internal structures or add new structures to support
+new functionality, see [[Manpage/btrfstune|btrfstune(8)]]. The command <b>btrfs inspect-internal
+dump-super device</b> will dump a superblock, you can map the value of
+<em>incompat_flags</em> to the features listed below
+</p>
+
+<dt>
+after mkfs, on a mounted filesystem
+<dd>
+<p>
+The features of a filesystem (with a given UUID) are listed in
+<tt>/sys/fs/btrfs/UUID/features/</tt>, one file per feature. The status is stored
+inside the file. The value <em>1</em> is for enabled and active, while <em>0</em> means the
+feature was enabled at mount time but turned off afterwards.
+</p>
+<p>Whether a particular feature can be turned on a mounted filesystem can be found
+in the directory <tt>/sys/fs/btrfs/features/</tt>, one file per feature. The value <em>1</em>
+means the feature can be enabled.</p>
+
+</dl>
+<p>List of features (see also [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] section <em>FILESYSTEM FEATURES</em>):</p>
+<dl>
+<dt>
+<b>big_metadata</b>
+<dd>
+<p>
+(since: 3.4)
+</p>
+<p>the filesystem uses <em>nodesize</em> for metadata blocks, this can be bigger than the
+page size</p>
+
+<dt>
+<b>compress_lzo</b>
+<dd>
+<p>
+(since: 2.6.38)
+</p>
+<p>the <em>lzo</em> compression has been used on the filesystem, either as a mount option
+or via <b>btrfs filesystem defrag</b>.</p>
+
+<dt>
+<b>compress_zstd</b>
+<dd>
+<p>
+(since: 4.14)
+</p>
+<p>the <em>zstd</em> compression has been used on the filesystem, either as a mount option
+or via <b>btrfs filesystem defrag</b>.</p>
+
+<dt>
+<b>default_subvol</b>
+<dd>
+<p>
+(since: 2.6.34)
+</p>
+<p>the default subvolume has been set on the filesystem</p>
+
+<dt>
+<b>extended_iref</b>
+<dd>
+<p>
+(since: 3.7)
+</p>
+<p>increased hardlink limit per file in a directory to 65536, older kernels
+supported a varying number of hardlinks depending on the sum of all file name
+sizes that can be stored into one metadata block</p>
+
+<dt>
+<b>mixed_backref</b>
+<dd>
+<p>
+(since: 2.6.31)
+</p>
+<p>the last major disk format change, improved backreferences, now default</p>
+
+<dt>
+<b>mixed_groups</b>
+<dd>
+<p>
+(since: 2.6.37)
+</p>
+<p>mixed data and metadata block groups, ie. the data and metadata are not
+separated and occupy the same block groups, this mode is suitable for small
+volumes as there are no constraints how the remaining space should be used
+(compared to the split mode, where empty metadata space cannot be used for data
+and vice versa)</p>
+<p>on the other hand, the final layout is quite unpredictable and possibly highly
+fragmented, which means worse performance</p>
+
+<dt>
+<b>no_holes</b>
+<dd>
+<p>
+(since: 3.14)
+</p>
+<p>improved representation of file extents where holes are not explicitly
+stored as an extent, saves a few percent of metadata if sparse files are used</p>
+
+<dt>
+<b>raid56</b>
+<dd>
+<p>
+(since: 3.9)
+</p>
+<p>the filesystem contains or contained a raid56 profile of block groups</p>
+
+<dt>
+<b>skinny_metadata</b>
+<dd>
+<p>
+(since: 3.10)
+</p>
+<p>reduced-size metadata for extent references, saves a few percent of metadata</p>
+
+</dl>
 ==FILE ATTRIBUTES==
 
 <p>The btrfs filesystem supports setting the following file attributes using the
@@ -593,7 +736,7 @@ empty files.</blockquote>
 <dd>
 <p>
 <em>no dump</em>, makes sense with 3rd party tools like [http://man7.org/linux/man-pages/man8/dump.8.html dump(8)], on BTRFS the
-attribute can be set/unset on no other special handling is done
+attribute can be set/unset but no other special handling is done
 </p>
 
 <dt>
@@ -639,11 +782,11 @@ numbers 10 and 234 (the device can be found under the <em>misc</em> category).</
 <pre>$ ls -l /dev/btrfs-control
 crw------- 1 root root 10, 234 Jan  1 12:00 /dev/btrfs-control</pre>
 <p>The device accepts some ioctl calls that can perform following actions on the
-filesyste module:</p>
+filesystem module:</p>
 <ul>
 <li>
 <p>
-scan devices for btrfs filesytem (ie. to let multi-device filesystems mount
+scan devices for btrfs filesystem (ie. to let multi-device filesystems mount
   automatically) and register them with the kernel module
 </p>
 </li>
@@ -659,11 +802,12 @@ get the supported features (can be also found under <em>/sys/fs/btrfs/features</
 </p>
 </li>
 </ul>
-<p>The device is usually created by &#8230;, but can be created manually:</p>
+<p>The device is usually created by a system device node manager (eg. udev), but
+can be created manually:</p>
 <pre># mknod --mode=600 c 10 234 /dev/btrfs-control</pre>
-<p>The device is not strictly required but the device scanning will not work and a
-workaround would need to be used to mount a multi-device filesystem. The mount
-option <em>device</em> can trigger the device scanning during mount.</p>
+<p>The control device is not strictly required but the device scanning will not
+work and a workaround would need to be used to mount a multi-device filesystem.
+The mount option <em>device</em> can trigger the device scanning during mount.</p>
 ==SEE ALSO==
 
 <p>[http://man7.org/linux/man-pages/man5/acl.5.html acl(5)],

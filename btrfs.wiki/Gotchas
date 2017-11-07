@@ -151,6 +151,12 @@ Details of affected versions TBD.
 ** '''3.10.31''', '''3.12.12''', '''3.13.4'''
 ** all newer than 3.14
 
+=== ssd mount option ===
+Currently, using the ssd mount option has a negative impact on usability and lifetime of modern SSDs.
+This will be fixed in '''4.14''', see this commit for more information: [https://github.com/torvalds/linux/commit/583b723151794e2ff1691f1510b4e43710293875]
+
+With '''4.14+''' it is safe and recommended again to use the ssd mount option for non-rotational storage.
+
 == Historical references ==
 
 List of issues going back 18 months from current release ('''kernels: 3.14+, date: Mar 2014'''). Older issues will be moved to a separate page.

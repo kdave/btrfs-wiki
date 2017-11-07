@@ -5,142 +5,189 @@
 For a list of features by their introduction, please see the table [[Changelog#By_feature]].
 
 The table below aims to serve as an overview for the stability status of the features BTRFS supports.
-While a feature may be functionally safe and reliable, it does not necessarily mean that its useful, for example in meeting your performance expectations for your specific workload.
+While a feature may be functionally safe and reliable, it does not necessarily
+mean that its useful, for example in meeting your performance expectations for
+your specific workload. Combination of features can vary in performance, the
+table does not cover all possibilities.
 
-The table is based on the latest released linux kernel: '''4.13'''
+'''The table is based on the latest released linux kernel: 4.13'''
+
+The columns for each feature reflrect the status of the implementation in following ways:
+
+''Overall status'' - completeness of the implementation, usecase coverage<br>
+''Performance'' - how much it could be improved until the inherent limits are hit
+''Notes'' - short description of the known issues, or what the feature does if it's not a well-known one
+
+''Legend:''
+* '''OK''': should be safe to use, no known major defficiencies
+* '''mostly OK''': safe for general use, there are some known problems that do not affect majority of users
+* '''Unstable''': do not use for other then testing purposes, known severe problems, missing implementation of some core parts
+
 
 {| class="wikitable" border=1
 |-
-! Feature !! Status !! Notes
+! Feature !! Overall status !! Performance !! Notes
 |-
-| colspan="3" | '''Performance'''
+| colspan="4" | '''Performance'''
 |-
 | Trim (aka. discard)
+| style="background: lightgreen;"   | OK
 | style="background: lightgreen;"   | OK
 | ''fstrim'' and mounted with ''-o discard'' (has performance implications)
 |-
 | Autodefrag
 | style="background: lightgreen;"   | OK
+| style="background: lightgreen;"   | OK
 |-
 | [[#Defrag|Defrag]]
 | style="background: orange;"       | mostly OK
-| extents get unshared ''(see below)''
+| style="background: lightgreen;"   | OK
+| extents get unshared ''[[Status#Defrag | (see below)]]''
 |-
-|colspan="3" | '''Compression, deduplication'''
+|colspan="4" | '''Compression, deduplication'''
 |-
 | [[Compression]]
-| style="background: orange;"       | mostly OK
+| style="background: lightgreen;"   | OK
+| style="background: lightgreen;"   | OK
 | ''(needs verification and source)'' auto-repair and compression may crash
 |-
 | Out-of-band dedupe
+| style="background: lightgreen;"   | OK
 | style="background: orange;"       | mostly OK
-| performance issues
+| (reflink), heavily referenced extents have a noticeable performance hit ''[[Status#Out_of_band_dedupe|(see below)]]''
 |-
 | File range cloning
+| style="background: lightgreen;"   | OK
 | style="background: orange;"       | mostly OK
-| (reflink), heavily referenced extents have a noticeable performance hit
+| (reflink), heavily referenced extents have a noticeable performance hit ''[[Status#File_range_cloning|(see below)]]''
 |-
-|colspan="3" | '''Reliabillity'''
+|colspan="4" | '''Reliabillity'''
 |-
 | Auto-repair
+| style="background: lightgreen;"   | OK
 | style="background: lightgreen;"   | OK
 | automatically repair from a correct spare copy if possible (dup, raid1, raid10)
 |-
 | [[Manpage/btrfs-scrub|Scrub]]
 | style="background: lightgreen;"   | OK
+| style="background: lightgreen;"   | OK
 |-
 | Scrub + RAID56
 | style="background: orange;"    | mostly OK
+| style="background: orange;"    | mostly OK
 |-
 | nodatacow
+| style="background: lightgreen;"   | OK
 | style="background: lightgreen;"   | OK
 | Nodatacow does not checksum data, see [[Manpage/btrfs(5)]].
 |-
 | Device replace
 | style="background: orange;"       | mostly OK
-| gets stuck on devices with bad sectors
+| style="background: orange;"       | mostly OK
+| gets stuck on devices with bad sectors ''[[Status#Device_replace|(see below)]]''
 |-
-| Balance
-| style="background: lightgreen;"   | OK
+| Degraded mount
+| style="background: orange;"       | mostly OK
+| n/a
+| applies to raid levels with redundancy: needs at least two available devices always. Can get stuck in irreversible read-only mode if only one device is present.
+[https://www.spinics.net/lists/linux-btrfs/msg63370.html] [https://www.spinics.net/lists/linux-btrfs/msg63435.html]
 |-
-|colspan="3" | '''Block group profile'''
+|colspan="4" | [[Manpage/mkfs.btrfs#PROFILES|'''Block group profile''']]
 |-
 | Single (block group profile)
+| style="background: lightgreen;"   | OK
 | style="background: lightgreen;"   | OK
 |-
 | DUP (block group profile)
 | style="background: lightgreen;"   | OK
+| style="background: lightgreen;"   | OK
 |-
 | RAID0
 | style="background: lightgreen;"   | OK
+| style="background: lightgreen;"   | OK
 |-
 | RAID1
+| style="background: lightgreen;"   | OK
 | style="background: orange;"       | mostly OK
-| Needs at least two available devices always. Can get stuck in irreversible read-only mode if only one device is present.
-[https://www.spinics.net/lists/linux-btrfs/msg63370.html] [https://www.spinics.net/lists/linux-btrfs/msg63435.html]
+| reading from mirrors in parallel can be optimized further ''[[Status#RAID1,_RAID10|(see below)]]''
+
 |-
 | RAID10
+| style="background: lightgreen;"   | OK
 | style="background: orange;"       | mostly OK
-| Needs to be able to create two copies always. Can get stuck in irreversible read-only mode if only one copy can be made.
-[https://www.spinics.net/lists/linux-btrfs/msg63370.html] [https://www.spinics.net/lists/linux-btrfs/msg63435.html]
+| reading from mirrors in parallel can be optimized further ''[[Status#RAID1,_RAID10|(see below)]]''
+
 |-
 | [[RAID56]]
 | style="background: FireBrick;"    | Unstable
-| write hole still exists, parity not checksummed
+| n/a
+| write hole still exists, parity not checksummed ''[[Status#RAID56|(see below)]]''
 |-
 | Mixed block groups
 | style="background: lightgreen;"   | OK
+| style="background: lightgreen;"   | OK
 | see documentation
 |-
-|colspan="3" | '''Administration'''
+|colspan="4" | '''Administration'''
 |-
 | Filesystem resize
 | style="background: lightgreen;"   | OK
+| style="background: lightgreen;"   | OK
 | shrink, grow
 |-
+| Balance
+| style="background: lightgreen;"   | OK
+| style="background: lightgreen;"   | OK
+| balance + qgroups can be slow when there are many snapshots
+|-
 | Offline UUID change
+| style="background: lightgreen;"   | OK
 | style="background: lightgreen;"   | OK
 |-
 | [[SysadminGuide#Subvolumes|Subvolumes, snapshots]]
 | style="background: lightgreen;"   | OK
+| style="background: lightgreen;"   | OK
 |-
 | [[Manpage/btrfs-send|Send]]
 | style="background: lightgreen;"   | OK
-| corner cases may still exist
+| style="background: lightgreen;"   | OK
 |-
 | [[Manpage/btrfs-receive|Receive]]
+| style="background: lightgreen;"   | OK
 | style="background: lightgreen;"   | OK
 |-
 | Seeding
 | style="background: lightgreen;"   | OK
-| should be better documented
+| style="background: lightgreen;"   | OK
+| needs to be better documented
 |-
 | [[Quota_support|Quotas, qgroups]]
 | style="background: orange;"       | mostly OK
+| style="background: orange;"       | mostly OK
+| qgroups with many snapshots slows down balance
 |-
-|colspan="3" | '''Misc'''
+|colspan="4" | '''Misc'''
 |-
 | [[#Free_space_tree|Free space tree]]
-| style="background: orange;"       | mostly OK
-| see below
+| style="background: lightgreen;"   | OK
+| style="background: lightgreen;"   | OK
+| ''[[Status#Free_space_tree|(see below)]]''
 |-
-| no-holes
+| [[Manpage/mkfs.btrfs#FILESYSTEM_FEATURES|no-holes]]
+| style="background: lightgreen;"   | OK
 | style="background: lightgreen;"   | OK
 | see documentation for compatibility
 |-
-| skinny-metadata
+| [[Manpage/mkfs.btrfs#FILESYSTEM_FEATURES|skinny-metadata]]
+| style="background: lightgreen;"   | OK
 | style="background: lightgreen;"   | OK
 | see documentation for compatibility
 |-
-| extended-refs
+| [[Manpage/mkfs.btrfs#FILESYSTEM_FEATURES|extended-refs]]
+| style="background: lightgreen;"   | OK
 | style="background: lightgreen;"   | OK
 | see documentation for compatibility
 |}
-
-''Legend:''
-* '''OK''': should be safe to use, no known defficiencies
-* '''mostly OK''': safe for general use, there are some known problems
-* '''Unstable''': do not use for other then testing purposes, known severe problems, missing implementation of some core part
 
 '''Note to editors:'''
 
@@ -167,9 +214,35 @@ Compatibility and historical references:
 * btrfs-progs versions before v4.7.3 might accidentally do writes to the filesystem, but since there's no way to invalidate the FST, this causes inconsistency and possible corruption (using a piece of space twice). ''If'' you have made changes (btrfstune, repair, ...) to a FST enabled filesystem with btrfs progs, then mount with clear_cache,space_cache=v2 and hope the space written to was not reused yet. (see [https://www.spinics.net/lists/linux-btrfs/msg59110.html Status of free-space-tree feature])
 * (fixed in linux 4.9) runtime support: fine on little-endian machines (x86*), known to be broken on big-endian (sparc64), see [https://bugzilla.kernel.org/show_bug.cgi?id=152111 sparc64: btrfs module fails to load on big-endian machines]
 
+=== Out of band dedupe ===
+
+File extents can be shared either due to snapshotting or reflink. As the
+number of owners of an extent grows, the time to process or modify the extent
+will also grow.
+
+The deduplication increases the level of sharing and reduces data usage.
+
+=== File range cloning ===
+
+See the intro paragraph in Out of band dedupe. The range cloning increases
+the extent sharing.
+
+=== RAID1, RAID10 ===
+
+The simple redundancy RAID levels utilize different mirrors in a way that does
+not achieve the maximum performance. The logic can be improved so the reads
+will spread over the mirrors evenly or based on device congestion.
+
 === RAID56 ===
 
 Some fixes went to 4.12, namely scrub and auto-repair fixes. Feature marked as ''mostly OK'' for now.
+
+Preliminary patches to fix the ''write hole'' have been posted.
+
+=== Device replace ===
+
+Replacing a device that has bad or otherwise inaccessible sectors may not
+let the replace command finish.
 
 = Other =
 

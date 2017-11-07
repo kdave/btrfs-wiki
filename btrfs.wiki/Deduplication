@@ -23,6 +23,8 @@ extents for deduplication using the Linux kernel extent-same ioctl.
 
 '''[http://btrfs-dedupe.com/ btrfs-dedupe]''' is a Rust library which implements incremental whole-file batch deduplication for Btrfs. It is written in Rust for safety and performance and uses the kernel ioctls to offload the actual deduplication to the kernel for safety. It maintains state for efficient regular operation, scanning file metadata on every run, hashing contents for files with new metadata, hashing file extent maps for files with new contents, and performing defragmentation and deduplication of files with matching content but non-matching extent maps.
 
+'''[https://github.com/Zygo/bees bees]''' block-oriented userspace dedup agent, designed to avoid scalability problems on large filesystems. Work as a daemon, not store any information about filesystem structure (only store some extent info and hashes in simple mmap'ed db), retrieves such information on demand through btrfs SEARCH_V2 and LOGICAL_INO ioctls. Very useful on large not write heavy storages, like backup servers. See more info at Bees GitHub.
+
 == Duplicate file finders with btrfs support ==
 
 While any duplicate file finder utility (e.g. [https://github.com/adrianlopezroche/fdupes fdupes], [http://www.pixelbeat.org/fslint/ fslint], etc) can find files for deduplication using another tool (eg duperemove), the following duplicate file finders have build-in btrfs deduplication capabilities:

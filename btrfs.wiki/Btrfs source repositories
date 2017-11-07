@@ -105,7 +105,7 @@ Note that some Fedora/Red Hat derived distributions use lzo-devel instead of lzo
 Followed by either of:
  sudo apt-get build-dep btrfs-tools 
  -or-
- sudo apt-get install uuid-dev libattr1-dev zlib1g-dev libacl1-dev e2fslibs-dev libblkid-dev liblzo2-dev
+ sudo apt-get install uuid-dev libattr1-dev zlib1g-dev libacl1-dev e2fslibs-dev libblkid-dev liblzo2-dev autoconf make
 
 If you tried the first and get "cannot find llzo2", or "blkid/blkid.h: No such file or directory" try the second; your distro has an even older version of btrfs-progs packaged than expected.
 

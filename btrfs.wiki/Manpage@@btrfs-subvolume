@@ -14,7 +14,7 @@ btrfs-subvolume - manage btrfs subvolumes
 snapshots.</p>
 ==SUBVOLUME AND SNAPSHOT==
 
-<p>A subvolume is a part of filesystem with it&#8217;s own and independent
+<p>A subvolume is a part of filesystem with its own and independent
 file/directory hierarchy. Subvolumes can share file extents. A snapshot is
 also subvolume, but with a given initial content of the original subvolume.</p>
 <blockquote><b>Note:</b>
@@ -49,7 +49,7 @@ do not affect the files in the original subvolume.</p>
 
 <dl>
 <dt>
-<b>create</b> [-i <em>&lt;qgroupid&gt;</em>] [&lt;dest&gt;]<em>&lt;name&gt;</em>
+<b>create</b> [-i <em>&lt;qgroupid&gt;</em>] [&lt;dest&gt;/]<em>&lt;name&gt;</em>
 <dd>
 <p>
 Create a subvolume <em>&lt;name&gt;</em> in <em>&lt;dest&gt;</em>.
@@ -77,10 +77,12 @@ Delete the subvolume(s) from the filesystem.
 <p>If <em>&lt;subvolume&gt;</em> is not a subvolume, btrfs returns an error but continues if
 there are more arguments to process.</p>
 <p>The corresponding directory is removed instantly but the data blocks are
-removed later.  The deletion does not involve full commit by default due to
-performance reasons (as a consequence, the subvolume may appear again after a
-crash).  Use one of the <em>--commit</em> options to wait until the operation is safely
-stored on the media.</p>
+removed later in the background. The command returns immediatelly. See <tt>btrfs
+subvolume sync</tt> how to wait until the subvolume gets completely removed.</p>
+<p>The deletion does not involve full transaction commit by default due to
+performance reasons.  As a consequence, the subvolume may appear again after a
+crash.  Use one of the <em>--commit</em> options to wait until the operation is
+safely stored on the device.</p>
 <p><tt>Options</tt></p>
 <dl>
 <dt>
@@ -222,7 +224,7 @@ neither '+' nor '-', it means = value.
 <dd>
 <p>
 list subvolumes in the filesystem that its ogeneration is
-&gt;=, &lt;= or = value. The usage is the same to <em>-g</em> option.
+&gt;=, &lt;= or = value. The usage is the same to <em>-G</em> option.
 </p>
 
 <dt>
@@ -234,7 +236,7 @@ you can add '+' or '-' in front of each items, '+' means ascending,
 '-' means descending. The default is ascending.
 </p>
 <p>for --sort you can combine some items together by ',', just like
--sort=+ogen,-gen,path,rootid.</p>
+--sort=+ogen,-gen,path,rootid.</p>
 
 </dl>
 

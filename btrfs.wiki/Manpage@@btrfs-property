@@ -28,12 +28,12 @@ Gets a property from a btrfs object.
 <p>A btrfs object, which is set by <em>&lt;object&gt;</em>, can be a btrfs filesystem
 itself, a btrfs subvolume, an inode(file or directory) inside btrfs,
 or a device on which a btrfs exists.</p>
-<p>The <em>-t <em>&lt;type&gt;</em></em> option can be used to explicitly
+<p>The option <em>-t</em> can be used to explicitly
 specify what type of object you meant. This is only needed when a
 property could be set for more then one object type.</p>
 <p>Possible types are <em>s[ubvol]</em>, <em>f[ilesystem]</em>, <em>i[node]</em> and <em>d[evice]</em>.</p>
-<p>Set the name of property by <em><em>&lt;name&gt;</em></em>. If no <em><em>&lt;name&gt;</em></em> is specified,
-all properties for the given object are printed. <em><em>&lt;name&gt;</em></em> is one of
+<p>Set the name of property by <em>name</em>. If no <em>name</em> is specified,
+all properties for the given object are printed. <em>name</em> is one of
 the followings.</p>
 <dl>
 <dt>
@@ -54,7 +54,7 @@ label of device
 compression
 <dd>
 <p>
-compression setting for an inode: lzo, zlib, or "" (empty string)
+compression setting for an inode: lzo, zlib, zstd, or "" (empty string)
 </p>
 
 </dl>

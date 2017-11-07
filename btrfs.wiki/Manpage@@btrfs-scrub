@@ -18,15 +18,14 @@ Scrub is not a filesystem checker (fsck) and does not verify nor repair
 structural damage in the filesystem.</blockquote>
 <p>The user is supposed to run it manually or via a periodic system service. The
 recommended period is a month but could be less. The estimated device bandwidth
-utilization is about 80% on an idle filesytem. The IO priority class is by
+utilization is about 80% on an idle filesystem. The IO priority class is by
 default <em>idle</em> so background scrub should not interfere with normal filesystem
 operation significantly.</p>
 <p>The scrubbing status is recorded in <em>/var/lib/btrfs/</em> in textual files named
-<em>scrub.status.UUID</em> for a filesystem identified by the given UUID. (An
-itermediate progress is communicated through a named pipe in file
-<em>scrub.progress.UUID</em> in the same directory.) The status file is updated
-periodically every 5 seconds. An resumed scrub will continue from the last
-saved position.</p>
+<em>scrub.status.UUID</em> for a filesystem identified by the given UUID. (Progress
+state is communicated through a named pipe in file <em>scrub.progress.UUID</em> in the
+same directory.) The status file is updated every 5 seconds. A resumed scrub
+will continue from the last saved position.</p>
 ==SUBCOMMAND==
 
 <dl>
@@ -34,7 +33,7 @@ saved position.</p>
 <b>cancel</b> <em>&lt;path&gt;</em>|<em>&lt;device&gt;</em>
 <dd>
 <p>
-If a scrub is running on the filesystem identified by <em>path&gt;</em> cancel it.
+If a scrub is running on the filesystem identified by <em>path</em> cancel it.
 </p>
 <p>If a <em>device</em> is specified, the corresponding filesystem is found and
 <b>btrfs scrub cancel</b> behaves as if it was called on that filesystem.</p>
@@ -147,7 +146,30 @@ print separate statistics for each device of the filesystem
 ==EXIT STATUS==
 
 <p><b>btrfs scrub</b> returns a zero exit status if it succeeds. Non zero is
-returned in case of failure.</p>
+returned in case of failure:</p>
+<dl>
+<dt>
+1
+<dd>
+<p>
+scrub couldn&#8217;t be performed
+</p>
+
+<dt>
+2
+<dd>
+<p>
+there is nothing to resume
+</p>
+
+<dt>
+3
+<dd>
+<p>
+scrub found uncorrectable errors
+</p>
+
+</dl>
 ==AVAILABILITY==
 
 <p><b>btrfs</b> is part of btrfs-progs.

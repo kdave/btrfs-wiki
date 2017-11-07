@@ -26,9 +26,14 @@ requires calls to privileged ioctls.</p>
 <p>Show btrfs superblock information stored on given devices in textual form.
 By default the first superblock is printed, more details about all copies or
 additional backup data can be printed.</p>
-<p>Besides verifictaion of the filesystem signature, there are no other sanity
+<p>Besides verification of the filesystem signature, there are no other sanity
 checks. The superblock checksum status is reported, the device item and
 filesystem UUIDs are checked and reported.</p>
+<blockquote><b>Note:</b>
+the meaning of option <em>-s</em> has changed in version 4.8 to be consistent
+with other tools to specify superblock copy rather the offset. The old way still
+works, but prints a warning. Please update your scripts to use <em>--bytenr</em>
+instead. The option <em>-i</em> has been deprecated.</blockquote>
 <p><tt>Options</tt></p>
 <dl>
 <dt>
@@ -42,32 +47,43 @@ print full superblock information, including the system chunk array and backup r
 -a|--all
 <dd>
 <p>
-print information about all present superblock copies (cannot be used together with <em>-i</em> option)
+print information about all present superblock copies (cannot be used together
+with <em>-s</em> option)
 </p>
 
 <dt>
--i <em>&lt;super_mirror&gt;</em>
+-i <em>&lt;super&gt;</em>
 <dd>
 <p>
-specify which mirror to print, valid values are 0, 1 and 2 and the superblock must be present on the device
+(deprecated since 4.8, same behaviour as <em>--super</em>)
 </p>
-<p>If there are multiple options specified, only the last one is applies.</p>
 
 <dt>
--F|--force
-<dd>
-<p>
-attempt to print the superblock even if thre&#8217;s no valid BTRFS signature found
-</p>
-<p>The result may be completely wrong if the data do not resemble a superblock.</p>
-
-<dt>
--s <em>&lt;bytenr&gt;</em>
+--bytenr <em>&lt;bytenr&gt;</em>
 <dd>
 <p>
 specify offset to a superblock in a non-standard location at <em>bytenr</em>, useful
 for debugging (disables the <em>-f</em> option)
 </p>
+<p>If there are multiple options specified, only the last one applies.</p>
+
+<dt>
+-F|--force
+<dd>
+<p>
+attempt to print the superblock even if a valid BTRFS signature is not found;
+the result may be completely wrong if the data does not resemble a superblock
+</p>
+
+<dt>
+-s|--super <em>&lt;bytenr&gt;</em>
+<dd>
+<p>
+(see compatibility note above)
+</p>
+<p>specify which mirror to print, valid values are 0, 1 and 2 and the superblock
+must be present on the device with a valid signature, can be used together with
+<em>--force</em></p>
 
 </dl>
 

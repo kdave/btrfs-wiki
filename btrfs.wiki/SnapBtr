@@ -44,7 +44,14 @@ and mount it at /mnt/restore, in /etc/fstab:
 That way, all users can use the backups in /mnt/restore, but cannot
 exploit security-bugs or tamper with the content.
 
+== Sources ==
+;Original Source [[Media:snapbtr.txt]] (Wiki does not allow .py uploads)
+:Original version by Helge Jensen
 
-Old Source: [[Media:snapbtr.txt]] (Wiki does not allow .py uploads)
+;snapbtrex [https://github.com/yoshtec/snapbtrex]
+:An extended version which is capable of transferring snapshots to remote systems
 
-A updated version can be found at: [https://github.com/hp197/snapbtr Github]
+;snapbtr [https://github.com/yvolchkov/snapbtr]
+:Reworked cli with the focus on working without root permissions (e.g. running from user application's hooks)
+
+;snapbtr [https://github.com/hp197/snapbtr]

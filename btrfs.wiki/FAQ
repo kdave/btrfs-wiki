@@ -221,7 +221,7 @@ See [[RAID56]] for more details.
 
 There are some optimizations for SSD drives, and you can enable them by mounting with -o ssd. As of 2.6.31-rc1, this mount option will be enabled if Btrfs is able to detect non-rotating storage.
 
-However, the optimizations seem to primarily apply to old SSD models which do not have a FTL (Flash Translation Layer) yet. For pretty almost all SSDs sold nowadays, the -o ssd option will have a negative impact on usability and lifetime of the SSD. Also see [[Gotchas#The_ssd_mount_option|the ssd section in Gotchas]] about this.
+Note that before '''4.14''' the ssd mount option has a negative impact on usability and lifetime of modern SSDs which have a FTL (Flash Translation Layer). See [[Gotchas#ssd_mount_option|the ssd section in Gotchas]] for more information.
 
 Note that -o ssd will not enable TRIM/discard.
 
@@ -296,7 +296,7 @@ There's a separate page for compression related questions, [[Compression]].
 
 === Will btrfs support LZ4? ===
 
-Maybe, if there is a clear benefit compared to existing compression support. Technically there are no obstacles, but supporing a new algorithm has impact on the the userpace tools or bootloader that has to be justified. There's a project idea [[Project_ideas#Compression_enhancements|Compression enhancements]] that targets more than just adding LZ4.
+Maybe, if there is a clear benefit compared to existing compression support. Technically there are no obstacles, but supporing a new algorithm has impact on the the userpace tools or bootloader, that has to be justified. There's a project idea [[Project_ideas#Compression_enhancements|Compression enhancements]] that targets more than just adding a new compression algorithm.
 
 Reasons against adding simple LZ4 support are stated [http://thread.gmane.org/gmane.comp.file-systems.btrfs/35642 here] and [http://thread.gmane.org/gmane.comp.file-systems.btrfs/35667 here]. Similar holds for ''snappy'' compression algorithm, but it performs worse than LZ4 and is not considered anymore.
 
@@ -444,7 +444,7 @@ There are several things meant by this. One is the out-of-space issues discussed
 There are several considerations:
 
 * The default raid level for the metadata group is dup on single drive systems, and raid1 on multi drive systems. The meaning is the same in both cases: there are two copies of everything in that group. This can be disabled at mkfs time, and it is possible to migrate raid levels online using the [[Balance_filters]].
-* There an overhead to maintaining the checksums (approximately 0.1% – 4 bytes for each 4k block)
+* There is an overhead to maintaining the checksums (approximately 0.1% – 4 bytes for each 4k block)
 * Small files are also written inline into the metadata group. If you have several gigabytes of very small files, this will add up.
 
 [incomplete; disabling features, etc]

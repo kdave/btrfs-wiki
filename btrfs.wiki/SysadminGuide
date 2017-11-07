@@ -104,7 +104,7 @@ Subvolumes are children of the top level subvolume (ID 5), typically directly be
    \-- postgres   (subvolume root directory, to be mounted at /var/lib/postgresql)
 
 Here, the toplevel mountable root directory should not normally be visible to the system.
-Of course, the <tt>www<tt> subvolume could have also been placed directly below the top level subvolume (without an intermediate directory) and the <tt>postgres<tt> subvolume could have also been placed at a directory <tt>var/lib/postgresql</tt>; these are just examples and the actual layout depends largely on personal taste.
+Of course, the <tt>www</tt> subvolume could have also been placed directly below the top level subvolume (without an intermediate directory) and the <tt>postgres</tt> subvolume could have also been placed at a directory <tt>var/lib/postgresql</tt>; these are just examples and the actual layout depends largely on personal taste.
 All subvolumes are however direct children of the top level subvolume in this scheme.
 
 This has several implications (advantages and disadvantages):
@@ -122,7 +122,7 @@ This has several implications (advantages and disadvantages):
 Subvolumes are located anywhere in the file hierarchy, typically at their desired locations (that is where one would manually mount them at in the flat schema), especially below other subvolumes that are not the top-level subvolume, for example:
  toplevel                  (volume root directory, to be mounted at /)
  +-- home                  (subvolume root directory)
- +-- var                   (directory)
+ +-- var                   (subvolume root directory)
      +-- www               (subvolume root directory)
      +-- lib               (directory)
           \-- postgresql   (subvolume root directory)
@@ -138,7 +138,7 @@ This makes changing the structure (for example to something more flat) more diff
  toplevel                        (volume root directory, not mounted)
    \-- root                      (subvolume root directory, to be mounted at /)
        +-- home                  (subvolume root directory)
-       +-- var                   (directory)
+       +-- var                   (subvolume root directory)
            +-- www               (subvolume root directory)
            +-- lib               (directory)
                 \-- postgresql   (subvolume root directory)
@@ -161,9 +161,7 @@ This is a not exhaustive list of typical guidelines where/when to make subvolume
 : But when that data shall be sent/received to other Btrfs filesystems this "undesired" data makes a big difference and not just only that it needs to be transferred there at least once (Btrfs’ send/receive feature works on subvolumes), which may already be bad, for security and privacy reasons.
 : If send/receive of the desired data shall happen more often, typically for backups, then even when btrfs-send’s -p or -c features would be used for incremental transfers, the undesired data would need to be transferred at least once (assuming it would never change again on the source system, which is unlikely).
 
-* Split of areas which need special properties.
-: As discussed elsewhere, certain types of data (databases, VM images and similar typically big files that are randomly written internally) may require CoW to be disabled for them.
-: So for example such areas could be placed in a subvolume, that is always mounted with the option "nodatacow".
+* Split of areas which need special properties / mount options.
 
 == Snapshots ==
 

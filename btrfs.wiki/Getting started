@@ -94,8 +94,6 @@ Now it is possible to mount the subvolumes
    mount -t btrfs -o subvol=new_subvol /dev/sda2 /mnt/new_subvol
    mount -t btrfs -o subvol=snapshot_of_root /dev/sda2 /mnt/snap
 
-{{note|While subvolumes can be created anywhere in the filesystem tree, in order to be mounted by name a subvolume or snapshot must be in the root of the btrfs filesystem. Mounting by subvolume ID will work regardless of where the subvolume is.}}
-
 * [[Btrfsck|btrfsck]]: do a limited check of the FS extent trees.
 * [[Btrfs-debug-tree| btrfs-debug-tree]]: print all of the FS metadata in text form
  btrfs-debug-tree /dev/sda2 &gt;&amp; big_output_file

@@ -175,33 +175,6 @@ Note that there should be no space between the '''-d''' and the '''usage'''. Thi
 If the balance command ends with "Done, had to relocate 0 out of XX chunks", then you need to increase the "dusage" percentage parameter till at least one chunk is relocated.
 More information is available elsewhere in this wiki, if you want to know [[FAQ#What_does_.22balance.22_do.3F|what a balance does]], or [[Balance Filters|what options are available]] for the balance command.
 
-== btrfs scrub will not start nor cancel ==
-
-{{note|this has been properly fixed in btrfs-progs version  3.18.2. The workarounds below still apply but are not necessary anymore.}}
-
-As per [http://marc.merlins.org/perso/btrfs/post_2014-04-26_Btrfs-Tips_-Cancel-A-Btrfs-Scrub-That-Is-Already-Stopped.html Marc's blog on how to fix btrfs cancel]:
-Problem:
- gargamel:~# btrfs scrub start -d /dev/mapper/dshelf1
- ERROR: scrub is already running.
- To cancel use 'btrfs scrub cancel /dev/mapper/dshelf1'.
- gargamel:~# btrfs scrub status  /dev/mapper/dshelf1
- scrub status for 6358304a-2234-4243-b02d-4944c9af47d7
-         scrub started at Tue Apr  8 08:36:18 2014, running for 46347 seconds
-         total bytes scrubbed: 5.70TiB with 0 errors
- gargamel:~# btrfs scrub cancel  /dev/mapper/dshelf1
- ERROR: scrub cancel failed on /dev/mapper/dshelf1: not running
- 
-Fix:
- gargamel:~# perl -pi -e 's/finished:0/finished:1/' /var/lib/btrfs/*
- 
-Verification:
- gargamel:~# btrfs scrub status  /dev/mapper/dshelf1
- scrub status for 6358304a-2234-4243-b02d-4944c9af47d7
-         scrub started at Tue Apr  8 08:36:18 2014 and finished after 46347 seconds
-         total bytes scrubbed: 5.70TiB with 0 errors
- gargamel:~# btrfs scrub start -d /dev/mapper/dshelf1
- scrub started on /dev/mapper/dshelf1, fsid 6358304a-2234-4243-b02d-4944c9af47d7 (pid=24196)
-
 == I cannot delete an empty directory ==
 
 First case, if you get:

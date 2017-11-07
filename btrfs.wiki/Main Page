@@ -26,7 +26,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 * Writable snapshots, read-only snapshots
 * Subvolumes (separate internal filesystem roots)
 * Checksums on data and metadata (crc32c)
-* [[Compression]] (zlib and LZO)
+* [[Compression]] (zlib, LZO, ZSTD), heuristics
 * Integrated [[Multiple_Device_Support|multiple device support]]
 ** File Striping
 ** File Mirroring
@@ -37,7 +37,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 * Background scrub process for finding and repairing errors of files with redundant copies
 * Online filesystem defragmentation
 * [[btrfsck|Offline filesystem check]]
-* In-place [[Conversion_from_Ext3|conversion]] of existing ext3/4 file systems
+* In-place [[Conversion_from_Ext3|conversion]] of existing ext2/3/4 and reiserfs file systems
 * [[Seed-device|Seed devices]]. Create a (readonly) filesystem that acts as a template to seed other Btrfs filesystems. The original filesystem and devices are included as a readonly starting point for the new filesystem. Using copy on write, all modifications are stored on different devices; the original is unchanged.
 * Subvolume-aware [[quota support]]
 * Send/receive of subvolume changes
@@ -58,42 +58,16 @@ As part of the changelog you can also review
 ** [https://btrfs.wiki.kernel.org/index.php/Design_notes_on_dedupe In-band dedupe design document]
 ** [https://btrfs.wiki.kernel.org/index.php/User_notes_on_dedupe How to use in-band dedupe]
 * Hot data tracking and moving to faster devices (currently being pushed as a generic feature available through VFS)
+* SMR support
+* DAX/persistent memory support
 
 == News and Changelog ==
 
-''' btrfs-progs v4.13 (Sep 2017)'''
-
-* convert: reiserfs support
-* check: new option --force to allow check of a mounted filesystem (no repair)
-* mkfs: --rootdir will now copy special files
-* dump-tree: minor output changes
-* inspect rootid: accept file as arugment
-* dev usage: don't calculate slack space for missing devices
-* fi du: don't print error on EMPTY_SUBVOL (inode number 2)
-* build:
-** fixed support for sanitization features on gcc (tsan, asan, ubsan)
-** fix PIE build
-* other:
-** misc cleanups and stability fixes
-** travis CI enhancements
-** new tests, fuzzed images
-** testsuite cleanups
-
-''' Linux v4.13 (Sep 2017) '''
-
-* deprecated: mount option ''alloc_start''
-* qgroups: new sysctl to allow temporary quota override with CAP_SYS_RESOURCE
-* statx syscall support
-* nowait AIO support
-* lots of cleanups around bio processing and error handling
-* memory allocation constraint cleanups and improvements
-* more sanity checks (for dir_item)
-* compression will be skipped if there's no improvement (at least one block)
-* fix invalid extent maps due to hole punching
-* fix: sgid not cleared when changing acls
-* some enospc corner case fixes
-* send fixes
-* other cleanups
+''' btrfs-progs v4.13.3 (Oct 2017) '''
+* check: fix --force, wrong check for a mounted block device
+* build: fix --with-convert parsing
+* subvol list: don't list TOPLEVEL
+* other: update tests
 
 Read about past releases in the [[Changelog]]
 * [[Changelog#By_feature|features by kernel version]]
@@ -105,7 +79,7 @@ Read about past releases in the [[Changelog]]
 === Guides and usage information ===
 
 * [[Getting started]] — first steps, distributions with btrfs support
-** [[Mount options]]
+** [[Manpage/btrfs(5)#MOUNT_OPTIONS|Mount options]]
 * [[FAQ]] — About the btrfs project and filesystem
 * [[UseCases]] — Recipes for how to do stuff with btrfs
 * [[SysadminGuide]] — A more in-depth guide to btrfs's concepts and a bit of its internals, to answer all those "but what ''is'' a subvolume?" kind of questions.

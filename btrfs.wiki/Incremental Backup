@@ -37,8 +37,11 @@ That said, many fixes have gone in btrfs send/receive and it is recommended to u
 ; Btrfs sync subvolumes [https://github.com/nazar-pc/btrfs-sync-subvolumes] by Nazar Mokrynskyi
 : This is a pretty naive implementation of replication exact set of subvolumes from one location to another, plays nicely with Just backup btrfs
 
+; snapbtr [https://github.com/yvolchkov/snapbtr]
+: Simple btrfs snapshoting. Does not require root permissions to create a snapshot, so it is possible to run it from user applications's hooks.
+
 ; snapbtrex [https://github.com/yoshtec/snapbtrex]
-: Snapshot creation and transfer to remote systems via ssh, no config files just shell options. The only dependency is python. An extension of the [[SnapBtr]] script.
+: Snapshot creation and transfer to remote systems via ssh, no config files just shell options. The only dependency is python. An extension of the [[SnapBtr]] script. This is a fork of the original version of snapbtr.
 
 == Doing it by hand, step by step ==
 When performing incremental backups, we will be working with two snapshots, one of them representing the time of the earlier backup, and the other representing the current backup. When the backup run completes, we can discard the earlier of the snapshots to prepare for the next incremental run.

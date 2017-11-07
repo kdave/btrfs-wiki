@@ -2,17 +2,25 @@
 
 A Btrfs filesystem can be created on top of many devices, and more devices can be added after the FS has been created.
 
-By default, metadata will be mirrored across two devices and data will be striped across all of the devices present.
+By default, metadata will be mirrored across two devices and data will be striped across all of the devices present. This is equivalent to <tt>mkfs.btrfs -m raid1 -d raid0</tt>.
 
 If only one device is present, metadata will be duplicated on that one device.
+For HDD <tt>mkfs.btrfs -m dup -d single</tt>, for SSD (or non-rotational
+device) <tt>mkfs.btrfs -m single -d single</tt>.
 
 === Current status ===
 
 Btrfs can add and remove devices online, and freely convert between RAID levels after the FS has been created.
 
-Btrfs supports raid0, raid1, raid10, raid5 and raid6 (but see the section below about raid5/6), and it can also duplicate metadata on a single spindle. When blocks are read in, checksums are verified. If there are any errors, Btrfs tries to read from an alternate copy and will repair the broken copy if the alternative copy succeeds.
+Btrfs supports raid0, raid1, raid10, raid5 and raid6 (but see the section below
+about raid5/6), and it can also duplicate metadata or data on a single spindle
+or multiple disks. When blocks are read in, checksums are verified. If there
+are any errors, Btrfs tries to read from an alternate copy and will repair the
+broken copy if the alternative copy succeeds.
 
 See the [[Gotchas]] page for some current issues when using btrfs with multiple volumes of differing sizes in a RAID1 style setup.
+
+See [[Manpage/mkfs.btrfs]].
 
 === Raid 5 and Raid6 ===
 
@@ -22,14 +30,18 @@ Note that the minimum number of devices required for RAID5 is 3. For a RAID6, th
 
 === Filesystem creation ===
 
-mkfs.btrfs will accept more than one device on the command line. It has options to control the raid configuration for data (-d) and metadata (-m). Valid choices are raid0, raid1, raid10 and single. The option ''-m single'' means that no duplication of metadata is done, which may be desired when using hardware raid.
+<tt>mkfs.btrfs</tt> will accept more than one device on the command line. It
+has options to control the raid configuration for data (-d) and metadata (-m).
+Valid choices are raid0, raid1, raid10, raid5, raid6, single and dup. The
+option ''-m single'' means that no duplication is done, which may
+be desired when using hardware raid.
 
 Raid10 requires at least 4 devices.
 
  # Create a filesystem across four drives (metadata mirrored, linear data allocation)
- mkfs.btrfs /dev/sdb /dev/sdc /dev/sdd /dev/sde
+ mkfs.btrfs -d single /dev/sdb /dev/sdc /dev/sdd /dev/sde
  
- # Stripe the data without mirroring
+ # Stripe the data without mirroring, metadata are mirrored
  mkfs.btrfs -d raid0 /dev/sdb /dev/sdc
  
  # Use raid10 for both data and metadata
@@ -48,7 +60,7 @@ Once you create a multi-device filesystem, you can use any device in the FS for 
  mkfs.btrfs /dev/sdb /dev/sdc /dev/sde
  mount /dev/sde /mnt
 
-If you want to mount a multi-device filesystem using a loopback device, it's not sufficient to use mount -o loop. Instead, you'll have to set up the loopbacks manually:
+If you want to mount a multi-device filesystem using a loopback device, it's not sufficient to use <tt>mount -o loop</tt>. Instead, you'll have to set up the loopbacks manually:
 
  # Create and mount a filesystem made of several disk images
  mkfs.btrfs img0 img1 img2
@@ -83,7 +95,7 @@ The [[UseCases]] page gives a few quick recipes for filesystem creation.
 
  btrfs device add /dev/sdc /mnt
 
-At this point we have a filesystem with two devices, but all of the metadata and data are still stored on the original device(s). The filesystem must be balanced to spread the files across all of the devices.
+At this point we have a filesystem with two devices, but all of the metadata and data are still stored on the original device(s). The filesystem must be balanced to spread the extents across all the devices.
 
  btrfs filesystem balance /mnt
 
@@ -103,7 +115,7 @@ If the metadata is not converted from the single-device default, it remains as D
 
 === Removing devices ===
 
-'''btrfs device delete''' is used to remove devices online. It redistributes the any extents in use on the device being removed to the other devices in the filesystem. Example:
+'''btrfs device delete''' is used to remove devices online. It redistributes any extents in use on the device being removed to the other devices in the filesystem. Example:
 
  mkfs.btrfs /dev/sdb /dev/sdc /dev/sdd /dev/sde
  mount /dev/sdb /mnt
@@ -113,12 +125,13 @@ If the metadata is not converted from the single-device default, it remains as D
 === Replacing failed devices ===
 
 ==== Using btrfs replace ====
-When you have a device that's in the process of failing or has failed in a RAID array you should use the btrfs replace command rather than adding a new device and removing the failed one. This is a newer technique that worked for me when adding and deleting devices didn't however it may be helpful to consult the mailing list of irc channel before attempting recovery.
+
+When you have a device that's in the process of failing or has failed in a RAID array you should use the <tt>btrfs replace</tt> command rather than adding a new device and removing the failed one. This is a newer technique that worked for me when adding and deleting devices didn't however it may be helpful to consult the mailing list of irc channel before attempting recovery.
 
 First list the devices in the filesystem, in this example we have one missing device that we will replace with a new drive of the same size. In the following output we see that the final device number (which is missing) is device 6:
 
 <pre>
-ubuntu@ubuntu:~$ sudo btrfs filesystem show
+user@host:~$ sudo btrfs filesystem show
 Label: none  uuid: 67b4821f-16e0-436d-b521-e4ab2c7d3ab7
     Total devices 6 FS bytes used 5.47TiB
     devid    1 size 1.81TiB used 1.71TiB path /dev/sda3
@@ -141,7 +154,7 @@ We will now replace the absent device 6 with the new drive /dev/sdf1 on our file
 
 This will start the replacement process in the background, you can monitor the status using the btrfs replace status command. The status command updates the status continously, you can ctrl+c to exit it at any time. At first progress will be shown, on completing you'll see the following output:
 
-   ubuntu@btrfs-recovery:~$ sudo btrfs replace status /mnt
+   user@host:~$ sudo btrfs replace status /mnt
    Started on 27.Mar 22:34:20, finished on 28.Mar 06:36:15, 0 write errs, 0 uncorr. read errs
 
 The error counters appear to be inaccurate, I had errors in my recovery reported in dmesg but not in the replace status output. The following command will parse out all the names of damaged files currently in the dmesg log, it only works on the messages currently in the kernel log ring buffer so if you have received too many log messages it will not be complete:
@@ -165,7 +178,7 @@ The example above can be used to remove a failed device if the super block can s
 
 '''btrfs device delete missing''' tells btrfs to remove the first device that is described by the filesystem metadata but not present when the FS was mounted.
 
-In case of ''raidXX'' layout, you cannot go below the minimum number of the device required. So before removing a device (even the ''missing'' one) you may need to add a new one. For example if you have a raid1 layout with '''two''' device, and a device fails, you must:
+In case of ''raidXX'' layout, you cannot go below the minimum number of the device required. So before removing a device (even the ''missing'' one) you may need to add a new one. For example if you have a raid1 layout with '''two''' devices, and a device fails, you must:
 
 * mount in degraded mode
 * add a new device
@@ -177,7 +190,7 @@ If you don't have an initrd, or your initrd doesn't perform a btrfs device scan,
  
  /dev/sdb     /mnt    btrfs    device=/dev/sdb,device=/dev/sdc,device=/dev/sdd,device=/dev/sde    0 0
 
-{{warning|Using <code>device</code> is '''not''' recommended, as it is sensitive to device names changing. You should ''really'' be using a initramfs. Most modern distributions will do this for you automatically if you install their own btrfs-progs package.}}
+{{warning|Using <code>device</code> is '''not''' recommended, as it is sensitive to device names changing that is affected by the order of discovery of the devices. You should ''really'' be using a initramfs. Most modern distributions will do this for you automatically if you install their own btrfs-progs package.}}
 
 Using <code>device=PARTUUID=...</code> with GPT partition UUIDs would also work and be less fragile. All these options can also be [https://www.kernel.org/doc/Documentation/kernel-parameters.txt set from the kernel command line], through root=/fstype=/rootflags=.
 

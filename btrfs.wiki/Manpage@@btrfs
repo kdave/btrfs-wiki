@@ -16,6 +16,8 @@ specific actions. See section <b>COMMANDS</b>.</p>
 <p>There are also standalone tools for some tasks like <b>btrfs-convert</b> or
 <b>btrfstune</b> that were separate historically and/or haven&#8217;t been merged to the
 main utility. See section <em>STANDALONE TOOLS</em> for more details.</p>
+<p>For other topics (mount options, etc) please refer to the separate manual
+page [[Manpage/btrfs|btrfs(5)]].</p>
 ==COMMAND SYNTAX==
 
 <p>Any command name can be shortened as far as it stays unambiguous,

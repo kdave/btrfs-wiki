@@ -275,7 +275,7 @@ Prior to this version one would use:
 
 This won't recurse into subvolumes (-xdev prevents recursion into non-btrfs filesystems but also btrfs subvolumes).
 
-You may also want to set the non-default <code>autodefrag</code> mount option, though the [[mount options]] page mentions caveats.
+You may also want to set the non-default <code>autodefrag</code> mount option.
 
 '''Caveat''': since Linux 3.14-rc2, 3.13.4, 3.12.12 and 3.10.31 (which removed the snapshot-aware defragmentation) defragmenting a file which has a COW copy (either a snapshot copy or one made with ''cp --reflink'' or ''bcp'') would produce two unrelated files. If you defragment a subvolume that had a snapshot, you would roughly double the disk usage, as the snapshot files would no longer be COW images of the originals.
 
