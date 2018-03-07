@@ -11,23 +11,51 @@ Warning, Btrfs evolves very quickly do not test it unless:
 
 Everyone tests with the latest btrfs code from git. Even the latest Linus kernel probably doesn't have the latest, so if you're really interested in using and testing btrfs, get btrfs from git. Distributions usually offer a way to install a kernel built from git.
 
+= Kernel module =
+
+The git repositories that are not normally used for development but rather for
+the final pull requests that go to Linus:
+
+* https://git.kernel.org/pub/scm/linux/kernel/git/mason/linux-btrfs.git -- pull requests
+* https://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git -- pull requests, branch ''for-next'' gets pulled to the linux-next tree
+
+The following git repositories are used for development and are updated with
+patches from the mailinglist:
+
+* https://github.com/kdave/btrfs-devel
+* http://repo.or.cz/linux-2.6/btrfs-unstable.git
+
+Branches are usually pushed to both repositories, either can be used.
+
+There are:
+
+* topic branches, eg. from a patchset
+* queue with patches for current release cycle (the name has the version, eg ''for-4.15'' or ''misc-4.15'').
+* queue with patches for next development cycle (branch name ''misc-next''),
+* snapshots of ''for-next'', that contain all of the above
+
+Note that the branches get rebased.  The base point for patches depend on the
+development phase.  See [[Developer%27s_FAQ#Development_schedule]].
+Independent changes can be based on the ''linus/master'' branch, changes that
+could depend on patches that have been added to one of the queues should use
+that as a base.
+
 = btrfs-progs git repository =
 
 == Official repositories ==
 
 The sources of the userspace utilities can be obtained from these repositories:
 
-* git://git.kernel.org/pub/scm/linux/kernel/git/kdave/btrfs-progs.git ([http://git.kernel.org/?p=linux/kernel/git/kdave/btrfs-progs.git;a=summary gitweb access])
-* git://git.kernel.org/pub/scm/linux/kernel/git/mason/btrfs-progs.git ([http://git.kernel.org/?p=linux/kernel/git/mason/btrfs-progs.git;a=summary gitweb access]) (apparently no longer synced)
+* git://git.kernel.org/pub/scm/linux/kernel/git/kdave/btrfs-progs.git ([http://git.kernel.org/?p=linux/kernel/git/kdave/btrfs-progs.git;a=summary gitweb access]) -- non-development
 
-There are 2 repositories that get synced at the time of a release ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063 announcement]) and can be considered equal for non-development branches.
+The '''master''' branch contains the latest released version and is never rebased.
 
-The '''master''' branch of the repositories is updated at the time of a release and is not used for development. This branch is never rebased.
-
-Devleopment git repositories:
+Development git repositories:
 
 * git://github.com/kdave/btrfs-progs.git ([https://github.com/kdave/btrfs-progs web access])
 * git://repo.or.cz/btrfs-progs-unstable/devel.git ([http://repo.or.cz/w/btrfs-progs-unstable/devel.git web access])
+
+For build dependencies and installation instructions please see [https://github.com/kdave/btrfs-progs/blob/master/INSTALL]
 
 == Development branches ==
 
@@ -73,10 +101,6 @@ There is a separate repository of useful scripts for common administrative tasks
 
 https://github.com/kdave/btrfsmaintenance/
 
-= btrfs kernel module git repository =
-
-git://git.kernel.org/pub/scm/linux/kernel/git/mason/linux-btrfs.git ([http://git.kernel.org/?p=linux/kernel/git/mason/linux-btrfs.git;a=summary Gitweb access])
-
 = Patches sent to mailinglist =
 
 A convenient interface to get an overview of patches and the related mail discussions can be found at https://patchwork.kernel.org/project/linux-btrfs/list/ .
@@ -86,45 +110,3 @@ It is possible to directly apply a patch by pasting the ''mbox'' link from the p
  $ wget -O - '<nowiki>https://patchwork.kernel.org/patch/123456/mbox</nowiki>' | git am -
 
 you may want to add ''--reject'', or decide otherwise what to do with the patch.
-
-= Build =
-== Dependencies ==
-
-Before compiling the userspace tools you'll need to get some dependencies:
-
-=== Fedora ===
-
- yum install libuuid-devel libattr-devel zlib-devel libacl-devel e2fsprogs-devel libblkid-devel lzo2-devel asciidoc xmlto
-
-Note that some Fedora/Red Hat derived distributions use lzo-devel instead of lzo2-devel.
-
-=== Debian/Ubuntu ===
-
- sudo apt-get install asciidoc xmlto --no-install-recommends
-
-Followed by either of:
- sudo apt-get build-dep btrfs-tools 
- -or-
- sudo apt-get install uuid-dev libattr1-dev zlib1g-dev libacl1-dev e2fslibs-dev libblkid-dev liblzo2-dev autoconf make
-
-If you tried the first and get "cannot find llzo2", or "blkid/blkid.h: No such file or directory" try the second; your distro has an even older version of btrfs-progs packaged than expected.
-
-=== Arch Linux ===
-
- pacman -S e2fsprogs
-
-=== openSUSE ===
-
- zypper in libattr-devel zlib-devel libacl-devel libext2fs-devel libuuid-devel libblkid-devel lzo-devel asciidoc xmlto
-
-== Build ==
-
-Once you have everything in place, you can run 
-
- ./autogen.sh
- ./configure
- make
-
-to build the user-space tools. After that they can be used like this:
-
- ./btrfs fi show

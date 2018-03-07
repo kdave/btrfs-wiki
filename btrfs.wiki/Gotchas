@@ -1,14 +1,20 @@
-This page lists problems one might face when trying btrfs, some of these are not really bugs, but rather inconveniences about things not yet implemented, or yet undocumented design decisions.
+This page lists some problems one might face when trying btrfs, some of these are
+not really bugs, but rather inconveniences about things not yet implemented,
+or yet undocumented design decisions.
 
-Please add new things below, don't forget to add a comment on which version you observed this.
+The page references issues relevant for a few
+[https://www.kernel.org/category/releases.html stable kernel releases] that
+seem to be in use. This currently contains 4.14, 4.9 and 4.4. The list will be
+updated once a new stable is announced.
+
+Please note this just to document known issues, ask your kernel vendor for
+backporting fixes or support.
 
 '''Please note that most of this page was not written by the btrfs developer community and may be entirely inaccurate.'''
 
-= Issues =
+= Affecting all versions =
 
-== Affecting all versions ==
-
-=== Block-level copies of devices ===
+== Block-level copies of devices ==
 
 '''Do NOT'''
 * make a block-level copy of a Btrfs filesystem to another block device...
@@ -33,7 +39,7 @@ Some options you have to hide filesystem copies are:
 * Remove one copy from the system (physically, or by deletion of the block device or FS) before mounting the other copy
 * When using LVM, <tt>lvchange -a n <vg>/<lv></tt> can be used to make the block device disappear temporarily. But beware of the fact that it can be auto-activated again.
 
-=== Fragmentation ===
+== Fragmentation ==
 
 * Files with a lot of random writes can become heavily fragmented (10000+ extents) causing thrashing on HDDs and excessive multi-second spikes of CPU load on systems with an SSD or large amount a RAM.
 ** On servers and workstations this affects databases and virtual machine images.
@@ -42,7 +48,7 @@ Some options you have to hide filesystem copies are:
 *** Workarounds include manually defragmenting your home directory using btrfs fi defragment. Auto-defragment (mount option autodefrag) should solve this problem in 3.0.
 ** Symptoms include btrfs-transacti and btrfs-endio-wri taking up a lot of CPU time (in spikes, possibly triggered by syncs). You can use filefrag to locate heavily fragmented files (may not work correctly with compression).
 
-=== 8TiB limit on 32-bit systems ===
+== 8TiB limit on 32-bit systems ==
 
 Because of various [http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg58970.html implementation limitations] on <em>32-bit systems</em>:
 
@@ -51,56 +57,33 @@ Because of various [http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg5
 
 It is also possible on 32-bit systems the limited address space per-process means that the tools cannot handle very complex (many inodes, many subvolumes, many hard links, ...) because they run out of memory on volumes smaller than 8TiB.
 
-== Version specific ==
-
-=== Parity RAID ===
+== Parity RAID ==
 
 * Currently <tt>raid5</tt> and <tt>raid6</tt> profiles have flaws that make it strongly not recommended as per the [[Status]] page.
 ** In less recent releases the parity of resynchronized blocks was not calculated correctly, this has been fixed in recent releases (TBD).
 ** If a crash happens while a <tt>raid5</tt>/<tt>raid6</tt> volume is being written this can result in a "transid" mismatch as in <tt>transid verify failed</tt>.
 ** The resulting corruption cannot be currently fixed.
 
-=== Having many subvolumes can be very slow ===
+== Some kernels had problems with "snapshot-aware defrag" ==
 
-The cost of several operations, including currently <tt>balance</tt>, <tt>device delete</tt> and <tt>fs resize</tt>, is proportional to the number of subvolumes, including snapshots, and (slightly super-linearly) the number of extents in the subvolumes.
+* There were problems found with the ''snapshot-aware defrag'' that has been turned off in the following kernels:
+** '''3.10.31''', '''3.12.12''', '''3.13.4'''
+** all newer than 3.14
+
+
+= For stable kernel versions 4.14.x, 4.9.x, 4.4.x =
+
+== Having many subvolumes can be very slow ==
+
+The cost of several operations, including currently <tt>balance</tt>, <tt>device delete</tt> and <tt>fs resize</tt> (shrinking), is proportional to the number of subvolumes, including snapshots, and (slightly super-linearly) the number of extents in the subvolumes.
 
 This is "obvious" for "pure" subvolumes, as each is an independent file tree and has independent extents anyhow (except for ref-linked ones). But in the case of snapshots metadata and extents are (usually) largely ref-linked with the ancestor subvolume, so the full scan of the snapshot need not happen, but currently this happens.
 
-This means that subvolumes with more than a dozen snapshots can greatly slow down <tt>balance</tt> and <tt>device delete</tt>. Some relevant quotes from the IRC channel:
+This means that subvolumes with more than a dozen snapshots can greatly slow down <tt>balance</tt> and <tt>device delete</tt>. The multiple tree walks involve both high CPU and IOPS usage. This means that schemes that snapshot a volume periodically should set a low upper limit on the number of those snapshots that are retained.
 
-* "when you do device removes on file systems with a lot of snapshots, it is unbelievably slow ... took nearly a week to move 20GB of FS data from one device to the other using that method"
-* "a balance on 2TB of data that was heavily snapshotted - it took 3 months"
-* "try to avoid having more than 8 snapshots due to the overhead"
-* "when I have to do balances ... I delete all the snapshots and allow a few months for the balance to finish"
+= For stable kernel versions 4.9.x, 4.4.x =
 
-The multiple tree walks involve both high CPU and IOPS usage.
-There is a [https://github.com/torvalds/linux/commit/1d57ee941692d0cc928526e21a1557b2ae3e11db commit] in kernel version <b>4.10-rc1</b> that greatly reduces CPU usage, but high IOPS usage remains.
-
-This means that schemes that snapshot a volume periodically should set a low upper limit on the number of those snapshots that are retained.
-
-=== Incomplete chunk conversion ===
-
-Volumes created or converted with various profile can become read-only on the ''next'' mount if they become degraded, and then they will be stuck like that.
-
-This can be detected by running <tt>btrfs filesystem df</tt> and checking that all data and metadata chunkfs have the same profile. An incomplete conversion looks like:
- <nowiki>
-#  btrfs fi df /mnt/sdb6
-Data, RAID10: total=174.00GiB, used=172.38GiB
-Data, single: total=8.00MiB, used=0.00B
-System, RAID10: total=96.00MiB, used=48.00KiB
-System, single: total=4.00MiB, used=0.00B
-Metadata, RAID10: total=3.00GiB, used=397.95MiB
-Metadata, single: total=8.00MiB, used=0.00B
-GlobalReserve, single: total=144.00MiB, used=0.00B</nowiki>
-
-* This is because older versions of '''btrfs-progs''' leave around on creation or conversion one chunk in the old profile by mistake, and then if a block device becomes missing Btrfs considers the volume fatally damaged if that old profile does not have redundancy.
-** This creation or conversion issue is solved in recent versions of '''btrfs-progs'''.
-** It can be fixed by running again (possibly repeatedly): <tt>btrfs balance start -mconvert=$MPROFILE,soft -dconvert=$DPROFILE,soft ...</tt>
-** If the volume has already gone read-only, dump, recreate and restore it.
-
-This [https://www.spinics.net/lists/linux-btrfs/msg63365.html mailing list message] describes some recovery patches that might help avoid dumping, recreating and restoring, at your risk.
-
-=== <tt>raid1</tt> volumes only mountable once RW if degraded ===
+== <tt>raid1</tt> volumes only mountable once RW if degraded ==
 
 Even if there are no <tt>single</tt> profile chunks, <tt>raid1</tt> volumes if they become degraded may only be mounted read-write ''once'' with the options <tt>-o degraded,rw</tt>.
 
@@ -117,7 +100,7 @@ Possible recoveries:
 
 This [https://www.spinics.net/lists/linux-btrfs/msg63365.html mailing list message] describes some recovery patches that might help avoid dumping, recreating and restoring, at your risk.
 
-=== Implicit conversion <tt>dup</tt> to <tt>raid1</tt> after adding a block device ===
+== Implicit conversion <tt>dup</tt> to <tt>raid1</tt> after adding a block device ==
 
 When all chunks of a single device volume are "allocated" a <tt>balance</tt> operation cannot start, and the suggested solution is to add a temporary block device of at least 1GiB (better 2-4GiB).
 
@@ -130,7 +113,7 @@ The subsequent <tt>balance</tt> turns existing <tt>dup</tt> profile chunks, usua
 
 Note: by itself adding a new device does not cause the conversion from <tt>dup</tt> to <tt>raid1</tt> profile, it is the <tt>balance</tt> without options that does it implicitly.
 
-=== Direct IO and CRCs  ===
+== Direct IO and CRCs ==
 
 Direct IO writes to Btrfs files can result in checksum warnings. This can happen with other filesystems, but most don't have checksums, so a mismatch between (updated) data and (out-of-date) checksum cannot arise.
 
@@ -141,35 +124,16 @@ This results in checksum verification messages that are warnings instead of erro
 
 Details of affected versions TBD.
 
-=== Conversion from <tt>ext4</tt> may not be undoable ===
+== Conversion from <tt>ext4</tt> may not be undoable ==
+
 * In kernels '''4.0+''': the empty block groups are reclaimed automatically that can affect the following:
 ** a converted filesystem may not be able to do a rollback because of the removed block groups
 
-=== Some kernels had problems with "snapshot-aware defrag" ===
+== ssd mount option ==
 
-* There were problems found with the ''snapshot-aware defrag'' that has been turned off in the following kernels:
-** '''3.10.31''', '''3.12.12''', '''3.13.4'''
-** all newer than 3.14
-
-=== ssd mount option ===
 Currently, using the ssd mount option has a negative impact on usability and lifetime of modern SSDs.
 This will be fixed in '''4.14''', see this commit for more information: [https://github.com/torvalds/linux/commit/583b723151794e2ff1691f1510b4e43710293875]
 
 With '''4.14+''' it is safe and recommended again to use the ssd mount option for non-rotational storage.
-
-== Historical references ==
-
-List of issues going back 18 months from current release ('''kernels: 3.14+, date: Mar 2014'''). Older issues will be moved to a separate page.
-
-* Stable kernel version '''4.0.6''' fixes a regression in raid1 conversion, works fine on 3.19 and 4.1
-** conversion from eg. single or raid0 profiles to raid1 made no change to the filesystem
-* Stable kernel version '''3.19.1+''' can cause a deadlock at mount time
-** Fixed in '''3.19.5''', '''3.14.39'''
-** workaround: boot with older kernel, or run ''btrfs-zero-log'' to clear the log. This will lose up to the last 30 seconds of writes to the filesystem. You will have to reboot after running the btrfs-zero-log command, to clear the jammed locks.
-** fix: scheduled for 3.19.5, or apply [https://git.kernel.org/linus/9c4f61f01d269815bb7c37be3ede59c5587747c6 9c4f61f01d269815bb7c37].
-** also affected: '''3.14.35+''', '''3.18.9+'''
-* '''bcache''' + btrfs was not stable with bcache with old kernels but is apparently ok with 3.19+
-** http://thread.gmane.org/gmane.comp.file-systems.btrfs/31018 user report (2013/12)
-* Versions from 3.15 up to 3.16.1 suffer from a deadlock that was observed during heavy rsync workloads with compression on, it's recommended to use '''3.16.2''' and newer
 
 [[Category:UserDoc]]

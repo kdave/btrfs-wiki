@@ -43,7 +43,9 @@ implementation.
 
 === Better data balancing over multiple devices for raid1/10 (read) ===
 {{project
-|text=Currently (3.6) the mirrors are selected based on process id of the ''endio-metadata'' worker threads, this may lead to a pathological case when only one mirror is always used (with more common case of uneven mirror use, not that bad in practice).<br>[http://www.spinics.net/lists/linux-btrfs/msg12745.html First attempt] with random mirror selection proved to be very wrong, the heuristic has to be improved ([http://article.gmane.org/gmane.comp.file-systems.btrfs/17985 more comments]), possibly in connection with readahead infrastructure within btrfs.
+|text=Currently (4.15) the mirrors are selected based on process id of the ''endio-metadata'' worker threads, this may lead to a pathological case when only one mirror is always used (with more common case of uneven mirror use, not that bad in practice).
+<br>[http://www.spinics.net/lists/linux-btrfs/msg12745.html First attempt] with random mirror selection proved to be very wrong, the heuristic has to be improved ([http://article.gmane.org/gmane.comp.file-systems.btrfs/17985 more comments]), possibly in connection with readahead infrastructure within btrfs.
+<br>[https://patchwork.kernel.org/patch/10137909 Second attempt] with balance based on queue size of device.
 }}
 
 === dm_cache or bcache like cache e.g. on a SSD ===
@@ -524,7 +526,7 @@ other filesystem specific to btrfs.
 
 * FALLOC_FL_COLLAPSE_RANGE
 * FALLOC_FL_INSERT_RANGE
-* FALLOC_FL_ZERO_RANGE
+* FALLOC_FL_ZERO_RANGE -- [https://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg69734.html PATCH v4] -- pending for 4.16
 * FALLOC_FL_UNSHARE_RANGE
 }}
 
@@ -618,6 +620,7 @@ Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 
 === Provide a library covering 'btrfs' functionality ===
 {{project
+|who=Omar Sandoval
 |text=It would be nice to have a library for manipulating btrfs filesystem in a way that the ''btrfs'' tool does and make it available to other programs, or via language bindings.
 
 For python, there's [https://github.com/knorrie/python-btrfs python-btrfs], a python library to to inspect the internals of an existing filesystem. This library only works with filesystems that are online and mounted, and consists of helper functions to call the IOCTL kernel API and wrapper classes to easily work with the data that is returned.

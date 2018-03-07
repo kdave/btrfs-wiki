@@ -67,7 +67,7 @@ Btrfs uses [http://en.wikipedia.org/wiki/Unix_time Unix time].
 
 === Superblock ===
 
-The primary superblock is located at 0x1 0000 (64<sub>10</sub> KiB). Mirror copies of the superblock are located at physical addresses 0x400 0000 (64<sub>10</sub> MiB), 0x40 0000 0000 (256<sub>10</sub> GiB), and 0x4 0000 0000 0000 (1 PiB), if these locations are valid. btrfs normally updates all superblocks, but in SSD mode it will update only one at a time. The superblock with the highest generation is used when reading.
+The primary superblock is located at 0x1 0000 (64<sub>10</sub> KiB). Mirror copies of the superblock are located at physical addresses 0x400 0000 (64<sub>10</sub> MiB) and 0x40 0000 0000 (256<sub>10</sub> GiB), if these locations are valid. Superblock copies are updated simultaneously. During mount btrfs' kernel module reads only the first super block (at 64k), if an error is detected mounting fails.
 
 Note that btrfs only recognizes disks with a valid 0x1 0000 superblock; otherwise, there would be confusion with other filesystems.
 

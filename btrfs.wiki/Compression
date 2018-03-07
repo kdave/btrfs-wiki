@@ -1,30 +1,29 @@
 Btrfs supports transparent file compression. There are three algorithms available: [http://en.wikipedia.org/wiki/Zlib ZLIB], [http://en.wikipedia.org/wiki/Lzo LZO] and [https://en.wikipedia.org/wiki/Zstandard ZSTD](since v4.14). Basically, compression is on a file by file basis. You can have a single btrfs mount point that has some files that are uncompressed, some that are compressed with LZO, some with ZLIB, for instance (though you may not '''want''' it that way, it is supported).
 
-= Compression FAQ =
-== How do I enable compression? ==
+= How do I enable compression? =
 Mount with <code>[[Mount options#compress|-o compress]]</code> or <code>[[Mount options#compress|-o compress-force]]</code>.  Then write (or re-write) files, and they will be transparently compressed.  Some files may not compress very well, and these are typically not recompressed but still written uncompressed.  See the [[#incompressible|What happens to incompressible files?]] section, below.
 
-=== What is the default compression method? ===
+== What is the default compression method? ==
 ZLIB. The 'default' means if it's specified by the mount option 'compress' or
 'compress-force', or via <tt>chattr +c</tt>, or <tt>btrfs filesystem defrag
 -c</tt>.
 
-=== Can I set the compression level? ===
+== Can I set the compression level? ==
 
 The level support of ZLIB has been added in v4.14, LZO does not support levels (the kernel implementation provides only one), ZSTD level support is planned.
 
 There are 9 levels of ZLIB supported (1 to 9), mapping 1:1 from the mount option to the algorithm defined level. The default is level 3, which provides the highest compression ratio and is still reasonably fast. The difference in compression gain of levels 7, 8 and 9 is comparable but the higher levels take longer. The level can be specified as the mount option, as "compress=zlib:1". Level 0 maps to the default.
 
-== What are the differences between compression methods? ==
+= What are the differences between compression methods? =
 There's a speed/ratio trade-off:
 
 * ZLIB -- slower, higher compression ratio (uses zlib level 3 setting, you can see the zlib level difference between 1 and 6 in zlib sources).
 * LZO -- faster compression and decompression than zlib, worse compression ratio, designed to be fast
-* ZSTD -- '(since v4.14)' compression comparable to zlib with higher compression/decompression speeds and different ratio levels ([https://git.kernel.org/pub/scm/linux/kernel/git/mason/linux-btrfs.git/commit/?h=next&id=5c1aab1dd5445ed8bdcdbb575abc1b0d7ee5b2e7 details])
+* ZSTD -- ''(since v4.14)'' compression comparable to zlib with higher compression/decompression speeds and different ratio levels ([https://git.kernel.org/pub/scm/linux/kernel/git/mason/linux-btrfs.git/commit/?h=next&id=5c1aab1dd5445ed8bdcdbb575abc1b0d7ee5b2e7 details])
 
 The differences depend on the actual data set and cannot be expressed by a single number or recommendation. Do your own benchmarks. LZO seems to give satisfying results for general use.
 
-=== Are there other compression methods supported? ===
+== Are there other compression methods supported? ==
 
 Currently no, and with ZSTD, there are no further plans to add more. The [http://code.google.com/p/lz4/ LZ4] algorithm was considered but has not brought significant gains.
 
@@ -32,34 +31,34 @@ Snappy support (compresses slower than LZ0 but decompresses much faster) has als
 
 Some work has been done toward adding lzma (very slow, high compression) support as well.  Current status is "not considered anymore".
 
-=== Can a file data be compressed with different methods? ===
-Yes. The compression algorithm is stored per-extent.
+== Can a file data be compressed with different methods? ==
+Yes. The compression algorithm is stored per-extent. Setting the compression method will affect newly written data, so it's possible to have all types of compression in file.
 
-== How can I determine compressed size of a file? ==
+= How can I determine compressed size of a file? =
 compsize takes a list of files on a btrfs filesystem and measures used compression types and effective compression ratio: https://github.com/kilobyte/compsize
 
 There is a patch adding support fort that, currently it's not merged.  You can kind of guess at its compressed size by comparing the output from the <code>df</code> command before and after writing a file, if this is available to you.
 
-=== Why does not <code>du</code> report the compressed size? ===
+== Why does not <code>du</code> report the compressed size? ==
 Traditionally the UNIX/Linux filesystems did not support compression and there was no item in <code>stat</code> data structure allocated for a similar purpose. There's the file size, that denotes nominal file size independent of the actually allocated size on-disk. For that purpose, the <code>stat.st_blocks</code> item contains a value that corresponds to the number of blocks allocated, i.e. in case of [http://en.wikipedia.org/wiki/Sparse_file sparse files]. However, when a compression is involved, the actually allocated size may be smaller than nominal, although the file is not sparse.<br>
 There are utilities that determine sparseness of a file by comparing the nominal and block-allocated size, this behaviour might cause bugs if <code>st_blocks</code> contained the amount after compression.<br>
 Another issue with backward compatibility is that up to now <code>st_blocks</code> always contains the uncompressed number of blocks. It's unclear what would happen if there are files with mixed types of the value. The proposed solution is to add another special call for that (via <code>ioctl</code>), but this may be not the ideal solution.
 
-== Can I determine what compression method was used on a file? ==
+= Can I determine what compression method was used on a file? =
 Not directly, but this is possible from a userspace tool without any special kernel support (the code just has not been written).
-== Can I force compression on a file without using the ''compress'' mount option? ==
-Yes. The utility [http://en.wikipedia.org/wiki/Chattr chattr] supports setting file attribute ''c'' that  marks the inode to compress newly written data. Setting the compression property on a file using <code>btrfs property set <file> compression <zlib|lzo></code> will '''force''' compression to be used on that file using the specified algorithm.
+= Can I force compression on a file without using the ''compress'' mount option? =
+Yes. The utility [http://en.wikipedia.org/wiki/Chattr chattr] supports setting file attribute ''c'' that  marks the inode to compress newly written data. Setting the compression property on a file using <code>btrfs property set <file> compression <zlib|lzo|zstd></code> will '''force''' compression to be used on that file using the specified algorithm.
 
-== Can I disable compression on a file? ==
+= Can I disable compression on a file? =
 It is possible to disable compression of new extents on a file using the <code>btrfs property set <file> compression ""</code> command. This will set the "no compression" flag on the file and newly written extents will not be compressed until the flag is cleared either by <code>chattr +c</code> or by using the compression property to specify an algorithm. Already written extents will not be rewritten.
 
-== Can I set compression per-subvolume? ==
+= Can I set compression per-subvolume? =
 Currently no, this is planned. You can simulate this by enabling compression on the subvolume directory and the files/directories will inherit the compression flag.
 <!--
-=== Is per-subvolume compression stored permanently on disk? ===
+== Is per-subvolume compression stored permanently on disk? ==
 It will be.
 -->
-== What's the precedence of all the options affecting compression? ==
+= What's the precedence of all the options affecting compression? =
 
 Compression to newly written data happens:
 
@@ -70,7 +69,7 @@ Compression to newly written data happens:
 
 Note, that mounting with <code>[[Mount options#compress|-o compress]]</code> will not set the <code>+c</code> file attribute.
 
-== How can I recursively compress/uncompress a directory (including guessed/forced-compression) ==
+= How can I recursively compress/uncompress a directory (including guessed/forced-compression) =
 
 Uset the <tt>btrfs filesystem defrag</tt> command, the option ''-r'' will
 process the files recursively in a directory. This is independent of the mount
@@ -81,12 +80,12 @@ Currently (v4.14), it's not possible to select "no compression", using the
 defrag command. This may change in the future.
 
 
-== How does compression interact with direct IO or COW? ==
+= How does compression interact with direct IO or COW? =
 Compression does not work with direct IO (DIO), does work with COW (the default) and does not work for NOCOW files. If a file is opened in DIO mode, it will fall back to buffered IO.
-=== Are there speed penalties when doing random access to a compressed file? ===
+== Are there speed penalties when doing random access to a compressed file? ==
 Yes. The compression processes ranges of a file of maximum size 128 KiB and compresses each 4 KiB (or page-sized) block separately. Accessing a byte in the middle of the given 128 KiB range requires to decompress the whole range. This is not optimal and is subject to optimizations and further development.
 
-== <div id="incompressible">What happens to incompressible files?</div> ==
+= <div id="incompressible">What happens to incompressible files?</div> =
 There is a simple decision logic: if the first portion of data being compressed is not smaller than the original, the compression of the file is disabled -- unless the filesystem is mounted with <code>[[Mount options#compress|-o compress-force]]</code>. In that case it'll be compressed always regardless of the compressibility of the file. This is not optimal and subject to optimizations and further development.
 
 This means that many times, even if you have compression enabled, if the first portion of the file doesn't compress well, but the rest *does* it still won't compress the rest.  Recommend using <code>[[Mount options#compress|-o compress-force]]</code> if you really want compression enabled on a mounted filesystem, though if you have many differing types files, then just <code>[[Mount options#compress|-o compress]]</code> might work well for you.

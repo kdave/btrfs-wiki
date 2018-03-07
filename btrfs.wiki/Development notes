@@ -105,6 +105,9 @@ xfstests has very few "hard" requirements and will succeed without running many 
 * <code>CONFIG_DM_FLAKEY=m</code> or <code>y</code>
 * <code>CONFIG_DM_THIN_PROVISIONING=m</code> or <code>y</code>
 * <code>CONFIG_DM_SNAPSHOT=m</code> or <code>y</code>
+* <code>CONFIG_DM_DELAY=m</code> or <code>y</code>
+* <code>CONFIG_DM_ERROR=m</code> or <code>y</code>
+* <code>CONFIG_DM_LOG_WRITES=m</code> or <code>y</code>
 * <code>CONFIG_BLK_DEV_LOOP=m</code> or <code>y</code>
 * <code>CONFIG_EXT4_FS=m</code> or <code>y</code>
 * <code>CONFIG_SCSI_DEBUG=m</code>
