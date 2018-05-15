@@ -186,10 +186,15 @@ It seems that the link count can be tracked like the other filesystems do. This 
 
 === Distinguish EIO and EUCLEAN types of errors ===
 {{project
+|who=ongoing
+|patch=n/a
+|upstream=n/a
 |text=Right now we use EIO as error code even for errors that are not directly
 related to IO failures from the lower layers. Other filesystems use EUCLEAN
 for corruptions or inconsistencies not caused by genuine IO errors. We'd like
-to gradually start using EUCLEAN as well where applicable.
+to gradually start using EUCLEAN as well where applicable. The symbolic name
+can be also synced up with other filesystems that use EFSCORRUPTION and maybe
+other more fine grained errors.
 }}
 
 === Improve self-tests and error messages ===
@@ -202,6 +207,11 @@ useful for and should be enhanced, eg.
 * drop the ending "\n" where applicable
 * enhance messages with the values of last failed condition
 * drop ifdefs from generic code that's used only from tests/*.c and move it there
+}}
+
+=== Get rid of buffer_head usage in superblock writing/reding ===
+{{project
+|text=The structure buffer_head is used for reading and writing the superblocks, the interface is easy to use to just stay 'read/write this offset and give me back the data'. The rest of btrfs uses the more modern 'bio' structures, that are also used to implement the buffer_heads. So this is merely lifting up the bio calls to the superblock IO. There's some page and mapping involved, but oterwise should be easy to convert.
 }}
 
 == New features ==
@@ -547,6 +557,8 @@ TODO: add reference to the RFC patches
 
 === Extended file attributes FS_XFLAG_* ===
 {{project
+|who=David Sterba
+|patch=https://patchwork.kernel.org/patch/10389621/
 |text=Defined in include/uapi/linux/fs.h in the namespace FS_XFLAG_. Extended
 range of the file attributes, similar to what FS_IOC_GETFLAGS does.
 
@@ -558,7 +570,10 @@ Preliminary patches in the mailinglist 03/2017.
 |text=Generic VFS-level crypto API is available since 4.6, port btrfs.
 }}
 
-
+=== Support SHUTDOWN ioctl ===
+{{project
+|text=Add the ioctl that will forcibly shutdown the filesystem.
+}}
 
 == Integration with userspace tools ==
 

@@ -156,6 +156,8 @@ base.
 ''Do:'' make sure that each patch compiles and does not deliberately introduce a bug,
 this is a good practice that makes ''bisecting'' go smooth
 
+''Do:'' send the cover letter (ie. the non-patch mail) with brief description of the series, this is a place where feedback to the whole patchset will be sent rather than comments to the individual patches. To generate the series with cover letter use ''git format-patch --cover-letter --thread''.
+
 == Good practices, contribution hints ==
 
 * if you feel that you understand some area of code enough to stick your ''Reviewed-by'' to submitted patches, please do. Even for small patches.

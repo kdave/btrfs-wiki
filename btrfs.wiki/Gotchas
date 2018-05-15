@@ -131,9 +131,9 @@ Details of affected versions TBD.
 
 == ssd mount option ==
 
-Currently, using the ssd mount option has a negative impact on usability and lifetime of modern SSDs.
-This will be fixed in '''4.14''', see this commit for more information: [https://github.com/torvalds/linux/commit/583b723151794e2ff1691f1510b4e43710293875]
+Using the <tt>ssd</tt> mount option with older kernels than 4.14 has a negative impact on usability and lifetime of modern SSDs.
+This is fixed in '''4.14''', see this commit for more information: [https://github.com/torvalds/linux/commit/583b723151794e2ff1691f1510b4e43710293875]
 
-With '''4.14+''' it is safe and recommended again to use the ssd mount option for non-rotational storage.
+With '''4.14+''' it is safe and recommended again to use the <tt>ssd</tt> mount option for non-rotational storage.
 
 [[Category:UserDoc]]

@@ -5,7 +5,7 @@
 From 3.19, the recovery and rebuild code was integrated. The one missing piece, from a reliability point of view, is that it is still vulnerable to the parity RAID "write hole", where a partial write as a result of a power failure will result in inconsistent parity data.
 
 * Parity may be inconsistent after a crash (the "write hole"). The problem born when after "an unclean shutdown" a disk failure happens. But these  are *two* distinct failures. These together break the BTRFS raid5 redundancy. If you run a scrub process after "an unclean shutdown" (with no disk failure in between) those data which match their checksum can still be read out while the mismatched data are lost forever.
-* Parity data is not checksummed
+* <del>Parity data is not checksummed</del> Checksumming for parity is not necessary.See [[Talk:Status#parity_not_checksummed_removed|Talk:Status]]
 * No support for discard? (possibly -- needs confirmation with cmason)
 * The algorithm uses as many devices as are available: No support for a fixed-width stripe (see note, below)
 

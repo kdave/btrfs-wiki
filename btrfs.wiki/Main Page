@@ -64,34 +64,31 @@ As part of the changelog you can also review
 
 == News and Changelog ==
 
-''' btrfs-progs v4.15.1 (Feb 2018) '''
-* build
-** fix build on musl
-** support asciidoctor for doc generation
-* cleanups
-** sync some code with kernel
-** check: move code to own directory, split to more files
-* tests
-** more build tests in travis
-** tests now pass with asan and ubsan
-** testsuite can be exported and used separately
+<b>WARNING:</b> kernels <b>4.14.25 - 4.14.27</b> and <b>4.15.8 - 4.15.9</b> on <b>big endian</b> machines
+will damage a filesystem after first umount. Little endian machines are unaffected. Please contact upstream developers if your filesystems were affected, the problem can be manually fixed and is only in the superblock, not data or regular metadata.
 
-''' Linux v4.15 (Jan 2018) '''
-* new features
-** extend mount options to specify zlib compression level, <i>-o compress=zlib:9</i>
-** v2 of ioctl "extent to inode mapping"
-** populate compression heuristics logic
-** enable indexing for btrfs as lower filesystem in overlayfs
-** speedup page cache readahead during send on large files
-* internal changes
-** more sanity checks of b-tree items when reading them from disk
-** more EINVAL/EUCLEAN fixups, missing BLK_STS_* conversion, other errno or error handling fixes
-** remove some homegrown IO-related logic, that's been obsoleted by core block layer changes (batching, plug/unplug, own counters)
-** add ref-verify, optional debugging feature to verify extent reference accounting
-** simplify code handling outstanding extents, make it more clear where and how the accounting is done
-** make delalloc reservations per-inode, simplify the code and make the logic more straightforward
-** extensive cleanup of delayed refs code
-* fix send ioctl on 32bit with 64bit kernel
+''' btrfs-progs v4.16.1 (Apr 2018) '''
+
+* remove obsolete tools: btrfs-debug-tree, btrfs-zero-log, btrfs-show-super, btrfs-calc-size                                                                                                                    
+* sb-mod: new debugging tool to edit superblock items                                                                                                                                                           
+* mkfs: detect if thin-provisioned device does not have enough space                                                                                                                                            
+* check: don't try to verify checksums on metadata dump images                                                                                                                                                  
+* build: fail documentation build if xmlto is not found                                                                                                                                                         
+* build: fix build of btrfs.static 
+
+''' Linux v4.16 (Apr 2018) '''
+* fallocate: implement zero range mode
+* avoid losing data raid profile when deleting a device
+* tree item checker: more checks for directory items and xattrs
+* raid56 recovery: don't use cached stripes, that could be potentially changed and a later RMW or recovery would lead to corruptions or failures
+* let raid56 try harder to rebuild damaged data, reading from all stripes if necessary
+* fix scrub to repair raid56 in a similar way as in the case above
+* cleanups: device freeing, removed some call indirections, redundant bio_put/_get, unused parameters, refactorings and renames
+* RCU list traversal fixups
+* simplify mount callchain, remove recursing back when mounting a subvolume
+* plug for fsync, may improve bio merging on multiple devices
+* compression heurisic: replace heap sort with radix sort, gains some performance
+* add extent map selftests, buffered write vs dio
 
 Read about past releases in the [[Changelog]]
 * [[Changelog#By_feature|features by kernel version]]

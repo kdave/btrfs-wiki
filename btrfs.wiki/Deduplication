@@ -45,7 +45,7 @@ Note if reflinking read-only snapshots, rmlint.sh must be run with -r option and
 
 Now that the ioctl has been lifted to the VFS layer, rather than being a BTRFS-specific function, deduplication functionality can be implemented in a filesystem-independent way.
 
-As such, '''[https://linux.die.net/man/8/xfs_io xfs_io]''', is able to perform deduplication on a BTRFS file system, and provides a simple way to invoke the deduplication function from the command line, on any filesystem which supports the ioctl.
+As such, '''[http://man7.org/linux/man-pages/man8/xfs_io.8.html xfs_io]''', is able to perform deduplication on a BTRFS file system, and provides a simple way to invoke the deduplication function from the command line, on any filesystem which supports the ioctl.
 
 = Inband =
 
