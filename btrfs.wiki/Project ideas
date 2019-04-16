@@ -134,8 +134,6 @@ It is possible to fix the allocation logic so it is more even while (almost almo
 {{project
 |patch=[http://thread.gmane.org/gmane.comp.file-systems.btrfs/21754 initial WIP]
 |text=The extent_io code makes some assumptions about the page size and the underlying FS sectorsize or blocksize. These need to be cleaned up, especially for the extent_buffer code.
-
-The HDD industry currently supports 512 byte blocks. We can expect HDDs in the future to support 4K Byte blocks
 }}
 
 === Hot spare support ===
@@ -204,12 +202,11 @@ operatios, extent tree manipulations, etc. The error messages are not always
 useful for and should be enhanced, eg.
 
 * switch all error case messages from test_msg to test_err that will also print the line and stack (use WARN_ON)
-* drop the ending "\n" where applicable
 * enhance messages with the values of last failed condition
 * drop ifdefs from generic code that's used only from tests/*.c and move it there
 }}
 
-=== Get rid of buffer_head usage in superblock writing/reding ===
+=== Get rid of buffer_head usage in superblock writing/reading ===
 {{project
 |text=The structure buffer_head is used for reading and writing the superblocks, the interface is easy to use to just stay 'read/write this offset and give me back the data'. The rest of btrfs uses the more modern 'bio' structures, that are also used to implement the buffer_heads. So this is merely lifting up the bio calls to the superblock IO. There's some page and mapping involved, but oterwise should be easy to convert.
 }}
@@ -536,33 +533,8 @@ other filesystem specific to btrfs.
 
 * FALLOC_FL_COLLAPSE_RANGE
 * FALLOC_FL_INSERT_RANGE
-* FALLOC_FL_ZERO_RANGE -- [https://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg69734.html PATCH v4] -- pending for 4.16
+* FALLOC_FL_ZERO_RANGE -- done in 4.16
 * FALLOC_FL_UNSHARE_RANGE
-}}
-
-=== Swap file support ===
-{{project
-|patch=patch in development
-|text=Implement swapfile support on top of swap-over-nfs infrastructure that has been merged in 3.7. Use the exported an API to manage the extents.
-
-There is a patchset (swap-over-nfs) which enhances the swapfile API and btrfs could build swap support on top of the infrastructure. The patchset has been merged into 3.6.
-
-References:
-* http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=35054394c4b3cecd52577c2662c84da1f3e73525 plus surrounding patches
-* http://www.spinics.net/lists/linux-btrfs/msg05042.html
-
-TODO: add reference to the RFC patches
-
-}}
-
-=== Extended file attributes FS_XFLAG_* ===
-{{project
-|who=David Sterba
-|patch=https://patchwork.kernel.org/patch/10389621/
-|text=Defined in include/uapi/linux/fs.h in the namespace FS_XFLAG_. Extended
-range of the file attributes, similar to what FS_IOC_GETFLAGS does.
-
-Preliminary patches in the mailinglist 03/2017.
 }}
 
 === Use fs/crypto API ===
@@ -587,7 +559,6 @@ Update rsync to preserve NOCOW file status.
 
 Not exactly an implementation of this, but I (A. v. Bidder) have patched dirvish to use btrfs snapshots instead of hardlinked directory trees. Discussion archived on the [http://www.dirvish.org/pipermail/dirvish/2010-December/002357.html Dirvish mailing list].
 }}
-
 
 === Snapshot-aware updatedb/locate ===
 {{project
@@ -683,13 +654,6 @@ Examples:
 * typos in comments: spelling fixes, typos in variable names referenced in comments
 * typos in error messages, or other wording changes that make things more readable and understandable
 
-=== Pass fs_info instead of root ===
-
-{{project
-|text=Lots of functions get a root passed, but only need the fs_info part of it. This is confusing, as it is unclear if a specific root is needed or if any root will do.
-|patch=Patches in flight
-}}
-
 === Helpers for tree enumeration ===
 
 {{project
@@ -713,7 +677,7 @@ These helpers could also generically make use of the upcoming readahead API.
 The output is noisy, you can comment out the other warnings or grep is your friend.
 }}
 
-=== Make less functions inline to help identifying them on the stack ===
+=== Make fewer functions inline to help identifying them on the stack ===
 
 {{project
 |text=
@@ -759,7 +723,6 @@ Note: keeping consistent look of the documentation may not be easy, but let's tr
 * Introduce semantic checks for filesystem data structures
 * Limit memory usage by triggering a back-reference only mode when too many extents are pending
 * Add verification of the generation number in btree metadata
-* [[Project_ideas#fsck]]
 
 == Test Suite ==
 
@@ -956,6 +919,24 @@ scrub code.
 |upstream=4.13
 |patch=complete
 |text=Implement support for the new statx() syscall
+}}
+
+=== Extended file attributes FS_XFLAG_* ===
+{{project
+|who=David Sterba
+|upstream=4.19
+|patch=complete
+|text=Defined in include/uapi/linux/fs.h in the namespace FS_XFLAG_. Extended
+range of the file attributes, similar to what FS_IOC_GETFLAGS does.
+}}
+
+=== Swap file support ===
+{{project
+|upstream=5.0
+|patch=complete
+|text=Implement swapfile support on top of swap-over-nfs infrastructure that has been merged in 3.7. Use the exported an API to manage the extents.
+
+There is a patchset (swap-over-nfs) which enhances the swapfile API and btrfs could build swap support on top of the infrastructure. The patchset has been merged into 3.6.
 }}
 
 = Obsolete requests =

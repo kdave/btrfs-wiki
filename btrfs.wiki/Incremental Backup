@@ -43,6 +43,9 @@ That said, many fixes have gone in btrfs send/receive and it is recommended to u
 ; snapbtrex [https://github.com/yoshtec/snapbtrex]
 : Snapshot creation and transfer to remote systems via ssh, no config files just shell options. The only dependency is python. An extension of the [[SnapBtr]] script. This is a fork of the original version of snapbtr.
 
+; btrfs-backup [https://github.com/3coma3/btrfs-backup]
+: Another, very small (50 lines), rsync script intended as base for extensions and ideas. It implements a custom 5-level rotation scheme based on snapshot date and time.
+
 == Doing it by hand, step by step ==
 When performing incremental backups, we will be working with two snapshots, one of them representing the time of the earlier backup, and the other representing the current backup. When the backup run completes, we can discard the earlier of the snapshots to prepare for the next incremental run.
 

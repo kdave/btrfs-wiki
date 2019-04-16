@@ -17,6 +17,19 @@ The following contributed in the past (sorted alphabetically):
 * Red Hat
 * STRATO AG
 
+== Statistics for 5.x series ==
+{| class="wikitable" border=1 align="right"
+|-
+! Version !! Contributors !! SLOC !! Raw lines !! Patches !! Diffstat
+|-
+| 5.0
+| 15
+| 98298
+| 134159
+| 144
+| +3173 -2297
+|}
+
 == Statistics for 4.x series ==
 {| class="wikitable" border=1 align="right"
 |-
@@ -147,6 +160,27 @@ The following contributed in the past (sorted alphabetically):
 | 133003
 | 194
 | +2723 -3024
+|-
+| 4.18
+| 26
+| 98387
+| 133667
+| 200
+| +3643 -2979
+|-
+| 4.19
+| 25
+| 97547
+| 132655
+| 193
+| +2058 -3070
+|-
+| 4.20
+| 22
+| 97830
+| 133283
+| 128
+| +1560 -932
 |}
 
 Legend:

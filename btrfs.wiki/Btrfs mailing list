@@ -1,7 +1,7 @@
 The Btrfs mailing list is hosted on http://vger.kernel.org.
 
 * email address is '''[mailto:linux-btrfs@vger.kernel.org linux-btrfs@vger.kernel.org]'''
-* subscription required to send email: no
+* no subscription required to send email
 
 === How to subscribe ===
 
@@ -17,11 +17,13 @@ The mailing list server utilizes [https://en.wikipedia.org/wiki/Greylisting grey
 
 Mailing list archives are available from:
 
-* <strike>gmane.org: http://news.gmane.org/gmane.comp.file-systems.btrfs</strike> web archive not functional since 2016
+* https://lore.kernel.org/linux-btrfs/ -- fast, search, mail threading, archives from 2008-now
 * mail archive: https://mail-archive.com/linux-btrfs@vger.kernel.org
 * marc: https://www.marc.info/?l=linux-btrfs
+* spinics: https://www.spinics.net/lists/linux-btrfs/
+* <strike>gmane.org: http://news.gmane.org/gmane.comp.file-systems.btrfs</strike> -- web archive not functional since 2016
 
-The old mailing lists on oss.oracle.com are no longer active, but the gmane archives do include the old list as well.
+The old mailing lists on oss.oracle.com are no longer active but are available at the lore.kernel.org archive. The original gmane.org archives do include them too but might be available only through the NNTP gateway.
 
 == What information to provide when asking a support question ==
 

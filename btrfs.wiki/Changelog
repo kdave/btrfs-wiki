@@ -292,11 +292,170 @@ This could avoid some corner cases leading to excessive fragmentation. [https://
 |version=4.16
 |text=Mode of the [http://man7.org/linux/man-pages/man2/fallocate.2.html ''fallocate''] syscall to zero file range.
 }}
+{{FeatureMerged
+|name=''removed user transaction ioctl''
+|version=4.17
+|text=deprecated in 4.14, see above
+}}
+{{FeatureMerged
+|name=''rmdir'' on subvolumes
+|version=4.18
+|text=Allow rmdir to delete an empty subvolume.
+}}
+{{FeatureMerged
+|name=XFLAGS ioctl
+|version=4.18
+|text=Add support for ioctl FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR, successor of
+FS_IOC_SETFLAGS/FS_IOC_GETFLAGS ioctl. Currently supports: APPEND, IMMUTABLE,
+NOATIME, NODUMP, SYNC. Note that the naming is very confusing, though it's
+named ''xattr'', it does not mean the extended attributes. It should be
+referenced as extended inode flags or ''xflags''.
+}}
+{{FeatureMerged
+|name=EXTENT_SAME ioctl / 16MiB chunks
+|version=4.18
+|text=The range for out-of-band deduplication implemented by the EXTENT_SAME
+ioctl will split the range into 16MiB chunks. Up to now this was the overall
+limit and effectively only the first 16MiB was deduplicated.
+}}
+{{FeatureMerged
+|name=GET_SUBVOL_INFO ioctl
+|version=4.18
+|text=New ioctl to read subvolume information (id, directory name, generation,
+flags, UUIDs, time). This does not require root permissions, only the regular
+access to to the subvolume.
+}}
+{{FeatureMerged
+|name=GET_SUBVOL_ROOTREF ioctl
+|version=4.18
+|text=New ioctl to enumerate subvolume references of a given subvolume. This
+does not require root permissions, only the regular access to to the
+subvolume.
+}}
+{{FeatureMerged
+|name=INO_LOOKUP_USER ioctl
+|version=4.18
+|text=New ioctl to lookup path by inode number. This does not require root
+permissions, only the regular access to to the subvolume, unlike the
+INO_LOOKUP ioctl.
+}}
+{{FeatureMerged
+|name=defrag ro/rw
+|version=4.19
+|text=Allow to run defrag on files that are normally accesible for read-write, but are currently opened in read-only mode.
+}}
+{{FeatureMerged
+|name=swapfile
+|version=5.0
+|text=
+}}
+{{FeatureMerged
+|name=metadata uuid
+|version=5.0
+|text=
+}}
 |}
 
 = By version (btrfs-progs) =
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
+
+== btrfs-progs v4.20 (Jan 2019) ==
+
+* new feature: metadata uuid
+** lightweight change of UUID without rewriting all metadata (incompatible change)
+** done by btrfstune -m/-M, needs kernel support, 5.0+
+* image:
+** fix block groups when restoring from multi-device image
+** only enlarge result image if it's a regular file
+* check
+** more device extent checks and fixes
+* can repair dir item with mismatched hash
+* mkfs: uuid tree created with proper contents
+* fix mount point detection due to partial prefix match
+* other:
+** new tests, build fixes, doc updates
+** libbtrfsutil: fix tests if kernel lacks support for new subvolume ioctls
+{{ProgsReleaseMinor |title=btrfs-progs v4.20.1 (Jan 2019) }}
+
+* libbtrfs: fix build of external tools due to missing symbols                                                                                                                                                
+* ci: enable library test
+
+== btrfs-progs v4.19 (Nov 2018) ==
+
+* check: support repair of fs with free-space-tree feature
+* core:
+** port delayed ref infrastructure from kernel
+** support write to free space tree
+* dump-tree: new options for BFS and DFS enumeration of b-trees
+* quota: rescan is now done automatically after 'assign'
+* btrfstune: incomplete fix to uuid change
+* subvol: fix 255 char limit checks
+* completion: complete block devices and now regular files too
+* docs:
+** ship uncompressed manual pages
+** btrfsck uses a manual page link instead of symlink
+* other:
+** improved error handling
+** docs
+** new tests
+{{ProgsReleaseMinor |title=btrfs-progs v4.19.1 (Dec 2018) }}
+
+* build fixes:
+** big-endian builds fail due to bswap helper clashes
+** 'swap' macro is too generic, renamed to prevent build failures
+* libbtrfsutil:
+** minor version update to 1.1.0
+** fix default search to top=0 as documented
+** rename 'async' to avoid future python binding problems
+** add support for unprivileged subvolume listing ioctls
+** added tests, API docs
+* other:
+** lot of typos fixed
+** warning cleanups
+** doc formatting updates
+** CI tests against zstd 1.3.7
+
+== btrfs-progs v4.17 (Jun 2018) ==
+
+* check
+** many lowmem mode improvements
+** properly report qgroup mismatch errors
+** check symlinks with append/immutable flags
+* fi usage
+** correctly calculate allocated/unallocated for raid10
+** minor output updates
+* mkfs
+** detect ENOSPC on thinly provisioned devices
+** fix spurious EEXIST during directory traversal
+* restore: fix relative path for restore target
+* dump-tree: print symbolic tree names for backrefs
+* send: fix regression preventing send -p with subvolumes mounted on "/"
+* corrupt-tree: refactoring and command line updates
+* build
+** make it work with e2fsprogs < 1.42 again
+** restore support for autoconf 2.63
+** detect if -std=gnu90 is supported
+* other: new tests, cleanups
+{{ProgsReleaseMinor |title=btrfs-progs v4.17.1 (Aug 2018) }}
+
+* check:
+** add ability to fix wrong ram_bytes for compressed inline files
+** beautify progress output
+* btrfstune: allow to continue uuid change after unclean interruption
+* several fuzz fixes:
+** detect overalpping chunks
+** chunk loading error handling
+** don't crash with unexpected root refs to extents
+* relax option parsing again to allow mixing options and non-options arguments
+* fix qgroup rescan status reporting
+* build:
+** drop obsolete dir-test
+** new configure option to disable building of tools
+** add compatibility options --disable-static and --disable-shared
+* other:
+** cleanups and preparatory work
+** new test images
 
 == btrfs-progs v4.16 (Apr 2018) ==
 
@@ -331,14 +490,13 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** test script cleanups (quoting, helpers)
 ** tool to edit superblocks
 ** updated docs
+{{ProgsReleaseMinor |title=btrfs-progs v4.16.1 (Apr 2018) }}
 
-=== btrfs-progs v4.16.1 (Apr 2018) ===
-
-* remove obsolete tools: btrfs-debug-tree, btrfs-zero-log, btrfs-show-super, btrfs-calc-size                                                                                                                    
-* sb-mod: new debugging tool to edit superblock items                                                                                                                                                           
-* mkfs: detect if thin-provisioned device does not have enough space                                                                                                                                            
-* check: don't try to verify checksums on metadata dump images                                                                                                                                                  
-* build: fail documentation build if xmlto is not found                                                                                                                                                         
+* remove obsolete tools: btrfs-debug-tree, btrfs-zero-log, btrfs-show-super, btrfs-calc-size
+* sb-mod: new debugging tool to edit superblock items
+* mkfs: detect if thin-provisioned device does not have enough space
+* check: don't try to verify checksums on metadata dump images
+* build: fail documentation build if xmlto is not found
 * build: fix build of btrfs.static
 
 == btrfs-progs v4.15 (Jan 2018) ==
@@ -349,8 +507,7 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** new and updated tests
 ** cleanups, refactoring
 ** doc updates
-
-=== btrfs-progs v4.15.1 (Feb 2018) ===
+{{ProgsReleaseMinor |title=btrfs-progs v4.15.1 (Feb 2018) }}
 
 * build
 ** fix build on musl
@@ -375,8 +532,8 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** new tests
 ** cleanups and refactoring
 ** doc updates
+{{ProgsReleaseMinor |title=btrfs-progs v4.14.1 (Jan 2018) }}
 
-=== btrfs-progs v4.14.1 (Jan 2018) ===
 * dump-tree: print times of root items
 * check: fix several lowmem mode bugs
 * convert: fix rollback after balance
@@ -404,8 +561,7 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** travis CI enhancements
 ** new tests, fuzzed images
 ** testsuite cleanups
-
-=== btrfs-progs v4.13.1 (Sep 2017) ===
+{{ProgsReleaseMinor |title=btrfs-progs v4.13.1 (Sep 2017) }}
 
 * image: speed up generating the sanitized names, do not generate unprintable chars
 * completion: add missing commands, better mount point detection
@@ -415,8 +571,7 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** doc enhancements, ioctl manual page started
 ** updated and new tests
 ** build fixes
-
-=== btrfs-progs v4.13.2 (Oct 2017) ===
+{{ProgsReleaseMinor |title=btrfs-progs v4.13.2 (Oct 2017) }}
 
 * subvol list:
 ** don't list toplevel subvolume among deleted (broken since 4.8.3)
@@ -429,8 +584,7 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** new tests, testsuite updates
 ** doc updates
 ** cleanups
-
-=== btrfs-progs v4.13.3 (Oct 2017) ===
+{{ProgsReleaseMinor |title=btrfs-progs v4.13.3 (Oct 2017) }}
 
 * check: fix --force, wrong check for a mounted block device
 * build: fix --with-convert parsing
@@ -448,8 +602,7 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** docs updates
 ** build: ThreadSanitizer support
 ** tests: stricter checks for mounted filesystem
-
-=== btrfs-progs v4.12.1 (Aug 2017) ===
+{{ProgsReleaseMinor |title=btrfs-progs v4.12.1 (Aug 2017) }}
 
 * build:
 ** fix cross-compilation
@@ -471,8 +624,7 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 * option parser updates: global options are parsed before the subcommand name (old xfstests will fail)
 * new and updated tests
 * documentation updates
-
-=== btrfs-progs v4.11.1 (Jun 2017) ===
+{{ProgsReleaseMinor |title=btrfs-progs v4.11.1 (Jun 2017) }}
 
 * image: restoring from multiple devices
 * dev stats: make --check option work
@@ -501,16 +653,14 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** source file reorganization: convert, mkfs, utils
 ** lots of spelling fixes in docs, other updates
 ** more tests
-
-=== btrfs-progs 4.10.1 (Mar 2017) ===
+{{ProgsReleaseMinor |title=btrfs-progs 4.10.1 (Mar 2017) }}
 
 * receive: handle subvolume in path clone
 * convert: rollback fixed (rewrite was needed to address previous design issues)
 * build: fix build of 3rd party tools, missing <linux/sizes.h>
 * dump-tree: print log trees
 * other: new and updated tests
-
-=== btrfs-progs 4.10.2 (Mar 2017) ===
+{{ProgsReleaseMinor |title= btrfs-progs 4.10.2 (Mar 2017) }}
 
 * check: lowmem mode fix for false alert about lost backrefs
 * convert: minor bugfix
@@ -534,8 +684,7 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 * other:
 ** cleanups
 ** docs updates
-
-=== btrfs-progs v4.9.1 (Jan 2017) ===
+{{ProgsReleaseMinor |title=btrfs-progs v4.9.1 (Jan 2017) }}
 
 * check:
 ** use correct inode number for lost+found files
@@ -558,11 +707,10 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 * minor cleanups and improvements
 * kernel library helpers moved to own directory
 * qgroup: fix regression leading to incorrect status after check, introduced in 4.7
+{{ProgsReleaseMinor |title=btrfs-progs v4.8.1 (Oct 2016) }}
 
-=== btrfs-progs v4.8.1 (Oct 2016) ===
 * build fixes: 32bit, "no backtrace"
-
-=== btrfs-progs v4.8.2 (Oct 2016) ===
+{{ProgsReleaseMinor |title=btrfs-progs v4.8.2 (Oct 2016) }}
 
 * convert: also convert file attributes
 * convert: fix wrong tree block alignment for unalianged block group
@@ -575,8 +723,7 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** convert: more symlink tests, attribute tests
 ** quota verify for reloc tree
 * other cleanups
-
-=== btrfs-progs v4.8.3 (Nov 2016) ===
+{{ProgsReleaseMinor |title=btrfs-progs v4.8.3 (Nov 2016) }}
 
 * check:
 ** support for clearing space cache (v1)
@@ -601,8 +748,7 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** new tests
 ** updates in testing infrastructure
 ** fixed convert test 005
-
-=== btrfs-progs v4.8.4 (Nov 2016) ===
+{{ProgsReleaseMinor |title=btrfs-progs v4.8.4 (Nov 2016) }}
 
 * check: support for clearing space cache v2 (free-space-tree)
 * send:
@@ -620,8 +766,7 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** move sources for btrfs-image to own directory
 ** deprecated and not build by default: btrfs-calc-size, btrfs-show-super
 ** docs updates
-
-=== btrfs-progs v4.8.5 (Nov 2016) ===
+{{ProgsReleaseMinor |title=btrfs-progs v4.8.5 (Nov 2016) }}
 
 * receive: fix detection of end of stream (error reported even for valid streams)
 * other:
@@ -645,8 +790,7 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** use /bin/bash
 ** other stability fixes and cleanups
 * more tests
-
-=== btrfs-progs 4.7.1 (Aug 2016) ===
+{{ProgsReleaseMinor |title=btrfs-progs 4.7.1 (Aug 2016) }}
 
 '''do not use, see 4.7.2'''
 
@@ -664,8 +808,8 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** message updates
 ** more tests
 ** more build options, enhanced debugging
+{{ProgsReleaseMinor |title=btrfs-progs 4.7.2 (Sep 2016) }}
 
-=== btrfs-progs 4.7.2 (Sep 2016) ===
 * check:
 ** '''urgent fix''': false report of backref mismatches; do not --repair, last unaffected version 4.6.1 (code reverted to that state)
 * fuzzing and fixes
@@ -677,8 +821,8 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** minor improvements in messages and help strings
 * documentation:
 ** filesystem features
+{{ProgsReleaseMinor |title=btrfs-progs 4.7.3 (Sep 2016) }}
 
-=== btrfs-progs 4.7.3 (Sep 2016) ===
 * fixed free space tree compat status
 * check: low-mem mode: handle partially dropped snapshots
 * dump-super: consolidate options for superblock copy
@@ -731,12 +875,12 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 ** documentation updates
 ** manual pages for the moved tools now point to btrfs-filesystem
 ** testsuite updates
+{{ProgsReleaseMinor |title=btrfs-progs 4.5.1 (Mar 2016) }}
 
-=== btrfs-progs 4.5.1 (Mar 2016) ===
 * mkfs: allow DUP on multi-device filesystems
 * bugfixes: build fixes, assorted other fixes
+{{ProgsReleaseMinor |title=btrfs-progs 4.5.2 (May 2016) }}
 
-=== btrfs-progs 4.5.2 (May 2016) ===
 * new/moved command: btrfs-calc-stats -> btrfs inspect tree-stats
 * check: fix false alert for metadata blocks crossing stripe boundary
 * check: catch when qgroup numbers mismatch
@@ -749,8 +893,8 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([ht
 * other:
 ** lowest supported version of e2fsprogs is 1.41
 ** minor cleanups, test updates
+{{ProgsReleaseMinor |title=btrfs-progs 4.5.3 (Mar 2016) }}
 
-=== btrfs-progs 4.5.3 (Mar 2016) ===
 * ioctl: fix unaligned access in buffer from TREE_SEARCH; might cause SIGBUS on architectures that do not support unaligned access and do not performa any fixups
 * improved validation checks of superblock and chunk-related structures
 * subvolume sync: fix handling of -s option
@@ -805,8 +949,7 @@ Bugfixes:
 * chunk recovery: endianity bugfix during rebuild
 * mkfs with 64K pages and nodesize reported superblock checksum mismatch
 * check: properly reset nlink of multi-linked file
-
-=== btrfs-progs 4.4.1 (Feb 2016) ===
+{{ProgsReleaseMinor |title=btrfs-progs 4.4.1 (Feb 2016) }}
 
 * find-root: don't skip the first chunk
 * free-space-tree compat bits fix
@@ -857,8 +1000,7 @@ Bugfixes:
 ** command intrumentation (eg valgrind)
 ** print commands if requested
 ** add README for tests
-
-=== btrfs-progs 4.3.1 (Nov 2015) ===
+{{ProgsReleaseMinor |title=btrfs-progs 4.3.1 (Nov 2015) }}
 
 * fixes
 ** device delete: recognize 'missing' again
@@ -896,8 +1038,8 @@ Bugfixes:
 ** tests: lots of updates, new tests, framework improvements
 ** documentation updates
 ** debugging: print-tree shows stripe length
+{{ProgsReleaseMinor |title=btrfs-progs 4.2.1 (Sep 2015) }}
 
-=== btrfs-progs 4.2.1 (Sep 2015) ===
 * fix an off-by-one error in cross-stripe boundary check
 ** if nodesize was 64k, any metadata block was reported as crossing, this leads to mkfs failure for example due to "no free blocks found"
 ** for other nodesizes, if the end of the metadata block was 64k aligned, it was incorrectly reported by fsck
@@ -906,15 +1048,15 @@ Bugfixes:
 ** don't loop with option -t0
 ** don't create threads if compression is not requested
 * other: minor cleanups
+{{ProgsReleaseMinor |title=btrfs-progs 4.2.2 (Oct 2015) }}
 
-=== btrfs-progs 4.2.2 (Oct 2015) ===
 * fi label: use fallback if the label ioctl is not available
 * convert: check nodesize constraints against commandline features (-O)
 * scrub: report status 'running' until all devices are finished
 * device scanning might crash in some scenarios
 * fi usage: print summary for non-root users
+{{ProgsReleaseMinor |title=btrfs-progs 4.2.3 (Oct 2015) }}
 
-=== btrfs-progs 4.2.3 (Oct 2015) ===
 * subvol sync: make it actually work again: it's been broken since 4.1.2, due to a reversed condition it returned immediatelly instead of waiting
 * scanning: do not scan already discovered filesystems (minor optimization)
 * convert: better error message in case the filesystem is not finalized
@@ -975,8 +1117,7 @@ Bugfixes:
 ** add new helpers for send uilts that check memory allocations, switch all users, deprecate old helpers
 ** Makefile: fix build dependency generation
 ** map-logical: make it work again
-
-=== btrfs-progs 4.1.1 (Jul 2015) ===
+{{ProgsReleaseMinor |title=btrfs-progs 4.1.1 (Jul 2015) }}
 
 '''Do not use this version'''
 
@@ -996,8 +1137,7 @@ Bugfixes:
 ** debug-tree: print nbytes
 ** test: image for corrupted nbytes
 ** corupt-block: let it kill nbytes
-
-=== btrfs-progs 4.1.2 (Jul 2015) ===
+{{ProgsReleaseMinor |title=btrfs-progs 4.1.2 (Jul 2015) }}
 * urgent bugfix: mkfs creates invalid filesystem, must be recreated
 
 == btrfs-progs 4.0 (Apr 2015) ==
@@ -1015,8 +1155,7 @@ Bugfixes:
 * fix quota rescan on PPC64 (mangled ioctl number)
 * test updates
 * documentation: files renamed to .asciidoc, misc fixups
-
-=== btrfs-progs 4.0.1 (May 2015) ===
+{{ProgsReleaseMinor |title=btrfs-progs 4.0.1 (May 2015) }}
 
 * restore:
 ** can restore symlinks, new option --symlinks
@@ -1038,8 +1177,8 @@ Bugfixes:
 * convert: show progress by default, can be turned off
 * corrupt-block: option to work on a specific root
 * bash completion script for all subcommands
+{{ProgsReleaseMinor |title=btrfs-progs 3.19.1 (Mar 2015) }}
 
-=== btrfs-progs 3.19.1 (Mar 2015) ===
 * convert:
 ** new option to specify metadata block size
 ** --no-progress actually works
@@ -1065,12 +1204,12 @@ Bugfixes:
 * convert - option to show progress
 * subvol create - print the commit mode inline, print the global mode only if --verbose
 * other updates: musl-libc support, coverity bugfixes, new test images, documentation
+{{ProgsReleaseMinor |title=btrfs-progs 3.18.1 (Jan 2015) }}
 
-=== btrfs-progs 3.18.1 (Jan 2015) ===
 * minor fixes
 * documentation updates
+{{ProgsReleaseMinor |title=btrfs-progs 3.18.2 (Jan 2015) }}
 
-=== btrfs-progs 3.18.2 (Jan 2015) ===
 * qgroup show: print human readable sizes, options to say otherwise
 * check: new option to explicitly say no to writes
 * mkfs: message about trimming is not printed to stderr
@@ -1088,48 +1227,48 @@ Bugfixes:
 * new subcommand ''subvolume sync''
 * ''filesystem df'': new options to set unit format
 * ''convert'': allow to copy label from the origin, or specify a new one
+{{ProgsReleaseMinor |title=btrfs-progs 3.17.1 (Nov 2014) }}
 
-=== btrfs-progs 3.17.1 (Nov 2014) ===
 * ''fi df'': argument handling
 * fix linking with libbtrfs
 * ''replace'': better error reporting
 * ''fi show'': fixed stall if run concurrently with ''balance''
 * ''check'': fixed argument parsing for ''--subvol-extents''
 * ''fi df'': SI prefixes corrected
+{{ProgsReleaseMinor |title=btrfs-progs 3.17.2 (Nov 2014) }}
 
-=== btrfs-progs 3.17.2 (Nov 2014) ===
 * ''check'' improvements
 ** add ability to replace missing dir item/dir indexes
 ** fix missing inode items
 ** create missing root dirid
 * ''corrupt block'': enhancements for testing ''fsck''
 * ''zero-log'': able to reset a fs with bogus log tree pointer ([https://bugzilla.kernel.org/show_bug.cgi?id=72151 bug 72151])
+{{ProgsReleaseMinor |title=btrfs-progs 3.17.3 (Dec 2014) }}
 
-=== btrfs-progs 3.17.3 (Dec 2014) ===
 * ''convert'': fix conversion of sparse ext* filesystems
 * ''show'': resolve to the correct path
 * ''fsck'': more verbose error for ''root dir'' problems
 
 == btrfs-progs 3.16 (Aug 2014) ==
-* mkfs: new option to specify UUID, drop experimental notice 
-* check: new option to verify quotas, reduced memory requirements, new option to print extent sharing 
-* restore: check length before decompression, more error handling, option to loop during restoring 
-* balance: new filter 'limit' 
-* recover: allow to read all sb copies 
-* btrfstune: new option to force dangerous changes 
-* receive: new option to limit number of errors 
-* show-super: skip unrecognized sb, add option to force 
-* debug-tree: print tree by id 
+* mkfs: new option to specify UUID, drop experimental notice
+* check: new option to verify quotas, reduced memory requirements, new option to print extent sharing
+* restore: check length before decompression, more error handling, option to loop during restoring
+* balance: new filter 'limit'
+* recover: allow to read all sb copies
+* btrfstune: new option to force dangerous changes
+* receive: new option to limit number of errors
+* show-super: skip unrecognized sb, add option to force
+* debug-tree: print tree by id
 * documentation updates
+{{ProgsReleaseMinor |title=btrfs-progs 3.16.1 (Sep 2014) }}
 
-=== btrfs-progs 3.16.1 (Sep 2014) ===
 * print GlobalReserve in ''fi df'' output
 * new option -R in ''subvol list''
 * library version defines
 * static build is fixed
 * build without documentation is possible
+{{ProgsReleaseMinor |title=btrfs-progs 3.16.2 (Oct 2014) }}
 
-=== btrfs-progs 3.16.2 (Oct 2014) ===
 * a few fixes in ''fsck'' and ''image'' tools
 
 == btrfs-progs 3.14 (Apr 2014) ==
@@ -1145,13 +1284,13 @@ Bugfixes:
 * mkfs: option -r deals with hardlinks and relative paths
 * mkfs: discard phase is interruptible
 * documentation updates
+{{ProgsReleaseMinor |title=btrfs-progs 3.14.1 (Apr 2014) }}
 
-=== btrfs-progs 3.14.1 (Apr 2014) ===
 * properties: fix handling of option -t
 * restore: fix reading of compressed extents
 * minor code and doc updates
+{{ProgsReleaseMinor |title=btrfs-progs 3.14.2 (May 2014) }}
 
-=== btrfs-progs 3.14.2 (May 2014) ===
 * documentation is now written in asciidoc and there are manpages for each subcommand
 * misc bugfixes
 
@@ -1161,6 +1300,60 @@ Bugfixes:
 
 = By version (linux kernel) =
 
+=== v4.20 (Dec 2018) ===
+* performance improvements
+** fewer wakeups and blocking during b-tree traversals, improved latencies and scalability
+** qgroups: 30+% run time improvement during balance, no accounting on unchanged subtrees (continued)
+** use a cached variant of rb-tree, speeds up traversal in some cases
+* fixes
+** trim
+*** could miss some block groups, if logical offset was too high and did not fit the range
+*** better error reporting, continue as far as possible
+*** less interaction with transaction commit
+** fsync: fix log replay and O_TMPFILE warnings
+** qgroups: fix rescan that might misc some dirty groups
+** don't clean dirty pages during buffered writes, this could lead to lost updates in some corner cases
+** some block groups could have been delayed in creation, if the allocation triggered another one
+** error handling improvements
+* other cleanups and refactoring
+* [https://git.kernel.org/linus/a1a4f841ec4585185c0e75bfae43a18b282dd316 pull request]
+
+=== v4.19 (Oct 2018) ===
+* hilights, no big changes in this releaase
+** allow defrag on opened read-only files that have rw permissions
+** tree checker improvements, reported by fuzzing
+** send, fix incorrect file layout after hole punching beyond eof
+** reset on-disk device stats value after replace
+* assorted fixes, cleanups and dead code removal
+* [https://git.kernel.org/linus/318b067a5dd649d198c2ba00cf7408d778fc00b4 pull request]
+
+=== v4.18 (Aug 2018) ===
+
+* added support for the ioctl FS_IOC_FSGETXATTR, per-inode flags, successor of GET/SETFLAGS; now supports only existing flags: append, immutable, noatime, nodump, sync
+* 3 new unprivileged ioctls to allow users to enumerate subvolumes
+* dedupe syscall implementation does not restrict the range to 16MiB, though it still splits the whole range to 16MiB chunks
+* on user demand, rmdir() is able to delete an empty subvolume, export the capability in sysfs
+* fix inode number types in tracepoints, other cleanups
+* send: improved speed when dealing with a large removed directory,  measurements show decrease from 2000 minutes to 2 minutes on a  directory with 2 million entries
+* pre-commit check of superblock to detect a mysterious in-memory corruption
+* log message updates
+* [https://git.kernel.org/linus/704996566f97e0e24c97052f81678060c213c260 pull request]
+
+=== v4.17 (Jun 2018) ===
+* mount options: new nossd_spread; subvolid will detect junk after the number and fail the mount
+* add message after cancelled device replace
+* direct module dependency on libcrc32, removed own crc wrappers
+* removed user space transaction ioctls
+* use lighter locking when reading /proc/self/mounts (RCU)
+* skip writeback of last page when truncating file to same size
+* send: do not issue unnecessary truncate operations
+* selftests: more tree block validation
+* fix fsync after hole punching when using no-holes feature
+* raid56:
+** make sure target is identical to source when raid56 rebuild fails after dev-replace
+** faster rebuild during scrub, batch by stripes and not block-by-block
+** make more use of cached data when rebuilding from a missing device
+* [https://git.kernel.org/linus/94514bbe9e5c402c4232af158a295a8fdfd72a2c pull request]
 
 === v4.16 (Apr 2018) ===
 * fallocate: implement zero range mode
@@ -1373,6 +1566,8 @@ Bugfixes:
 * fsync and log replay fixes
 * lots of cleanups and other fixes
 
+= By version (linux kernel) 3.x =
+
 == v3.19 (Feb 2015) ==
 * raid56 supports scrub and device replace
 
@@ -1502,6 +1697,8 @@ Bugfixes:
 * Auto-defragmentation (autodefrag mount option)
 * Improved block allocator
 * Sped up file creation/deletion by delayed operation
+
+= By version (linux kernel) 2.6.x =
 
 == v2.6.39 (May 2011) ==
 

@@ -29,20 +29,27 @@ string:
 
    "root=%llu(%s) offset=%llu size=%llu num_stripes=%d sub_stripes=%d type=%s"
 
-== Error messages ==
+== Error messages, verbosity ==
 
 * use ''btrfs_*'' helpers (btrfs_err, btrfs_info, ...), they print a filesystem identification like
  BTRFS info (device sdb): ...
 * first letter in the string is lowercase
 * message contents
 ** be descriptive
-** keep the text length reasonable
+** keep the text length reasonable (fits one line without wrapping)
 ** no typos
 ** print values that refer to what happend (inode number, subvolume id, path, offset, ...)
 ** print error value from the last call
-* message level
-** btrfs_err -- such messages have high visibility so use them for serious problems
-** btrfs_info -- use for informative messages that might help debugging problems in the future and are worth keeping in the logs
+** no ''"\n"'' at the end of the string
+** no ''".'''' at the end of text
+** un-indent the string so it fits under 80 columns
+** don't split long strings, overflow 80 is ok in this case (we want to be able to search for the error messages in the sources easily)
+
+=== Message level ===
+
+* btrfs_err -- such messages have high visibility so use them for serious problems that need user attention
+* btrfs_warn -- conditions that are not too serious but can point to potential problems, the system should be still in a good state
+* btrfs_info -- use for informative messages that are useful to see what's happening in the filesystem or might help debugging problems in the future and are worth keeping in the logs
 
 == Error handling and transaction abort ==
 
@@ -54,6 +61,13 @@ syslog message and do not have to guess which way it got to the merged call.
 == BCP ==
 
 * do not use <tt>spin_is_locked</tt> but <tt>lockdep_assert_held</tt>
+
+= Coding style preferences =
+
+Before applying recommendations from this sections, please make sure you're familiar with the [https://www.kernel.org/doc/html/latest/process/coding-style.html|generic kernel coding style guide].
+
+* comment new data structures
+* comment new enum/define values, brief description or pointers to the code that uses them
 
 = Kernel config options =
 
@@ -134,6 +148,7 @@ Note: This list may be incomplete.
 == Storage environment ==
 * At least 4 identically sized partitions/disks/virtual disks, specified using <code>$SCRATCH_DEV_POOL</code>
 ** some tests may require 6 such partitions
+* some tests need at least 10G of free space, as determined by <code>df</code>, ie. the size of the device may need to be larger
 
 == Other requirements ==
 * An <code>fsgqa</code> user and group must exist.

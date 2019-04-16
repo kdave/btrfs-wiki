@@ -1,16 +1,14 @@
-== Btrfs Conversion from Ext3 or Ext4==
-
-'''Warning: As of 4.0 kernels this feature is not often used or well tested anymore, and there have been some reports that the conversion doesn't work reliably. Feel free to try it out, but make sure you have backups'''.
+== Conversion from other filesystems (ext2, ext3, ext4, reiserfs) to btrfs ==
 
 Btrfs has very few pieces of metadata that live in fixed locations, making it relatively easy to implement an in place conversion utility from other filesystems. Copy on write algorithms allow Btrfs to preserve an unmodified copy of the original FS, and allow administrator to undo the conversion, even after making changes in the resulting Btrfs filesystem.
 
-The conversion program [[Btrfs-convert|btrfs-convert]] uses libe2fs to read the Ext3/4 metadata, and uses the free blocks in the Ext3 filesystem to hold the new Btrfs. The basic conversion algorithm works like this:
+The conversion program [[Btrfs-convert|btrfs-convert]] uses libe2fs to read the ext3/4 metadata, and uses the free blocks in the ext3 filesystem to hold the new Btrfs filesystem. The basic conversion algorithm works like this:
 
 * Duplicate the first 1MB of the device
 * Duplicate directories and inodes, creating copies in Btrfs
-* Take references on Ext3 file data blocks from the Btrfs files
+* Take references on ext3 file data blocks from the Btrfs files
 
-This does create copies of all the Ext3 metadata, but the Btrfs files simply point to the same blocks used by the Ext3 files. This shares the bulk of the blocks in use between the two filesystems. Because Btrfs uses copy on write for all file modifications, the original Ext3 version of the file data blocks is preserved.
+This does create copies of all the ext3 metadata, but the Btrfs files simply point to the same blocks used by the ext3 files. This shares the bulk of the blocks in use between the two filesystems. Because Btrfs uses copy on write for all file modifications, the original ext3 version of the file data blocks is preserved.
 
 The first 1MB of the device is copied to an alternate location so that Btrfs metadata may be written there. Undoing the conversion simply involves restoring these blocks.
 
@@ -18,9 +16,11 @@ The result of the conversion looks something like this:
 
 [[File:Converter-description.png|[[Image:Converter-description.png|575px|Converter-description.png]]]]
 
-The conversion program creates a snapshot in Btrfs that references all of the blocks used by Ext3, allowing the administrator to control how long the original Ext3 filesystem is preserved. If the admin wishes to recover the space used by Ext3, the snapshot can be deleted and the conversion will be permanent.
+The conversion program creates a snapshot in Btrfs that references all of the blocks used by ext3, allowing the administrator to control how long the original ext3 filesystem is preserved. If the admin wishes to recover the space used by ext3, the snapshot can be deleted and the conversion will be permanent.
 
-Until the snapshot is deleted, only blocks that were marked as free in Ext3 are used to hold new Btrfs modifications. This means the conversion can be undone at any time, restoring the original Ext3 FS. The converter creates a sparse file to hold all of the references to the original Ext3 filesystem, and the offsets in this file correspond to offsets on the block device. This allows the admin to mount the image file via readonly loopback and see the original Ext3 filesystem and the converted Btrfs filesystem at the same time.
+Until the snapshot is deleted, only blocks that were marked as free in ext3 are used to hold new Btrfs modifications. This means the conversion can be undone at any time, restoring the original ext3 FS. The converter creates a sparse file to hold all of the references to the original ext3 filesystem, and the offsets in this file correspond to offsets on the block device. This allows the admin to mount the image file via readonly loopback and see the original ext3 filesystem and the converted Btrfs filesystem at the same time.
+
+The [[Manpage:btrfs-convert|manual page]] contains further information how to use the conversion utility.
 
 ==Example usage==
 

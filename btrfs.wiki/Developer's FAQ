@@ -82,6 +82,29 @@ tested.
 Add this tag to the patch if you feel that the person should be aware of the
 patch.
 
+=== Ordering ===
+
+The order of the tags can track the flow of the patches through various trees, namely the Signed-off-by tag. Ordering of the other tags is not strict so you can find patches with randomly mixed tags. A common practice we find kind of useful is to sort them how things happened. It would be good to use that, namely the references to stable trees and original reports.
+
+* how it happened
+*# (optional) Bugzilla:
+*# (optional) Link:
+*# '''Reported-by:'''
+* where it should be backported, relevant references
+*# '''Fixes:'''
+*# '''CC:''' stable@vger.kernel.org # 4.4+
+* other tags
+*# '''CC:''
+*# '''Suggested-by:'''
+* quality control by non-authors
+*# '''Reviewed-by:'''
+*# '''Tested-by:'''
+* author(s)
+*# '''Signed-off-by:'''
+* maintainer(s)
+*# '''Reviewed-by:'''
+*# '''Signed-off-by:'''
+
 == Patch flow ==
 
 === Simple patch ===

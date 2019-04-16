@@ -1,6 +1,6 @@
 == Status ==
 
-{{Warning|The parity RAID code has '''multiple serious data-loss bugs''' in it. It should '''not''' be used for anything other than testing purposes.}}
+{{Warning|The parity RAID code has a specific issue with regard to data integrity: see "write hole", below. It should ''not'' be used for metadata. For data, it should be safe as long as a scrub is run immediately after any unclean shutdown.}}
 
 From 3.19, the recovery and rebuild code was integrated. The one missing piece, from a reliability point of view, is that it is still vulnerable to the parity RAID "write hole", where a partial write as a result of a power failure will result in inconsistent parity data.
 

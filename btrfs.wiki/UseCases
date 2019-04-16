@@ -112,6 +112,8 @@ Available tools:
 
 * [https://github.com/oxplot/rsyncbtrfs rsyncbtrfs] — simple bash script which uses rsync to perform incremental btrfs backup, creating subvolumes automatically
 
+* [https://github.com/3coma3/btrfs-backup btrfs-backup] — Another, very small (50 lines), rsync script intended as base for extensions and ideas. It implements a custom 5-level rotation scheme based on snapshot date and time. 
+
 Proposed tools:
 
 * There is a proposal for somehow generic solution, called [[Autosnap]] ([http://thread.gmane.org/gmane.comp.file-systems.btrfs/12603/focus=12605 initial proposal], [http://thread.gmane.org/gmane.comp.file-systems.btrfs/16030 patch]).

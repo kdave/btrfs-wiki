@@ -1,7 +1,7 @@
 (this page is very incomplete, please add to it)
 
 The following companies use Btrfs in production:
-* Facebook (testing in production as of 2014/04)
+* Facebook (testing in production as of 2014/04, [https://code.fb.com/open-source/linux/ deployed on millions of servers] as of 2018/10)
 * Jolla (smartphone)
 * [http://lavu.com Lavu] (iPad point of sale solution. Used for compressed log storage on webservers.)
 * [http://rockstor.com Rockstor] (BTRFS powered FOSS NAS solution)

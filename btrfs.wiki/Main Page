@@ -43,6 +43,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 * Send/receive of subvolume changes
 ** Efficient incremental filesystem mirroring
 * Batch, or out-of-band [[deduplication]] (happens after writes, not during)
+* Swapfile support
 
 === Features by kernel version ===
 As part of the changelog you can also review
@@ -55,40 +56,57 @@ As part of the changelog you can also review
 * Object-level mirroring and striping
 * Alternative checksum algorithms
 * In-band deduplication (happes during writes)
-** [https://btrfs.wiki.kernel.org/index.php/Design_notes_on_dedupe In-band dedupe design document]
-** [https://btrfs.wiki.kernel.org/index.php/User_notes_on_dedupe How to use in-band dedupe]
 * Hot data tracking and moving to faster devices (or provided on the generic VFS layer)
-* SMR support
+* SMR (zoned block device) support
 * DAX/persistent memory support
 * The file/directory -level encryption support (fscrypt)
 
 == News and Changelog ==
 
-<b>WARNING:</b> kernels <b>4.14.25 - 4.14.27</b> and <b>4.15.8 - 4.15.9</b> on <b>big endian</b> machines
-will damage a filesystem after first umount. Little endian machines are unaffected. Please contact upstream developers if your filesystems were affected, the problem can be manually fixed and is only in the superblock, not data or regular metadata.
+''' GRUB supports ZSTD '''
+* support for booting from filesystems with files compressed by ZSTD has been merged to GRUB2 [https://git.savannah.gnu.org/cgit/grub.git/log/?id=386128648606a3aa6ae7108d1c9af52258202279] (11/2018)
 
-''' btrfs-progs v4.16.1 (Apr 2018) '''
+''' GRUB supports RAID 5/6 boot '''
+* support for booting from filesystems with RAID5/6 profiles has been merged to GRUB2 [https://git.savannah.gnu.org/cgit/grub.git/log/?id=72e80c0255733d7e802ab7c0bad9b6dda16f2c1a] (10/2018)
 
-* remove obsolete tools: btrfs-debug-tree, btrfs-zero-log, btrfs-show-super, btrfs-calc-size                                                                                                                    
-* sb-mod: new debugging tool to edit superblock items                                                                                                                                                           
-* mkfs: detect if thin-provisioned device does not have enough space                                                                                                                                            
-* check: don't try to verify checksums on metadata dump images                                                                                                                                                  
-* build: fail documentation build if xmlto is not found                                                                                                                                                         
-* build: fix build of btrfs.static 
+''' btrfs-progs v4.20.1 (Jan 2019) '''
+* libbtrfs: fix build of external tools due to missing symbols                                                                                                                                                
+* ci: enable library test
 
-''' Linux v4.16 (Apr 2018) '''
-* fallocate: implement zero range mode
-* avoid losing data raid profile when deleting a device
-* tree item checker: more checks for directory items and xattrs
-* raid56 recovery: don't use cached stripes, that could be potentially changed and a later RMW or recovery would lead to corruptions or failures
-* let raid56 try harder to rebuild damaged data, reading from all stripes if necessary
-* fix scrub to repair raid56 in a similar way as in the case above
-* cleanups: device freeing, removed some call indirections, redundant bio_put/_get, unused parameters, refactorings and renames
-* RCU list traversal fixups
-* simplify mount callchain, remove recursing back when mounting a subvolume
-* plug for fsync, may improve bio merging on multiple devices
-* compression heurisic: replace heap sort with radix sort, gains some performance
-* add extent map selftests, buffered write vs dio
+''' btrfs-progs v4.20 (Jan 2019) '''
+* new feature: metadata uuid
+** lightweight change of UUID without rewriting all metadata (incompatible change)
+** done by btrfstune -m/-M, needs kernel support, 5.0+
+* image:
+** fix block groups when restoring from multi-device image
+** only enlarge result image if it's a regular file
+* check
+** more device extent checks and fixes
+* can repair dir item with mismatched hash
+* mkfs: uuid tree created with proper contents
+* fix mount point detection due to partial prefix match
+* other:
+** new tests, build fixes, doc updates
+** libbtrfsutil: fix tests if kernel lacks support for new subvolume ioctls
+
+''' Linux v4.20 (Dec 2018) '''
+
+* performance improvements
+** fewer wakeups and blocking during b-tree traversals, improved latencies and scalability
+** qgroups: 30+% run time improvement during balance, no accounting on unchanged subtrees (continued)
+** use a cached variant of rb-tree, speeds up traversal in some cases
+* fixes
+** trim
+*** could miss some block groups, if logical offset was too high and did not fit the range
+*** better error reporting, continue as far as possible
+*** less interaction with transaction commit
+** fsync: fix log replay and O_TMPFILE warnings
+** qgroups: fix rescan that might misc some dirty groups
+** don't clean dirty pages during buffered writes, this could lead to lost updates in some corner cases
+** some block groups could have been delayed in creation, if the allocation triggered another one
+** error handling improvements
+* other cleanups and refactoring
+* [https://git.kernel.org/linus/a1a4f841ec4585185c0e75bfae43a18b282dd316 pull request]
 
 Read about past releases in the [[Changelog]]
 * [[Changelog#By_feature|features by kernel version]]
@@ -126,7 +144,7 @@ Links to Btrfs documentation of various Linux distributions:
 
 * [[Changelog]] — history of changes in linux kernel wrt btrfs
 ** [[Changelog#By_feature | features added by release]]
-* [[Contributors#Statistics|Development statistics]] — contributors, commits, lines
+* [[Contributors#Statistics_for_4.x_series|Development statistics]] — contributors, commits, lines
 * [[Glossary]]
 * Contact information:
 ** [[Btrfs mailing list]]

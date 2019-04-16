@@ -10,7 +10,7 @@ mean that its useful, for example in meeting your performance expectations for
 your specific workload. Combination of features can vary in performance, the
 table does not cover all possibilities.
 
-'''The table is based on the latest released linux kernel: 4.16'''
+'''The table is based on the latest released linux kernel: 5.0'''
 
 The columns for each feature reflrect the status of the implementation in following ways:
 
@@ -98,11 +98,9 @@ The columns for each feature reflrect the status of the implementation in follow
 | [[Status#Device_replace|see below]]
 |-
 | Degraded mount
-| style="background: orange;"       | mostly OK
-| tbd
+| style="background: lightgreen;"   | OK
+| 4.14
 | n/a
-| applies to raid levels with redundancy: needs at least two available devices always. Can get stuck in irreversible read-only mode if only one device is present.
-[https://www.spinics.net/lists/linux-btrfs/msg63370.html] [https://www.spinics.net/lists/linux-btrfs/msg63435.html]
 |-
 |colspan="5" | [[Manpage/mkfs.btrfs#PROFILES|'''Block group profile''']]
 |-
@@ -164,6 +162,11 @@ The columns for each feature reflrect the status of the implementation in follow
 | tbd
 | style="background: lightgreen;"   | OK
 |-
+| Metadata UUID change
+| style="background: lightgreen;"   | OK
+| tbd
+| style="background: lightgreen;"   | OK
+|-
 | [[SysadminGuide#Subvolumes|Subvolumes, snapshots]]
 | style="background: lightgreen;"   | OK
 | tbd
@@ -191,7 +194,13 @@ The columns for each feature reflrect the status of the implementation in follow
 | style="background: orange;"       | mostly OK
 | qgroups with many snapshots slows down balance
 |-
-|colspan="5" | '''Misc'''
+| Swapfile
+| style="background: lightgreen;"   | OK
+| tbd
+| n/a
+| [[Manpage/btrfs(5)#FILESYSTEM_FEATURES|check the limitations]]
+|-
+|colspan="5" | '''Features'''
 |-
 | [[#Free_space_tree|Free space tree]]
 | style="background: lightgreen;"   | OK

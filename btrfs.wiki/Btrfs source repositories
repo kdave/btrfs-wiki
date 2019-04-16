@@ -16,14 +16,15 @@ Everyone tests with the latest btrfs code from git. Even the latest Linus kernel
 The git repositories that are not normally used for development but rather for
 the final pull requests that go to Linus:
 
-* https://git.kernel.org/pub/scm/linux/kernel/git/mason/linux-btrfs.git -- pull requests
 * https://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git -- pull requests, branch ''for-next'' gets pulled to the linux-next tree
+* https://git.kernel.org/pub/scm/linux/kernel/git/mason/linux-btrfs.git -- pull requests
 
 The following git repositories are used for development and are updated with
 patches from the mailinglist:
 
 * https://github.com/kdave/btrfs-devel
-* http://repo.or.cz/linux-2.6/btrfs-unstable.git
+* https://gitlab.com/kdave/btrfs-devel
+* <strike>http://repo.or.cz/linux-2.6/btrfs-unstable.git</strike> -- not used anymore
 
 Branches are usually pushed to both repositories, either can be used.
 
@@ -46,14 +47,15 @@ that as a base.
 
 The sources of the userspace utilities can be obtained from these repositories:
 
-* git://git.kernel.org/pub/scm/linux/kernel/git/kdave/btrfs-progs.git ([http://git.kernel.org/?p=linux/kernel/git/kdave/btrfs-progs.git;a=summary gitweb access]) -- non-development
+* git://git.kernel.org/pub/scm/linux/kernel/git/kdave/btrfs-progs.git ([http://git.kernel.org/?p=linux/kernel/git/kdave/btrfs-progs.git;a=summary gitweb access]) -- release repisotiry, not for development
 
 The '''master''' branch contains the latest released version and is never rebased.
 
 Development git repositories:
 
 * git://github.com/kdave/btrfs-progs.git ([https://github.com/kdave/btrfs-progs web access])
-* git://repo.or.cz/btrfs-progs-unstable/devel.git ([http://repo.or.cz/w/btrfs-progs-unstable/devel.git web access])
+* git://gitlab.com/kdave/btrfs-progs.git ([https://gitlab.com/kdave/btrfs-progs web access])
+* <strike>git://repo.or.cz/btrfs-progs-unstable/devel.git ([http://repo.or.cz/w/btrfs-progs-unstable/devel.git web access])</strike> -- not used anymore
 
 For build dependencies and installation instructions please see [https://github.com/kdave/btrfs-progs/blob/master/INSTALL]
 
@@ -67,20 +69,15 @@ The git repositories on ''kernel.org'' are not used for development or integrati
 
 '''Integration branches''' collect patches that may need public testing and are provided for convenience to developers or users willing to test unstable version. The patches in these branches are not guaranteed to be merged. The branches are assembled from scratch and serve more like a snapshots than stable bases for other development.
 
- git://repo.or.cz/btrfs-progs-unstable/devel.git integration-''YYYYMMDD''
+ git://github.com/kdave//btrfs-progs.git integration-''YYYYMMDD''
 
 where ''YYYYMMDD'' is the date of the branch.
 
 To check out this repository, and select the latest branch, use:
 
- git clone git://repo.or.cz/btrfs-progs-unstable/devel.git
- cd devel
+ git clone git://github.com/kdave//btrfs-progs.git
+ cd btrfs-progs
  git checkout integration-''YYYYMMDD''
-
-Mirror of the repository is at
- git://github.com/kdave/btrfs-progs.git
-
-and has the same layout as the previous repository. 
 
 Note that this branch can be rebased when there's good reason for that (adding Reported-by/Reviewed-by tags to the middle of the patch series) or if there's a change needed down the patch stack in general. The point is to keep the git history clean.
 

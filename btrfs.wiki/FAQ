@@ -270,7 +270,10 @@ Deduplication is supported, with some limitations. See [[Deduplication]].
 
 == Does btrfs support swap files? ==
 
-Currently no. Just making a file NOCOW does not help, swap file support relies on one function that btrfs intentionally does not implement due to potential corruptions. The swap implementation used to rely on some assumptions which may not hold in btrfs, like block numbers in the swap file while btrfs has a different block number mapping in case of multiple devices. There is a new API that could be used to port swap to btrfs; for more details have a look at [[project ideas#Swap file support]].
+From kernel 5.0+ btrfs have native swap files support, but with some limitations.
+Swap file - must be fully allocated as NOCOW with no compression on one device. 
+
+For kernels before 5.0, swap files not supported. Just making a file NOCOW does not help, swap file support relies on one function that btrfs intentionally does not implement due to potential corruptions. The swap implementation used to rely on some assumptions which may not hold in btrfs, like block numbers in the swap file while btrfs has a different block number mapping in case of multiple devices. There is a new API that could be used to port swap to btrfs; for more details have a look at [[project ideas#Swap file support]].
 
 A workaround, albeit with poor performance, is to mount a swap file via a loop device.
 
@@ -298,7 +301,7 @@ There's a separate page for compression related questions, [[Compression]].
 
 Maybe, if there is a clear benefit compared to existing compression support. Technically there are no obstacles, but supporing a new algorithm has impact on the the userpace tools or bootloader, that has to be justified. There's a project idea [[Project_ideas#Compression_enhancements|Compression enhancements]] that targets more than just adding a new compression algorithm.
 
-Reasons against adding simple LZ4 support are stated [http://thread.gmane.org/gmane.comp.file-systems.btrfs/35642 here] and [http://thread.gmane.org/gmane.comp.file-systems.btrfs/35667 here]. Similar holds for ''snappy'' compression algorithm, but it performs worse than LZ4 and is not considered anymore.
+Reasons against adding simple LZ4 support are stated [https://lore.kernel.org/linux-btrfs/20140603155353.GP22324@twin.jikos.cz/ here] and [https://lore.kernel.org/linux-btrfs/538F2666.6030402@fb.com/ here]. Similar holds for ''snappy'' compression algorithm, but it performs worse than LZ4 and is not considered anymore.
 
 = Common questions =
 
