@@ -319,6 +319,14 @@ there are other patches in ''devel'', a non-rebased development branch needs
 to be created. As this is not needed most of the time, this will happen only
 on-demand.
 
+== Copyright notices in files ==
+
+The copyright notices in source files (near the top) have been in wide use but don't and cannot comprise the entire information regarding copyright holders and all contributors that modified the code. The complete information with '''history''' is recorded in '''git''' using '''Signed-off-by''' tags that are documented and widely understood. An initiative started in 2017 [https://lwn.net/Articles/739183/] aims to unify licensing information in all files using '''SPDX''' tags, this is driven by the Linux Foundation.
+
+Given all the above, there's no need to put the copyright notices in individual files that are new, renamed or split. This applies to all new changes.
+
+Note that removing the copyright from existing files is not trivial and would require asking the original authors or current copyright holders. The status will be inconsistent but at least new contributions won't continue adding new ones. The current licensing practices are believed to be sufficient.
+
 = Development schedule =
 
 A short overview of the development phases of linux kernel and what this means for developers regarding sending patches etc.

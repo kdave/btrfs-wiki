@@ -44,6 +44,14 @@ string:
 ** no ''".'''' at the end of text
 ** un-indent the string so it fits under 80 columns
 ** don't split long strings, overflow 80 is ok in this case (we want to be able to search for the error messages in the sources easily)
+* value representation
+** decimal: offsets, length, ordinary numbers
+** hexadecimal: checksums
+** hexadecimal + string: bitmasks (eg. raid profiles, flags)
+** intervals of integers:
+*** closed interval (end values inclusive): [0, 4096]
+*** half-open (right value excluded): [0, 4096)
+*** half-open (left value excluded): (0, 4096] -- that one may look strange but is used in several places
 
 === Message level ===
 
@@ -57,6 +65,16 @@ Please keep all transaction abort exactly at the place where they happen and
 do not merge them to one. This pattern should be used everwhere and is
 important when debugging because we can pinpoint the line in the code from the
 syslog message and do not have to guess which way it got to the merged call.
+
+== Handling unexpected conditions ==
+
+This is different than error handling. An unexpected condtion happens when the code invariants/assumptions do not hold and there's no way to recover from the situation. This means that returning an error to the caller can't be done and continuing would only propagate the logic error further. The reasons for that bug can be two fold: internal (a genuine bug) or external (eg. memory biflip, memory corrupted by other subystem). In this case it is allowed to use the nuclear option and do BUG_ON, that is otherwise highly discouraged.
+
+There are several ways how to react to the unexpected conditions:
+
+* ASSERT -- conditionally compiled in and crashes when the condition is false, this is supposed to catch 'must never happen' at the time of development, code must not continue
+* WARN_ON -- light check that is visible in the log and allows the code to continue but the reasons must be investigated
+* BUG_ON -- last resort, checks condition that 'must never happen' and continuing would cause more harm than the instant crash; code should always try to avoid using it, but there are cases when sanity and invariant checks are done in advance
 
 == BCP ==
 
@@ -110,8 +128,8 @@ Please refer to the option documentation for further details.
 
 = (x)fstests =
 
-xfstests has very few "hard" requirements and will succeed without running many of the tests.  In order to ensure full test coverage, your test environment should provide the following. 
-
+The fstests suite has very few "hard" requirements and will succeed without actually running many tests.  In order to ensure full test coverage, your test environment should provide the settings from the following sections. Please note that newly added tests silently add new dependencies, so you should always review results after an update.
+ 
 == Kernel config options for complete test coverage ==
 * <code>CONFIG_FAULT_INJECTION=y</code>
 * <code>CONFIG_FAULT_INJECTION_DEBUG_FS=y</code>
@@ -132,7 +150,8 @@ See the list in the section above for more options.
 
 == User space utilities and development library dependencies ==
 * fio
-* dmsetup
+* dmsetup (device-mapper)
+* lvm
 * xfsprogs >= 4.3.1
 ** <code>xfs_io -c reflink</code> is required.
 * btrfsprogs
@@ -142,6 +161,8 @@ See the list in the section above for more options.
 * libattr
 * libaio
 * libuuid
+* libcap-progs
+* duperemove
 ----
 Note: This list may be incomplete.
 
@@ -149,6 +170,8 @@ Note: This list may be incomplete.
 * At least 4 identically sized partitions/disks/virtual disks, specified using <code>$SCRATCH_DEV_POOL</code>
 ** some tests may require 6 such partitions
 * some tests need at least 10G of free space, as determined by <code>df</code>, ie. the size of the device may need to be larger
+* some tests require <code>$LOGWRITES_DEV</code>, yet another separate block device, for power fail testing
+* for testing trim and discard, the devices must be capable of that (physical or virtual)
 
 == Other requirements ==
 * An <code>fsgqa</code> user and group must exist.

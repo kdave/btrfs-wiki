@@ -347,18 +347,120 @@ INO_LOOKUP ioctl.
 {{FeatureMerged
 |name=swapfile
 |version=5.0
-|text=
+|text=With some limitations where COW design does not work well with the swap implementation (nodatacow file, no compression, cannot be snapshotted, not possible on multiple devices, ...), as this is the most restricted but working setup, we'll try to improve that in the future
 }}
 {{FeatureMerged
 |name=metadata uuid
 |version=5.0
-|text=
+|text=An optional incompat feature to assign a new filesystem UUID without overwriting all metadata blocks, stored only in superblock, unlike what <tt>btrfstune -u</tt>
+}}
+{{FeatureMerged
+|name=FORGET_DEV ioctl
+|version=5.1
+|text=Unregister devices previously added by the scan ioctl, same effect as if the kernel module is reloaded.
+}}
+{{FeatureMerged
+|name=zstd level
+|version=5.1
+|text=Allow to set the zstd compression level via mount option, eg. like <i>compress=zstd:9</i>. The levels match the default zstd compression levels. The default is 3, maximum is 15.
+}}
+{{FeatureMerged
+|name=pre-write checks
+|version=5.2
+|text=Verify metadata blocks before submitting them to the devices. This can catch consistency problems or bitflips.
 }}
 |}
 
 = By version (btrfs-progs) =
 
-Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/ ([http://article.gmane.org/gmane.comp.file-systems.btrfs/38063/ announcement])
+Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/
+
+== btrfs-progs v5.2 (Jul 2019) ==
+
+* subvol show: print qgroup information when available
+* scrub:
+** status: show ETA, revamp the whole output
+** fix reading/writing of last position on resume/cancel, potentially skipping part of the filesystem on next resume
+* dump-tree: add new option --noscan to use only devices given on the commandline
+* all-in-one binary (busybox style) with mkfs.btrfs, btrfs-image, btrfs-convert, btrfstune
+* image: fix hang when there are more than 32 cpus online and compression is requested
+* convert: fix some false ENOSPC errors when --rootdir is used
+* build: fix gcc9 warnings
+* core changes
+** command handling cleanups
+** dead code removal
+** cmds-* files moved to cmds/
+** other shared userspace files moved to common/
+** utils.c split into more files
+** preparatory work for more output formats
+** libbtrfsutil: fix unaligned access
+* other
+** new and updated tests
+** fix tests so CI passes again
+** sb-mod can modify more superblock items
+{{ProgsReleaseMinor |title=btrfs-progs v5.2.1 (Jul 2019) }}
+
+* scrub status: fix ETA calculation after resume
+* check: fix crash when using -Q
+* restore: fix symlink owner restoration
+* mkfs: fix regression with mixed block groups
+* core: fix commit to process all delayed refs
+* other:
+** minor cleanups
+** test updates
+{{ProgsReleaseMinor |title=btrfs-progs v5.2.2 (Sep 2019) }}
+
+* check:                                                                                                                                                                                                                       
+** fix false report of wrong byte count for orphan inodes
+** option -E was not handled correctly
+** new check and repair for root item generation
+* balance: check for full-balance before background fork
+* mkfs: check that total device size does not overflow 16EiB
+* dump-tree: print DEV_STATS key type
+* other:
+** new and updated tests
+** doc fixups and updates
+
+== btrfs-progs v5.1 (May 2019) ==
+
+* check:
+** repair: flush/FUA support to avoid breaking metadata COW
+** file extents repair no longer relies on data in extent tree
+** lowmem: fix false error reports about gaps between extents
+** add inode mode check and repair for various objects
+** add check for invalid combination of nocow/compressed extents
+* device scan: new option to forget scanned devices
+* mkfs: use same chunk size as kernel for initial creation
+* dev-replace: better report when other exclusive operation is running
+* help: for syntax errors on command line, print only the relevant messages, not the whole help text
+* receive:
+** new option for quiet mode
+** on -vv print information about written ranges
+** fix endless loop with --dump on an invalid stream
+* defrag: able open files in RO mode (needs kernel support to work)
+* dump-tree: --block can be specified multiple times
+* libbtrfsutil: fix: don't close fd on error in btrfs_util_subvolume_id_fd
+* core:
+** add sync before superblock write
+** better error handling on the transaction commit path
+** try to find best copy when reading tree blocks
+** update backup roots on commit transaction
+* other:
+** fuzz tests pass and are enabled in CI
+** cleanups
+** new tests
+{{ProgsReleaseMinor |title=btrfs-progs v5.1.1 (Jun 2019) }}
+
+* convert and mkfs will try to use optimized crc32c                                                                                                                                                           
+* fi show: accept a file-backed image                                                                                                                                                                         
+* fi show: fix possible crash when device is deleted in parallel                                                                                                                                              
+* build:                                                                                                                                                                                                      
+** support extra flags for python bindings                                                                                                                                                                   
+** separate LDFLAGS for libbtrfsutil                                                                                                                                                                         
+* other:                                                                                                                                                                                                      
+** space reservation fixes or debugging improvements                                                                                                                                                         
+** V0 extent code removed                                                                                                                                                                                    
+** more tests and cleanups
 
 == btrfs-progs v4.20 (Jan 2019) ==
 
@@ -1299,6 +1401,40 @@ Bugfixes:
 * first release after 0.19 (2009/06) with a lot of changes
 
 = By version (linux kernel) =
+
+=== v5.2 (Jul 2019) ===
+TBD
+
+=== v5.1 (May 2019) ===
+
+* new features, hilights
+** zstd compression levels can be set as mount options
+** new ioctl to unregister scanned devices
+** scrub prints messages about start/stop/cancel to the log
+* other changes
+** qgroups skip some work (est. speedup during balance 20%)
+** reclaim vs GFP_KERNEL fixes
+** fsync fixes for rename/unlink/rmdir
+** improved enospc handling on a highly fragmented filesystem
+** no trim on filesystem with unreplayed log
+
+=== v5.0 (Mar 2019) ===
+* features, hilights
+** swapfile support (with some limitations)
+** metadata uuid - new feature that allows fast uuid change without rewriting all metadata blocks (backward incompatible)
+** balance messages in the syslog when operations start or stop
+* fixes
+** improved check of filesystem id associated with a device during scan to detect duplicate devices that could be mixed up during mount 
+** fix device replace state transitions
+** fix a crash due to a race when quotas are enabled during snapshot creation
+** GFP_NOFS/memalloc_nofs_* fixes
+** fsync fixes
+* other
+** remove first phase of balance that tried to remove some space (not necessary)
+** separate reserve for delayed refs from global reserve
+** cleanups
+
+= By version (linux kernel) 4.x=
 
 === v4.20 (Dec 2018) ===
 * performance improvements

@@ -44,6 +44,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 ** Efficient incremental filesystem mirroring
 * Batch, or out-of-band [[deduplication]] (happens after writes, not during)
 * Swapfile support
+* [[Tree-checker]] for extra robustness
 
 === Features by kernel version ===
 As part of the changelog you can also review
@@ -63,50 +64,20 @@ As part of the changelog you can also review
 
 == News and Changelog ==
 
-''' GRUB supports ZSTD '''
-* support for booting from filesystems with files compressed by ZSTD has been merged to GRUB2 [https://git.savannah.gnu.org/cgit/grub.git/log/?id=386128648606a3aa6ae7108d1c9af52258202279] (11/2018)
+''' btrfs-progs v5.2.2 (Sep 2019) '''
 
-''' GRUB supports RAID 5/6 boot '''
-* support for booting from filesystems with RAID5/6 profiles has been merged to GRUB2 [https://git.savannah.gnu.org/cgit/grub.git/log/?id=72e80c0255733d7e802ab7c0bad9b6dda16f2c1a] (10/2018)
-
-''' btrfs-progs v4.20.1 (Jan 2019) '''
-* libbtrfs: fix build of external tools due to missing symbols                                                                                                                                                
-* ci: enable library test
-
-''' btrfs-progs v4.20 (Jan 2019) '''
-* new feature: metadata uuid
-** lightweight change of UUID without rewriting all metadata (incompatible change)
-** done by btrfstune -m/-M, needs kernel support, 5.0+
-* image:
-** fix block groups when restoring from multi-device image
-** only enlarge result image if it's a regular file
-* check
-** more device extent checks and fixes
-* can repair dir item with mismatched hash
-* mkfs: uuid tree created with proper contents
-* fix mount point detection due to partial prefix match
+* check:                                                                                                                                                                                                                       
+** fix false report of wrong byte count for orphan inodes
+** option -E was not handled correctly
+** new check and repair for root item generation
+* balance: check for full-balance before background fork
+* mkfs: check that total device size does not overflow 16EiB
+* dump-tree: print DEV_STATS key type
 * other:
-** new tests, build fixes, doc updates
-** libbtrfsutil: fix tests if kernel lacks support for new subvolume ioctls
+** new and updated tests
+** doc fixups and updates
 
-''' Linux v4.20 (Dec 2018) '''
-
-* performance improvements
-** fewer wakeups and blocking during b-tree traversals, improved latencies and scalability
-** qgroups: 30+% run time improvement during balance, no accounting on unchanged subtrees (continued)
-** use a cached variant of rb-tree, speeds up traversal in some cases
-* fixes
-** trim
-*** could miss some block groups, if logical offset was too high and did not fit the range
-*** better error reporting, continue as far as possible
-*** less interaction with transaction commit
-** fsync: fix log replay and O_TMPFILE warnings
-** qgroups: fix rescan that might misc some dirty groups
-** don't clean dirty pages during buffered writes, this could lead to lost updates in some corner cases
-** some block groups could have been delayed in creation, if the allocation triggered another one
-** error handling improvements
-* other cleanups and refactoring
-* [https://git.kernel.org/linus/a1a4f841ec4585185c0e75bfae43a18b282dd316 pull request]
+''' linux v5.2 (Jul 2019) '''
 
 Read about past releases in the [[Changelog]]
 * [[Changelog#By_feature|features by kernel version]]
@@ -149,7 +120,10 @@ Links to Btrfs documentation of various Linux distributions:
 * Contact information:
 ** [[Btrfs mailing list]]
 ** [http://en.wikipedia.org/wiki/Internet_Relay_Chat IRC] on freenode.net in the channel [irc://irc.freenode.net:6667/btrfs #btrfs]
-** Reporting bugs: see [[Problem_FAQ#How_do_I_report_bugs_and_issues.3F | the Bugzilla FAQ]] for reporting and finding bugs. Quick tip: use product ''File System'' and component ''btrfs''.
+** Reporting bugs:
+*** for kernel code see [[Problem_FAQ#How_do_I_report_bugs_and_issues.3F | the Bugzilla FAQ]], quick tip: use product ''File System'' and component ''btrfs''.
+*** for btrfs-progs it's either bugzilla or [https://github.com/kdave/btrfs-progs/issues/ github issues]
+*** for read-only documentation exported on wiki eg. manual pages as [https://github.com/kdave/btrfs-progs/issues/ github issues]
 * [[Project ideas]]
 * [[Project_ideas#Cleanup_projects|Cleanup ideas]]
 * [[Project_ideas#Userspace_tools_projects|Userspace tools projects]]

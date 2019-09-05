@@ -110,10 +110,10 @@ All subvolumes are however direct children of the top level subvolume in this sc
 This has several implications (advantages and disadvantages):
 * Management of snapshots (especially rolling them) may be considered easier as the effective layout is more directly visible.
 * All subvolumes need to be mounted manually (e.g. via fstab) to their desired locations, e.g. in the above example this would look like:
- LABEL=the-btrfs-fs-device   /                    subvol=/root,defaults,noatime  0  0
- LABEL=the-btrfs-fs-device   /home                subvol=/home,defaults,noatime  0  0
- LABEL=the-btrfs-fs-device   /var/www             subvol=/var/www,noatime        0  0
- LABEL=the-btrfs-fs-device   /var/lib/postgresql  subvol=/postgres,noatime       0  0
+ LABEL=the-btrfs-fs-device   /                    btrfs subvol=/root,defaults,noatime  0  0
+ LABEL=the-btrfs-fs-device   /home                btrfs subvol=/home,defaults,noatime  0  0
+ LABEL=the-btrfs-fs-device   /var/www             btrfs subvol=/var/www,noatime        0  0
+ LABEL=the-btrfs-fs-device   /var/lib/postgresql  btrfs subvol=/postgres,noatime       0  0
 * Each of these [[FAQ#Can_I_mount_subvolumes_with_different_mount_options.3F|subvolumes/mountpoints can be mounted with some options being different]].
 :This means however as well, that any typically useful mount options (for example <tt>noatime</tt>) need to be specified again for each mountpoint.
 * Everything in the volume that's not beneath a subvolume that has been mounted, is not accessible or even visible. This may be beneficial for security, especially when being used with snapshots, see below.

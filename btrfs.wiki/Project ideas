@@ -297,7 +297,27 @@ This work is related to stripe granular IO, which would make it possible to conf
 The latest generation of SSD drives can achieve high iops/sec rates at both reading and writing. They will be very effective front end caches for slower (and less expensive) spinning media. A caching layer could be added to Btrfs to store the hottest blocks on faster devices to achieve better read and write throughput. This cache could also make use of other spindles in the existing spinning storage, for example why not store frequently used random-heavy data mirrored on all drives if space is available. A similar mechanism could allow frequent random read patterns (such as booting a system) as a series of sequential blocks in this cache.
 }}
 
+=== Upconvert new directories to subvolumes ===
+{{project
+|text=For several reasons it would be really convenient if there was a way to mark a btrfs directory such that the directories created in the marked directory would actually be automatically converted to subvolume creation and destruction.
 
+* NFS4 particularly pivots on file system boundaries, which it seems to include subvolumes-in-place as such boundaries
+* doing this to /home is another opportunity if you have transient accounts created by scripts/programs you cannot easily change
+* Other uses include creating virtual machine sets via tarballs and such
+
+Original proposal: [https://lore.kernel.org/linux-btrfs/a108b077-ff18-7c6d-ac5c-ea666de48084@pobox.com]
+
+The core logic would be to upconvert any legal rmdir to a subvol delete if it's applied to a subvol. Yes, this _would_ remove non-empty subvols, that would be the point. Then any mkdir in that directory would create a subvol instead of a directory.
+
+* Normal files in the directory would be unchanged
+* And a normal directory moved into the directory would remain a normal directory for obvious reasons
+* And a subvol moved out of the directory (can you even do that?) would remain a subvol for equally obvious reasons
+* It's implicit that the non-superuser create/remove subvol operation would be legal for such a directory
+
+Proposed implementation:
+
+Use the 'T' bit of file attributes (GETFLAGS ioctl), when applied to directories, mkdir -> mksubvol, rmdir -> destroy subvolume.
+}}
 
 == Enhancements to existing features ==
 
@@ -583,6 +603,24 @@ Things to audit/fix:
 * bugfixes to code touching the core datastructures
 * check that new features like ''skinny-metadata'' or ''no-holes'' are handled properly, or
 * ... add warnings if the bootloader does not understand the incompat bits
+}}
+
+=== Send notifications about important events ===
+{{project
+|text=Use kobject_uevents to notify userspace about some important events to userspace. The uevents is what udev uses so there's an established way and easier (extra data passed a-la shell variables) than raw netlink with custom protocol. The events are something like:
+* state changes
+** filesystem size changed
+** enospc encountered
+** subvolume created, deleted, cleaned
+** transaction aborted, filesystem readonly
+* whole filesystem jobs
+** scrub started, stopped
+** balance started, stopped
+* recovery actions
+** checksum mismatch detected, and repaired
+** checksum mismatch detected
+
+The environment of the event would contain filesystem UUID, subvolume, path to file, device id, etc where applicable.
 }}
 
 == Userspace tools projects ==

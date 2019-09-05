@@ -1,0 +1,87 @@
+== Summary ==
+Starting from kernel version 4.18, btrfs has introduced a new verification layer, tree-checker, to provide a centralized verification service so other part no longer to bother random corruption.
+
+The design principle is, detect and reject, with comprehensive check.
+
+- '''Detect'''
+: For read time tree-checker, the check happens when btrfs reads tree block from disk, after basic checks like csum, tree-checker verifies the content.
+: For write time tree-checker, the check happens before btrfs writes tree block to disk, after csum calculation, tree-checker verifies the content.
+
+- '''Reject'''
+: For read time tree-checker, it rejects the tree block just as it doesn't pass csum, thus btrfs will still try to read other mirrors.
+: For write time tree-checker, it rejects the tree block as it fails to reach disk. This will cause the current transaction to be aborted, so the fs is not further corrupted.
+
+- '''Comprehensive check'''
+: In theory, tree-checker verifies every member of on-disk data.
+: Although sometimes compromise is made to accept some older kernel, but if older behavior breaks the definition of on-disk format,
+: tree-checker will reject them.
+
+Starting from kernel version 5.2, tree-checker is also applied to tree blocks written to disk, thus detecting possible runtime memory bitflip/corruption.
+
+== Implementation ==
+Btrfs tree-checker is to reject any suspicious/corrupted tree blocks before passing it to core btrfs code.
+
+One example is <code>check_block_group_item()</code> of <code>fs/btrfs/tree-checker.c</code>. It will check the following members (all members):
+* key
+: Key of a block group item includes its start bytenr and length.
+: Length should never be 0.
+
+* item size
+: For block group item it's fixed size, so everything else is invalid
+
+* block group item
+:- chunk objectid
+::Fixed value
+:- used bytes
+:: Should never exceed block group size
+:- flags
+:: Only certain combination is allowed
+
+By such comprehensive check, we ensure every tree block (<code>struct extent_buffer</code>) has valid structure and data.
+So later <code>struct extent_buffer</code> user will no longer bother to check things like bad key order or unaligned bytenr.
+
+== Limitation ==
+Tree-checker works at single tree block level, thus it can't check key sequence across leaf/node boundary.
+
+One example of such limit looks like:
+ node level 1:
+ (EXTENT_CSUM EXTENT_CSUM 1M) block X
+ (EXTENT_CSUM EXTENT_CSUM 2M) block Y
+ (EXTENT_CSUM EXTENT_CSUM 3M) block Z
+ 
+ leaf X: nritems 1
+ (EXTENT_CSUM EXTENT_CSUM 1M)
+ 
+ leaf Y: nritems 2
+ (EXTENT_CSUM EXTENT_CSUM 2M)
+ (EXTENT_CSUM EXTENT_CSUM 4M) <<< Larger than the first key of next leaf
+ 
+ leaf Z:
+ (EXTENT_CSUM EXTENT_CSUM 3M).
+
+So tree-checker will not cover 100% cases, but it is still very useful, and handled a lot of fuzzed image pretty well.
+
+== For end users ==
+=== How to determine if it's caused by tree-checker ===
+Tree check will report error like:
+ [13234.185509] BTRFS error (device dm-4): corrupt leaf, root=2 block=30769152 slot=0 bg_start=16777216 bg_len=0, invalid block size 0
+
+The <code>corrupt leaf</code> or <code>corrupt node</code> is common for all tree-checker error report.
+
+Furthermore, for kernel newer than v5.2, it will include the following message to show the timing of detection:
+ [13234.185509] BTRFS error (device dm-4): block=30769152 read time tree block corruption detected
+
+=== How to handle such error ===
+Please report to btrfs mail list <linux-btrfs@vger.kernel.org> first.
+
+- If it's write time corruption
+: Normally this means runtime memory corruption, either memory is unreliable or some other kernel memory corruption is causing the problem.
+: Reporting to the mail list will help end user to pin down the cause by some extent.
+: But for write time corruption, since the corruption is prevented, the fs is not further corrupted. But a <code>btrfs check --readonly</code> is still recommended to make sure the fs is OK.
+
+- If it's read time corruption
+: This needs to be determined case by case
+: If it's false alert, developers would fix it and before that, use an older kernel should be OK.
+: If it's really a corruption, depends on the solution provided, either user need to salvage the data from the corrupted image either by mounting it RO, or "btrfs-restore".
+
+Please *NOT* use <code>btrfs check --repair</code> until instructed by a developer.

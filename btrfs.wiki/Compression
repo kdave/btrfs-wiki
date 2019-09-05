@@ -10,9 +10,10 @@ ZLIB. The 'default' means if it's specified by the mount option 'compress' or
 
 == Can I set the compression level? ==
 
-The level support of ZLIB has been added in v4.14, LZO does not support levels (the kernel implementation provides only one), ZSTD level support is planned.
+The level support of ZLIB has been added in v4.14, LZO does not support levels (the kernel implementation provides only one), ZSTD level support has been added in v5.1.
 
 There are 9 levels of ZLIB supported (1 to 9), mapping 1:1 from the mount option to the algorithm defined level. The default is level 3, which provides the highest compression ratio and is still reasonably fast. The difference in compression gain of levels 7, 8 and 9 is comparable but the higher levels take longer. The level can be specified as the mount option, as "compress=zlib:1". Level 0 maps to the default.
+The ZSTD support includes up to 15 levels.
 
 = What are the differences between compression methods? =
 There's a speed/ratio trade-off:

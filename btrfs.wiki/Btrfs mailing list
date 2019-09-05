@@ -3,6 +3,10 @@ The Btrfs mailing list is hosted on http://vger.kernel.org.
 * email address is '''[mailto:linux-btrfs@vger.kernel.org linux-btrfs@vger.kernel.org]'''
 * no subscription required to send email
 
+=== Restrictions ===
+
+The mailing list server utilizes [https://en.wikipedia.org/wiki/Greylisting greylisting] (i.e. the server may delay mails) and [http://vger.kernel.org/majordomo-info.html#taboo discards emails that are in HTML format or that exceed 100,000 bytes]. And please disable word wrapping in the mail client for sent mails that include kernel log backtraces.
+
 === How to subscribe ===
 
 You can find details on how to subscribe here http://vger.kernel.org/vger-lists.html#linux-btrfs
@@ -10,8 +14,6 @@ You can find details on how to subscribe here http://vger.kernel.org/vger-lists.
 Send an email to '''majordomo@vger.kernel.org''' with plain text format the follwing (and only that):
 
  subscribe linux-btrfs
-
-The mailing list server utilizes [https://en.wikipedia.org/wiki/Greylisting greylisting] (i.e. the server may delay mails) and [http://vger.kernel.org/majordomo-info.html#taboo discards emails that are in HTML format or that exceed 100,000 bytes]. And please disable word wrapping in the mail client for sent mails that include kernel log backtraces.
 
 === Archives ===
 
@@ -35,4 +37,4 @@ When reporting errors or asking for support always supply the output of the foll
    btrfs fi df /home # Replace /home with the mount point of your btrfs-filesystem 
    dmesg > dmesg.log
 
-A lot of debug information can be retrieved from dmesg. If the relevant log information is very large, supply the output as an attachment in the mail instead of in the message body.
+A lot of debug information can be retrieved from dmesg. If the relevant log information is very large, supply the output as an attachment in the mail instead of in the message body (though mind the [[#Restrictions|restrictions]] above).

@@ -279,13 +279,15 @@ A workaround, albeit with poor performance, is to mount a swap file via a loop d
 
 == Does grub support btrfs? ==
 
-In most cases. Grub 2 supports many btrfs configurations (including zlib and lzo compression, and RAID0/1/10 multi-dev filesystems).
-If your distribution only provides older versions of GRUB, you'll have to build it for yourself.
+In most cases. Grub supports many btrfs configurations, including zlib and lzo compression (but not [[Compression#|zstd]], depending on the Grub version) and RAID0/1/10 multi-dev filesystems.
+If your distribution only provides older versions of Grub, you'll have to build it for yourself.
 
-grubenv write support (used to track failed boot entries) is lacking, grub needs btrfs to support a reserved area.
+<code>grubenv</code> write support (used to track failed boot entries) is lacking, Grub needs btrfs to support a reserved area.
 
 References:
-* LZO support http://bzr.savannah.gnu.org/lh/grub/trunk/grub/revision/3436
+* [https://git.savannah.gnu.org/cgit/grub.git/commit/?id=3be8e5ea96264c2d0df38b63ff13596c634522dd BtrFS zlib compression support] (2010-12-03)
+* [https://git.savannah.gnu.org/cgit/grub.git/commit/?id=050e8e908085d69c7ac2b6b99f4361787b046d74 Add support for LZO compression in GRUB] (2011-10-06)
+* [https://git.savannah.gnu.org/cgit/grub.git/commit/?id=386128648606a3aa6ae7108d1c9af52258202279 btrfs: Add zstd support to grub btrfs] (2018-11-19)
 
 == Is it possible to boot to btrfs without an initramfs? ==
 
