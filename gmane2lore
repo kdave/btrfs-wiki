@@ -1,0 +1,11 @@
+#!/bin/sh
+# usage: $0 gmane-id
+#
+# eg. in http://thread.gmane.org/gmane.comp.file-systems.btrfs/27406
+# it's 27406 -- works only for gmane.comp.file-systems.btrfs
+
+url="$1"
+lore="https://lore.kernel.org/linux-btrfs"
+id=${1:-1}
+mid=$(grep -A 1 "^From gmane-$id " < gmane-ids | grep -i 'message-id: ' | | sed -e 's/^.*<\(.*\)>.*$/\1/')
+echo "${lore}/${mid}"
