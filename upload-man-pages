@@ -24,7 +24,7 @@ import config
 from getpass import getpass
 
 def message(*args, **kwargs):
-    print '*** '+' '.join(args)
+    print('*** '+' '.join(args))
 
 # main -------------------------------------------------------
 
@@ -32,13 +32,13 @@ files={}
 
 for arg in sys.argv[1:]:
 	fn=re.search(r'(?:.*/)?(.*)\.mw', arg).group(1)
-	print "arg: %s, fn: %s" % (arg, fn)
+	print("arg: %s, fn: %s" % (arg, fn))
 	fp=open(arg, 'r')
 	files[fn]=fp.readlines()
 	fp.close()
 
 if len(files) == 0:
-	print "Usage: $0 file1.mw [more...]"
+	print("Usage: $0 file1.mw [more...]")
 	sys.exit(1)
 
 message('Start')
@@ -51,7 +51,7 @@ else:
 	message("Not logged in")
 	site.login(whoami, remember=True, force=True, password=False, verify=True)
 
-print site
+print(site)
 
 if re.search(r'not logged', str(site)) and doedit:
 	message('Not logged in to edit, exit')
@@ -86,4 +86,4 @@ for page in cat.getAllMembersGen():
 					txt=''.join(files[pn])
 					message("Update wiki page %s" % pn)
 					res=page.edit(text=txt, summary=summary, notminor=True, bot=True)
-					print "RES:", res
+					print("RES:", res)

@@ -19,7 +19,7 @@ query_allpages={'action':'query', 'list':'allpages'}
 query_wikitext_base={'action':'query', 'prop': 'revisions', 'rvprop':'content'}
 
 def message(*args, **kwargs):
-    print '*** '+' '.join(args)
+    print('*** '+' '.join(args))
 
 def res_allpages(res):
     ret=[]
@@ -52,7 +52,7 @@ def escape_title(title):
 message('Start')
 message('URL',config.wiki_api_url())
 site=wiki.Wiki(config.wiki_api_url())
-print site
+print(site)
 
 timestamp=strftime('%Y%m%d')
 out=config.wiki_name+'-'+timestamp
