@@ -19,7 +19,7 @@ other. When given the -d option, duperemove will submit those
 extents for deduplication using the Linux kernel extent-same ioctl.
 </blockquote>
 
-'''[https://github.com/g2p/bedup bedup]''' implements incremental whole-file batch deduplication for Btrfs.  It integrates deeply with btrfs so that scans are incremental and low-impact.  It uses the btrfs clone ioctl to do the deduplication, rather than the extent-same ioctl, due to concerns regarding kernel crashes with the latter as of kernel 4.2.
+'''[https://github.com/g2p/bedup bedup]''' implements incremental whole-file batch deduplication for Btrfs.  It integrates deeply with btrfs so that scans are incremental and low-impact.  It uses the btrfs clone ioctl to do the deduplication, rather than the extent-same ioctl, due to concerns regarding kernel crashes with the latter as of kernel 4.2. Appears to be unmaintained and is [https://github.com/g2p/bedup/issues/101 broken on 5.x kernels].
 
 '''[https://github.com/wellbehavedsoftware/btrfs-dedupe btrfs-dedupe]''' is a Rust library which implements incremental whole-file batch deduplication for Btrfs. It is written in Rust for safety and performance and uses the kernel ioctls to offload the actual deduplication to the kernel for safety. It maintains state for efficient regular operation, scanning file metadata on every run, hashing contents for files with new metadata, hashing file extent maps for files with new contents, and performing defragmentation and deduplication of files with matching content but non-matching extent maps.
 
@@ -51,6 +51,6 @@ As such, '''[http://man7.org/linux/man-pages/man8/xfs_io.8.html xfs_io]''', is a
 
 = Inband =
 
-Inband / synchronous / inline deduplication is deduplication done in the write path, so it happens as data is written to the filesystem. This typically requires large amounts of RAM to store the lookup table of known block hashes. [http://www.mail-archive.com/linux-btrfs%40vger.kernel.org/msg32862.html Patches] are currently being worked on.
+Inband / synchronous / inline deduplication is deduplication done in the write path, so it happens as data is written to the filesystem. This typically requires large amounts of RAM to store the lookup table of known block hashes. [https://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg82003.html Patches] are currently being worked on and have been in development since at least 2014. See the [[User notes on dedupe]] page for more details.
 
 [[Category: Features]]

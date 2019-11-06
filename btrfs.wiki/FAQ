@@ -827,10 +827,22 @@ In practice, the worst case means that an inline file extent may occupy one leaf
 
 References:
 
-# [http://article.gmane.org/gmane.comp.file-systems.btrfs/5956 it's a bug]
+# [https://lore.kernel.org/linux-btrfs/20100618193555.GV27466@think/ it's a bug]
+# [https://lore.kernel.org/linux-btrfs/20100618152214.GP27466@think reiserfs experience]
+# [https://lore.kernel.org/linux-btrfs/20100618181011.GS27466@think inefficient b-tree balance]
+# [https://lore.kernel.org/linux-btrfs/20100621131528.GA17979@think worst case estimation in practice]
+
+<!--
+# [http://article.gmane.org/gmane.comp.file-systems.btrfs/5956 it's a bug] 
 # [http://article.gmane.org/gmane.comp.file-systems.btrfs/5948 reiserfs experience]
 # [http://article.gmane.org/gmane.comp.file-systems.btrfs/5953 inefficient b-tree balance]
 # [http://article.gmane.org/gmane.comp.file-systems.btrfs/5971 worst case estimation in practice]
+
+5956 https://lore.kernel.org/linux-btrfs/20100618193555.GV27466@think/
+5948 https://lore.kernel.org/linux-btrfs/20100618152214.GP27466@think
+5953 https://lore.kernel.org/linux-btrfs/20100618181011.GS27466@think
+5971 https://lore.kernel.org/linux-btrfs/20100621131528.GA17979@think
+-->
 
 Discussed on LWN:
 

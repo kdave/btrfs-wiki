@@ -128,36 +128,38 @@ If the metadata is not converted from the single-device default, it remains as D
 
 When you have a device that's in the process of failing or has failed in a RAID array you should use the <tt>btrfs replace</tt> command rather than adding a new device and removing the failed one. This is a newer technique that worked for me when adding and deleting devices didn't however it may be helpful to consult the mailing list of irc channel before attempting recovery.
 
-First list the devices in the filesystem, in this example we have one missing device that we will replace with a new drive of the same size. In the following output we see that the final device number (which is missing) is device 6:
+First list the devices in the filesystem, in this example we have one missing device (5 devices out of 6 are shown). The devids in the example are not sequential since <tt>add</tt> and <tt>remove</tt> have been used previously instead of <tt>replace</tt>.
 
 <pre>
 user@host:~$ sudo btrfs filesystem show
 Label: none  uuid: 67b4821f-16e0-436d-b521-e4ab2c7d3ab7
     Total devices 6 FS bytes used 5.47TiB
     devid    1 size 1.81TiB used 1.71TiB path /dev/sda3
-    devid    2 size 1.81TiB used 1.71TiB path /dev/sdb3
-    devid    3 size 1.82TiB used 1.72TiB path /dev/sdc1
-    devid    4 size 1.82TiB used 1.72TiB path /dev/sdd1
-    devid    5 size 2.73TiB used 2.62TiB path /dev/sde1
+    devid    3 size 1.81TiB used 1.71TiB path /dev/sdb3
+    devid    4 size 1.82TiB used 1.72TiB path /dev/sdc1
+    devid    6 size 1.82TiB used 1.72TiB path /dev/sdd1
+    devid    8 size 2.73TiB used 2.62TiB path /dev/sde1
     *** Some devices missing
 </pre>
-
-If the device is present then it's easier to determine the numeric device ID required.
 
 Before replacing the device you will need to mount the array, if you have a missing device then you will need to use the following command:
 
    sudo mount -o degraded /dev/sda1 /mnt
 
-We will now replace the absent device 6 with the new drive /dev/sdf1 on our file system currently mounted on /mnt:
+Now replace the absent device with the new drive /dev/sdf1 on the filesystem currently mounted on /mnt (since the device is absent, you can use any devid number that isn't present; 2,5,7,9 would all work the same):
 
-   sudo btrfs replace start 6 /dev/sdf1 /mnt
+   sudo btrfs replace start 7 /dev/sdf1 /mnt
 
-This will start the replacement process in the background, you can monitor the status using the btrfs replace status command. The status command updates the status continously, you can ctrl+c to exit it at any time. At first progress will be shown, on completing you'll see the following output:
+This will start the replacement process in the background, you can monitor the status using the <tt>btrfs replace</tt> status command. The status command updates the status continuously, you can ctrl+c to exit it at any time. At first progress will be shown, on completing you'll see the following output:
 
    user@host:~$ sudo btrfs replace status /mnt
    Started on 27.Mar 22:34:20, finished on 28.Mar 06:36:15, 0 write errs, 0 uncorr. read errs
 
-The error counters appear to be inaccurate, I had errors in my recovery reported in dmesg but not in the replace status output. The following command will parse out all the names of damaged files currently in the dmesg log, it only works on the messages currently in the kernel log ring buffer so if you have received too many log messages it will not be complete:
+===== Caveats =====
+
+* If replacing an existing device with a smaller device, you should use <tt>btrfs fi resize</tt> first. If replacing a device with a larger device, you should use <tt>resize</tt> after.
+
+* The error counters appear to be inaccurate, I had errors in my recovery reported in dmesg but not in the replace status output. The following command will parse out all the names of damaged files currently in the dmesg log, it only works on the messages currently in the kernel log ring buffer so if you have received too many log messages it will not be complete:
 
    dmesg | grep BTRFS | grep path | sed -e 's/^.*path: //;s/)$//' | sort | uniq
 

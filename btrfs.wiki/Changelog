@@ -375,6 +375,21 @@ INO_LOOKUP ioctl.
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/
 
+== btrfs-progs v5.3 (Oct 2019) ==
+
+* mkfs:
+** new option to specify checksum algorithm (only crc32c)
+** fix xattr enumeration
+** dump-tree: BFS (breadth-first) traversal now default
+** libbtrfsutil: remove stale BTRFS_DEV_REPLACE_ITEM_STATE_x defines
+** ci: add support for gitlab
+* other:
+** preparatory work for more checksum algorithms
+** docs update
+** switch to docbook5 backend for asciidoc
+** fix build on uClibc due to missing backtrace()
+** lots of printf format fixups
+
 == btrfs-progs v5.2 (Jul 2019) ==
 
 * subvol show: print qgroup information when available
@@ -1402,8 +1417,45 @@ Bugfixes:
 
 = By version (linux kernel) =
 
+=== v5.3 (Sep 2019) ===
+
+* new features, hilights:
+** chunks that have been trimmed and unchanged since last mount are tracked and skipped on repeated trims
+** use hw assisted crc32c on more arches
+** the RAID56 incompat bit is automatically removed when the last block group of that type is removed
+* fixes
+** update ctime/mtime/iversion after hole punching
+** fsync fixes
+** send and balance can't be run at the same time
+* other
+** code refactoring, file splits
+** preparatory work for more checksums
+** tree checker to verify lengths of various items
+** delayed iput happens at unlink time, not in cleaner thread
+** new tracepoints for space updates
+
 === v5.2 (Jul 2019) ===
-TBD
+
+* user visible changes, hilights
+** better read time and write checks to catch errors early and before writing data to disk
+** qgroups + metadata relocation: last speed up patch in the series there should be no overhead comparing balance with and without qgroups
+** FIEMAP ioctl does not start a transaction unnecessarily
+** LOGICAL_INO (v1, v2) does not start transaction unnecessarily
+** fsync on files with many (but not too many) hardlinks is faster
+** send tries harder to find ranges to clone
+** trim/discard will skip unallocated chunks that haven't been touched since the last mount
+** tree-checker does more validations: device item, inode item, block group item:
+** improved space flushing logic for intense DIO vs buffered workloads
+** metadata reservations for delalloc reworked to better adapt in many-writers/low-space scenarios
+* fixes
+** send flushes delayed allocation before start
+** fix fallocate with qgroups accounting underflow
+** send and dedupe can't be run at the same time
+** fix crash in relocation/balance after resume
+* other
+** new tracepoints for locking
+** async write preallocates memory to avoid failures deep in call chains
+** lots of cleanups
 
 === v5.1 (May 2019) ===
 

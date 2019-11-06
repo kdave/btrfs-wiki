@@ -1,6 +1,5 @@
 This page describes in more detail than the [[Data Structures]] page how the various trees are put together, and how to navigate around their data.
 
-
 = FS Tree =
 
 Btrfs supports many filesystem trees, with each tree corresponding to a subvolume. Trees are numbered 5, 256, 257, ..., with the top-level subvolume having ID 5; the first-created subvolume 256, and so forth. Within an FS tree, objects have their own inode numbers, and are indexed by inode number (starting from 257). Each object stored in the FS tree has many keys associated with its inode number. Every object has, at minimum, an INODE_ITEM and an INODE_REF key, and, depending on the type of the object, none or more additional keys containing further information about it.
@@ -34,5 +33,20 @@ The extent tree contains extents: contiguous chunks of storage allocated for use
 Block group extents are the fundamental building blocks within the virtual address space of the filesystem, and indicate which virtual addresses are valid (i.e. have physical storage underlying them). A block group extent's key in the extent tree is <code>(start, BLOCK_GROUP_ITEM, length)</code>, and the associated data item contains the objectid of the chunk (which can then be looked up in the chunk tree).
 
 Data extents are always allocated from within block group extents, and represent the sequences of bytes that contain data (or metadata) managed by the filesystem. As with block group extents, data extents are keyed by their start position in the filesystem's virtual address space, and their length is the "offset" field of the key.
+
+= Root tree =
+
+Contains the address of the other root tree used by btrfs, as device tree, checksum tree and extent tree. 
+
+= Chunk tree =
+
+
+= Checksum tree =
+
+Contains the checksum for all data stored by btrfs.
+
+= Device tree =
+
+It contains the reversed mapping of physical to logical addresses for devices.
 
 [[Category:CodeDoc]]

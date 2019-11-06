@@ -25,7 +25,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 * Dynamic inode allocation
 * Writable snapshots, read-only snapshots
 * Subvolumes (separate internal filesystem roots)
-* Checksums on data and metadata (crc32c)
+* Checksums on data and metadata (crc32c, xxhash, sha256, blake2b)
 * [[Compression]] (zlib, LZO, ZSTD), heuristics
 * Integrated [[Multiple_Device_Support|multiple device support]]
 ** File Striping
@@ -55,8 +55,7 @@ As part of the changelog you can also review
 
 * Online filesystem check
 * Object-level mirroring and striping
-* Alternative checksum algorithms
-* In-band deduplication (happes during writes)
+* In-band deduplication (happens during writes)
 * Hot data tracking and moving to faster devices (or provided on the generic VFS layer)
 * SMR (zoned block device) support
 * DAX/persistent memory support
@@ -64,20 +63,26 @@ As part of the changelog you can also review
 
 == News and Changelog ==
 
-''' btrfs-progs v5.2.2 (Sep 2019) '''
+''' btrfs-progs v5.3 (Oct 2019) '''
 
-* check:                                                                                                                                                                                                                       
-** fix false report of wrong byte count for orphan inodes
-** option -E was not handled correctly
-** new check and repair for root item generation
-* balance: check for full-balance before background fork
-* mkfs: check that total device size does not overflow 16EiB
-* dump-tree: print DEV_STATS key type
+* mkfs:
+** new option to specify checksum algorithm (only crc32c)
+** fix xattr enumeration
+** dump-tree: BFS (breadth-first) traversal now default
+** libbtrfsutil: remove stale BTRFS_DEV_REPLACE_ITEM_STATE_x defines
+** ci: add support for gitlab
 * other:
-** new and updated tests
-** doc fixups and updates
+** preparatory work for more checksum algorithms
+** docs update
+** switch to docbook5 backend for asciidoc
+** fix build on uClibc due to missing backtrace()
+** lots of printf format fixups
 
-''' linux v5.2 (Jul 2019) '''
+''' linux v5.2.15 (Sep 2019) '''
+
+* '''5.2.15''' fix for regression introduced in 5.2
+
+''' linux v5.3 (Sep 2019) '''
 
 Read about past releases in the [[Changelog]]
 * [[Changelog#By_feature|features by kernel version]]
@@ -196,6 +201,8 @@ Links to old or obsolete documentation, articles. Kept for historical reasons. S
 
 === Articles, presentations, podcasts ===
 
+* '''Video:''' [https://youtu.be/qHalOdCZO9Q btrfs is awesome, except when it isn't] by Richard Brown at openSUSE Conferece 2018 (2018-05-25)
+* '''Video:''' [https://youtu.be/-m01x3gHNjg btrfs: The Best Filesystem You've Never Heard Of] by poiupoiu at PhreakNIC 21 (2017-11-3)
 * '''Article:''' [http://www.howtoforge.com/a-beginners-guide-to-btrfs A Beginner's Guide To Btrfs] (2012-11-26)
 * '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/advanced-btrfs-1734952.html How I Use the Advanced Capabilities of Btrfs] by Margaret Bierman with Lenz Grimmer (2012-08-11)
 * '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/gettingstarted-btrfs-1695246.html How I Got Started with the Btrfs File System for Oracle Linux] by Margaret Bierman with Lenz Grimmer (2012-07-11)

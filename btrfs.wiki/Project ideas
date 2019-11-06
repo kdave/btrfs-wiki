@@ -607,6 +607,7 @@ Things to audit/fix:
 
 === Send notifications about important events ===
 {{project
+|who=Marcos Paulo de Souza
 |text=Use kobject_uevents to notify userspace about some important events to userspace. The uevents is what udev uses so there's an established way and easier (extra data passed a-la shell variables) than raw netlink with custom protocol. The events are something like:
 * state changes
 ** filesystem size changed

@@ -220,7 +220,7 @@ Creating a ro-snapshot would work for example like this:
 Rolling back a snapshot would work for example like this:
  # mount /root/btrfs-top-lvl
  # umount /home
-now either the snapshot could be directly mounted at /home (which would be temporary, unless fstab is adatped as well):
+now either the snapshot could be directly mounted at /home (which would be temporary, unless fstab is adapted as well):
  # mount -o subvol=/snapshots/home/2015-12-01,defaults,noatime LABEL=the-btrfs-fs-device /home
 or the subvolume itself could be moved and then mounted again
  # mv /root/btrfs-top-lvl/home /root/btrfs-top-lvl/home.tmp     #or it could  have been deleted see below

@@ -12,6 +12,7 @@ The following companies use Btrfs in production:
 * [https://www.mendix.com/ Mendix] (since end 2014) for backup servers using snapshots and rsync (remotes are mostly ext4) and for incremental replication (fast and often) for disaster recovery purposes using snapshots and send/receive (btrbk)
 * [https://www.suse.com/products/caas-platform/ SUSE Container as a Service (CaaS)] (since [https://www.suse.com/communities/blog/tune-beijing-suse-caas-platform-launch/ June 2017], btrfs with snapshots and rollback for transactional updates, for details see [https://www.suse.com/releasenotes/x86_64/SUSE-CAASP/1.0/ release notes])
 * [https://blog.parrotlinux.org/parrot-4-4-release-notes/ Parrot Project] root filesystem is on btrfs (2018/11)
+* [https://ubuntu.com/blog/using-lxd-on-your-chromebook Chromebook Linux Apps] based on  LXD, with btrfs storage, allowing for fast container creation, snapshots and copies, starting with Chrome OS 69 (2018/09)
 
 These companies are currently working on adding Btrfs to production products:
 * Netgear (ReadyNAS products)

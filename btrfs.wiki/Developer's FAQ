@@ -1,7 +1,7 @@
 = Contributor's FAQ =
 
 The term ''contributor'' is broader and does not only mean contribution of
-code. The documentation is a significant part and this where non-technical
+code. The documentation is a significant part and this is where non-technical
 people add value.  The user's POV brings different questions than the
 developers' and explaining things in human language is a good thing.
 
@@ -25,10 +25,10 @@ and aims to cover the current practices.
 == Patch tags ==
 
 The practice of tagging patches in linux kernel community is documented in
-[https://www.kernel.org/doc/Documentation/SubmittingPatches
-kernel.org:SubmittingPatches], we'll hilight the most frequently used tags and
-their expected meaning. This only briefly mentions the commonly used tags.
-You're encouraged to read the whole document and get familiar with it.
+https://www.kernel.org/doc/html/latest/process/submitting-patches.html,
+we'll highlight the most frequently used tags and their expected meaning.
+This only briefly mentions the commonly used tags. You're encouraged to read
+the whole document and get familiar with it.
 
 === Signed-off-by: ===
 
@@ -38,7 +38,7 @@ author is also recorded in git log history.
 
 Then, each maintainer that processed the patch adds his sob line.
 
-''Reference:'' Section 12 of SubmittingPatches
+''Reference:'' Section 11 of SubmittingPatches
 
 ''Do'': Always send a patch with at least one such line with your name and
 email. If more people contributed to the patch, add their names and addresses too.
@@ -52,7 +52,7 @@ The patch has been reviewed and the singed person is putting his hand into
 fire. If there's a bug found in this patch, the person is usually a good
 candidate for a CC: of the bugreport.
 
-''Reference:'' Section 14 of SubmittingPatches
+''Reference:'' Section 13 of SubmittingPatches
 
 ''Do'': talk to the maintainer if he forgot to add this tag to the final patch.
 Reviews do take time and the patches land in various branches early after
@@ -72,7 +72,7 @@ the patch. Asking for an ACK can be expressed by a ''CC:'' tag in the patch.
 Indicates that the patch has been successfully tested in some environment,
 usually follows a proposed fix and closes the feedback loop.
 
-''Reference:'' Section 14 of SubmittingPatches
+''Reference:'' Section 13 of SubmittingPatches
 
 ''Do'': or rather you're encouraged to add this tag to a patch that you've
 tested.
