@@ -94,7 +94,7 @@ The order of the tags can track the flow of the patches through various trees, n
 *# '''Fixes:'''
 *# '''CC:''' stable@vger.kernel.org # 4.4+
 * other tags
-*# '''CC:''
+*# '''CC:'''
 *# '''Suggested-by:'''
 * quality control by non-authors
 *# '''Reviewed-by:'''
@@ -319,7 +319,7 @@ there are other patches in ''devel'', a non-rebased development branch needs
 to be created. As this is not needed most of the time, this will happen only
 on-demand.
 
-== Copyright notices in files ==
+== Copyright notices in files, SPDX ==
 
 The copyright notices in source files (near the top) have been in wide use but don't and cannot comprise the entire information regarding copyright holders and all contributors that modified the code. The complete information with '''history''' is recorded in '''git''' using '''Signed-off-by''' tags that are documented and widely understood. An initiative started in 2017 [https://lwn.net/Articles/739183/] aims to unify licensing information in all files using '''SPDX''' tags, this is driven by the Linux Foundation.
 
@@ -431,7 +431,7 @@ for the sake of sending it and having your name in the git history.
 = References =
 
 * [https://events.linuxfoundation.org/sites/events/files/slides/clement-kernel-maintainership-oral-tradition.pdf Kernel maintainersip: an oral tradition] (pdf) a nice presentation from ELCE 2015 what does it mean to be a maintainer and what the developers can expect.
-* https://www.kernel.org/doc/html/v4.12/process/submitting-patches.html (must read)
-* https://www.kernel.org/doc/html/v4.12/process/coding-style.html (must read)
+* https://www.kernel.org/doc/html/latest/process/submitting-patches.html (must read)
+* https://www.kernel.org/doc/html/latest/process/coding-style.html (must read)
 * Pro Git by Scott Chacon http://progit.org/book/
 * Git project main page http://git-scm.com

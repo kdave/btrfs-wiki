@@ -80,6 +80,14 @@ There are several ways how to react to the unexpected conditions:
 
 * do not use <tt>spin_is_locked</tt> but <tt>lockdep_assert_held</tt>
 
+== Error injection using eBPF ==
+
+Functions can be annotated to enable error injection using the eBPF scripts. See eg. <tt>disk-io.c:open_ctree</tt>. For btrfs-specific injection, the annotation is ALLOW_ERROR_INJECTION, but beware that this only overrides the return value and this can leak memory or other resources. For error injection to generic helpers (eg. memory allocation), you cau se something like <tt>bcc/tools/inject.py kmalloc btrfs_alloc_device() -P 0.001</tt>
+
+Resources:
+* eBPF
+* BCC tools
+
 = Coding style preferences =
 
 Before applying recommendations from this sections, please make sure you're familiar with the [https://www.kernel.org/doc/html/latest/process/coding-style.html|generic kernel coding style guide].
@@ -105,9 +113,12 @@ Please refer to the option documentation for further details.
 * memory
 ** '''CONFIG_SLUB_DEBUG''' - boot with slub_debug
 ** CONFIG_DEBUG_PAGEALLOC + CONFIG_DEBUG_PAGEALLOC_ENABLE_DEFAULT (on newer kernels)
+** CONFIG_SCHED_STACK_END_CHECK
 ** CONFIG_PAGE_POISONING
 ** CONFIG_HAVE_DEBUG_KMEMLEAK
-** CONFIG_FAILSLAB
+** CONFIG_FAILSLAB -- fault injection to kmalloc
+** CONFIG_DEBUG_LIST
+** CONFIG_BUG_ON_DATA_CORRUPTION
 * btrfs
 ** '''CONFIG_BTRFS_DEBUG''', '''CONFIG_BTRFS_ASSERT''', '''CONFIG_BTRFS_FS_RUN_SANITY_TESTS'''
 ** '''CONFIG_BTRFS_FS_CHECK_INTEGRITY'''
@@ -117,10 +128,12 @@ Please refer to the option documentation for further details.
 ** CONFIG_PROVE_LOCKING, CONFIG_LOCKDEP
 ** CONFIG_LOCK_STAT
 ** CONFIG_PROVE_RCU
+** CONFIG_DEBUG_ATOMIC_SLEEP
 * sanity checks
 ** CONFIG_DEBUG_STACK_USAGE, CONFIG_HAVE_DEBUG_STACKOVERFLOW, CONFIG_DEBUG_STACKOVERFLOW
 ** CONFIG_STACKTRACE
-** kasan
+** CONFIG_KASAN -- address sanitizer
+** CONFIG_UBSAN -- undefined behaviour sanitizer
 * verbose reporting
 ** CONFIG_DEBUG_BUGVERBOSE
 * tracing

@@ -275,8 +275,6 @@ Swap file - must be fully allocated as NOCOW with no compression on one device.
 
 For kernels before 5.0, swap files not supported. Just making a file NOCOW does not help, swap file support relies on one function that btrfs intentionally does not implement due to potential corruptions. The swap implementation used to rely on some assumptions which may not hold in btrfs, like block numbers in the swap file while btrfs has a different block number mapping in case of multiple devices. There is a new API that could be used to port swap to btrfs; for more details have a look at [[project ideas#Swap file support]].
 
-A workaround, albeit with poor performance, is to mount a swap file via a loop device.
-
 == Does grub support btrfs? ==
 
 In most cases. Grub supports many btrfs configurations, including zlib and lzo compression (but not [[Compression#|zstd]], depending on the Grub version) and RAID0/1/10 multi-dev filesystems.

@@ -63,24 +63,11 @@ As part of the changelog you can also review
 
 == News and Changelog ==
 
-''' btrfs-progs v5.3 (Oct 2019) '''
-
-* mkfs:
-** new option to specify checksum algorithm (only crc32c)
-** fix xattr enumeration
-** dump-tree: BFS (breadth-first) traversal now default
-** libbtrfsutil: remove stale BTRFS_DEV_REPLACE_ITEM_STATE_x defines
-** ci: add support for gitlab
-* other:
-** preparatory work for more checksum algorithms
-** docs update
-** switch to docbook5 backend for asciidoc
-** fix build on uClibc due to missing backtrace()
-** lots of printf format fixups
-
-''' linux v5.2.15 (Sep 2019) '''
-
-* '''5.2.15''' fix for regression introduced in 5.2
+''' btrfs-progs v5.4.1 (Jan 2020) '''
+* build: fix docbook5 build                                                                                                                                                                                 
+* check: do extra verification of extent items, inode items and chunks                                                                                                                                      
+* qgroup: return ENOTCONN if quotas not running (needs updated kernel)                                                                                                                                      
+* other: various test fixups 
 
 ''' linux v5.3 (Sep 2019) '''
 
@@ -120,7 +107,7 @@ Links to Btrfs documentation of various Linux distributions:
 
 * [[Changelog]] — history of changes in linux kernel wrt btrfs
 ** [[Changelog#By_feature | features added by release]]
-* [[Contributors#Statistics_for_4.x_series|Development statistics]] — contributors, commits, lines
+* [[Contributors#Statistics_for_5.x_series|Development statistics]] — contributors, commits, lines
 * [[Glossary]]
 * Contact information:
 ** [[Btrfs mailing list]]
@@ -180,6 +167,9 @@ Links to Btrfs documentation of various Linux distributions:
 The wiki contributions are welcome! Please create an account and wait for approval (this is a necessary spam protection). You can try to catch some of the wiki admins on [[#Project_information.2FContact|IRC]] and expedite the account creation.
 
 == Articles, presentations, podcasts ==
+* '''Video:''' [https://youtu.be/qHalOdCZO9Q btrfs is awesome, except when it isn't] by Richard Brown at openSUSE Conferece 2018 (2018-05-25)
+* '''Video:''' [https://youtu.be/-m01x3gHNjg btrfs: The Best Filesystem You've Never Heard Of] by poiupoiu at PhreakNIC 21 (2017-11-3)
+* '''Video''' [https://youtu.be/iwNg_fusT9A TUT91782 Getting the most out of the btrfs filesystem by Thorsthen Kukuk and Jeff Mahoney] (SUSECON, 2017)
 * '''Video:''' [https://www.youtube.com/watch?v=W3QRWUfBua8 NYLUG Presents: Chris Mason on Btrfs (May 14th 2015)] by Chris Mason at the 192nd meeting of the NYLUG
 * '''Video:''' [https://www.youtube.com/watch?v=6DplcPrQjvA Why you should consider using btrfs ... like Google does.] by Marc Merlin at linux.conf.au 2015. [http://marc.merlins.org/linux/talks/Btrfs-LCA2015/ talk slides]
 * '''Article:''' [http://arstechnica.com/information-technology/2014/01/bitrot-and-atomic-cows-inside-next-gen-filesystems Bitrot and atomic COWs: Inside “next-gen” filesystems] (ars technica, 2014/01)
@@ -194,15 +184,12 @@ The wiki contributions are welcome! Please create an account and wait for approv
 == Benchmarking ==
 -->
 
-
 == Historical resources ==
 
 Links to old or obsolete documentation, articles. Kept for historical reasons. Stuff that's more than 3 years old.
 
 === Articles, presentations, podcasts ===
 
-* '''Video:''' [https://youtu.be/qHalOdCZO9Q btrfs is awesome, except when it isn't] by Richard Brown at openSUSE Conferece 2018 (2018-05-25)
-* '''Video:''' [https://youtu.be/-m01x3gHNjg btrfs: The Best Filesystem You've Never Heard Of] by poiupoiu at PhreakNIC 21 (2017-11-3)
 * '''Article:''' [http://www.howtoforge.com/a-beginners-guide-to-btrfs A Beginner's Guide To Btrfs] (2012-11-26)
 * '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/advanced-btrfs-1734952.html How I Use the Advanced Capabilities of Btrfs] by Margaret Bierman with Lenz Grimmer (2012-08-11)
 * '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/gettingstarted-btrfs-1695246.html How I Got Started with the Btrfs File System for Oracle Linux] by Margaret Bierman with Lenz Grimmer (2012-07-11)
@@ -218,12 +205,4 @@ Links to old or obsolete documentation, articles. Kept for historical reasons. S
 
 === Benchmarks ===
 * '''2012-10''' [http://www.ilsistemista.net/index.php/linux-a-unix/36-btrfs-mount-options-and-virtual-machines-an-in-depth-look.html BTRFS, mount options and virtual machines: an in-depth look] (Ilsistemista.net)
-* '''2012-06''' [http://www.ilsistemista.net/index.php/linux-a-unix/34-btrfs-ext3-ext4-xfs-and-kvm-virtual-machine-a-host-side-filesystem-comparison.html BTRFS EXT3 EXT4 XFS and KVM virtual machine: a host-side filesystem comparison] (Ilsistemista.net)
-* '''2012-06''' [http://www.ilsistemista.net/index.php/linux-a-unix/33-btrfs-vs-ext3-vs-ext4-vs-xfs-performance-on-fedora-17.html BTRFS vs EXT3 vs EXT4 vs XFS performance on Fedora 17] (Ilsistemista.net)
-* '''2012-05''' [http://cd34.com/blog/scalability/ext4-xfs-and-btrfs-benchmark-redux/ Ext4, XFS and Btrfs benchmark redux]
-* '''2011-12''' [http://btrfs.boxacle.net Btrfs Performance Analysis]
-* '''2011-10''' [http://www.ilsistemista.net/index.php/linux-a-unix/21-ext3-ext4-xfs-and-btrfs-filesystems-comparison-on-linux-kernel-300.html EXT3 vs EXT4 vs XFS vs BTRFS - filesystems comparison on Linux kernel 3.0.0] (Ilsistemista.net)
-* '''2010''' [http://www.mayrhofer.eu.org/ssd-linux-benchmark SSD Linux benchmarking: Comparing filesystems and encryption method]
-* '''2010-11''' [http://www.ilsistemista.net/index.php/linux-a-unix/6-linux-filesystems-benchmarked-ext3-vs-ext4-vs-xfs-vs-btrfs.html EXT3 vs EXT4 vs XFS vs BTRFS linux filesystems benchmark] (Ilsistemista.net)
 * '''2010-10''' [http://www.linux-mag.com/id/7876 One Billion Files] Btrfs performs well in comparison to other filesystems, when there are a billion files in the filesystem.
-* '''2008-10''' [http://btrfs.boxacle.net Btrfs performance analysis by Steven Pratt and IBM] The benchmarks from IBM demonstrate some bottlenecks we have in the extent recording on large workloads. We're working on fixes for these.

@@ -369,11 +369,46 @@ INO_LOOKUP ioctl.
 |version=5.2
 |text=Verify metadata blocks before submitting them to the devices. This can catch consistency problems or bitflips.
 }}
+{{FeatureMerged
+|name=more checksums
+|version=5.5
+|text=New checksum algorithms: xxhash (64b), SHA256 (256b), BLAKE2b (256b).
+}}
+{{FeatureMerged
+|name=RAID1C34
+|version=5.5
+|text=RAID1 with 3- and 4- copies (over all devices).
+}}
 |}
 
 = By version (btrfs-progs) =
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/
+
+== btrfs-progs v5.4 (Dec 2019) ==
+* support new hash algorithms (kernel 5.5):
+** mkfs.btrfs and btrfs-convert with --csum, crc32c, xxhash, sha256, blake2
+* mkfs: support new raid1c3 and raid1c4 block group profiles (kernel 5.5)
+* check:
+** --repair delays start with a warning, can be skipped using --force
+** enhanced detetion of inode types from partial data, more options for repair                                                                                                                                                                                                       
+* receive: fix quiet option
+* image: speed up chunk loading
+* fi usage:
+** sort devices by id
+** print ratio of used/total per block group type
+* rescue zero-log: reset the log pointers directly, avoid reading some other potentially damaged structures                                                                                                                                                                                 
+* new make target install-static to install only static binaries/libraries
+* other
+** docs updates                                                                                                                                                                                                 
+** new tests                                                                                                                                                                                                    
+** cleanups and refactoring
+{{ProgsReleaseMinor |title=btrfs-progs v5.4.1 (Jan 2020) }}
+
+* build: fix docbook5 build                                                                                                                                                                                 
+* check: do extra verification of extent items, inode items and chunks                                                                                                                                      
+* qgroup: return ENOTCONN if quotas not running (needs updated kernel)                                                                                                                                      
+* other: various test fixups
 
 == btrfs-progs v5.3 (Oct 2019) ==
 
@@ -1416,6 +1451,8 @@ Bugfixes:
 * first release after 0.19 (2009/06) with a lot of changes
 
 = By version (linux kernel) =
+
+=== v5.4 (Nov 2019) ===
 
 === v5.3 (Sep 2019) ===
 

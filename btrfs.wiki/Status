@@ -10,7 +10,7 @@ mean that its useful, for example in meeting your performance expectations for
 your specific workload. Combination of features can vary in performance, the
 table does not cover all possibilities.
 
-'''The table is based on the latest released linux kernel: 5.0'''
+'''The table is based on the latest released linux kernel: 5.4'''
 
 The columns for each feature reflrect the status of the implementation in following ways:
 
@@ -124,6 +124,19 @@ The columns for each feature reflrect the status of the implementation in follow
 | tbd
 | style="background: orange;"       | mostly OK
 | reading from mirrors in parallel can be optimized further ''[[Status#RAID1,_RAID10|(see below)]]''
+|-
+| RAID1C3
+| style="background: lightgreen;"   | OK
+| tbd
+| style="background: orange;"       | mostly OK
+| reading from mirrors in parallel can be optimized further ''[[Status#RAID1,_RAID10|(see below)]]''
+|-
+| RAID1C4
+| style="background: lightgreen;"   | OK
+| tbd
+| style="background: orange;"       | mostly OK
+| reading from mirrors in parallel can be optimized further ''[[Status#RAID1,_RAID10|(see below)]]''
+
 |-
 | RAID10
 | style="background: lightgreen;"   | OK

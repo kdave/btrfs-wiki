@@ -36,8 +36,9 @@ Currently there is only one extent allocation tree shared by all the other trees
 
 These store files and directories, and all of the normal metadata you would expect to find in a filesystem. There is one root for each subvolume or snapshot, but snapshots will share blocks between roots.
 
- Keys in FS trees always use the inode number of the filesystem object as the objectid. Each object will have one or more of:
+ Keys in FS trees always use the inode number of the filesystem object as the objectid.
 
+Each object will have one or more of:
 * Inode.
 * Inode ref, indicating what name this object is known as, and in which directory.
 * For files, a set of extent information, indicating where on the filesystem this file's data is.

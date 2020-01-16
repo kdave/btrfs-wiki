@@ -159,11 +159,6 @@ It seems that the link count can be tracked like the other filesystems do. This 
 * a mkdir/rmdir/move/snapshot will update the link count accordingly iff the current link count is not 1
 }}
 
-=== More checksumming algorithms ===
-{{project
-|text=Currently crc32c is used, we may offer more alternatives with different speed/strength characteristics. The considered ones are xxHash and SHA256.
-}}
-
 === Btree lock contention ===
 {{project
 |text=The btree locks, especially on the root block can be very hot. We need to improve this, especially in read mostly workloads.
@@ -598,6 +593,7 @@ If the updatedb tool were aware of the snapshots (also whether or not they are r
 The bootloaders in question:
 * grub2
 * SYSLINUX
+* U-Boot
 
 Things to audit/fix:
 * bugfixes to code touching the core datastructures
@@ -976,6 +972,13 @@ range of the file attributes, similar to what FS_IOC_GETFLAGS does.
 |text=Implement swapfile support on top of swap-over-nfs infrastructure that has been merged in 3.7. Use the exported an API to manage the extents.
 
 There is a patchset (swap-over-nfs) which enhances the swapfile API and btrfs could build swap support on top of the infrastructure. The patchset has been merged into 3.6.
+}}
+
+=== More checksumming algorithms ===
+{{project
+|upstream=5.5
+|patch=complete
+|text=Currently crc32c is used, we may offer more alternatives with different speed/strength characteristics. The considered ones are xxHash and SHA256. (Final: xxhash, sha256, blake2b)
 }}
 
 = Obsolete requests =
