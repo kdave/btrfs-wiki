@@ -3,7 +3,7 @@
 |name=btrfs-filesystem}}
 
 ==NAME==
-btrfs-filesystem - command group of btrfs that usually work on the whole filesystem
+btrfs-filesystem - command group that primarily does work on the whole filesystems
 
 ==SYNOPSIS==
 
@@ -80,8 +80,9 @@ not total size of filesystem.
 <p><em>GlobalReserve</em> is an artificial and internal emergency space. It is used eg.
 when the filesystem is full. Its <em>total</em> size is dynamic based on the
 filesystem size, usually not larger than 512MiB, <em>used</em> may fluctuate.</p>
-<p>The global block reserve is accounted within Metadata. In case the filesystem
-metadata are exhausted, <em>GlobalReserve/total + Metadata/used = Metadata/total</em>.</p>
+<p>The GlobalReserve is a portion of Metadata. In case the filesystem metadata is
+exhausted, <em>GlobalReserve/total + Metadata/used = Metadata/total</em>. Otherwise
+there appears to be some unused space of Metadata.</p>
 <p><tt>Options</tt></p>
 <dl>
 <dt>
@@ -156,7 +157,8 @@ show sizes in TiB, or TB with --si
 <p>
 Defragment file data on a mounted filesystem. Requires kernel 2.6.33 and newer.
 </p>
-<p>If <em>-r</em> is passed, files in dir will be defragmented recursively.
+<p>If <em>-r</em> is passed, files in dir will be defragmented recursively (not
+descending to subvolumes and mount points).
 The start position and the number of bytes to defragment can be specified by
 start and length using <em>-s</em> and <em>-l</em> options below.
 Extents bigger than value given by <em>-t</em> will be skipped, otherwise this value
@@ -167,10 +169,10 @@ You can also turn on compression in defragment operations.</p>
 <blockquote><b>Warning:</b>
 Defragmenting with Linux kernel versions &lt; 3.9 or ≥ 3.14-rc2 as well as
 with Linux stable kernel versions ≥ 3.10.31, ≥ 3.12.12 or ≥ 3.13.4 will break up
-the ref-links of COW data (for example files copied with <tt>cp --reflink</tt>,
+the reflinks of COW data (for example files copied with <tt>cp --reflink</tt>,
 snapshots or de-duplicated data).
 This may cause considerable increase of space usage depending on the broken up
-ref-links.</blockquote>
+reflinks.</blockquote>
 <blockquote><b>Note:</b>
 Directory arguments without <em>-r</em> do not defragment files recursively but will
 defragment certain internal trees (extent tree and the subvolume tree). This has been
@@ -200,7 +202,8 @@ compression. See also section <em>EXAMPLES</em>.
 -r
 <dd>
 <p>
-defragment files recursively in given directories
+defragment files recursively in given directories, does not descend to
+subvolumes or mount points
 </p>
 
 <dt>
@@ -251,8 +254,9 @@ described below.
 </p>
 <p>Each argument to <em>btrfs filesystem du</em> will have a <em>set shared</em> value
 calculated for it. We define each <em>set</em> as those files found by a
-recursive search of an argument. The <em>set shared</em> value
-then is a sum of all shared space referenced by the set.</p>
+recursive search of an argument (recursion descends to subvolumes but not
+mount points). The <em>set shared</em> value then is a sum of all shared space
+referenced by the set.</p>
 <p><em>set shared</em> takes into account overlapping shared extents, hence it
 isn&#8217;t as simple as adding up shared extents.</p>
 <p><tt>Options</tt></p>
@@ -329,7 +333,7 @@ show sizes in TiB, or TB with --si.
 Show or update the label of a filesystem. This works on a mounted filesystem or
 a filesystem image.
 </p>
-<p>The <em>newlabel</em> argument is optional. Current label is printed if the the argument
+<p>The <em>newlabel</em> argument is optional. Current label is printed if the argument
 is omitted.</p>
 <blockquote><b>Note:</b>
 the maximum allowable length shall be less than 256 chars and must not contain
@@ -603,9 +607,9 @@ explicit. For a single-device filesystem it&#8217;s typically not necessary to
 specify the devid though.</p>
 <p><b>$ btrfs filesystem resize max /path</b></p>
 <p><b>$ btrfs filesystem resize 1:max /path</b></p>
-<p>Let&#8217;s assume that devid 1 exists, the filesystem does not occupy the whole block
-device, eg. it has been enlarged and we wan the grow the filesystem. Simply using
-<em>max</em> as size we will achieve that.</p>
+<p>Let&#8217;s assume that devid 1 exists and the filesystem does not occupy the whole
+block device, eg. it has been enlarged and we want to grow the filesystem. By
+simply using <em>max</em> as size we will achieve that.</p>
 <blockquote><b>Note:</b>
 There are two ways to minimize the filesystem on a given device. The
 <b>btrfs inspect-internal min-dev-size</b> command, or iteratively shrink in steps.</blockquote>

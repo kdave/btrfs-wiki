@@ -23,11 +23,12 @@ stream.</p>
 are available on both the sending and receiving side can be used to reduce the
 amount of information that has to be sent to reconstruct the sent snapshot on a
 different filesystem.</p>
-<p>It is allowed to omit the <em>-p <em>&lt;parent&gt;</em></em> option when <em>-c <em>&lt;clone-src&gt;</em></em> options
-are given, in which case <b>btrfs send</b> will determine a suitable parent among the
-clone sources itself.</p>
+<p>The <em>-p <em>&lt;parent&gt;</em></em> option can be omitted when <em>-c <em>&lt;clone-src&gt;</em></em> options are
+given, in which case <b>btrfs send</b> will determine a suitable parent from among
+the clone sources.</p>
 <p>You must not specify clone sources unless you guarantee that these snapshots
-are exactly in the same state on both sides, the sender and the receiver.</p>
+are exactly in the same state on both sides&#8212;both for the sender and the
+receiver.</p>
 <p><tt>Options</tt></p>
 <dl>
 <dt>
@@ -68,7 +69,7 @@ send in <em>NO_FILE_DATA</em> mode
 </p>
 <p>The output stream does not contain any file
 data and thus cannot be used to transfer changes. This mode is faster and
-useful to show the differences in metadata.</p>
+is useful to show the differences in metadata.</p>
 
 <dt>
 -v|--verbose

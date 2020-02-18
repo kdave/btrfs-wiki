@@ -203,7 +203,19 @@ useful for and should be enhanced, eg.
 
 === Get rid of buffer_head usage in superblock writing/reading ===
 {{project
+|who=Johannes Thumshirn
 |text=The structure buffer_head is used for reading and writing the superblocks, the interface is easy to use to just stay 'read/write this offset and give me back the data'. The rest of btrfs uses the more modern 'bio' structures, that are also used to implement the buffer_heads. So this is merely lifting up the bio calls to the superblock IO. There's some page and mapping involved, but oterwise should be easy to convert.
+}}
+
+=== Replace remaining radix tree usage by xarray ===
+{{project
+|text=The radix tree has been replaced by xarray, there are still some conversions left. The patches can be found in M. Wilcox' git http://git.infradead.org/users/willy/linux-dax.git/shortlog/refs/heads/xarray-conv .
+
+* readahead trees (fs_info::reada_tree, device::reada_zones and ::reada_extents)
+* subvolume roots (fs_info::fs_roots_radix)
+* extent buffer radix (fs_info::buffer_radix)
+* (fs_info::delayed_nodes_tree))
+* send name_cache tree
 }}
 
 == New features ==
@@ -287,9 +299,11 @@ This work is related to stripe granular IO, which would make it possible to conf
 
 === Hybrid Storage ===
 {{project
-|text=It should be possible to use very fast devices as a front end to traditional storage. The most used blocks should be kept hot on the fast device and they should be pushed out to slower storage in large sequential chunks.
+|text=It should be possible to use very fast devices as a front end to traditional storage. The most used blocks should be kept hot on the fast device and they should be pushed out to slower storage in large sequential chunks. It should also be possible to optimize for energy conservation.
 
 The latest generation of SSD drives can achieve high iops/sec rates at both reading and writing. They will be very effective front end caches for slower (and less expensive) spinning media. A caching layer could be added to Btrfs to store the hottest blocks on faster devices to achieve better read and write throughput. This cache could also make use of other spindles in the existing spinning storage, for example why not store frequently used random-heavy data mirrored on all drives if space is available. A similar mechanism could allow frequent random read patterns (such as booting a system) as a series of sequential blocks in this cache.
+
+Conversely, there exists large spinning disks that have very low energy consumption when in standby. The coldest blocks should be allocated to the most energy efficient device, which should be set in standby to save energy.
 }}
 
 === Upconvert new directories to subvolumes ===

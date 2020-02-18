@@ -46,6 +46,13 @@ increase verbosity about performed actions, print details about each operation
 </p>
 
 <dt>
+-q|--quiet
+<dd>
+<p>
+suppress all messages except errors
+</p>
+
+<dt>
 -f <em>&lt;FILE&gt;</em>
 <dd>
 <p>
@@ -107,7 +114,7 @@ will not be an exact copy of the sent subvolume.</p>
 should be protected from access by users until the receive operation
 has completed and the subvolume is set to read-only.</p>
 <p>Additionally, receive does not currently do a very good job of validating
-that an incremental send streams actually makes sense, and it is thus
+that an incremental send stream actually makes sense, and it is thus
 possible for a specially crafted send stream to create a subvolume with
 reflinks to arbitrary files in the same filesystem.  Because of this,
 users are advised to not use <b>btrfs receive</b> on send streams from

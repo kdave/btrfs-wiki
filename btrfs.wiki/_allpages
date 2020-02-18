@@ -20,6 +20,7 @@ Code documentation
 Compression
 Contributors
 Conversion from Ext3
+Conversion from Ext3/4 and ReiserFS
 Data Structures
 Debug-tree
 Debugging Btrfs with GDB

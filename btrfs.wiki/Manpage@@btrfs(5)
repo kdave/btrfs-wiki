@@ -22,6 +22,21 @@ filesystem features
 </li>
 <li>
 <p>
+checksum algorithms
+</p>
+</li>
+<li>
+<p>
+filesystem limits
+</p>
+</li>
+<li>
+<p>
+bootloader support
+</p>
+</li>
+<li>
+<p>
 file attributes
 </p>
 </li>
@@ -36,6 +51,13 @@ control device
 <p>This section describes mount options specific to BTRFS.  For the generic mount
 options please refer to [http://man7.org/linux/man-pages/man8/mount.8.html mount(8)] manpage. The options are sorted alphabetically
 (discarding the <em>no</em> prefix).</p>
+<blockquote><b>Note:</b>
+most mount options apply to the whole filesystem and only options in the
+first mounted subvolume will take effect. This is due to lack of implementation
+and may change in the future. This means that (for example) you can&#8217;t set
+per-subvolume <em>nodatacow</em>, <em>nodatasum</em>, or <em>compress</em> using mount options. This
+should eventually be fixed, but it has proved to be difficult to implement
+correctly within the Linux VFS framework.</blockquote>
 <dl>
 <dt>
 <b>acl</b>
@@ -68,10 +90,10 @@ location.</p>
 <blockquote><b>Warning:</b>
 Defragmenting with Linux kernel versions &lt; 3.9 or ≥ 3.14-rc2 as
 well as with Linux stable kernel versions ≥ 3.10.31, ≥ 3.12.12 or
-≥ 3.13.4 will break up the ref-links of CoW data (for example files
+≥ 3.13.4 will break up the reflinks of COW data (for example files
 copied with <tt>cp --reflink</tt>, snapshots or de-duplicated data).
 This may cause considerable increase of space usage depending on the
-broken up ref-links.</blockquote>
+broken up reflinks.</blockquote>
 
 <dt>
 <b>barrier</b>
@@ -82,7 +104,7 @@ broken up ref-links.</blockquote>
 (default: on)
 </p>
 <p>Ensure that all IO write operations make it through the device cache and are stored
-permanently when the filesystem is at it&#8217;s consistency checkpoint. This
+permanently when the filesystem is at its consistency checkpoint. This
 typically means that a flush command is sent to the device that will
 synchronize all pending data and ordinary metadata blocks, then writes the
 superblock and issues another flush.</p>
@@ -107,17 +129,18 @@ supposed to make it to the permanent storage.</p>
 (since: 3.0, default: off)
 </p>
 <p>These debugging options control the behavior of the integrity checking
-module (the BTRFS_FS_CHECK_INTEGRITY config option required).<br/></p>
-<p><tt>check_int</tt> enables the integrity checker module, which examines all
+module (the BTRFS_FS_CHECK_INTEGRITY config option required). The main goal is
+to verify that all blocks from a given transaction period are properly linked.</p>
+<p><em>check_int</em> enables the integrity checker module, which examines all
 block write requests to ensure on-disk consistency, at a large
-memory and CPU cost.<br/></p>
-<p><tt>check_int_data</tt> includes extent data in the integrity checks, and
-implies the check_int option.<br/></p>
-<p><tt>check_int_print_mask</tt> takes a bitmask of BTRFSIC_PRINT_MASK_* values
+memory and CPU cost.</p>
+<p><em>check_int_data</em> includes extent data in the integrity checks, and
+implies the <em>check_int</em> option.</p>
+<p><em>check_int_print_mask</em> takes a bitmask of BTRFSIC_PRINT_MASK_* values
 as defined in <em>fs/btrfs/check-integrity.c</em>, to control the integrity
-checker module behavior.<br/></p>
+checker module behavior.</p>
 <p>See comments at the top of <em>fs/btrfs/check-integrity.c</em>
-for more info.</p>
+for more information.</p>
 
 <dt>
 <b>clear_cache</b>
@@ -133,34 +156,43 @@ has gone wrong. See also: <em>space_cache</em>.
 <p>
 (since: 3.12, default: 30)
 </p>
-<p>Set the interval of periodic commit. Higher
-values defer data being synced to permanent storage with obvious
-consequences when the system crashes. The upper bound is not forced,
-but a warning is printed if it&#8217;s more than 300 seconds (5 minutes).</p>
+<p>Set the interval of periodic transaction commit when data are synchronized
+to permanent storage. Higher interval values lead to larger amount of unwritten
+data, which has obvious consequences when the system crashes.
+The upper bound is not forced, but a warning is printed if it&#8217;s more than 300
+seconds (5 minutes). Use with care.</p>
 
 <dt>
 <b>compress</b>
 <dt>
-<b>compress=<em>type</em></b>
+<b>compress=<em>type[:level]</em></b>
 <dt>
 <b>compress-force</b>
 <dt>
-<b>compress-force=<em>type</em></b>
+<b>compress-force=<em>type[:level]</em></b>
 <dd>
 <p>
-(default: off)
+(default: off, level support since: 5.1)
 </p>
 <p>Control BTRFS file data compression.  Type may be specified as <em>zlib</em>,
 <em>lzo</em>, <em>zstd</em> or <em>no</em> (for no compression, used for remounting).  If no type
 is specified, <em>zlib</em> is used.  If <em>compress-force</em> is specified,
-the compression will allways be attempted, but the data may end up uncompressed
+then compression will always be attempted, but the data may end up uncompressed
 if the compression would make them larger.</p>
+<p>Both <em>zlib</em> and <em>zstd</em> (since version 5.1) expose the compression level as a
+tunable knob with higher levels trading speed and memory (<em>zstd</em>) for higher
+compression ratios. This can be set by appending a colon and the desired level.
+Zlib accepts the range [1, 9] and zstd accepts [1, 15]. If no level is set,
+both currently use a default level of 3. The value 0 is an alias for the defaul
+level.</p>
 <p>Otherwise some simple heuristics are applied to detect an incompressible file.
 If the first blocks written to a file are not compressible, the whole file is
 permanently marked to skip compression. As this is too simple, the
 <em>compress-force</em> is a workaround that will compress most of the files at the
-cost of some wasted CPU cycles on failed attempts. The heuristics of <em>compress</em>
-will improve in the future so this will not be necessary.</p>
+cost of some wasted CPU cycles on failed attempts.
+Since kernel 4.15, a set of heuristic algorithms have been improved by using
+frequency sampling, repeated pattern detection and Shannon entropy calculation
+to avoid that.</p>
 <blockquote><b>Note:</b>
 If compression is enabled, <em>nodatacow</em> and <em>nodatasum</em> are disabled.</blockquote>
 
@@ -177,6 +209,9 @@ If compression is enabled, <em>nodatacow</em> and <em>nodatasum</em> are disable
 under <em>nodatacow</em> are also set the NOCOW file attribute (see [http://man7.org/linux/man-pages/man1/chattr.1.html chattr(1)]).</p>
 <blockquote><b>Note:</b>
 If <em>nodatacow</em> or <em>nodatasum</em> are enabled, compression is disabled.</blockquote>
+<p>Updates in-place improve performance for workloads that do frequent overwrites,
+at the cost of potential partial writes, in case the write is interrupted
+(system crash, device failure).</p>
 
 <dt>
 <b>datasum</b>
@@ -192,6 +227,10 @@ under <em>nodatasum</em> inherit the "no checksums" property, however there&#821
 corresponding file attribute (see [http://man7.org/linux/man-pages/man1/chattr.1.html chattr(1)]).</p>
 <blockquote><b>Note:</b>
 If <em>nodatacow</em> or <em>nodatasum</em> are enabled, compression is disabled.</blockquote>
+<p>There is a slight performance gain when checksums are turned off, the
+corresponding metadata blocks holding the checksums do not need to updated.
+The cost of checksumming of the blocks in memory is much lower than the IO,
+modern CPUs feature hardware support of the checksumming algorithm.</p>
 
 <dt>
 <b>degraded</b>
@@ -199,9 +238,19 @@ If <em>nodatacow</em> or <em>nodatasum</em> are enabled, compression is disabled
 <p>
 (default: off)
 </p>
-<p>Allow mounts with less devices than the raid profile constraints
-require.  A read-write mount (or remount) may fail with too many devices
+<p>Allow mounts with less devices than the RAID profile constraints
+require.  A read-write mount (or remount) may fail when there are too many devices
 missing, for example if a stripe member is completely missing from RAID0.</p>
+<p>Since 4.14, the constraint checks have been improved and are verified on the
+chunk level, not an the device level. This allows degraded mounts of
+filesystems with mixed RAID profiles for data and metadata, even if the
+device number constraints would not be satisfied for some of the profiles.</p>
+<p>Example: metadata&#8201;&#8212;&#8201;raid1, data&#8201;&#8212;&#8201;single, devices&#8201;&#8212;&#8201;/dev/sda, /dev/sdb</p>
+<p>Suppose the data are completely stored on <em>sda</em>, then missing <em>sdb</em> will not
+prevent the mount, even if 1 missing device would normally prevent (any)
+<em>single</em> profile to mount. In case some of the data chunks are stored on <em>sdb</em>,
+then the constraint of single/data is not satisfied and the filesystem
+cannot be mounted.</p>
 
 <dt>
 <b>device=<em>devicepath</em></b>
@@ -225,16 +274,18 @@ system at that point.</blockquote>
 <p>
 (default: off)
 </p>
-<p>Enable discarding of freed file blocks using TRIM operation.  This is useful
-for SSD devices, thinly provisioned LUNs or virtual machine images where the
-backing device understands the operation. Depending on support of the
-underlying device, the operation may severely hurt performance in case the TRIM
-operation is synchronous (eg. with SATA devices up to revision 3.0).</p>
-<p>If discarding is not necessary to be done at the block freeing time, there&#8217;s
-<tt>fstrim</tt> tool that lets the filesystem discard all free blocks in a batch,
-possibly not much interfering with other operations. Also, the the device may
-ignore the TRIM command if the range is too small, so running the batch discard
-can actually discard the blocks.</p>
+<p>Enable discarding of freed file blocks.  This is useful for SSD devices, thinly
+provisioned LUNs, or virtual machine images; however, every storage layer must
+support discard for it to work. if the backing device does not support
+asynchronous queued TRIM, then this operation can severely degrade performance,
+because a synchronous TRIM operation will be attempted instead. Queued TRIM
+requires newer than SATA revision 3.1 chipsets and devices.</p>
+<p>If it is not necessary to immediately discard freed blocks, then the <tt>fstrim</tt>
+tool can be used to discard all free blocks in a batch. Scheduling a TRIM
+during a period of low system activity will prevent latent interference with
+the performance of other operations. Also, a device may ignore the TRIM command
+if the range is too small, so running a batch discard has a greater probability
+of actually discarding the blocks.</p>
 
 <dt>
 <b>enospc_debug</b>
@@ -285,7 +336,7 @@ parameters, eg. <em>panic</em>, <em>oops</em> or <em>crashkernel</em>.
 <p>This option forces any data dirtied by a write in a prior transaction to commit
 as part of the current commit, effectively a full filesystem sync.</p>
 <p>This makes the committed state a fully consistent view of the file system from
-the application&#8217;s perspective (i.e., it includes all completed file system
+the application&#8217;s perspective (i.e. it includes all completed file system
 operations). This was previously the behavior only when a snapshot was
 created.</p>
 <p>When off, the filesystem is consistent but buffered writes may last more than
@@ -320,6 +371,13 @@ the option.</p>
 <blockquote><b>Note:</b>
 Defaults to off due to a potential overflow problem when the free space
 checksums don&#8217;t fit inside a single page.</blockquote>
+<p>Don&#8217;t use this option unless you really need it. The inode number limit
+on 64bit system is 2<sup>64</sup>, which is practically enough for the whole filesystem
+lifetime. Due to implementation of linux VFS layer, the inode numbers on 32bit
+systems are only 32 bits wide. This lowers the limit significantly and makes
+it possible to reach it. In such case, this mount option will help.
+Alternatively, files with high inode numbers can be copied to a new subvolume
+which will effectively start the inode numbers from the beginning again.</p>
 
 <dt>
 <b>logreplay</b>
@@ -329,7 +387,8 @@ checksums don&#8217;t fit inside a single page.</blockquote>
 <p>
 (default: on, even read-only)
 </p>
-<p>Enable/disable log replay at mount time. See also <em>treelog</em>.</p>
+<p>Enable/disable log replay at mount time. See also <em>treelog</em>.
+Note that <em>nologreplay</em> is the same as <em>norecovery</em>.</p>
 <blockquote><b>Warning:</b>
 currently, the tree log is replayed even with a read-only mount! To
 disable that behaviour, mount also with <em>nologreplay</em>.</blockquote>
@@ -340,7 +399,7 @@ disable that behaviour, mount also with <em>nologreplay</em>.</blockquote>
 <p>
 (default: min(2048, page size) )
 </p>
-<p>Specify the maximum amount of space, in bytes, that can be inlined in
+<p>Specify the maximum amount of space, that can be inlined in
 a metadata B-tree leaf.  The value is specified in bytes, optionally
 with a K suffix (case insensitive).  In practice, this value
 is limited by the filesystem block size (named <em>sectorsize</em> at mkfs time),
@@ -374,7 +433,8 @@ inlined files).</p>
 (since: 4.5, default: off)
 </p>
 <p>Do not attempt any data recovery at mount time. This will disable <em>logreplay</em>
-and avoids other write operations.</p>
+and avoids other write operations. Note that this option is the same as
+<em>nologreplay</em>.</p>
 <blockquote><b>Note:</b>
 The opposite option <em>recovery</em> used to have different meaning but was
 changed for consistency with other filesystems, where <em>norecovery</em> is used for
@@ -416,8 +476,8 @@ performance when reading block group free space into memory. However, managing
 the space cache consumes some resources, including a small amount of disk
 space.</p>
 <p>There are two implementations of the free space cache. The original
-implementation, <em>v1</em>, is the safe default. The <em>v1</em> space cache can be disabled
-at mount time with <em>nospace_cache</em> without clearing.</p>
+one, referred to as <em>v1</em>, is the safe default. The <em>v1</em> space cache can be
+disabled at mount time with <em>nospace_cache</em> without clearing.</p>
 <p>On very large filesystems (many terabytes) and certain workloads, the
 performance of the <em>v1</em> space cache may degrade drastically. The <em>v2</em>
 implementation, which adds a new B-tree called the free space tree, addresses
@@ -425,11 +485,11 @@ this issue. Once enabled, the <em>v2</em> space cache will always be used and ca
 be disabled unless it is cleared. Use <em>clear_cache,space_cache=v1</em> or
 <em>clear_cache,nospace_cache</em> to do so. If <em>v2</em> is enabled, kernels without <em>v2</em>
 support will only be able to mount the filesystem in read-only mode. The
-<tt>btrfs(8)</tt> command currently only has read-only support for <em>v2</em>. A read-write
+[[Manpage/btrfs|btrfs(8)]] command currently only has read-only support for <em>v2</em>. A read-write
 command may be run on a <em>v2</em> filesystem by clearing the cache, running the
 command, and then remounting with <em>space_cache=v2</em>.</p>
 <p>If a version is not explicitly specified, the default implementation will be
-chosen, which is <em>v1</em> as of 4.9.</p>
+chosen, which is <em>v1</em>.</p>
 
 <dt>
 <b>ssd</b>
@@ -437,26 +497,39 @@ chosen, which is <em>v1</em> as of 4.9.</p>
 <b>ssd_spread</b>
 <dt>
 <b>nossd</b>
+<dt>
+<b>nossd_spread</b>
 <dd>
 <p>
 (default: SSD autodetected)
 </p>
 <p>Options to control SSD allocation schemes.  By default, BTRFS will
-enable or disable SSD allocation heuristics depending on whether a
-rotational or non-rotational device is in use (contents of
-<em>/sys/block/DEV/queue/rotational</em>). If it is, the <em>ssd</em> option is turned on.
-The option <em>nossd</em> will disable the autodetection.</p>
+enable or disable SSD optimizations depending on status of a device with
+respect to rotational or non-rotational type. This is determined by the
+contents of <em>/sys/block/DEV/queue/rotational</em>). If it is 0, the <em>ssd</em> option is
+turned on.  The option <em>nossd</em> will disable the autodetection.</p>
+<p>The optimizations make use of the absence of the seek penalty that&#8217;s inherent
+for the rotational devices. The blocks can be typically written faster and
+are not offloaded to separate threads.</p>
+<blockquote><b>Note:</b>
+Since 4.14, the block layout optimizations have been dropped. This used
+to help with first generations of SSD devices. Their FTL (flash translation
+layer) was not effective and the optimization was supposed to improve the wear
+by better aligning blocks. This is no longer true with modern SSD devices and
+the optimization had no real benefit. Furthermore it caused increased
+fragmentation. The layout tuning has been kept intact for the option
+<em>ssd_spread</em>.</blockquote>
 <p>The <em>ssd_spread</em> mount option attempts to allocate into bigger and aligned
 chunks of unused space, and may perform better on low-end SSDs.  <em>ssd_spread</em>
 implies <em>ssd</em>, enabling all other SSD heuristics as well. The option <em>nossd</em>
-will disable all SSD options.</p>
+will disable all SSD options while <em>nossd_spread</em> only disables <em>ssd_spread</em>.</p>
 
 <dt>
 <b>subvol=<em>path</em></b>
 <dd>
 <p>
 Mount subvolume from <em>path</em> rather than the toplevel subvolume. The
-<em>path</em> is absolute (ie. starts at the toplevel subvolume).
+<em>path</em> is always treated as relative to the toplevel subvolume.
 This mount option overrides the default subvolume set for the given filesystem.
 </p>
 
@@ -465,12 +538,13 @@ This mount option overrides the default subvolume set for the given filesystem.
 <dd>
 <p>
 Mount subvolume specified by a <em>subvolid</em> number rather than the toplevel
-subvolume.  You can use <b>btrfs subvolume list</b> to see subvolume ID numbers.
+subvolume.  You can use <b>btrfs subvolume list</b> of <b>btrfs subvolume show</b> to see
+subvolume ID numbers.
 This mount option overrides the default subvolume set for the given filesystem.
 </p>
 <blockquote><b>Note:</b>
 if both <em>subvolid</em> and <em>subvol</em> are specified, they must point at the
-same subvolume, otherwise mount will fail.</blockquote>
+same subvolume, otherwise the mount will fail.</blockquote>
 
 <dt>
 <b>thread_pool=<em>number</em></b>
@@ -478,11 +552,11 @@ same subvolume, otherwise mount will fail.</blockquote>
 <p>
 (default: min(NRCPUS + 2, 8) )
 </p>
-<p>The number of worker threads to allocate. NRCPUS is number of on-line CPUs
+<p>The number of worker threads to start. NRCPUS is number of on-line CPUs
 detected at the time of mount. Small number leads to less parallelism in
 processing data and metadata, higher numbers could lead to a performance hit
-due to increased locking contention, cache-line bouncing or costly data
-transfers between local CPU memories.</p>
+due to increased locking contention, process scheduling, cache-line bouncing or
+costly data transfers between local CPU memories.</p>
 
 <dt>
 <b>treelog</b>
@@ -498,7 +572,7 @@ are flushed at sync and transaction commit. If the system crashes between two
 such syncs, the pending tree log operations are replayed during mount.</p>
 <blockquote><b>Warning:</b>
 currently, the tree log is replayed even with a read-only mount! To
-disable that behaviour, mount also with <em>nologreplay</em>.</blockquote>
+disable that behaviour, also mount with <em>nologreplay</em>.</blockquote>
 <p>The tree log could contain new files/directories, these would not exist on
 a mounted filesystem if the log is not replayed.</p>
 
@@ -507,6 +581,9 @@ a mounted filesystem if the log is not replayed.</p>
 <dt>
 <b>nousebackuproot</b>
 <dd>
+<p>
+(since: 4.6, default: off)
+</p>
 <p>Enable autorecovery attempts if a bad tree root is found at mount time.
 Currently this scans a backup list of several previous tree roots and tries to
 use the first readable. This can be used with read-only mounts as well.</p>
@@ -521,6 +598,14 @@ This option has replaced <em>recovery</em>.</blockquote>
 </p>
 <p>Allow subvolumes to be deleted by their respective owner. Otherwise, only the
 root user can do that.</p>
+<blockquote><b>Note:</b>
+historically, any user could create a snapshot even if he was not owner
+of the source subvolume, the subvolume deletion has been restricted for that
+reason. The subvolume creation has been restricted but this mount option is
+still required. This is a usability issue.
+Since 4.18, the [http://man7.org/linux/man-pages/man2/rmdir.2.html rmdir(2)] syscall can delete an empty subvolume just like an
+ordinary directory. Whether this is possible can be detected at runtime, see
+<em>rmdir_subvol</em> feature in <em>FILESYSTEM FEATURES</em>.</blockquote>
 
 </dl>
 ===DEPRECATED MOUNT OPTIONS===
@@ -557,6 +642,28 @@ but will work on 4.5+ kernels.</blockquote>
 subvolume that did not reside directly under the toplevel subvolume.</p>
 
 </dl>
+===NOTES ON GENERIC MOUNT OPTIONS===
+
+<p>Some of the general mount options from [http://man7.org/linux/man-pages/man8/mount.8.html mount(8)] that affect BTRFS and are
+worth mentioning.</p>
+<dl>
+<dt>
+<b>noatime</b>
+<dd>
+<p>
+under read intensive work-loads, specifying <em>noatime</em> significantly improves
+performance because no new access time information needs to be written. Without
+this option, the default is <em>relatime</em>, which only reduces the number of
+inode atime updates in comparison to the traditional <em>strictatime</em>. The worst
+case for atime updates under <em>relatime</em> occurs when many files are read whose
+atime is older than 24 h and which are freshly snapshotted. In that case the
+atime is updated <em>and</em> COW happens - for each file - in bulk. See also
+https://lwn.net/Articles/499293/ - <em>Atime and btrfs: a bad combination? (LWN, 2012-05-31)</em>.
+</p>
+<p>Note that <em>noatime</em> may break applications that rely on atime uptimes like
+the venerable Mutt (unless you use maildir mailboxes).</p>
+
+</dl>
 ==FILESYSTEM FEATURES==
 
 <p>The basic set of filesystem features gets extended over time. The backward
@@ -568,8 +675,8 @@ explicitly asked for so accidental use will not create incompatibilities.</p>
 at mkfs time only
 <dd>
 <p>
-This is namely for core structures, like the b-tree nodesize, see
-[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] for more details.
+This is namely for core structures, like the b-tree nodesize or checksum
+algorithm, see [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] for more details.
 </p>
 
 <dt>
@@ -644,6 +751,16 @@ supported a varying number of hardlinks depending on the sum of all file name
 sizes that can be stored into one metadata block</p>
 
 <dt>
+<b>metadata_uuid</b>
+<dd>
+<p>
+(since: 5.0)
+</p>
+<p>the main filesystem UUID is the metadata_uuid, which stores the new UUID only
+in the superblock while all metadata blocks still have the UUID set at mkfs
+time, see [[Manpage/btrfstune|btrfstune(8)]] for more</p>
+
+<dt>
 <b>mixed_backref</b>
 <dd>
 <p>
@@ -683,6 +800,15 @@ stored as an extent, saves a few percent of metadata if sparse files are used</p
 <p>the filesystem contains or contained a raid56 profile of block groups</p>
 
 <dt>
+<b>rmdir_subvol</b>
+<dd>
+<p>
+(since: 4.18)
+</p>
+<p>indicate that [http://man7.org/linux/man-pages/man2/rmdir.2.html rmdir(2)] syscall can delete an empty subvolume just like an
+ordinary directory. Note that this feature only depends on the kernel version.</p>
+
+<dt>
 <b>skinny_metadata</b>
 <dd>
 <p>
@@ -691,6 +817,236 @@ stored as an extent, saves a few percent of metadata if sparse files are used</p
 <p>reduced-size metadata for extent references, saves a few percent of metadata</p>
 
 </dl>
+===SWAPFILE SUPPORT===
+
+<p>The swapfile is supported since kernel 5.0. Use [http://man7.org/linux/man-pages/man8/swapon.8.html swapon(8)] to activate the
+swapfile. There are some limitations of the implementation in btrfs and linux
+swap subystem:</p>
+<ul>
+<li>
+<p>
+filesystem - must be only single device
+</p>
+</li>
+<li>
+<p>
+swapfile - the containing subvolume cannot be snapshotted
+</p>
+</li>
+<li>
+<p>
+swapfile - must be preallocated
+</p>
+</li>
+<li>
+<p>
+swapfile - must be nodatacow (ie. also nodatasum)
+</p>
+</li>
+<li>
+<p>
+swapfile - must not be compressed
+</p>
+</li>
+</ul>
+<p>The limitations come namely from the COW-based design and mapping layer of
+blocks that allows the advanced features like relocation and multi-device
+filesystems. However, the swap subsystem expects simpler mapping and no
+background changes of the file blocks once they&#8217;ve been attached to swap.</p>
+<p>With active swapfiles, the following whole-filesystem operations will skip
+swapfile extents or may fail:</p>
+<ul>
+<li>
+<p>
+balance - block groups with swapfile extents are skipped and reported, the rest will be processed normally
+</p>
+</li>
+<li>
+<p>
+resize grow - unaffected
+</p>
+</li>
+<li>
+<p>
+resize shrink - works as long as the extents are outside of the shrunk range
+</p>
+</li>
+<li>
+<p>
+device add - a new device does not interfere with existing swapfile and this operation will work, though no new swapfile can be activated afterwards
+</p>
+</li>
+<li>
+<p>
+device delete - if the device has been added as above, it can be also deleted
+</p>
+</li>
+<li>
+<p>
+device replace - ditto
+</p>
+</li>
+</ul>
+<p>When there are no active swapfiles and a whole-filesystem exclusive operation
+is running (ie. balance, device delete, shrink), the swapfiles cannot be
+temporarily activated. The operation must finish first.</p>
+<pre># truncate -s 0 swapfile
+# chattr +C swapfile
+# fallocate -l 2G swapfile
+# chmod 0600 swapfile
+# mkswap swapfile
+# swapon swapfile</pre>
+==CHECKSUM ALGORITHMS==
+
+<p>There are several checksum algorithms supported. The default and backward
+compatible is <em>crc32c</em>. Since kernel 5.5 there are three more with different
+characteristics and trade-offs regarding speed and strength. The following
+list may help you to decide which one to select.</p>
+<dl>
+<dt>
+<b>CRC32C</b> (32bit digest)
+<dd>
+<p>
+default, best backward compatibility, very fast, modern CPUs have
+instruction-level support, not collision-resistant but still good error
+detection capabilities
+</p>
+
+<dt>
+<b>XXHASH</b> (64bit digest)
+<dd>
+<p>
+can be used as CRC32C successor, very fast, optimized for modern CPUs utilizing
+instruction pipelining, good collision resistance and error detection
+</p>
+
+<dt>
+<b>SHA256</b> (256bit digest)
+<dd>
+<p>
+a cryptographic-strength hash, relatively slow but with possible CPU
+instruction acceleration or specialized hardware cards, FIPS certified and
+in wide use
+</p>
+
+<dt>
+<b>BLAKE2b</b> (256bit digest)
+<dd>
+<p>
+a cryptographic-strength hash, relatively fast with possible CPU acceleration
+using SIMD extensions, not standardized but based on BLAKE which was a SHA3
+finalist, in wide use, the algorithm used is BLAKE2b-256 that&#8217;s optimized for
+64bit platforms
+</p>
+
+</dl>
+<p>The <em>digest size</em> affects overall size of data block checksums stored in the
+filesystem.  The metadata blocks have a fixed area up to 256bits (32 bytes), so
+there&#8217;s no increase. Each data block has a separate checksum stored, with
+additional overhead of the b-tree leaves.</p>
+<p>Approximate relative performance of the algorithms, measured against CRC32C
+using reference software implementations on a 3.5GHz intel CPU:</p>
+<div>
+<table rules="all"
+width="50%"
+frame="border"
+cellspacing="0" cellpadding="4">
+<tbody>
+<tr>
+<td align="center" width="33%" valign="top"><p><strong>Digest</strong></p></td>
+<td align="right" width="33%" valign="top"><p><strong>Cycles/4KiB</strong></p></td>
+<td align="right" width="33%" valign="top"><p><strong>Ratio</strong></p></td>
+</tr>
+<tr>
+<td align="center" width="33%" valign="top"><p>CRC32C</p></td>
+<td align="right" width="33%" valign="top"><p>1700</p></td>
+<td align="right" width="33%" valign="top"><p>1.00</p></td>
+</tr>
+<tr>
+<td align="center" width="33%" valign="top"><p>XXHASH</p></td>
+<td align="right" width="33%" valign="top"><p>2500</p></td>
+<td align="right" width="33%" valign="top"><p>1.44</p></td>
+</tr>
+<tr>
+<td align="center" width="33%" valign="top"><p>SHA256</p></td>
+<td align="right" width="33%" valign="top"><p>105000</p></td>
+<td align="right" width="33%" valign="top"><p>61</p></td>
+</tr>
+<tr>
+<td align="center" width="33%" valign="top"><p>BLAKE2b</p></td>
+<td align="right" width="33%" valign="top"><p>22000</p></td>
+<td align="right" width="33%" valign="top"><p>13</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+==FILESYSTEM LIMITS==
+
+<dl>
+<dt>
+maximum file name length
+<dd>
+<p>
+255
+</p>
+
+<dt>
+maximum symlink target length
+<dd>
+<p>
+depends on the <em>nodesize</em> value, for 4k it&#8217;s 3949 bytes, for larger nodesize
+it&#8217;s 4095 due to the system limit PATH_MAX
+</p>
+<p>The symlink target may not be a valid path, ie. the path name components
+can exceed the limits (NAME_MAX), there&#8217;s no content validation at [http://man7.org/linux/man-pages/man3/symlink.3.html symlink(3)]
+creation.</p>
+
+<dt>
+maximum number of inodes
+<dd>
+<p>
+2<sup>64</sup> but depends on the available metadata space as the inodes are created
+dynamically
+</p>
+
+<dt>
+inode numbers
+<dd>
+<p>
+minimum number: 256 (for subvolumes), regular files and directories: 257
+</p>
+
+<dt>
+maximum file length
+<dd>
+<p>
+inherent limit of btrfs is 2<sup>64</sup> (16 EiB) but the linux VFS limit is 2<sup>63</sup> (8 EiB)
+</p>
+
+<dt>
+maximum number of subvolumes
+<dd>
+<p>
+the subvolume ids can go up to 2<sup>64</sup> but the number of actual subvolumes
+depends on the available metadata space, the space consumed by all subvolume
+metadata includes bookkeeping of shared extents can be large (MiB, GiB)
+</p>
+
+<dt>
+maximum number of hardlinks of a file in a directory
+<dd>
+<p>
+65536 when the <tt>extref</tt> feature is turned on during mkfs (default), roughly
+100 otherwise
+</p>
+
+</dl>
+==BOOTLOADER SUPPORT==
+
+<p>GRUB2 (https://www.gnu.org/software/grub) has the most advanced support of
+booting from BTRFS with respect to features.</p>
+<p>EXTLINUX (from the https://syslinux.org project) can boot but does not support
+all features. Please check the upstream documentation before you use it.</p>
 ==FILE ATTRIBUTES==
 
 <p>The btrfs filesystem supports setting the following file attributes using the
@@ -767,8 +1123,8 @@ long as this attribute is set (obviously the exception is unsetting the attribut
 <b>X</b>
 <dd>
 <p>
-<em>no compression</em>, permanently turn off compression on the given file, other
-compression mount options will not affect that
+<em>no compression</em>, permanently turn off compression on the given file. Any
+compression mount options will not affect this file.
 </p>
 <p>When set on a directory, all newly created files will inherit this attribute.</p>
 
@@ -816,5 +1172,6 @@ The mount option <em>device</em> can trigger the device scanning during mount.</
 [http://man7.org/linux/man-pages/man8/fstrim.8.html fstrim(8)],
 [http://man7.org/linux/man-pages/man2/ioctl.2.html ioctl(2)],
 [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
-[http://man7.org/linux/man-pages/man8/mount.8.html mount(8)]</p>
+[http://man7.org/linux/man-pages/man8/mount.8.html mount(8)],
+[http://man7.org/linux/man-pages/man8/swapon.8.html swapon(8)]</p>
 [[Category:Manpage]]

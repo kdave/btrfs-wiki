@@ -19,7 +19,7 @@ root tree&#8217;s objectid, generation, level.</p>
 -a
 <dd>
 <p>
-Search through all the metadata extents, even the root is already found.
+Search through all metadata extents, even the root has been already found.
 </p>
 
 <dt>

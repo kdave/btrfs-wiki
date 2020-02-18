@@ -20,20 +20,22 @@ mount option. See section <b>MULTIPLE DEVICES</b> for more details.</p>
 
 <dl>
 <dt>
-<b>-A|--alloc-start <em>&lt;offset&gt;</em></b>
-<dd>
-<p>
-(An option to help debugging chunk allocator.)
-Specify the (physical) offset from the start of the device at which allocations
-start.  The default value is zero.
-</p>
-
-<dt>
 <b>-b|--byte-count <em>&lt;size&gt;</em></b>
 <dd>
 <p>
-Specify the size of the filesystem. If this option is not used,
+Specify the size of the filesystem. If this option is not used, then
 mkfs.btrfs uses the entire device space for the filesystem.
+</p>
+
+<dt>
+<b>--csum <em>&lt;type&gt;</em></b>
+<dt>
+<b>--checksum <em>&lt;type&gt;</em></b>
+<dd>
+<p>
+Specify the checksum algorithm. Default is <em>crc32c</em>. Valid values are <em>crc32c</em>,
+<em>xxhash</em>, <em>sha256</em> or <em>blake2</em>. To mount such filesystem kernel must support the
+checksums as well. See <em>CHECKSUM ALGORITHMS</em> in [[Manpage/btrfs|btrfs(5)]].
 </p>
 
 <dt>
@@ -41,9 +43,9 @@ mkfs.btrfs uses the entire device space for the filesystem.
 <dd>
 <p>
 Specify the profile for the data block groups.  Valid values are <em>raid0</em>,
-<em>raid1</em>, <em>raid5</em>, <em>raid6</em>, <em>raid10</em> or <em>single</em> or dup (case does not matter).
+<em>raid1</em>, <em>raid5</em>, <em>raid6</em>, <em>raid10</em> or <em>single</em> or <em>dup</em> (case does not matter).
 </p>
-<p>See <em>DUP PROFILES ON A SINGLE DEVICE</em> for more.</p>
+<p>See <em>DUP PROFILES ON A SINGLE DEVICE</em> for more details.</p>
 
 <dt>
 <b>-m|--metadata <em>&lt;profile&gt;</em></b>
@@ -51,10 +53,10 @@ Specify the profile for the data block groups.  Valid values are <em>raid0</em>,
 <p>
 Specify the profile for the metadata block groups.
 Valid values are <em>raid0</em>, <em>raid1</em>, <em>raid5</em>, <em>raid6</em>, <em>raid10</em>, <em>single</em> or
-<em>dup</em>, (case does not matter).
+<em>dup</em> (case does not matter).
 </p>
-<p>A single device filesystem will default to <em>DUP</em>, unless a SSD is detected. Then
-it will default to <em>single</em>. The detection is based on the value of
+<p>A single device filesystem will default to <em>DUP</em>, unless an SSD is detected, in which
+case it will default to <em>single</em>. The detection is based on the value of
 <tt>/sys/block/DEV/queue/rotational</tt>, where <em>DEV</em> is the short name of the device.</p>
 <p>Note that the rotational status can be arbitrarily set by the underlying block
 device driver and may not reflect the true status (network block device, memory-backed
@@ -98,7 +100,7 @@ default value is 16KiB (16384) or the page size, whichever is bigger. Must be a
 multiple of the sectorsize and a power of 2, but not larger than 64KiB (65536).
 Leafsize always equals nodesize and the options are aliases.
 </p>
-<p>Smaller node size increases fragmentation but lead to higher b-trees which in
+<p>Smaller node size increases fragmentation but leads to taller b-trees which in
 turn leads to lower locking contention. Higher node sizes give better packing
 and less fragmentation at the cost of more expensive memory operations while
 updating the metadata blocks.</p>
@@ -138,18 +140,25 @@ Please see the mount option <em>discard</em> for that in [[Manpage/btrfs|btrfs(5
 <dd>
 <p>
 Populate the toplevel subvolume with files from <em>rootdir</em>.  This does not
-require root permissions and does not mount the filesystem.
+require root permissions to write the new files or to mount the filesystem.
 </p>
-<p>With this option, only one device can be specified.</p>
 <blockquote><b>Note:</b>
-User should make sure the block device/file has large enough space to
-contain the source directory and has enough previllege to read source directory.
-Or mkfs will just fail.</blockquote>
-<blockquote><b>Warning:</b>
-Before v4.14 btrfs-progs, <b>--rootdir</b> will shrink the filesystem,
-prevent user to make use of the remaining space.
-In v4.14 btrfs-progs, this behavior is changed, and will not shrink the fs.
-The result should be the same as <tt>mkfs</tt>, <tt>mount</tt> and then <tt>cp -r</tt>.</blockquote>
+This option may enlarge the image or file to ensure it&#8217;s big enough to
+contain the files from <em>rootdir</em>. Since version 4.14.1 the filesystem size is
+not minimized. Please see option <em>--shrink</em> if you need that functionality.</blockquote>
+
+<dt>
+<b>--shrink</b>
+<dd>
+<p>
+Shrink the filesystem to its minimal size, only works with <em>--rootdir</em> option.
+</p>
+<p>If the destination is a regular file, this option will also truncate the
+file to the minimal size. Otherwise it will reduce the filesystem available
+space.  Extra space will not be usable unless the filesystem is mounted and
+resized using <em>btrfs filesystem resize</em>.</p>
+<blockquote><b>Note:</b>
+prior to version 4.14.1, the shrinking was done automatically.</blockquote>
 
 <dt>
 <b>-O|--features <em>&lt;feature1&gt;</em>[,<em>&lt;feature2&gt;</em>&#8230;]</b>
@@ -201,6 +210,16 @@ Print the <b>mkfs.btrfs</b> version and exit.
 Print help.
 </p>
 
+<dt>
+<b>-A|--alloc-start <em>&lt;offset&gt;</em></b>
+<dd>
+<p>
+<b>deprecated, will be removed</b>
+(An option to help debugging chunk allocator.)
+Specify the (physical) offset from the start of the device at which allocations
+start.  The default value is zero.
+</p>
+
 </dl>
 ==SIZE UNITS==
 
@@ -226,7 +245,7 @@ mount will fail anyway. This can happen on systems without initramfs/initrd and
 root partition created with RAID1/10/5/6 profiles. The mount action can happen
 before all block devices are discovered. The waiting is usually done on the
 initramfs/initrd systems.</blockquote>
-<p>As of kernel 4.9, RAID5/6 is still considered experimental and shouldn&#8217;t be
+<p>As of kernel 4.14, RAID5/6 is still considered experimental and shouldn&#8217;t be
 employed for production use.</p>
 ==FILESYSTEM FEATURES==
 
@@ -349,88 +368,332 @@ frame="border"
 cellspacing="0" cellpadding="4">
 <tbody>
 <tr>
-<td rowspan="2" align="center" width="20%" valign="top"><p><strong>Profile</strong></p></td>
-<td colspan="3" align="center" width="20%" valign="middle"><p><strong>Redundancy</strong></p></td>
-<td rowspan="2" align="center" width="20%" valign="top"><p><strong>Min/max devices</strong></p></td>
+<td rowspan="2" align="center" width="16%" valign="top"><p><strong>Profile</strong></p></td>
+<td colspan="3" align="center" width="16%" valign="middle"><p><strong>Redundancy</strong></p></td>
+<td rowspan="2" align="center" width="16%" valign="top"><p><strong>Space utilization</strong></p></td>
+<td rowspan="2" align="center" width="16%" valign="top"><p><strong>Min/max devices</strong></p></td>
 </tr>
 <tr>
-<td align="center" width="20%" valign="middle"><p><strong>Copies</strong></p></td>
-<td align="center" width="20%" valign="middle"><p><strong>Parity</strong></p></td>
-<td align="center" width="20%" valign="top"><p><strong>Striping</strong></p></td>
+<td align="center" width="16%" valign="middle"><p><strong>Copies</strong></p></td>
+<td align="center" width="16%" valign="middle"><p><strong>Parity</strong></p></td>
+<td align="center" width="16%" valign="top"><p><strong>Striping</strong></p></td>
 </tr>
 <tr>
-<td align="center" width="20%" valign="top"><p>single</p></td>
-<td align="center" width="20%" valign="top"><p>1</p></td>
-<td align="center" width="20%" valign="top"><p></p></td>
-<td align="center" width="20%" valign="top"><p></p></td>
-<td align="center" width="20%" valign="top"><p>1/any</p></td>
+<td align="left" width="16%" valign="top"><p>single</p></td>
+<td align="center" width="16%" valign="top"><p>1</p></td>
+<td align="center" width="16%" valign="top"><p></p></td>
+<td align="center" width="16%" valign="top"><p></p></td>
+<td align="right" width="16%" valign="top"><p>100%</p></td>
+<td align="center" width="16%" valign="top"><p>1/any</p></td>
 </tr>
 <tr>
-<td align="center" width="20%" valign="top"><p>DUP</p></td>
-<td align="center" width="20%" valign="top"><p>2 / 1 device</p></td>
-<td align="center" width="20%" valign="top"><p></p></td>
-<td align="center" width="20%" valign="top"><p></p></td>
-<td align="center" width="20%" valign="top"><p>1/any <sup>(see note 1)</sup></p></td>
+<td align="left" width="16%" valign="top"><p>DUP</p></td>
+<td align="center" width="16%" valign="top"><p>2 / 1 device</p></td>
+<td align="center" width="16%" valign="top"><p></p></td>
+<td align="center" width="16%" valign="top"><p></p></td>
+<td align="right" width="16%" valign="top"><p>50%</p></td>
+<td align="center" width="16%" valign="top"><p>1/any <sup>(see note 1)</sup></p></td>
 </tr>
 <tr>
-<td align="center" width="20%" valign="top"><p>RAID0</p></td>
-<td align="center" width="20%" valign="top"><p></p></td>
-<td align="center" width="20%" valign="top"><p></p></td>
-<td align="center" width="20%" valign="top"><p>1 to N</p></td>
-<td align="center" width="20%" valign="top"><p>2/any</p></td>
+<td align="left" width="16%" valign="top"><p>RAID0</p></td>
+<td align="center" width="16%" valign="top"><p></p></td>
+<td align="center" width="16%" valign="top"><p></p></td>
+<td align="center" width="16%" valign="top"><p>1 to N</p></td>
+<td align="right" width="16%" valign="top"><p>100%</p></td>
+<td align="center" width="16%" valign="top"><p>2/any</p></td>
 </tr>
 <tr>
-<td align="center" width="20%" valign="top"><p>RAID1</p></td>
-<td align="center" width="20%" valign="top"><p>2</p></td>
-<td align="center" width="20%" valign="top"><p></p></td>
-<td align="center" width="20%" valign="top"><p></p></td>
-<td align="center" width="20%" valign="top"><p>2/any</p></td>
+<td align="left" width="16%" valign="top"><p>RAID1</p></td>
+<td align="center" width="16%" valign="top"><p>2</p></td>
+<td align="center" width="16%" valign="top"><p></p></td>
+<td align="center" width="16%" valign="top"><p></p></td>
+<td align="right" width="16%" valign="top"><p>50%</p></td>
+<td align="center" width="16%" valign="top"><p>2/any</p></td>
 </tr>
 <tr>
-<td align="center" width="20%" valign="top"><p>RAID10</p></td>
-<td align="center" width="20%" valign="top"><p>2</p></td>
-<td align="center" width="20%" valign="top"><p></p></td>
-<td align="center" width="20%" valign="top"><p>1 to N</p></td>
-<td align="center" width="20%" valign="top"><p>4/any</p></td>
+<td align="left" width="16%" valign="top"><p>RAID1C3</p></td>
+<td align="center" width="16%" valign="top"><p>3</p></td>
+<td align="center" width="16%" valign="top"><p></p></td>
+<td align="center" width="16%" valign="top"><p></p></td>
+<td align="right" width="16%" valign="top"><p>33%</p></td>
+<td align="center" width="16%" valign="top"><p>3/any</p></td>
 </tr>
 <tr>
-<td align="center" width="20%" valign="top"><p>RAID5</p></td>
-<td align="center" width="20%" valign="top"><p>1</p></td>
-<td align="center" width="20%" valign="top"><p>1</p></td>
-<td align="center" width="20%" valign="top"><p>2 to N - 1</p></td>
-<td align="center" width="20%" valign="top"><p>2/any <sup>(see note 2)</sup></p></td>
+<td align="left" width="16%" valign="top"><p>RAID1C4</p></td>
+<td align="center" width="16%" valign="top"><p>4</p></td>
+<td align="center" width="16%" valign="top"><p></p></td>
+<td align="center" width="16%" valign="top"><p></p></td>
+<td align="right" width="16%" valign="top"><p>25%</p></td>
+<td align="center" width="16%" valign="top"><p>4/any</p></td>
 </tr>
 <tr>
-<td align="center" width="20%" valign="top"><p>RAID6</p></td>
-<td align="center" width="20%" valign="top"><p>1</p></td>
-<td align="center" width="20%" valign="top"><p>2</p></td>
-<td align="center" width="20%" valign="top"><p>3 to N - 2</p></td>
-<td align="center" width="20%" valign="top"><p>3/any <sup>(see note 3)</sup></p></td>
+<td align="left" width="16%" valign="top"><p>RAID10</p></td>
+<td align="center" width="16%" valign="top"><p>2</p></td>
+<td align="center" width="16%" valign="top"><p></p></td>
+<td align="center" width="16%" valign="top"><p>1 to N</p></td>
+<td align="right" width="16%" valign="top"><p>50%</p></td>
+<td align="center" width="16%" valign="top"><p>4/any</p></td>
+</tr>
+<tr>
+<td align="left" width="16%" valign="top"><p>RAID5</p></td>
+<td align="center" width="16%" valign="top"><p>1</p></td>
+<td align="center" width="16%" valign="top"><p>1</p></td>
+<td align="center" width="16%" valign="top"><p>2 to N-1</p></td>
+<td align="right" width="16%" valign="top"><p>(N-1)/N</p></td>
+<td align="center" width="16%" valign="top"><p>2/any <sup>(see note 2)</sup></p></td>
+</tr>
+<tr>
+<td align="left" width="16%" valign="top"><p>RAID6</p></td>
+<td align="center" width="16%" valign="top"><p>1</p></td>
+<td align="center" width="16%" valign="top"><p>2</p></td>
+<td align="center" width="16%" valign="top"><p>3 to N-2</p></td>
+<td align="right" width="16%" valign="top"><p>(N-2)/N</p></td>
+<td align="center" width="16%" valign="top"><p>3/any <sup>(see note 3)</sup></p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <blockquote><b>Warning:</b>
-It&#8217;s not recommended to build btrfs with RAID0/1/10/5/6 profiles on
-partitions from the same device.  Neither redundancy nor performance will be
-improved.</blockquote>
+It&#8217;s not recommended to create filesystems with RAID0/1/10/5/6
+profiles on partitions from the same device.  Neither redundancy nor
+performance will be improved.</blockquote>
 <p><em>Note 1:</em> DUP may exist on more than 1 device if it starts on a single device and
 another one is added. Since version 4.5.1, <b>mkfs.btrfs</b> will let you create DUP
-on multiple devices.</p>
+on multiple devices without restrictions.</p>
 <p><em>Note 2:</em> It&#8217;s not recommended to use 2 devices with RAID5. In that case,
 parity stripe will contain the same data as the data stripe, making RAID5
 degraded to RAID1 with more overhead.</p>
 <p><em>Note 3:</em> It&#8217;s also not recommended to use 3 devices with RAID6, unless you
-want to get effectively 3 copies in a RAID1-like manner (but not exactly that).
-N-copies RAID1 is not implemented.</p>
+want to get effectively 3 copies in a RAID1-like manner (but not exactly that).</p>
+<p><em>Note 4:</em> Since kernel 5.5 it&#8217;s possible to use RAID1C3 as replacement for
+RAID6, higher space cost but reliable.</p>
+===PROFILE LAYOUT===
+
+<p>For the following examples, assume devices numbered by 1, 2, 3 and 4, data or
+metadata blocks A, B, C, D, with possible stripes eg. A1, A2 that would be
+logically A, etc. For parity profiles PA and QA are parity and syndrom,
+associated with the given stripe.  The simple layouts single or DUP are left
+out.  Actual physical block placement on devices depends on current state of
+the free/allocated space and may appear random. All devices are assumed to be
+present at the time of the blocks would have been written.</p>
+<p>RAID1</p>
+<div>
+<table rules="all"
+width="50%"
+frame="border"
+cellspacing="0" cellpadding="4">
+<thead>
+<tr>
+<th align="center" width="25%" valign="top"> device 1 </th>
+<th align="center" width="25%" valign="top"> device 2 </th>
+<th align="center" width="25%" valign="top"> device 3 </th>
+<th align="center" width="25%" valign="top"> device 4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center" width="25%" valign="top"><p>A</p></td>
+<td align="center" width="25%" valign="top"><p>D</p></td>
+<td align="center" width="25%" valign="top"><p></p></td>
+<td align="center" width="25%" valign="top"><p></p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>B</p></td>
+<td align="center" width="25%" valign="top"><p></p></td>
+<td align="center" width="25%" valign="top"><p></p></td>
+<td align="center" width="25%" valign="top"><p>C</p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>C</p></td>
+<td align="center" width="25%" valign="top"><p></p></td>
+<td align="center" width="25%" valign="top"><p></p></td>
+<td align="center" width="25%" valign="top"><p></p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>D</p></td>
+<td align="center" width="25%" valign="top"><p>A</p></td>
+<td align="center" width="25%" valign="top"><p>B</p></td>
+<td align="center" width="25%" valign="top"><p></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>RAID1C3</p>
+<div>
+<table rules="all"
+width="50%"
+frame="border"
+cellspacing="0" cellpadding="4">
+<thead>
+<tr>
+<th align="center" width="25%" valign="top"> device 1 </th>
+<th align="center" width="25%" valign="top"> device 2 </th>
+<th align="center" width="25%" valign="top"> device 3 </th>
+<th align="center" width="25%" valign="top"> device 4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center" width="25%" valign="top"><p>A</p></td>
+<td align="center" width="25%" valign="top"><p>A</p></td>
+<td align="center" width="25%" valign="top"><p>D</p></td>
+<td align="center" width="25%" valign="top"><p></p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>B</p></td>
+<td align="center" width="25%" valign="top"><p></p></td>
+<td align="center" width="25%" valign="top"><p>B</p></td>
+<td align="center" width="25%" valign="top"><p></p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>C</p></td>
+<td align="center" width="25%" valign="top"><p></p></td>
+<td align="center" width="25%" valign="top"><p>A</p></td>
+<td align="center" width="25%" valign="top"><p>C</p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>D</p></td>
+<td align="center" width="25%" valign="top"><p>D</p></td>
+<td align="center" width="25%" valign="top"><p>C</p></td>
+<td align="center" width="25%" valign="top"><p>B</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>RAID0</p>
+<div>
+<table rules="all"
+width="50%"
+frame="border"
+cellspacing="0" cellpadding="4">
+<thead>
+<tr>
+<th align="center" width="25%" valign="top"> device 1 </th>
+<th align="center" width="25%" valign="top"> device 2 </th>
+<th align="center" width="25%" valign="top"> device 3 </th>
+<th align="center" width="25%" valign="top"> device 4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center" width="25%" valign="top"><p>A2</p></td>
+<td align="center" width="25%" valign="top"><p>C3</p></td>
+<td align="center" width="25%" valign="top"><p>A3</p></td>
+<td align="center" width="25%" valign="top"><p>C2</p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>B1</p></td>
+<td align="center" width="25%" valign="top"><p>A1</p></td>
+<td align="center" width="25%" valign="top"><p>D2</p></td>
+<td align="center" width="25%" valign="top"><p>B3</p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>C1</p></td>
+<td align="center" width="25%" valign="top"><p>D3</p></td>
+<td align="center" width="25%" valign="top"><p>B4</p></td>
+<td align="center" width="25%" valign="top"><p>D1</p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>D4</p></td>
+<td align="center" width="25%" valign="top"><p>B2</p></td>
+<td align="center" width="25%" valign="top"><p>C4</p></td>
+<td align="center" width="25%" valign="top"><p>A4</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>RAID5</p>
+<div>
+<table rules="all"
+width="50%"
+frame="border"
+cellspacing="0" cellpadding="4">
+<thead>
+<tr>
+<th align="center" width="25%" valign="top"> device 1 </th>
+<th align="center" width="25%" valign="top"> device 2 </th>
+<th align="center" width="25%" valign="top"> device 3 </th>
+<th align="center" width="25%" valign="top"> device 4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center" width="25%" valign="top"><p>A2</p></td>
+<td align="center" width="25%" valign="top"><p>C3</p></td>
+<td align="center" width="25%" valign="top"><p>A3</p></td>
+<td align="center" width="25%" valign="top"><p>C2</p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>B1</p></td>
+<td align="center" width="25%" valign="top"><p>A1</p></td>
+<td align="center" width="25%" valign="top"><p>D2</p></td>
+<td align="center" width="25%" valign="top"><p>B3</p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>C1</p></td>
+<td align="center" width="25%" valign="top"><p>D3</p></td>
+<td align="center" width="25%" valign="top"><p>PB</p></td>
+<td align="center" width="25%" valign="top"><p>D1</p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>PD</p></td>
+<td align="center" width="25%" valign="top"><p>B2</p></td>
+<td align="center" width="25%" valign="top"><p>PC</p></td>
+<td align="center" width="25%" valign="top"><p>PA</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>RAID6</p>
+<div>
+<table rules="all"
+width="50%"
+frame="border"
+cellspacing="0" cellpadding="4">
+<thead>
+<tr>
+<th align="center" width="25%" valign="top"> device 1 </th>
+<th align="center" width="25%" valign="top"> device 2 </th>
+<th align="center" width="25%" valign="top"> device 3 </th>
+<th align="center" width="25%" valign="top"> device 4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center" width="25%" valign="top"><p>A2</p></td>
+<td align="center" width="25%" valign="top"><p>QC</p></td>
+<td align="center" width="25%" valign="top"><p>QA</p></td>
+<td align="center" width="25%" valign="top"><p>C2</p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>B1</p></td>
+<td align="center" width="25%" valign="top"><p>A1</p></td>
+<td align="center" width="25%" valign="top"><p>D2</p></td>
+<td align="center" width="25%" valign="top"><p>QB</p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>C1</p></td>
+<td align="center" width="25%" valign="top"><p>QD</p></td>
+<td align="center" width="25%" valign="top"><p>PB</p></td>
+<td align="center" width="25%" valign="top"><p>D1</p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>PD</p></td>
+<td align="center" width="25%" valign="top"><p>B2</p></td>
+<td align="center" width="25%" valign="top"><p>PC</p></td>
+<td align="center" width="25%" valign="top"><p>PA</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 ==DUP PROFILES ON A SINGLE DEVICE==
 
 <p>The mkfs utility will let the user create a filesystem with profiles that write
 the logical blocks to 2 physical locations. Whether there are really 2
 physical copies highly depends on the underlying device type.</p>
-<p>For example, a SSD drive can remap the blocks internally to a single copy thus
+<p>For example, a SSD drive can remap the blocks internally to a single copy&#8212;thus
 deduplicating them. This negates the purpose of increased redundancy and just
-wastes filesystem space without the expected level of redundancy.</p>
+wastes filesystem space without providing the expected level of redundancy.</p>
 <p>The duplicated data/metadata may still be useful to statistically improve the
 chances on a device that might perform some internal optimizations. The actual
 details are not usually disclosed by vendors. For example we could expect that

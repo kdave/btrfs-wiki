@@ -15,12 +15,16 @@ and metadata blocks from all devices and verify checksums. Automatically repair
 corrupted blocks if there&#8217;s a correct copy available.</p>
 <blockquote><b>Note:</b>
 Scrub is not a filesystem checker (fsck) and does not verify nor repair
-structural damage in the filesystem.</blockquote>
+structural damage in the filesystem. It really only checks checksums of data
+and tree blocks, it doesn&#8217;t ensure the content of tree blocks is valid and
+consistent. There&#8217;s some validation performed when metadata blocks are read
+from disk but it&#8217;s not extensive and cannot substitute full <em>btrfs check</em> run.</blockquote>
 <p>The user is supposed to run it manually or via a periodic system service. The
 recommended period is a month but could be less. The estimated device bandwidth
 utilization is about 80% on an idle filesystem. The IO priority class is by
-default <em>idle</em> so background scrub should not interfere with normal filesystem
-operation significantly.</p>
+default <em>idle</em> so background scrub should not significantly interfere with
+normal filesystem operation. The IO scheduler set for the device(s) might not
+support the priority classes though.</p>
 <p>The scrubbing status is recorded in <em>/var/lib/btrfs/</em> in textual files named
 <em>scrub.status.UUID</em> for a filesystem identified by the given UUID. (Progress
 state is communicated through a named pipe in file <em>scrub.progress.UUID</em> in the
@@ -33,19 +37,23 @@ will continue from the last saved position.</p>
 <b>cancel</b> <em>&lt;path&gt;</em>|<em>&lt;device&gt;</em>
 <dd>
 <p>
-If a scrub is running on the filesystem identified by <em>path</em> cancel it.
+If a scrub is running on the filesystem identified by <em>path</em> or <em>device</em>,
+cancel it.
 </p>
 <p>If a <em>device</em> is specified, the corresponding filesystem is found and
-<b>btrfs scrub cancel</b> behaves as if it was called on that filesystem.</p>
+<b>btrfs scrub cancel</b> behaves as if it was called on that filesystem.
+The progress is saved in the status file so <b>btrfs scrub resume</b> can continue
+from the last position.</p>
 
 <dt>
 <b>resume</b> [-BdqrR] [-c <em>&lt;ioprio_class&gt;</em> -n <em>&lt;ioprio_classdata&gt;</em>] <em>&lt;path&gt;</em>|<em>&lt;device&gt;</em>
 <dd>
 <p>
 Resume a cancelled or interrupted scrub on the filesystem identified by
-<em>path</em> or on a given <em>device</em>.
+<em>path</em> or on a given <em>device</em>. The starting point is read from the status file
+if it exists.
 </p>
-<p>Does not start a new scrub if the last scrub finished successfully.</p>
+<p>This does not start a new scrub if the last scrub finished successfully.</p>
 <p><tt>Options</tt></p>
 <p>see <b>scrub start</b>.</p>
 
@@ -54,11 +62,14 @@ Resume a cancelled or interrupted scrub on the filesystem identified by
 <dd>
 <p>
 Start a scrub on all devices of the filesystem identified by <em>path</em> or on
-a single <em>device</em>. If a scrub is already running, the new one fails.
+a single <em>device</em>. If a scrub is already running, the new one will not start.
 </p>
-<p>Without options, scrub is started as a background process.</p>
+<p>Without options, scrub is started as a background process. The automatic
+repairs of damaged copies is performed by default for block group profiles with
+redundancy.</p>
 <p>The default IO priority of scrub is the idle class. The priority can be
-configured similar to the [http://man7.org/linux/man-pages/man1/ionice.1.html ionice(1)] syntax using <em>-c</em> and <em>-n</em> options.</p>
+configured similar to the [http://man7.org/linux/man-pages/man1/ionice.1.html ionice(1)] syntax using <em>-c</em> and <em>-n</em> options.
+Note that not all IO schedulers honor the ionice settings.</p>
 <p><tt>Options</tt></p>
 <dl>
 <dt>
@@ -94,7 +105,7 @@ filesystem
 -R
 <dd>
 <p>
-print raw statistics per-device instead of a summary
+raw print mode, print full data instead of summary
 </p>
 
 <dt>

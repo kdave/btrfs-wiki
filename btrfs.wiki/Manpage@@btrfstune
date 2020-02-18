@@ -10,47 +10,48 @@ btrfstune - tune various filesystem parameters
 <p><b>btrfstune</b> [options] <em>&lt;device&gt;</em> [<em>&lt;device&gt;</em>&#8230;]</p>
 ==DESCRIPTION==
 
-<p><b>btrfstune</b> can be used to enable, disable or set various filesystem
+<p><b>btrfstune</b> can be used to enable, disable, or set various filesystem
 parameters. The filesystem must be unmounted.</p>
 <p>The common usecase is to enable features that were not enabled at mkfs time.
 Please make sure that you have kernel support for the features.  You can find a
 complete list of features and kernel version of their introduction at
 https://btrfs.wiki.kernel.org/index.php/Changelog#By_feature .  Also, the
 manual page [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] contains more details about the features.</p>
-<p>Some of the features could be enabled on a mounted filesystem. Please refer to
-the respective section in [[Manpage/btrfs|btrfs(5)]].</p>
+<p>Some of the features could be also enabled on a mounted filesystem by other
+means.  Please refer to the <em>FILESYSTEM FEATURES</em> in [[Manpage/btrfs|btrfs(5)]].</p>
 ==OPTIONS==
 
 <dl>
 <dt>
--S <em>&lt;0|1&gt;</em>
+-f
 <dd>
 <p>
-Enable seeding on a given device. Value 1 will enable seeding, 0 will disable it.<br/>
-A seeding filesystem is forced to be mounted read-only. A new device can be added
-to the filesystem and will capture all writes keeping the seeding device intact.
+Allow dangerous changes, e.g. clear the seeding flag or change fsid. Make sure
+that you are aware of the dangers.
 </p>
 
 <dt>
--r
+-m
 <dd>
 <p>
-(since kernel: 3.7)
+(since kernel: 5.0)
 </p>
-<p>Enable extended inode refs (hardlink limit per file in a directory is 65536),
-enabled by mkfs feature <em>extref</em>.</p>
+<p>change fsid stored as <em>metadata_uuid</em> to a randomly generated UUID,
+see also <em>-U</em></p>
 
 <dt>
--x
+-M <em>&lt;UUID&gt;</em>
 <dd>
 <p>
-(since kernel: 3.10)
+(since kernel: 5.0)
 </p>
-<p>Enable skinny metadata extent refs (more efficient representation of extents),
-enabled by mkfs feature <em>skinny-metadata</em>.</p>
-<p>All newly created extents will use the new representation. To completely switch
-the entire filesystem, run a full balance of the metadata. Please refer to
-[[Manpage/btrfs-balance|btrfs-balance(8)]].</p>
+<p>change fsid stored as <em>metadata_uuid</em> to a given UUID, see also <em>-U</em></p>
+<p>The metadata_uuid is stored only in the superblock and is a backward
+incompatible change. The fsid in metadata blocks remains unchanged and
+is not overwritten, thus the whole operation is significantly faster than
+<em>-U</em>.</p>
+<p>The new metadata_uuid can be used for mount by UUID and is also used to
+identify devices of a multi-device filesystem.</p>
 
 <dt>
 -n
@@ -62,12 +63,30 @@ the entire filesystem, run a full balance of the metadata. Please refer to
 by mkfs feature <em>no-holes</em>.</p>
 
 <dt>
--f
+-r
 <dd>
 <p>
-Allow dangerous changes, e.g. clear the seeding flag or change fsid. Make sure
-that you are aware of the dangers.
+(since kernel: 3.7)
 </p>
+<p>Enable extended inode refs (hardlink limit per file in a directory is 65536),
+enabled by mkfs feature <em>extref</em>.</p>
+
+<dt>
+-S <em>&lt;0|1&gt;</em>
+<dd>
+<p>
+Enable seeding on a given device. Value 1 will enable seeding, 0 will disable it.<br/>
+A seeding filesystem is forced to be mounted read-only. A new device can be added
+to the filesystem and will capture all writes keeping the seeding device intact.
+</p>
+<blockquote><b>Warning:</b>
+Clearing the seeding flag on a device may be dangerous.
+If a previously-seeding device is changed, all filesystems that used that
+device will become unmountable. Setting the seeding flag back will not fix
+that.<br/>
+A valid usecase is <em>seeding device as a base image</em>. Clear the seeding
+flag, update the filesystem and make it seeding again, provided that it&#8217;s OK
+to throw away all filesystems built on top of the previous base.</blockquote>
 
 <dt>
 -u
@@ -81,34 +100,40 @@ operation in case it was interrupted.
 -U <em>&lt;UUID&gt;</em>
 <dd>
 <p>
-Change fsid to <em>UUID</em>.
+Change fsid to <em>UUID</em> in all metadata blocks.
 </p>
 <p>The <em>UUID</em> should be a 36 bytes string in [http://man7.org/linux/man-pages/man3/printf.3.html printf(3)] format
 <em>"%08x-%04x-%04x-%04x-%012x"</em>.
 If there is a previous unfinished fsid change, it will continue only if the
 <em>UUID</em> matches the unfinished one or if you use the option <em>-u</em>.</p>
-
-</dl>
+<p>All metadata blocks are rewritten, this may take some time, but the final
+filesystem compatibility is unaffected, unlike <em>-M</em>.</p>
 <blockquote><b>Warning:</b>
 Cancelling or interrupting a UUID change operation will make the
-filesystem temporarily unmountable.  To fix it, rerun <em>btrfstune -u</em> to restore
-the UUID and let it complete.</blockquote>
-<blockquote><b>Warning:</b>
-Clearing the seeding flag on a device may be dangerous.
-If a previously-seeding device is changed, all filesystems that used that
-device will become unmountable. Setting the seeding flag back will not fix
-that.<br/>
-A valid usecase is <em>seeding device as a base image</em>. Clear the seeding
-flag, update the filesystem and make it seeding again, provided that it&#8217;s OK
-to throw away all filesystems built on top of the previous base.</blockquote>
+filesystem temporarily unmountable.  To fix it, rerun <em>btrfstune -u</em> and let
+it complete.</blockquote>
+
+<dt>
+-x
+<dd>
+<p>
+(since kernel: 3.10)
+</p>
+<p>Enable skinny metadata extent refs (more efficient representation of extents),
+enabled by mkfs feature <em>skinny-metadata</em>.</p>
+<p>All newly created extents will use the new representation. To completely switch
+the entire filesystem, run a full balance of the metadata. Please refer to
+[[Manpage/btrfs-balance|btrfs-balance(8)]].</p>
+
+</dl>
 ==EXIT STATUS==
 
 <p><b>btrfstune</b> returns 0 if no error happened, 1 otherwise.</p>
 ==COMPATIBILITY NOTE==
 
-<p>This tool exists for historical reasons but is still in use today.  The
-functionality is about to be merged to the main tool someday and <b>btrfstune</b>
-will become deprecated and removed afterwards.</p>
+<p>This deprecated tool exists for historical reasons but is still in use today.
+Its functionality will be merged to the main tool, at which time <b>btrfstune</b>
+will be declared obsolete and scheduled for removal.</p>
 ==SEE ALSO==
 
 <p>[[Manpage/btrfs|btrfs(5)]],

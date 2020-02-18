@@ -20,9 +20,9 @@ main utility. See section <em>STANDALONE TOOLS</em> for more details.</p>
 page [[Manpage/btrfs|btrfs(5)]].</p>
 ==COMMAND SYNTAX==
 
-<p>Any command name can be shortened as far as it stays unambiguous,
-however it is recommended to use full command names in scripts.
-All command groups have their manual page named <b>btrfs-<em>&lt;group&gt;</em></b>.</p>
+<p>Any command name can be shortened so long as the shortened form is unambiguous,
+however, it is recommended to use full command names in scripts.  All command
+groups have their manual page named <b>btrfs-<em>&lt;group&gt;</em></b>.</p>
 <p>For example: it is possible to run <b>btrfs sub snaps</b> instead of
 <b>btrfs subvolume snapshot</b>.
 But <b>btrfs file s</b> is not allowed, because <b>file s</b> may be interpreted
@@ -158,10 +158,10 @@ or <em>btrfs [command&#8230;] --help --full</em> to print all available options.
 </dl>
 ==STANDALONE TOOLS==
 
-<p>There are several standalone tools to provide certain functionality. If the
-functionality proves to be useful, the standalone tools are declared obsolete
-and their functionality copied to the main tool. The deprecation period is long
-(years) and the obsolete binaries are still provided.</p>
+<p>New functionality could be provided using a standalone tool. If the functionality
+proves to be useful, then the standalone tool is declared obsolete and its
+functionality is copied to the main tool. Obsolete tools are removed after a
+long (years) depreciation period.</p>
 <p>Tools that are still in active use without an equivalent in <b>btrfs</b>:</p>
 <dl>
 <dt>
@@ -199,24 +199,30 @@ rescue helper to find tree roots in a filesystem
 <b>btrfs-debug-tree</b>
 <dd>
 <p>
-moved to <b>btrfs inspect-internal dump-tree</b>
+moved to <b>btrfs inspect-internal dump-tree</b>. Removed from
+source distribution.
 </p>
 
 <dt>
 <b>btrfs-show-super</b>
 <dd>
 <p>
-moved to <b>btrfs inspect-internal dump-super</b>
+moved to <b>btrfs inspect-internal dump-super</b>, standalone
+removed.
 </p>
 
 <dt>
 <b>btrfs-zero-log</b>
 <dd>
 <p>
-moved to <b>btrfs rescue zero-log</b>
+moved to <b>btrfs rescue zero-log</b>, standalone removed.
 </p>
 
 </dl>
+<p>For space-constrained environments, it&#8217;s possible to build a single binary with
+functionality of several standalone tools. This is following the concept of
+busybox where the file name selects the functionality. This works for symlinks
+or hardlinks. The full list can be obtained by <b>btrfs help --box</b>.</p>
 ==EXIT STATUS==
 
 <p><b>btrfs</b> returns a zero exit status if it succeeds. Non zero is returned in
@@ -228,7 +234,8 @@ Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
 further details.</p>
 ==SEE ALSO==
 
-<p>[[Manpage/btrfs-balance|btrfs-balance(8)]],
+<p>[[Manpage/btrfs|btrfs(5)]],
+[[Manpage/btrfs-balance|btrfs-balance(8)]],
 [[Manpage/btrfs-check|btrfs-check(8)]],
 [[Manpage/btrfs-convert|btrfs-convert(8)]],
 [[Manpage/btrfs-device|btrfs-device(8)]],

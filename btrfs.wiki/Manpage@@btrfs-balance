@@ -19,8 +19,8 @@ filesystem.</p>
 <p>The balance operation is cancellable by the user. The on-disk state of the
 filesystem is always consistent so an unexpected interruption (eg. system crash,
 reboot) does not corrupt the filesystem. The progress of the balance operation
-is temporarily stored and will be resumed upon mount, unless the mount option
-<em>skip_balance</em> is specified.</p>
+is temporarily stored as an internal state and will be resumed upon mount,
+unless the mount option <em>skip_balance</em> is specified.</p>
 <blockquote><b>Warning:</b>
 running balance without filters will take a lot of time as it basically
 rewrites the entire filesystem and needs to update all block pointers.</blockquote>
@@ -53,24 +53,28 @@ See the section <em>ENOSPC</em> for more details.</blockquote>
 <blockquote><b>Note:</b>
 The balance subcommand also exists under the <b>btrfs filesystem</b>
 namespace. This still works for backward compatibility but is deprecated and
-should not be used anymore.</blockquote>
+should not be used any more.</blockquote>
 <blockquote><b>Note:</b>
 A short syntax <b>btrfs balance <em>&lt;path&gt;</em></b> works due to backward compatibility
 but is deprecated and should not be used any more. Use <b>btrfs balance start</b>
 command instead.</blockquote>
-
 ==PERFORMANCE IMPLICATIONS==
 
-<p>Balancing operations are very IO intensive and can also be quite CPU intensive, impacting other ongoing filesystem operations. Typically large amounts of data are copied from one location to another, with corresponding metadata updates.</p>
-<p>Depending upon the block group layout, it can also be seek heavy. Performance on rotational devices is noticeably worse compared to SSDs or fast arrays.</p>
-
+<p>Balancing operations are very IO intensive and can also be quite CPU intensive,
+impacting other ongoing filesystem operations. Typically large amounts of data
+are copied from one location to another, with corresponding metadata updates.</p>
+<p>Depending upon the block group layout, it can also be seek heavy. Performance
+on rotational devices is noticeably worse compared to SSDs or fast arrays.</p>
 ==SUBCOMMAND==
 
 <dl>
 <dt>
 <b>cancel</b> <em>&lt;path&gt;</em>
 <dd>
-<p>cancels a running or paused balance. The command will block until the the current blockgroup being processed completes.</p>
+<p>
+cancels a running or paused balance, the command will block and wait until the
+current blockgroup being processed completes
+</p>
 
 <dt>
 <b>pause</b> <em>&lt;path&gt;</em>
@@ -139,7 +143,7 @@ be verbose and print balance filter arguments
 -f
 <dd>
 <p>
-force reducing of metadata integrity, eg. when going from <em>raid1</em> to <em>single</em>
+force a reduction of metadata integrity, eg. when going from <em>raid1</em> to <em>single</em>
 </p>
 
 <dt>
@@ -161,7 +165,6 @@ Show status of running or paused balance.
 <p>If <em>-v</em> option is given, output will be verbose.</p>
 
 </dl>
-
 ==FILTERS==
 
 <p>From kernel 3.3 onwards, btrfs balance can limit its action to a subset of the
@@ -284,10 +287,11 @@ section <em>PROFILES</em>.</p>
 ==ENOSPC==
 
 <p>The way balance operates, it usually needs to temporarily create a new block
-group and move the old data there. For that it needs work space, otherwise
-it fails for ENOSPC reasons.
+group and move the old data there, before the old block group can be removed.
+For that it needs the work space, otherwise it fails for ENOSPC reasons.
 This is not the same ENOSPC as if the free space is exhausted. This refers to
-the space on the level of block groups.</p>
+the space on the level of block groups, which are bigger parts of the filesystem
+that contain many file extents.</p>
 <p>The free work space can be calculated from the output of the <b>btrfs filesystem show</b>
 command:</p>
 <pre>   Label: 'BTRFS'  uuid: 8a9d72cd-ead3-469d-b371-9c7203276265
@@ -302,14 +306,14 @@ space. After that it might be possible to run other filters.</p>
 <p><b>CONVERSIONS ON MULTIPLE DEVICES</b></p>
 <p>Conversion to profiles based on striping (RAID0, RAID5/6) require the work
 space on each device. An interrupted balance may leave partially filled block
-groups that might consume the work space.</p>
+groups that consume the work space.</p>
 ==EXAMPLES==
 
 <p>A more comprehensive example when going from one to multiple devices, and back,
 can be found in section <em>TYPICAL USECASES</em> of [[Manpage/btrfs-device|btrfs-device(8)]].</p>
 ===MAKING BLOCK GROUP LAYOUT MORE COMPACT===
 
-<p>The layout of block groups is not normally visible, most tools report only
+<p>The layout of block groups is not normally visible; most tools report only
 summarized numbers of free or used space, but there are still some hints
 provided.</p>
 <p>Let&#8217;s use the following real life example and start with the output:</p>
@@ -362,7 +366,7 @@ GlobalReserve, single: total=512.00MiB, used=0.00B</pre>
 data to the remaining blockgroups, ie. the 6GiB are now free of filesystem
 structures, and can be reused for new data or metadata block groups.</p>
 <p>We can do a similar exercise with the metadata block groups, but this should
-not be typically necessary, unless the used/total ration is really off. Here
+not typically be necessary, unless the used/total ratio is really off. Here
 the ratio is roughly 50% but the difference as an absolute number is "a few
 gigabytes", which can be considered normal for a workload with snapshots or
 reflinks updated frequently.</p>
@@ -402,8 +406,14 @@ can be used to reclaim unused block groups to make it available.</p>
 <p>This should lead to decrease in the <em>total</em> numbers in the <b>btrfs filesystem df</b> output.</p>
 ==EXIT STATUS==
 
-<p><b>btrfs balance</b> returns a zero exit status if it succeeds. Non zero is
-returned in case of failure.</p>
+<p>Unless indicated otherwise below, all <b>btrfs balance</b> subcommands
+return a zero exit status if they succeed, and non zero in case of
+failure.</p>
+<p>The <b>pause</b>, <b>cancel</b>, and <b>resume</b> subcommands exit with a status of
+<b>2</b> if they fail because a balance operation was not running.</p>
+<p>The <b>status</b> subcommand exits with a status of <b>0</b> if a balance
+operation is not running, <b>1</b> if the command-line usage is incorrect
+or a balance operation is still running, and <b>2</b> on other errors.</p>
 ==AVAILABILITY==
 
 <p><b>btrfs</b> is part of btrfs-progs.

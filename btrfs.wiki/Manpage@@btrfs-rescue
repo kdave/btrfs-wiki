@@ -51,6 +51,21 @@ Since <b>chunk-recover</b> will scan the whole device, it will be <b>VERY</b> sl
 especially executed on a large device.</blockquote>
 <dl>
 <dt>
+<b>fix-device-size</b> <em>&lt;device&gt;</em>
+<dd>
+<p>
+fix device size and super block total bytes values that are do not match
+</p>
+<p>Kernel 4.11 starts to check the device size more strictly and this might
+mismatch the stored value of total bytes. See the exact error message below.
+Newer kernel will refuse to mount the filesystem where the values do not match.
+This error is not fatal and can be fixed.  This command will fix the device
+size values if possible.</p>
+<pre>BTRFS error (device sdb): super_total_bytes 92017859088384 mismatch with fs_devices total_rw_bytes 92017859094528</pre>
+<p>The mismatch may also exhibit as a kernel warning:</p>
+<pre>WARNING: CPU: 3 PID: 439 at fs/btrfs/ctree.h:1559 btrfs_update_device+0x1c5/0x1d0 [btrfs]</pre>
+
+<dt>
 <b>super-recover</b> [options] <em>&lt;device&gt;</em>
 <dd>
 <p>
@@ -83,8 +98,8 @@ clear the filesystem log tree
 <p>This command will clear the filesystem log tree. This may fix a specific
 set of problem when the filesystem mount fails due to the log replay. See below
 for sample stacktraces that may show up in system log.</p>
-<p>The common case where this happens has been fixed a long time ago,
-so it is unlikely that you will see this particular problem, but the utility is
+<p>The common case where this happens was fixed a long time ago,
+so it is unlikely that you will see this particular problem, but the command is
 kept around.</p>
 <blockquote><b>Note:</b>
 clearing the log may lead to loss of changes that were made since the

@@ -14,7 +14,7 @@ btrfs-subvolume - manage btrfs subvolumes
 snapshots.</p>
 ==SUBVOLUME AND SNAPSHOT==
 
-<p>A subvolume is a part of filesystem with its own and independent
+<p>A subvolume is a part of filesystem with its own independent
 file/directory hierarchy. Subvolumes can share file extents. A snapshot is
 also subvolume, but with a given initial content of the original subvolume.</p>
 <blockquote><b>Note:</b>
@@ -77,7 +77,7 @@ Delete the subvolume(s) from the filesystem.
 <p>If <em>&lt;subvolume&gt;</em> is not a subvolume, btrfs returns an error but continues if
 there are more arguments to process.</p>
 <p>The corresponding directory is removed instantly but the data blocks are
-removed later in the background. The command returns immediatelly. See <tt>btrfs
+removed later in the background. The command returns immediately. See <tt>btrfs
 subvolume sync</tt> how to wait until the subvolume gets completely removed.</p>
 <p>The deletion does not involve full transaction commit by default due to
 performance reasons.  As a consequence, the subvolume may appear again after a
@@ -89,14 +89,21 @@ safely stored on the device.</p>
 -c|--commit-after
 <dd>
 <p>
-wait for transaction commit at the end of the operation
+wait for transaction commit at the end of the operation.
 </p>
 
 <dt>
 -C|--commit-each
 <dd>
 <p>
-wait for transaction commit after deleting each subvolume
+wait for transaction commit after deleting each subvolume.
+</p>
+
+<dt>
+-v|--verbose
+<dd>
+<p>
+verbose output of operations.
 </p>
 
 </dl>
@@ -105,7 +112,7 @@ wait for transaction commit after deleting each subvolume
 <b>find-new</b> <em>&lt;subvolume&gt;</em> <em>&lt;last_gen&gt;</em>
 <dd>
 <p>
-List the recently modified files in a subvolume, after <em>&lt;last_gen&gt;</em> ID.
+List the recently modified files in a subvolume, after <em>&lt;last_gen&gt;</em> generation.
 </p>
 
 <dt>
@@ -122,21 +129,24 @@ Get the default subvolume of the filesystem <em>&lt;path&gt;</em>.
 <p>
 List the subvolumes present in the filesystem <em>&lt;path&gt;</em>.
 </p>
-<p>For every subvolume the following information is shown by default.<br/>
-ID <em>&lt;ID&gt;</em> top level <em>&lt;ID&gt;</em> path <em>&lt;path&gt;</em><br/>
-where path is the relative path of the subvolume to the top level subvolume.
+<p>For every subvolume the following information is shown by default:</p>
+<p>ID <em>&lt;ID&gt;</em> gen <em>&lt;generation&gt;</em> top level <em>&lt;ID&gt;</em> path <em>&lt;path&gt;</em></p>
+<p>where ID is subvolume&#8217;s id, gen is an internal counter which is updated
+every transaction, top level is the same as parent subvolume&#8217;s id, and
+path is the relative path of the subvolume to the top level subvolume.
 The subvolume&#8217;s ID may be used by the subvolume set-default command,
-or at mount time via the subvolid= option.
-If <tt>-p</tt> is given, then parent <em>&lt;ID&gt;</em> is added to the output between ID
-and top level. The parent&#8217;s ID may be used at mount time via the
-<tt>subvolrootid=</tt> option.</p>
+or at mount time via the subvolid= option.</p>
 <p><tt>Options</tt></p>
 <dl>
 <dt>
--p
+Path filtering
+<dd>
+<dl>
+<dt>
+-o
 <dd>
 <p>
-print parent ID.
+print only subvolumes below specified <em>&lt;path&gt;</em>.
 </p>
 
 <dt>
@@ -145,6 +155,20 @@ print parent ID.
 <p>
 print all the subvolumes in the filesystem and distinguish between
 absolute and relative path with respect to the given <em>&lt;path&gt;</em>.
+</p>
+
+</dl>
+
+<dt>
+Field selection
+<dd>
+<dl>
+<dt>
+-p
+<dd>
+<p>
+print the parent ID
+(<em>parent</em> here means the subvolume which contains this subvolume).
 </p>
 
 <dt>
@@ -158,14 +182,7 @@ print the ogeneration of the subvolume, aliases: ogen or origin generation.
 -g
 <dd>
 <p>
-print the generation of the subvolume.
-</p>
-
-<dt>
--o
-<dd>
-<p>
-print only subvolumes below specified <em>&lt;path&gt;</em>.
+print the generation of the subvolume (default).
 </p>
 
 <dt>
@@ -179,23 +196,23 @@ print the UUID of the subvolume.
 -q
 <dd>
 <p>
-print the parent uuid of subvolumes (and snapshots).
+print the parent UUID of the subvolume
+(<em>parent</em> here means subvolume of which this subvolume is a snapshot).
 </p>
 
 <dt>
 -R
 <dd>
 <p>
-print the UUID of the sent subvolume, where the subvolume is the result of a receive operation
+print the UUID of the sent subvolume, where the subvolume is the result of a receive operation.
 </p>
+
+</dl>
 
 <dt>
--t
+Type filtering
 <dd>
-<p>
-print the result as a table.
-</p>
-
+<dl>
 <dt>
 -s
 <dd>
@@ -210,6 +227,35 @@ only snapshot subvolumes in the filesystem will be listed.
 only readonly subvolumes in the filesystem will be listed.
 </p>
 
+<dt>
+-d
+<dd>
+<p>
+list deleted subvolumes that are not yet cleaned.
+</p>
+
+</dl>
+
+<dt>
+Other
+<dd>
+<dl>
+<dt>
+-t
+<dd>
+<p>
+print the result as a table.
+</p>
+
+</dl>
+
+<dt>
+Sorting
+<dd>
+<p>
+By default the subvolumes will be sorted by subvolume ID ascending.
+</p>
+<dl>
 <dt>
 -G [+|-]<em>&lt;value&gt;</em>
 <dd>
@@ -240,42 +286,95 @@ you can add '+' or '-' in front of each items, '+' means ascending,
 
 </dl>
 
-<dt>
-<b>set-default</b> <em>&lt;id&gt;</em> <em>&lt;path&gt;</em>
-<dd>
-<p>
-Set the subvolume of the filesystem <em>&lt;path&gt;</em> which is mounted as
-default.
-</p>
-<p>The subvolume is identified by <em>&lt;id&gt;</em>, which is returned by the <b>subvolume list</b>
-command.</p>
+</dl>
 
 <dt>
-<b>show</b> <em>&lt;path&gt;</em>
+<b>set-default</b> [<em>&lt;subvolume&gt;</em>|<em>&lt;id&gt;</em> <em>&lt;path&gt;</em>]
 <dd>
 <p>
-Show information of a given subvolume in the <em>&lt;path&gt;</em>.
+Set the default subvolume for the (mounted) filesystem.
+</p>
+<p>Set the default subvolume for the (mounted) filesystem at <em>&lt;path&gt;</em>. This will hide
+the top-level subvolume (i.e. the one mounted with <em>subvol=/</em> or <em>subvolid=5</em>).
+Takes action on next mount.</p>
+<p>There are two ways how to specify the subvolume, by <em>&lt;id&gt;</em> or by the <em>&lt;subvolume&gt;</em>
+path.
+The id can be obtained from <b>btrfs subvolume list</b>, <b>btrfs subvolume show</b> or
+<b>btrfs inspect-internal rootid</b>.</p>
+
+<dt>
+<b>show</b> [options] <em>&lt;path&gt;</em>
+<dd>
+<p>
+Show more information about subvolume <em>&lt;path&gt;</em> regarding UUIDs, times,
+generations, flags and related snapshots.
+</p>
+<pre>/mnt/btrfs/subvolume
+        Name:                   subvolume
+        UUID:                   5e076a14-4e42-254d-ac8e-55bebea982d1
+        Parent UUID:            -
+        Received UUID:          -
+        Creation time:          2018-01-01 12:34:56 +0000
+        Subvolume ID:           79
+        Generation:             2844
+        Gen at creation:        2844
+        Parent ID:              5
+        Top level ID:           5
+        Flags:                  -
+        Snapshot(s):</pre>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-r|--rootid
+<dd>
+<p>
+rootid of the subvolume.
 </p>
 
 <dt>
-<b>snapshot</b> [-r] <em>&lt;source&gt;</em> <em>&lt;dest&gt;</em>|[&lt;dest&gt;/]<em>&lt;name&gt;</em>
+-u|--uuid
 <dd>
 <p>
-Create a writable/readonly snapshot of the subvolume <em>&lt;source&gt;</em> with the
+UUID of the subvolume.
+</p>
+
+</dl>
+
+<dt>
+<b>snapshot</b> [-r|-i <em>&lt;qgroupid&gt;</em>] <em>&lt;source&gt;</em> <em>&lt;dest&gt;</em>|[&lt;dest&gt;/]<em>&lt;name&gt;</em>
+<dd>
+<p>
+Create a snapshot of the subvolume <em>&lt;source&gt;</em> with the
 name <em>&lt;name&gt;</em> in the <em>&lt;dest&gt;</em> directory.
 </p>
 <p>If only <em>&lt;dest&gt;</em> is given, the subvolume will be named the basename of <em>&lt;source&gt;</em>.
-If <em>&lt;source&gt;</em> is not a subvolume, btrfs returns an error.
-If <em>-r</em> is given, the snapshot will be readonly.</p>
+If <em>&lt;source&gt;</em> is not a subvolume, btrfs returns an error.</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-r
+<dd>
+<p>
+Make the new snapshot read only.
+</p>
+
+<dt>
+-i <em>&lt;qgroupid&gt;</em>
+<dd>
+<p>
+Add the newly created subvolume to a qgroup. This option can be given multiple
+times.
+</p>
+
+</dl>
 
 <dt>
 <b>sync</b> <em>&lt;path&gt;</em> [subvolid&#8230;]
 <dd>
 <p>
-Wait until given subvolume(s) are completely removed from the filesystem
-after deletion. If no subvolume id is given, wait until all current  deletion
-requests are completed, but do not wait for subvolumes deleted meanwhile.
-The status of subvolume ids is checked periodically.
+Wait until given subvolume(s) are completely removed from the filesystem after
+deletion. If no subvolume id is given, wait until all current deletion requests
+are completed, but do not wait for subvolumes deleted in the meantime.
 </p>
 <p><tt>Options</tt></p>
 <dl>

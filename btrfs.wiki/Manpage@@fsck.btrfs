@@ -12,14 +12,13 @@ fsck.btrfs - do nothing, successfully
 
 <p><b>fsck.btrfs</b> is a type of utility that should exist for any filesystem and is
 called during system setup when the corresponding <tt>/etc/fstab</tt> entries
-contain non-zero value for <tt>fs_passno</tt> , see [http://man7.org/linux/man-pages/man5/fstab.5.html fstab(5)] for more.</p>
+contain non-zero value for <tt>fs_passno</tt>, see [http://man7.org/linux/man-pages/man5/fstab.5.html fstab(5)] for more.</p>
 <p>Traditional filesystems need to run their respective fsck utility in case the
 filesystem was not unmounted cleanly and the log needs to be replayed before
 mount. This is not needed for BTRFS. You should set fs_passno to 0.</p>
 <p>If you wish to check the consistency of a BTRFS filesystem or repair a damaged
-filesystem, see [[Manpage/btrfs-check|btrfs-check(8)]]. By default the filesystem
-consistency is checked, the repair mode is enabled via <em>--repair</em> option (use
-with care!).</p>
+filesystem, see [[Manpage/btrfs-check|btrfs-check(8)]]. By default filesystem consistency is checked,
+the repair mode is enabled via the <em>--repair</em> option (use with care!).</p>
 ==OPTIONS==
 
 <p>The options are all the same and detect if <b>fsck.btrfs</b> is executed in

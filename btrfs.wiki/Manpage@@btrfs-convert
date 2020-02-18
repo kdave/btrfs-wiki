@@ -22,7 +22,7 @@ ext2, ext3, ext4&#8201;&#8212;&#8201;original feature, always built in
 </li>
 <li>
 <p>
-reiserfs&#8201;&#8212;&#8201;since version 4.13, opptinally built, requires libreiserfscore 3.6.27
+reiserfs&#8201;&#8212;&#8201;since version 4.13, optionally built, requires libreiserfscore 3.6.27
 </p>
 </li>
 </ul>
@@ -35,12 +35,13 @@ will change the extent layout and make <b>btrfs-convert</b> unable to rollback.<
 <p>The conversion utilizes free space of the original filesystem. The exact
 estimate of the required space cannot be foretold. The final btrfs metadata
 might occupy several gigabytes on a hundreds-gigabyte filesystem.</p>
-<p>If you decide not to rollback anymore, it is recommended to perform a few more
-steps to transform the btrfs filesystem to a more compact layout. The
-conversion inherits the original data block fragmentation and the metadata
-blocks are bound to the original free space layout.</p>
-<p>Due to different constraints, it&#8217;s possible to convert only filesystem that
-have supported data block size (ie. the same that would be valid for
+<p>If the ability to rollback is no longer important, the it is recommended to
+perform a few more steps to transition the btrfs filesystem to a more compact
+layout. This is because the conversion inherits the original data blocks'
+fragmentation, and also because the metadata blocks are bound to the original
+free space layout.</p>
+<p>Due to different constraints, it is only possible to convert filesystems that
+have a supported data block size (ie. the same that would be valid for
 <em>mkfs.btrfs</em>). This is typically the system page size (4KiB on x86_64
 machines).</p>
 <blockquote><b>Note:</b>
@@ -50,8 +51,8 @@ The source filesystem should be clean, you are encouraged to run the
 <p>By removing the subvolume named like <em>ext2_saved</em> or <em>reiserfs_saved</em>, all
 metadata of the original filesystem will be removed:</p>
 <pre># btrfs subvolume delete /mnt/ext2_saved</pre>
-<p>At this point it&#8217;s not possible to do rollback. The filesystem is usable but may
-be impacted by the fragmentation inherited from the original filesystem.</p>
+<p>At this point it is not possible to do a rollback. The filesystem is usable but
+may be impacted by the fragmentation inherited from the original filesystem.</p>
 <p><b>MAKE FILE DATA MORE CONTIGUOUS</b></p>
 <p>An optional but recommended step is to run defragmentation on the entire
 filesystem. This will attempt to make file extents more contiguous.</p>
@@ -71,6 +72,17 @@ but the block group layout may remain unchanged.</p>
 ==OPTIONS==
 
 <dl>
+<dt>
+--csum <em>&lt;type&gt;</em>
+<dt>
+--checksum <em>&lt;type&gt;</em>
+<dd>
+<p>
+Specify the checksum algorithm. Default is <em>crc32c</em>. Valid values are <em>crc32c</em>,
+<em>xxhash</em>, <em>sha256</em> or <em>blake2</em>. To mount such filesystem kernel must support the
+checksums as well.
+</p>
+
 <dt>
 -d|--no-datasum
 <dd>
@@ -129,7 +141,7 @@ use label from the converted filesystem
 -O|--features <em>&lt;feature1&gt;</em>[,<em>&lt;feature2&gt;</em>&#8230;]
 <dd>
 <p>
-A list of filesystem features turned on at conversion time. Not all features
+A list of filesystem features enabled the at time of conversion. Not all features
 are supported by old kernels. To disable a feature, prefix it with <em>^</em>.
 Description of the features is in section <em>FILESYSTEM FEATURES</em> of
 [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]].

@@ -88,7 +88,7 @@ must be present on the device with a valid signature, can be used together with
 </dl>
 
 <dt>
-<b>dump-tree</b> [options] <em>&lt;device&gt;</em>
+<b>dump-tree</b> [options] <em>&lt;device&gt;</em> [device&#8230;]
 <dd>
 <p>
 (replaces the standalone tool <b>btrfs-debug-tree</b>)
@@ -142,16 +142,34 @@ print only the uuid tree information, empty output if the tree does not exist
 -b <em>&lt;block_num&gt;</em>
 <dd>
 <p>
-print info of the specified block only
+print info of the specified block only, can be specified multiple times
 </p>
 
 <dt>
--t <em>&lt;tree_id&gt;</em>
+--follow
 <dd>
 <p>
-print only the tree with the specified ID, where the ID can be numerical or
-common name in a flexible human readable form
+use with <em>-b</em>, print all children tree blocks of <em><em>&lt;block_num&gt;</em></em>
 </p>
+
+<dt>
+--dfs
+<dd>
+<p>
+(default up to 5.2)
+</p>
+<p>use depth-first search to print trees, the nodes and leaves are
+intermixed in the output
+--bfs::::
+(default since 5.3)</p>
+<p>use breadth-first search to print trees, the nodes are printed before all
+leaves
+--noscan::::
+do not automatically scan the system for other devices from the same
+filesystem, only use the devices provided as the arguments
+-t <em>&lt;tree_id&gt;</em>::::
+print only the tree with the specified ID, where the ID can be numerical or
+common name in a flexible human readable form</p>
 <p>The tree id name recognition rules:</p>
 <ul>
 <li>
@@ -203,7 +221,7 @@ verbose mode, print count of returned paths and ioctl() return value
 </dl>
 
 <dt>
-<b>logical-resolve</b> [-Pv] [-s <em>&lt;bufsize&gt;</em>] <em>&lt;logical&gt;</em> <em>&lt;path&gt;</em>
+<b>logical-resolve</b> [-Pvo] [-s <em>&lt;bufsize&gt;</em>] <em>&lt;logical&gt;</em> <em>&lt;path&gt;</em>
 <dd>
 <p>
 (needs root privileges)
@@ -226,10 +244,22 @@ verbose mode, print count of returned paths and all ioctl() return values
 </p>
 
 <dt>
+-o
+<dd>
+<p>
+ignore offsets, find all references to an extent instead of a single block.
+Requires kernel support for the V2 ioctl (added in 4.15). The results might need
+further processing to filter out unwanted extents by the offset that is supposed
+to be obtained by other means.
+</p>
+
+<dt>
 -s <em>&lt;bufsize&gt;</em>
 <dd>
 <p>
-set internal buffer for storing the file names to <em>bufsize</em>, default is 4096, maximum 64k
+set internal buffer for storing the file names to <em>bufsize</em>, default is 64k,
+maximum 16m.  Buffer sizes over 64K require kernel support for the V2 ioctl
+(added in 4.15).
 </p>
 
 </dl>
@@ -257,12 +287,12 @@ specify the device <em>id</em> to query, default is 1 if this option is not used
 <b>rootid</b> <em>&lt;path&gt;</em>
 <dd>
 <p>
-for a given file or directory, return the containing tree root id, for a
-subvolume itself return it&#8217;s own tree id (ie. subvol id)
+for a given file or directory, return the containing tree root id, but for a
+subvolume itself return its own tree id (ie. subvol id)
 </p>
 <blockquote><b>Note:</b>
 The result is undefined for the so-called empty subvolumes (identified by
-inode number 2), but such subvolume does not contain any files anyway</blockquote>
+inode number 2), but such a subvolume does not contain any files anyway</blockquote>
 
 <dt>
 <b>subvolid-resolve</b> <em>&lt;subvolid&gt;</em> <em>&lt;path&gt;</em>
@@ -270,7 +300,7 @@ inode number 2), but such subvolume does not contain any files anyway</blockquot
 <p>
 (needs root privileges)
 </p>
-<p>resolve the absolute path of a the subvolume id <em>subvolid</em></p>
+<p>resolve the absolute path of the subvolume id <em>subvolid</em></p>
 
 <dt>
 <b>tree-stats</b> [options] <em>&lt;device&gt;</em>

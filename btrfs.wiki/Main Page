@@ -63,13 +63,32 @@ As part of the changelog you can also review
 
 == News and Changelog ==
 
+''' linux v5.5.2 (Feb 2020) '''
+* fix for <tt>df</tt> (statfs) reporting 0 after heavy metadata operation like balance
+
+''' linux v5.5 (Jan 2020) '''
+
+* new block group profiles: RAID1 with 3- and 4- copies                                                                                                                                                            
+** RAID1 in btrfs has always 2 copies, now add support for 3 and 4                                                                                                                                                 
+** this is an incompat feature (named RAID1C34)                                                                                                                                                                    
+** recommended use of RAID1C3 is replacement of RAID6 profile on metadata, this brings a more reliable resiliency against 2 device loss/damage                                                                     
+* support for new checksums                                                                                                                                                                                        
+** per-filesystem, set at mkfs time                                                                                                                                                                                
+** fast hash (crc32c successor): xxhash, 64bit digest                                                                                                                                                              
+** strong hashes (both 256bit): sha256 (slower, FIPS), blake2b (faster)                                                                                                                                            
+* speed up lseek, don't take inode locks unnecessarily, this can speed up parallel SEEK_CUR/SEEK_SET/SEEK_END by 80%                                                                                               
+* send:                                                                                                                                                                                                            
+** allow clone operations within the same file                                                                                                                                                                     
+** limit maximum number of sent clone references to avoid slow backref walking                                                                                                                                     
+* error message improvements: device scan prints process name and PID                                                                                                                                              
+* new tree-checker sanity tests (INODE_ITEM, DIR_ITEM, DIR_INDEX, INODE_REF, XATTR)
+* more in the [https://git.kernel.org/linus/97d0bf96a0d0986f466c3ff59f2ace801e33dc69 pull request]
+
 ''' btrfs-progs v5.4.1 (Jan 2020) '''
 * build: fix docbook5 build                                                                                                                                                                                 
 * check: do extra verification of extent items, inode items and chunks                                                                                                                                      
 * qgroup: return ENOTCONN if quotas not running (needs updated kernel)                                                                                                                                      
 * other: various test fixups 
-
-''' linux v5.3 (Sep 2019) '''
 
 Read about past releases in the [[Changelog]]
 * [[Changelog#By_feature|features by kernel version]]
@@ -204,5 +223,6 @@ Links to old or obsolete documentation, articles. Kept for historical reasons. S
 * '''Article:''' [http://lwn.net/Articles/342892/ Valerie Aurora: A short history of btrfs] (2009-07-22)
 
 === Benchmarks ===
+* '''2019-12''' [https://www.phoronix.com/scan.php?page=article&item=linux54-hdd-raid&num=1 Linux 5.4 EXT4 / XFS / Btrfs RAID Performance On Four HDDs]
 * '''2012-10''' [http://www.ilsistemista.net/index.php/linux-a-unix/36-btrfs-mount-options-and-virtual-machines-an-in-depth-look.html BTRFS, mount options and virtual machines: an in-depth look] (Ilsistemista.net)
 * '''2010-10''' [http://www.linux-mag.com/id/7876 One Billion Files] Btrfs performs well in comparison to other filesystems, when there are a billion files in the filesystem.

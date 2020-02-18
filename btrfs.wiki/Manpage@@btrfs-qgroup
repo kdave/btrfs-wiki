@@ -16,7 +16,7 @@ To use qgroup you need to enable quota first using <b>btrfs quota enable</b>
 command.</blockquote>
 <blockquote><b>Warning:</b>
 Qgroup is not stable yet and will impact performance in current mainline
-kernel (v3.14 so far).</blockquote>
+kernel (v4.14).</blockquote>
 ==QGROUP==
 
 <p>Quota groups or qgroup in btrfs make a tree hierarchy, the leaf qgroups are
@@ -48,15 +48,18 @@ identified by <em>&lt;path&gt;</em>.
 --rescan
 <dd>
 <p>
-Automatically schedule quota rescan if the new qgroup assignment leads to
-quota inconsistency.
+(default since: 4.19) Automatically schedule quota rescan if the new qgroup
+assignment would lead to quota inconsistency. See <em>QUOTA RESCAN</em> for more
+information.
 </p>
 
 <dt>
 --no-rescan
 <dd>
 <p>
-Explicitly ask not to do a rescan.
+Explicitly ask not to do a rescan, even if the assignment will make the quotas
+inconsistent. This may be useful for repeated calls where the rescan would add
+unnecessary overhead.
 </p>
 
 </dl>
@@ -68,7 +71,7 @@ Explicitly ask not to do a rescan.
 Create a subvolume quota group.
 </p>
 <p>For the <em>0/<em>&lt;subvolume id&gt;</em></em> qgroup, a qgroup can be created even before the
-subvolume created.</p>
+subvolume is created.</p>
 
 <dt>
 <b>destroy</b> <em>&lt;qgroupid&gt;</em> <em>&lt;path&gt;</em>
@@ -76,8 +79,8 @@ subvolume created.</p>
 <p>
 Destroy a qgroup.
 </p>
-<p>If a qgroup is no isolated,which means it is a parent or child qgroup, it
-can&#8217;t be destroyed.</p>
+<p>If a qgroup is not isolated, meaning it is a parent or child qgroup, then it
+can only be destroyed after the relationship is removed.</p>
 
 <dt>
 <b>limit</b> [options] <em>&lt;size&gt;</em>|none [<em>&lt;qgroupid&gt;</em>] <em>&lt;path&gt;</em>
@@ -114,6 +117,8 @@ limit space exclusively assigned to this qgroup.
 Remove the relationship between child qgroup <em>&lt;src&gt;</em> and parent qgroup <em>&lt;dst&gt;</em> in
 the btrfs filesystem identified by <em>&lt;path&gt;</em>.
 </p>
+<p><tt>Options</tt></p>
+<p>The same as <b>assign</b> subcommand.</p>
 
 <dt>
 <b>show</b> [options] <em>&lt;path&gt;</em>
@@ -243,6 +248,18 @@ force sync of the filesystem identified by <em>&lt;path&gt;</em> before getting 
 </dl>
 
 </dl>
+==QUOTA RESCAN==
+
+<p>The rescan reads all extent sharing metadata and updates the respective qgoups
+accordingly.</p>
+<p>The information consists of bytes owned exclusively (<em>excl</em>) or shared/referred
+to (<em>rfer</em>). There&#8217;s no explicit information about which extents are shared or
+owned exclusively.  This means when qgroup relationship changes, extent owners
+change and qgroup numbers are no longer consistent unless we do a full rescan.</p>
+<p>However there are cases where we can avoid a full rescan, if a subvolume whose
+<em>rfer</em> number equals its <em>excl</em> number, which means all bytes are exclusively
+owned, then assigning/removing this subvolume only needs to add/subtract <em>rfer</em>
+number from its parent qgroup. This can speed up the rescan.</p>
 ==EXIT STATUS==
 
 <p><b>btrfs qgroup</b> returns a zero exit status if it succeeds. Non zero is

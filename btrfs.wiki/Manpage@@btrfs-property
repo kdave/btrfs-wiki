@@ -3,15 +3,16 @@
 |name=btrfs-property}}
 
 ==NAME==
-btrfs-property - get/set/list properties for given btrfs object.
+btrfs-property - get/set/list properties for given filesystem object
 
 ==SYNOPSIS==
 
 <p><b>btrfs property</b> <em>&lt;subcommand&gt;</em> <em>&lt;args&gt;</em></p>
 ==DESCRIPTION==
 
-<p><b>btrfs property</b> is used to get/set/list property for given btrfs object.
-See the description of <b>get</b> subcommand for more information about
+<p><b>btrfs property</b> is used to get/set/list property for given filesystem object.
+The object can be an inode (file or directory), subvolume or the whole
+filesystem.  See the description of <b>get</b> subcommand for more information about
 both btrfs object and property.</p>
 <p><b>btrfs property</b> provides an unified and user-friendly method to tune different
 btrfs properties instead of using the traditional method like [http://man7.org/linux/man-pages/man1/chattr.1.html chattr(1)] or
@@ -23,18 +24,19 @@ btrfs properties instead of using the traditional method like [http://man7.org/l
 <b>get</b> [-t <em>&lt;type&gt;</em>] <em>&lt;object&gt;</em> [<em>&lt;name&gt;</em>]
 <dd>
 <p>
-Gets a property from a btrfs object.
+get property from a btrfs <em>&lt;object&gt;</em> of given <em>&lt;type&gt;</em>
 </p>
 <p>A btrfs object, which is set by <em>&lt;object&gt;</em>, can be a btrfs filesystem
-itself, a btrfs subvolume, an inode(file or directory) inside btrfs,
+itself, a btrfs subvolume, an inode (file or directory) inside btrfs,
 or a device on which a btrfs exists.</p>
 <p>The option <em>-t</em> can be used to explicitly
 specify what type of object you meant. This is only needed when a
 property could be set for more then one object type.</p>
-<p>Possible types are <em>s[ubvol]</em>, <em>f[ilesystem]</em>, <em>i[node]</em> and <em>d[evice]</em>.</p>
+<p>Possible types are <em>s[ubvol]</em>, <em>f[ilesystem]</em>, <em>i[node]</em> and <em>d[evice]</em>, where
+the first lettes is a shortcut.</p>
 <p>Set the name of property by <em>name</em>. If no <em>name</em> is specified,
 all properties for the given object are printed. <em>name</em> is one of
-the followings.</p>
+the following:</p>
 <dl>
 <dt>
 ro
@@ -47,14 +49,16 @@ read-only flag of subvolume: true or false
 label
 <dd>
 <p>
-label of device
+label of the filesystem. For an unmounted filesystem, provide a path to a block
+device as object. For a mounted filesystem, specify a mount point.
 </p>
 
 <dt>
 compression
 <dd>
 <p>
-compression setting for an inode: lzo, zlib, zstd, or "" (empty string)
+compression algorithm set for an inode, possible values: <em>lzo</em>, <em>zlib</em>, <em>zstd</em>.
+To disable compression use "" (empty string), <em>no</em> or <em>none</em>.
 </p>
 
 </dl>

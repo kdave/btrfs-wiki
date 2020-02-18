@@ -40,7 +40,7 @@ from the system, you have to use the devid parameter format.
 The <em>&lt;targetdev&gt;</em> needs to be same size or larger than the <em>&lt;srcdev&gt;</em>.</p>
 <blockquote><b>Note:</b>
 the filesystem has to be resized to fully take advantage of a
-larger target device, this can be achieved with
+larger target device; this can be achieved with
 <tt>btrfs filesystem resize &lt;devid&gt;:max /path</tt></blockquote>
 <p><tt>Options</tt></p>
 <dl>
@@ -58,10 +58,10 @@ slow)
 <dd>
 <p>
 force using and overwriting <em>&lt;targetdev&gt;</em> even if it looks like
-containing a valid btrfs filesystem.
+it contains a valid btrfs filesystem.
 </p>
 <p>A valid filesystem is assumed if a btrfs superblock is found which contains a
-correct checksum. Devices which are currently mounted are
+correct checksum. Devices that are currently mounted are
 never allowed to be used as the <em>&lt;targetdev&gt;</em>.</p>
 
 <dt>
@@ -92,6 +92,35 @@ operation finishes (or is cancelled)
 </dl>
 
 </dl>
+==EXAMPLES==
+
+===Replacing an online drive with a bigger one===
+
+<p>Given the filesystem:</p>
+<pre>Label: 'MyVault'  uuid: ae20903e-b72d-49ba-b944-901fc6d888a1
+        Total devices 2 FS bytes used 1TiB
+        devid    1 size 1TiB used 500.00GiB path /dev/sda
+        devid    2 size 1TiB used 500.00GiB path /dev/sdb</pre>
+<p>In order to replace <em>/dev/sda</em> (<em>devid 1</em>) with a bigger drive located at
+<em>/dev/sdc</em> you would run the following:</p>
+<table border="0" bgcolor="#e8e8e8" width="100%" cellpadding="10"><tr><td><!-- Generator: GNU source-highlight
+by Lorenzo Bettini
+http://www.lorenzobettini.it
+http://www.gnu.org/software/src-highlite -->
+<pre><tt>btrfs replace start <font color="#993399">1</font> /dev/sdc /mnt/my-vault<font color="#990000">/</font></tt></pre></td></tr></table>
+<p>You can monitor progress by:</p>
+<table border="0" bgcolor="#e8e8e8" width="100%" cellpadding="10"><tr><td><!-- Generator: GNU source-highlight
+by Lorenzo Bettini
+http://www.lorenzobettini.it
+http://www.gnu.org/software/src-highlite -->
+<pre><tt>btrfs replace status /mnt/my-vault<font color="#990000">/</font></tt></pre></td></tr></table>
+<p>After the replacement is complete, as per the docs at [[Manpage/btrfs-filesystem|btrfs-filesystem(8)]] in
+order to use the entire storage space of the new drive you need to run:</p>
+<table border="0" bgcolor="#e8e8e8" width="100%" cellpadding="10"><tr><td><!-- Generator: GNU source-highlight
+by Lorenzo Bettini
+http://www.lorenzobettini.it
+http://www.gnu.org/software/src-highlite -->
+<pre><tt>btrfs filesystem resize <font color="#993399">1</font><font color="#990000">:</font>max /mnt/my-vault<font color="#990000">/</font></tt></pre></td></tr></table>
 ==EXIT STATUS==
 
 <p><b>btrfs replace</b> returns a zero exit status if it succeeds. Non zero is
@@ -104,5 +133,6 @@ further details.</p>
 ==SEE ALSO==
 
 <p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
-[[Manpage/btrfs-device|btrfs-device(8)]],</p>
+[[Manpage/btrfs-device|btrfs-device(8)]],
+[[Manpage/btrfs-filesystem|btrfs-filesystem(8)]],</p>
 [[Category:Manpage]]

@@ -1452,7 +1452,31 @@ Bugfixes:
 
 = By version (linux kernel) =
 
+=== v5.5 (Jan 2020) ===
+* new block group profiles: RAID1 with 3- and 4- copies
+** RAID1 in btrfs has always 2 copies, now add support for 3 and 4
+** this is an incompat feature (named RAID1C34)
+** recommended use of RAID1C3 is replacement of RAID6 profile on metadata, this brings a more reliable resiliency against 2 device loss/damage
+* support for new checksums
+** per-filesystem, set at mkfs time
+** fast hash (crc32c successor): xxhash, 64bit digest
+** strong hashes (both 256bit): sha256 (slower, FIPS), blake2b (faster)
+* speed up lseek, don't take inode locks unnecessarily, this can speed up parallel SEEK_CUR/SEEK_SET/SEEK_END by 80%
+* send:
+** allow clone operations within the same file
+** limit maximum number of sent clone references to avoid slow backref walking
+* error message improvements: device scan prints process name and PID
+* new tree-checker sanity tests (INODE_ITEM, DIR_ITEM, DIR_INDEX, INODE_REF, XATTR)
+* more in the [https://git.kernel.org/linus/97d0bf96a0d0986f466c3ff59f2ace801e33dc69 pull request]
+
 === v5.4 (Nov 2019) ===
+
+* tree checker: adde sanity checks for tree items, extent items, and references
+* deprecated subvolume creation mode BTRFS_SUBVOL_CREATE_ASYNC
+* qgroup relation deletion tries harder, orphan entries are removed too
+* space handling improvements (ticket reservations, flushing, overcommit logic)
+* fix possible lockups during send of large subvolumes
+* see [https://git.kernel.org/linus/7d14df2d280fb7411eba2eb96682da0683ad97f6 pull request]
 
 === v5.3 (Sep 2019) ===
 
@@ -1470,6 +1494,7 @@ Bugfixes:
 ** tree checker to verify lengths of various items
 ** delayed iput happens at unlink time, not in cleaner thread
 ** new tracepoints for space updates
+* see [https://git.kernel.org/linus/a18f8775419d3df282dd83efdb51c5a64d092f31 pull request]
 
 === v5.2 (Jul 2019) ===
 
@@ -1493,6 +1518,7 @@ Bugfixes:
 ** new tracepoints for locking
 ** async write preallocates memory to avoid failures deep in call chains
 ** lots of cleanups
+* see [https://git.kernel.org/linus/9f2e3a53f7ec9ef55e9d01bc29a6285d291c151e pull request]
 
 === v5.1 (May 2019) ===
 
@@ -1506,6 +1532,7 @@ Bugfixes:
 ** fsync fixes for rename/unlink/rmdir
 ** improved enospc handling on a highly fragmented filesystem
 ** no trim on filesystem with unreplayed log
+* see [https://git.kernel.org/linus/b1e243957e9b3ba8e820fb8583bdf18e7c737aa2 pull request]
 
 === v5.0 (Mar 2019) ===
 * features, hilights
@@ -1522,6 +1549,7 @@ Bugfixes:
 ** remove first phase of balance that tried to remove some space (not necessary)
 ** separate reserve for delayed refs from global reserve
 ** cleanups
+* see [https://git.kernel.org/linus/32ee34eddad13cd44ad0cb3e659fe6fd49143b62 pull request]
 
 = By version (linux kernel) 4.x=
 
@@ -1593,6 +1621,7 @@ Bugfixes:
 * plug for fsync, may improve bio merging on multiple devices
 * compression heuristic: replace heap sort with radix sort, gains some performance
 * add extent map selftests, buffered write vs dio
+* see [https://git.kernel.org/linus/31466f3ed710e5761077190809e694f55aed5deb pull request]
 
 === v4.15 (Jan 2018) ===
 
