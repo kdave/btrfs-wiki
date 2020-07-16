@@ -10,7 +10,7 @@ mean that its useful, for example in meeting your performance expectations for
 your specific workload. Combination of features can vary in performance, the
 table does not cover all possibilities.
 
-'''The table is based on the latest released linux kernel: 5.5'''
+'''The table is based on the latest released linux kernel: 5.7'''
 
 The columns for each feature reflrect the status of the implementation in following ways:
 
@@ -31,11 +31,17 @@ The columns for each feature reflrect the status of the implementation in follow
 |-
 | colspan="5" | '''Performance'''
 |-
-| Trim (aka. discard)
+| discard (synchronous)
 | style="background: lightgreen;"   | OK
-| tbd
+|
 | style="background: lightgreen;"   | OK
-| ''fstrim'' and mounted with ''-o discard'' (has performance implications)
+| mounted with ''-o discard'' (has performance implications), also see ''fstrim''
+|-
+| discard (asynchronous)
+| style="background: lightgreen;"   | OK
+|
+| style="background: lightgreen;"   | OK
+| mounted with ''-o discard=async'' (improved performance)
 |-
 | Autodefrag
 | style="background: lightgreen;"   | OK
@@ -48,7 +54,7 @@ The columns for each feature reflrect the status of the implementation in follow
 | style="background: lightgreen;"   | OK
 | extents get unshared ''[[Status#Defrag | (see below)]]''
 |-
-|colspan="5" | '''Compression, deduplication'''
+|colspan="5" | '''Compression, deduplication, checksumming'''
 |-
 | [[Compression]]
 | style="background: lightgreen;"   | OK
@@ -66,6 +72,12 @@ The columns for each feature reflrect the status of the implementation in follow
 | tbd
 | style="background: orange;"       | mostly OK
 | (reflink), heavily referenced extents have a noticeable performance hit ''[[Status#File_range_cloning|(see below)]]''
+|-
+| More checksum algorithms
+| style="background: lightgreen;"   | OK
+|
+| style="background: lightgreen;"   | OK
+| [[Manpage/btrfs(5)#CHECKSUM_ALGORITHMS|see manual page]]
 |-
 |colspan="5" | '''Reliabillity'''
 |-
@@ -212,6 +224,20 @@ The columns for each feature reflrect the status of the implementation in follow
 | tbd
 | n/a
 | [[Manpage/btrfs(5)#FILESYSTEM_FEATURES|check the limitations]]
+|-
+|colspan="5" | '''Interoperability'''
+|-
+| NFS
+| style="background: lightgreen;"   | OK
+| 
+| style="background: lightgreen;"   | OK
+|
+|-
+| cgroups
+| style="background: lightgreen;"   | OK
+| 
+| style="background: lightgreen;"   | OK
+| IO controler
 |-
 |colspan="5" | '''Features'''
 |-

@@ -70,8 +70,6 @@ Building the utilities is just ''make''. If you would also like the ext3 convers
 
 = Basic Filesystem Commands =
 
-{{note|the new command '''[[Btrfs(command)|btrfs]]''' has replaced the old '''btrfsctl''' and '''btrfs-vol''' commands.}}
-
 Creating a filesystem of at least 1GiB is recommended.
 
 {{note|Be aware that for that size, it will report full when reaching about 75%.}}

@@ -748,6 +748,8 @@ The functions should be tagged with <code>noinline_for_stack</code>.
 |text=rcu-string.h implements helpers and wrappers around RCU-friendly strings. This is a generic piece of code and should live in the generic library (linux.git/lib/). The task involves documenting API and pushing through lkml and updating according to the feedback.
 }}
 
+== Feature deprecation ==
+
 = '''Unbound or ongoing projects''' =
 
 == Documentation ==

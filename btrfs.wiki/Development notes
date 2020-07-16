@@ -94,6 +94,12 @@ Before applying recommendations from this sections, please make sure you're fami
 
 * comment new data structures
 * comment new enum/define values, brief description or pointers to the code that uses them
+* function comment goes to the .c file, not the header
+* exported functions have btrfs_ prefix
+* fix coding style in code that's only moved
+* fix spelling, grammar and formatting of comments that get moved
+* leave one newline before #endif in headers
+* for patch subject use "btrfs:" followed by a lowercase
 
 = Kernel config options =
 

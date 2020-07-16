@@ -12,7 +12,7 @@ Next, there is an INODE_REF item. This stores simply an index number, and a stri
 
 == Files ==
 
-A file's additional keys consist of one or more EXTENT_DATA_REF items. Taken in sequence, these describe where the data of the file can be found on the disk. The offset field of the key in each case is the offset of the extent within the file. An extent item may map any contiguous sequence of bytes in the file to any other contiguous sequence of bytes stored in a data chunk.
+A file's additional keys consist of one or more EXTENT_DATA items. Taken in sequence, these describe where the data of the file can be found on the disk. The offset field of the key in each case is the offset of the extent within the file. An extent item may map any contiguous sequence of bytes in the file to any other contiguous sequence of bytes stored in a data chunk.
 
 == Directories and subvolumes ==
 

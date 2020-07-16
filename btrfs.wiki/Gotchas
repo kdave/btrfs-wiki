@@ -34,10 +34,13 @@ If you for example make an LVM snapshot of a btrfs filesystem, you can't mount e
 
 While it's technically possible to have block device copies around as long as you don't try to use mount, you have to be extremely careful with this. In most distributions <tt>udev</tt> runs <tt>btrfs device scan</tt> automatically when a block device is discovered. Also, programs like <tt>os-prober</tt> exist which will try to look into filesystems when you might not expect it. So, don't leave anything to chance when trying this.
 
-Some options you have to hide filesystem copies are:
-* Copying a filesystem into a file, which is harmless in itself, because the file will not be visible as a block device.
-* Remove one copy from the system (physically, or by deletion of the block device or FS) before mounting the other copy
-* When using LVM, <tt>lvchange -a n <vg>/<lv></tt> can be used to make the block device disappear temporarily. But beware of the fact that it can be auto-activated again.
+'''Remedies:'''
+* Make sure your kernel has the "btrfs: harden agaist duplicate fsid" commit.
+* Some options you have to hide filesystem copies are:
+** Copying a filesystem into a file, which is harmless in itself, because the file will not be visible as a block device.
+** Remove one copy from the system (physically, or by deletion of the block device or FS) before mounting the other copy
+** When using LVM, <tt>lvchange -a n <vg>/<lv></tt> can be used to make the block device disappear temporarily. But beware of the fact that it can be auto-activated again.
+* btrfstune -u can change the fsid (filesystem UUID?)
 
 == Fragmentation ==
 

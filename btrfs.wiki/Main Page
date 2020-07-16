@@ -26,7 +26,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 * Writable snapshots, read-only snapshots
 * Subvolumes (separate internal filesystem roots)
 * Checksums on data and metadata (crc32c, xxhash, sha256, blake2b)
-* [[Compression]] (zlib, LZO, ZSTD), heuristics
+* [[Compression]] (ZLIB, LZO, ZSTD), heuristics
 * Integrated [[Multiple_Device_Support|multiple device support]]
 ** File Striping
 ** File Mirroring
@@ -44,7 +44,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 ** Efficient incremental filesystem mirroring
 * Batch, or out-of-band [[deduplication]] (happens after writes, not during)
 * Swapfile support
-* [[Tree-checker]] for extra robustness
+* [[Tree-checker]], post-read and pre-write metadata verification
 
 === Features by kernel version ===
 As part of the changelog you can also review
@@ -61,39 +61,43 @@ As part of the changelog you can also review
 * DAX/persistent memory support
 * The file/directory -level encryption support (fscrypt)
 
-== News and Changelog ==
+== News ==
 
-''' linux v5.5.2 (Feb 2020) '''
-* fix for <tt>df</tt> (statfs) reporting 0 after heavy metadata operation like balance
+''' btrfs-progs v5.7 (Jul 2020) '''
+* mkfs:
+** new option to enable features otherwise enabled at runtime, now implemented for quotas, 'mkfs.btrfs -R quota'
+** fix space accounting for small image, DUP and --rootdir
+** option -A removed
+* check: detect ranges with overlapping csum items
+* fi usage: report correct numbers when plain RAID56 profiles are used
+* convert: ensure the data chunks size never exceed device size
+* libbtrfsutil: update documentation regarding subvolume deletion
+* build: support libkcapi as implementation backend for cryptographic primitives
+* core: global options for verbosity (-v, -q), subcommands -v or -q are aliases and will continue to work but are considered deprecated, current command output is preserved to keep scripts working
+* other:
+** block group code cleanups
+** build warning fixes
+** more files moved to kernel-shared
+** btrfs-debugfs ported to python 3
+** documentation updates
+** new tests
 
-''' linux v5.5 (Jan 2020) '''
+''' linux v5.7 (May 2020) '''
+* hilights
+** v2 of ioctl to delete subvolumes, allowing to delete by id and more future extensions
+** removal of obsolete ioctl flag BTRFS_SUBVOL_CREATE_ASYNC
+** more responsive balance cancel
+** speedup of extent back reference resolution
+** reflink/clone_range works on inline extents
+* lots of othe core changes, see the [https://git.kernel.org/linus/15c981d16d70e8a5be297fa4af07a64ab7e080ed pull request]
 
-* new block group profiles: RAID1 with 3- and 4- copies                                                                                                                                                            
-** RAID1 in btrfs has always 2 copies, now add support for 3 and 4                                                                                                                                                 
-** this is an incompat feature (named RAID1C34)                                                                                                                                                                    
-** recommended use of RAID1C3 is replacement of RAID6 profile on metadata, this brings a more reliable resiliency against 2 device loss/damage                                                                     
-* support for new checksums                                                                                                                                                                                        
-** per-filesystem, set at mkfs time                                                                                                                                                                                
-** fast hash (crc32c successor): xxhash, 64bit digest                                                                                                                                                              
-** strong hashes (both 256bit): sha256 (slower, FIPS), blake2b (faster)                                                                                                                                            
-* speed up lseek, don't take inode locks unnecessarily, this can speed up parallel SEEK_CUR/SEEK_SET/SEEK_END by 80%                                                                                               
-* send:                                                                                                                                                                                                            
-** allow clone operations within the same file                                                                                                                                                                     
-** limit maximum number of sent clone references to avoid slow backref walking                                                                                                                                     
-* error message improvements: device scan prints process name and PID                                                                                                                                              
-* new tree-checker sanity tests (INODE_ITEM, DIR_ITEM, DIR_INDEX, INODE_REF, XATTR)
-* more in the [https://git.kernel.org/linus/97d0bf96a0d0986f466c3ff59f2ace801e33dc69 pull request]
+== Changelog ==
 
-''' btrfs-progs v5.4.1 (Jan 2020) '''
-* build: fix docbook5 build                                                                                                                                                                                 
-* check: do extra verification of extent items, inode items and chunks                                                                                                                                      
-* qgroup: return ENOTCONN if quotas not running (needs updated kernel)                                                                                                                                      
-* other: various test fixups 
+Read about past releases in the separate [[Changelog]] page
 
-Read about past releases in the [[Changelog]]
 * [[Changelog#By_feature|features by kernel version]]
-* [[Changelog#By_version_.28linux_kernel.29|kernel changes]]
-* [[Changelog#By_version_.28btrfs-progs.29|btrfs-progs]]
+* [[Changelog#By_version_.28linux_kernel.29|kernel changes for each release]]
+* [[Changelog#By_version_.28btrfs-progs.29|btrfs-progs changes for each release]]
 
 == Documentation ==
 
@@ -177,13 +181,19 @@ Links to Btrfs documentation of various Linux distributions:
 
 ==== Source code download ====
 
-* [[Btrfs source repositories]]
-* [http://git.kernel.org/?p=linux/kernel/git/mason/linux-btrfs.git;a=tree;f=fs/btrfs;hb=HEAD Gitweb source viewer] of the main kernel repository
-* [https://git.kernel.org/cgit/linux/kernel/git/kdave/btrfs-progs.git/ Gitweb source viewer] of the userspace tools repository
+[[Btrfs source repositories]] describes purpose and contents, here are a few quick links:
+
+* repository for kernel pull requests: git://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git ([https://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git gitweb])
+* kernel development repository: git://github.com/kdave/btrfs-devel.git ([https://github.com/kdave/btrfs-devel.git web access])
+* kernel development repository (mirror): git://gitlabs.com/kdave/btrfs-devel.git ([https://gitlab.com/kdave/btrfs-devel.git web access])
+* btrfs-progs development and release repository: git://github.com/kdave/btrfs-progs.git ([https://github.com/kdave/btrfs-progs.git web access])
+* released tarballs of btrfs-progs: https://mirrors.edge.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/
 
 === Wiki editing ===
 
-The wiki contributions are welcome! Please create an account and wait for approval (this is a necessary spam protection). You can try to catch some of the wiki admins on [[#Project_information.2FContact|IRC]] and expedite the account creation.
+The wiki contributions are welcome! Please create an account and wait for approval (this is a necessary spam protection and we cannot remove it). You can try to catch some of the wiki admins on [[#Project_information.2FContact|IRC]] (or ping user 'kdave' in a query) to expedite the account creation.
+
+The registration requires full name for account but it's not mandatory from our perspective. The wiki User and User talk pages are created automatically but removed after account is approved. If you want to use the pages, create them manually, they won't be deleted.
 
 == Articles, presentations, podcasts ==
 * '''Video:''' [https://youtu.be/qHalOdCZO9Q btrfs is awesome, except when it isn't] by Richard Brown at openSUSE Conferece 2018 (2018-05-25)
