@@ -1530,6 +1530,16 @@ Bugfixes:
 
 = By version (linux kernel) =
 
+=== v5.8 (Aug 2020) ===
+* Hilights:
+** speedup dead root detection during orphan cleanup
+** send will emit file capabilities after chown
+* Core changes:
+** improved global block reserve utilization
+** direct io cleanups and fixes
+** refactored block group reading code
+** lots of other core changes see the [https://git.kernel.org/linus/f3cdc8ae116e27d84e1f33c7a2995960cebb73ac pull request]
+
 === v5.7 (May 2020) ===
 * hilights
 ** v2 of ioctl to delete subvolumes, allowing to delete by id and more future extensions

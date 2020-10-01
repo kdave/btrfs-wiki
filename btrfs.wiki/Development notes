@@ -76,10 +76,6 @@ There are several ways how to react to the unexpected conditions:
 * WARN_ON -- light check that is visible in the log and allows the code to continue but the reasons must be investigated
 * BUG_ON -- last resort, checks condition that 'must never happen' and continuing would cause more harm than the instant crash; code should always try to avoid using it, but there are cases when sanity and invariant checks are done in advance
 
-== BCP ==
-
-* do not use <tt>spin_is_locked</tt> but <tt>lockdep_assert_held</tt>
-
 == Error injection using eBPF ==
 
 Functions can be annotated to enable error injection using the eBPF scripts. See eg. <tt>disk-io.c:open_ctree</tt>. For btrfs-specific injection, the annotation is ALLOW_ERROR_INJECTION, but beware that this only overrides the return value and this can leak memory or other resources. For error injection to generic helpers (eg. memory allocation), you cau se something like <tt>bcc/tools/inject.py kmalloc btrfs_alloc_device() -P 0.001</tt>
@@ -97,9 +93,15 @@ Before applying recommendations from this sections, please make sure you're fami
 * function comment goes to the .c file, not the header
 * exported functions have btrfs_ prefix
 * fix coding style in code that's only moved
-* fix spelling, grammar and formatting of comments that get moved
+* fix spelling, grammar and formatting of comments that get moved or changed
 * leave one newline before #endif in headers
 * for patch subject use "btrfs:" followed by a lowercase
+* do not use <tt>spin_is_locked</tt> but <tt>lockdep_assert_held</tt>
+* do not use functions with double underscore, there's only a few valid uses of that, namely when ''__function'' is doing the core of the work with looser checks, no locks or more parameters than ''function''
+* default function return value is ''int ret'', temporary return values should be named like ''ret2'' etc
+* avoid prototypes for static functions, order them in new code in a way that does not need it
+* when dumping a lot of data after an error, consider what will remain visible last
+** in case of <tt>btrfs_print_leaf</tt>, print the specific error message after that
 
 = Kernel config options =
 
@@ -140,6 +142,7 @@ Please refer to the option documentation for further details.
 ** CONFIG_STACKTRACE
 ** CONFIG_KASAN -- address sanitizer
 ** CONFIG_UBSAN -- undefined behaviour sanitizer
+** CONFIG_KCSAN -- concurrency checker
 * verbose reporting
 ** CONFIG_DEBUG_BUGVERBOSE
 * tracing
@@ -159,6 +162,7 @@ The fstests suite has very few "hard" requirements and will succeed without actu
 * <code>CONFIG_DM_DELAY=m</code> or <code>y</code>
 * <code>CONFIG_DM_ERROR=m</code> or <code>y</code>
 * <code>CONFIG_DM_LOG_WRITES=m</code> or <code>y</code>
+* <code>CONFIG_DM_DUST=m</code> or <code>y</code>
 * <code>CONFIG_BLK_DEV_LOOP=m</code> or <code>y</code>
 * <code>CONFIG_EXT4_FS=m</code> or <code>y</code>
 * <code>CONFIG_SCSI_DEBUG=m</code>

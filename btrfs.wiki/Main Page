@@ -3,11 +3,11 @@ Not too many companies have said that they are using Btrfs in production, but we
 
 == Stability status ==
 
-'''For a feature status and stability please refer to the [[Status]] page.''' The filesystem [[On-disk_Format|disk format]] is stable; this means it is not expected to change unless there are very strong reasons to do so. If there is a format change, filesystems which implement the previous disk format will continue to be mountable and usable by newer kernels.
+'''For feature status and stability, please refer to the [[Status]] page.''' The filesystem [[On-disk_Format|disk format]] is stable; this means that it is not expected to change unless there are very strong reasons to do so. If there is a format change, filesystems which implement the previous disk format will continue to be mountable and usable by newer kernels.
 
 The Btrfs code base is under heavy development. Not only is every effort being made to ensure that it remains stable and fast but to make it more so with each and every commit. This rapid pace of development means that the filesystem improves ''noticeably'' with every new Linux release so it's ''highly'' recommended that users run the most modern kernel possible.
 
-For benchmarks, it's recommended to test the latest stable Linux version, and not any older, as well as the latest Linux development versions. Also, it's recommended to test the various [[mount options]] such as different compression options.
+For benchmarks, it's recommended to test the latest stable Linux version, and not any older, as well as the latest Linux development versions. Also, it's recommended to test the various [[Manpage/btrfs(5)#MOUNT_OPTIONS|mount options]] such as different compression options.
 
 As with all software, newly added features may need a few releases to stabilize.
 
@@ -53,15 +53,21 @@ As part of the changelog you can also review
 
 === Features Currently in Development or Planned for Future Implementation ===
 
-* Online filesystem check
-* Object-level mirroring and striping
-* In-band deduplication (happens during writes)
-* Hot data tracking and moving to faster devices (or provided on the generic VFS layer)
 * SMR (zoned block device) support
 * DAX/persistent memory support
 * The file/directory -level encryption support (fscrypt)
 
 == News ==
+
+''' linux v5.8 (Aug 2020) '''
+* Hilights:
+** speedup dead root detection during orphan cleanup
+** send will emit file capabilities after chown
+* Core changes:
+** improved global block reserve utilization
+** direct io cleanups and fixes
+** refactored block group reading code
+** lots of other core changes see the [https://git.kernel.org/linus/f3cdc8ae116e27d84e1f33c7a2995960cebb73ac pull request]
 
 ''' btrfs-progs v5.7 (Jul 2020) '''
 * mkfs:
@@ -81,15 +87,6 @@ As part of the changelog you can also review
 ** btrfs-debugfs ported to python 3
 ** documentation updates
 ** new tests
-
-''' linux v5.7 (May 2020) '''
-* hilights
-** v2 of ioctl to delete subvolumes, allowing to delete by id and more future extensions
-** removal of obsolete ioctl flag BTRFS_SUBVOL_CREATE_ASYNC
-** more responsive balance cancel
-** speedup of extent back reference resolution
-** reflink/clone_range works on inline extents
-* lots of othe core changes, see the [https://git.kernel.org/linus/15c981d16d70e8a5be297fa4af07a64ab7e080ed pull request]
 
 == Changelog ==
 
@@ -189,7 +186,7 @@ Links to Btrfs documentation of various Linux distributions:
 * btrfs-progs development and release repository: git://github.com/kdave/btrfs-progs.git ([https://github.com/kdave/btrfs-progs.git web access])
 * released tarballs of btrfs-progs: https://mirrors.edge.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/
 
-=== Wiki editing ===
+=== Wiki accounts, editing ===
 
 The wiki contributions are welcome! Please create an account and wait for approval (this is a necessary spam protection and we cannot remove it). You can try to catch some of the wiki admins on [[#Project_information.2FContact|IRC]] (or ping user 'kdave' in a query) to expedite the account creation.
 
@@ -231,8 +228,3 @@ Links to old or obsolete documentation, articles. Kept for historical reasons. S
 * '''Article:''' [http://www.linux.com/learn/tutorials/371623-weekend-project-get-started-with-btrfs Linux.com Weekend Project: Get Started with Btrfs] (2010-10-15)
 * '''Webcast:''' [https://event.on24.com/eventRegistration/EventLobbyServlet?target=registration.jsp&eventid=233161&sessionid=1&key=D0B1D3285FA444C5745C344A1C859CE0&partnerref=banner&sourcepage=register State of "Btrfs" File System for Linux by Chris Mason] (2010-08-26) [email registration and flash required]
 * '''Article:''' [http://lwn.net/Articles/342892/ Valerie Aurora: A short history of btrfs] (2009-07-22)
-
-=== Benchmarks ===
-* '''2019-12''' [https://www.phoronix.com/scan.php?page=article&item=linux54-hdd-raid&num=1 Linux 5.4 EXT4 / XFS / Btrfs RAID Performance On Four HDDs]
-* '''2012-10''' [http://www.ilsistemista.net/index.php/linux-a-unix/36-btrfs-mount-options-and-virtual-machines-an-in-depth-look.html BTRFS, mount options and virtual machines: an in-depth look] (Ilsistemista.net)
-* '''2010-10''' [http://www.linux-mag.com/id/7876 One Billion Files] Btrfs performs well in comparison to other filesystems, when there are a billion files in the filesystem.

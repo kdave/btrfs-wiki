@@ -147,18 +147,6 @@ It is possible to fix the allocation logic so it is more even while (almost almo
 
 == Core updates ==
 
-=== Track link count for directories ===
-
-{{project
-|who=Praveen
-|text=The link count for directories is traditionally used to count the number of subdirectores iff the link count is >= 2. Btrfs sets this to 1 and does not track the link count at all. The link count could be used by some utilities to do optimizations when traversing the file hierarchy (at least <tt>find</tt> does that).
-
-It seems that the link count can be tracked like the other filesystems do. This will be even backward compatible:
-
-* for new directories and subvolumes , set the initial link count to 2
-* a mkdir/rmdir/move/snapshot will update the link count accordingly iff the current link count is not 1
-}}
-
 === Btree lock contention ===
 {{project
 |text=The btree locks, especially on the root block can be very hot. We need to improve this, especially in read mostly workloads.
@@ -549,7 +537,12 @@ But these still allow a single large subvolume to span huge amounts of data. We 
 The key range restriction would consist of a new btree that provided very coarse grained indexing of chunk allocations against key ranges. This could provide hints to fsck in order to limit consistency checking.
 }}
 
+=== Scrub to compare all data copies ===
+{{project
+|text=Currently scrub only checks that data matches the checksums independently for each device.
 
+This is insufficient for ensuring that multiple redundant copies of all data exist. There should be a check that all file data exists on all devices, and that the data is the same (not just that the checksums are the same).
+}}
 
 == Feature parity, upstream changes ==
 
@@ -1046,4 +1039,17 @@ http://thread.gmane.org/gmane.comp.file-systems.btrfs/27452
 See also [http://www.bestbits.at/richacl/ RichACLs project site].
 
 '''Note: the richacl feature is unlikely to get merged'''
+}}
+
+
+=== Track link count for directories ===
+{{project
+|text=The link count for directories is traditionally used to count the number of subdirectores iff the link count is >= 2. Btrfs sets this to 1 and does not track the link count at all. The link count could be used by some utilities to do optimizations when traversing the file hierarchy (at least <tt>find</tt> does that).
+
+It seems that the link count can be tracked like the other filesystems do. This will be even backward compatible:
+
+* for new directories and subvolumes , set the initial link count to 2
+* a mkdir/rmdir/move/snapshot will update the link count accordingly iff the current link count is not 1
+
+'''Rejected''': implementing that brings backward compatibility issues that are not easy to resolve compared to the overall benefit of the link tracking.
 }}

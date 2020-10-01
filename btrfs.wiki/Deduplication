@@ -18,7 +18,7 @@ There are multiple tools that take different approaches to deduplication, offer 
 |-
 |[https://github.com/Zygo/bees bees] || {{No}} || {{Yes}} || {{No}} || {{Yes}} || Runs as a daemon. Very light database, useful for large colder storages like backup servers. Uses SEARCH_V2 and LOGICAL_INO. Has workarounds for kernel bugs.
 |-
-| [https://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg79853.html dduper] || {{Yes}} || {{Yes}} || {{No}} || {{Yes}} || Uses built-in BTRFS csum-tree, so is extremely fast and lightweight (13.8 seconds for identical 10GB files). Requires BTRFS-PROGS patch for csum access.
+| [https://github.com/lakshmipathi/dduper dduper] || {{Yes}} || {{Yes}} || {{No}} || {{Yes}} || Uses built-in BTRFS csum-tree, so is extremely fast and lightweight (13.8 seconds for identical 10GB files). Requires BTRFS-PROGS patch for csum access.
 |}
 
 Legend:
