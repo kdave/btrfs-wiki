@@ -59,34 +59,7 @@ As part of the changelog you can also review
 
 == News ==
 
-''' linux v5.8 (Aug 2020) '''
-* Hilights:
-** speedup dead root detection during orphan cleanup
-** send will emit file capabilities after chown
-* Core changes:
-** improved global block reserve utilization
-** direct io cleanups and fixes
-** refactored block group reading code
-** lots of other core changes see the [https://git.kernel.org/linus/f3cdc8ae116e27d84e1f33c7a2995960cebb73ac pull request]
-
-''' btrfs-progs v5.7 (Jul 2020) '''
-* mkfs:
-** new option to enable features otherwise enabled at runtime, now implemented for quotas, 'mkfs.btrfs -R quota'
-** fix space accounting for small image, DUP and --rootdir
-** option -A removed
-* check: detect ranges with overlapping csum items
-* fi usage: report correct numbers when plain RAID56 profiles are used
-* convert: ensure the data chunks size never exceed device size
-* libbtrfsutil: update documentation regarding subvolume deletion
-* build: support libkcapi as implementation backend for cryptographic primitives
-* core: global options for verbosity (-v, -q), subcommands -v or -q are aliases and will continue to work but are considered deprecated, current command output is preserved to keep scripts working
-* other:
-** block group code cleanups
-** build warning fixes
-** more files moved to kernel-shared
-** btrfs-debugfs ported to python 3
-** documentation updates
-** new tests
+''' linux v5.9 (Oct 2020) '''
 
 == Changelog ==
 
@@ -193,6 +166,7 @@ The wiki contributions are welcome! Please create an account and wait for approv
 The registration requires full name for account but it's not mandatory from our perspective. The wiki User and User talk pages are created automatically but removed after account is approved. If you want to use the pages, create them manually, they won't be deleted.
 
 == Articles, presentations, podcasts ==
+* '''Video:''' [https://www.youtube.com/watch?v=U7gXR2L05IU Deploying Btrfs at Facebook Scale] by Josef Bacik at the Open Source Summit 2020 (2020-06-29)
 * '''Video:''' [https://youtu.be/qHalOdCZO9Q btrfs is awesome, except when it isn't] by Richard Brown at openSUSE Conferece 2018 (2018-05-25)
 * '''Video:''' [https://youtu.be/-m01x3gHNjg btrfs: The Best Filesystem You've Never Heard Of] by poiupoiu at PhreakNIC 21 (2017-11-3)
 * '''Video''' [https://youtu.be/iwNg_fusT9A TUT91782 Getting the most out of the btrfs filesystem by Thorsthen Kukuk and Jeff Mahoney] (SUSECON, 2017)

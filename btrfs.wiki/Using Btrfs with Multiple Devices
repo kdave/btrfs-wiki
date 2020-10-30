@@ -20,7 +20,7 @@ broken copy if the alternative copy succeeds.
 
 See the [[Gotchas]] page for some current issues when using btrfs with multiple volumes of differing sizes in a RAID1 style setup.
 
-See [[Manpage/mkfs.btrfs]].
+The raid1 profile also allows for 2, 3, or 4 copies of redundant data copies, called raid1, raid1c3, and raid1c4 respectively. See [[Manpage/mkfs.btrfs]] for more details on this and other raid profiles.
 
 === Raid 5 and Raid6 ===
 

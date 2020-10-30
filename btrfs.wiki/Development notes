@@ -88,20 +88,78 @@ Resources:
 
 Before applying recommendations from this sections, please make sure you're familiar with the [https://www.kernel.org/doc/html/latest/process/coding-style.html|generic kernel coding style guide].
 
-* comment new data structures
-* comment new enum/define values, brief description or pointers to the code that uses them
-* function comment goes to the .c file, not the header
-* exported functions have btrfs_ prefix
-* fix coding style in code that's only moved
-* fix spelling, grammar and formatting of comments that get moved or changed
-* leave one newline before #endif in headers
+The purpose of coding style is to maintain unified and consistent look & feel of the patches and code, keeping distractions to minimum which allows focus on the important things.
+
+Patches:
 * for patch subject use "btrfs:" followed by a lowercase
-* do not use <tt>spin_is_locked</tt> but <tt>lockdep_assert_held</tt>
-* do not use functions with double underscore, there's only a few valid uses of that, namely when ''__function'' is doing the core of the work with looser checks, no locks or more parameters than ''function''
-* default function return value is ''int ret'', temporary return values should be named like ''ret2'' etc
+* read the patch again and fix all typos and grammar
+* size units should use short form K/M/G/T or IEC form KiB/MiB/GiB
+* don't write references to parameters to subject (like removing @pointer)
+* do not end subject with a dot '.'
+
+Function declarations:
 * avoid prototypes for static functions, order them in new code in a way that does not need it
+** but don't move static functions just to get rid of the prototype
+* exported functions have btrfs_ prefix
+* do not use functions with double underscore, there's only a few valid uses of that, namely when ''__function'' is doing the core of the work with looser checks, no locks or more parameters than ''function''
+* function type and name are on the same line, if this is too long, the parameters continue on the next line (indented)
+* 'static inline' functions should be small (measured by their resulting binary size)
+* conditional definitions should follow the style below, where the full function body is in .c
+  #ifdef CONFIG_BTRFS_DEBUG
+  void btrfs_assert_everything_is_fine(void *ptr);
+  #else
+  void btrfs_assert_everything_is_fine(void *ptr) { }
+  #endif
+
+Headers:
+* leave one newline before #endif in headers
+
+Comments:
+* function comment goes to the .c file, not the header
+** kdoc style is recommended but the exact syntax is not mandated
+  /*
+   * btrfs_do_something - kdoc requires this text to be on one line, but that's making the
+   *                      text hard to read for people, so you can do it like this
+   * @fs_info:    trivial parameters should be in the list but with some short description
+   * @offset:     describe the context of the argument, eg. offset to page or inode ...
+   *
+   * Long description comes here if necessary.
+   *
+   * Return value semantics if it's not obvious
+   */
+* comment new enum/define values, brief description or pointers to the code that uses them
+* comment new data structures, their purpose and context of use
+* do not put struct member comments on the same line, put it on the line before and do not trim/abbreviate the text
+* comment text that fits on one line can use the ''/* text */'' format, slight overflow of 80 chars is ok
+
+Misc:
+* fix spelling, grammar and formatting of comments that get moved or changed
+* fix coding style in code that's only moved
+* one newline between functions
+
+Locking:
+* do not use <tt>spin_is_locked</tt> but <tt>lockdep_assert_held</tt>
+* do not use <tt>assert_spin_locked</tt> without reading it's semantics (it does not check if the caller hold the lock)
+* use <tt>lockdep_assert_held</tt> and its friends for lock assertions
+* add lock assertions to functions called deep in the call chain
+
+Code:
+
+* default function return value is ''int ret'', temporary return values should be named like ''ret2'' etc
+* structure initializers should use ''{ 0 }''
+
+Output:
 * when dumping a lot of data after an error, consider what will remain visible last
 ** in case of <tt>btrfs_print_leaf</tt>, print the specific error message after that
+
+Expressions, operators:
+* spaces around binary operators, no spaces for unary operators
+* extra braces around expressions that might be harder to understand wrt precedence are fine (logical and/or, shifts with other operations)
+* 64bit division is not allowed, either avoid it completely, or use bit shifts or use div_u64 helpers
+
+Variable declarations, parameters:
+* declaration block in a function should do only simple initializations (pointers, constants); nothing that would require error handling or has non-trivial sideefects
+* use ''const'' extensively
 
 = Kernel config options =
 

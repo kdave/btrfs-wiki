@@ -409,6 +409,11 @@ INO_LOOKUP ioctl.
 |version=5.7
 |text=New ioctl BTRFS_IOC_SNAP_DESTROY_V2, deletion by subvolume id is now possible.
 }}
+{{FeatureMerged
+|name=mount option ''rescue''
+|version=5.9
+|text=Unified mount option for actions that may help to access a damaged filesystem. Now supports: nologreplay, usebackuproot
+}}
 |}
 
 = By version (btrfs-progs) =
