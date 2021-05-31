@@ -10,7 +10,7 @@ mean that its useful, for example in meeting your performance expectations for
 your specific workload. Combination of features can vary in performance, the
 table does not cover all possibilities.
 
-'''The table is based on the latest released linux kernel: 5.5'''
+'''The table is based on the latest released linux kernel: 5.12'''
 
 The columns for each feature reflrect the status of the implementation in following ways:
 
@@ -31,24 +31,30 @@ The columns for each feature reflrect the status of the implementation in follow
 |-
 | colspan="5" | '''Performance'''
 |-
-| Trim (aka. discard)
+| discard (synchronous)
 | style="background: lightgreen;"   | OK
-| tbd
+|
 | style="background: lightgreen;"   | OK
-| ''fstrim'' and mounted with ''-o discard'' (has performance implications)
+| mounted with ''-o discard'' (has performance implications), also see ''fstrim''
+|-
+| discard (asynchronous)
+| style="background: lightgreen;"   | OK
+|
+| style="background: lightgreen;"   | OK
+| mounted with ''-o discard=async'' (improved performance)
 |-
 | Autodefrag
 | style="background: lightgreen;"   | OK
-| tbd
+|
 | style="background: lightgreen;"   | OK
 |-
 | [[#Defrag|Defrag]]
 | style="background: orange;"       | mostly OK
-| tbd
+|
 | style="background: lightgreen;"   | OK
 | extents get unshared ''[[Status#Defrag | (see below)]]''
 |-
-|colspan="5" | '''Compression, deduplication'''
+|colspan="5" | '''Compression, deduplication, checksumming'''
 |-
 | [[Compression]]
 | style="background: lightgreen;"   | OK
@@ -57,43 +63,49 @@ The columns for each feature reflrect the status of the implementation in follow
 |-
 | Out-of-band dedupe
 | style="background: lightgreen;"   | OK
-| tbd
+|
 | style="background: orange;"       | mostly OK
 | (reflink), heavily referenced extents have a noticeable performance hit ''[[Status#Out_of_band_dedupe|(see below)]]''
 |-
 | File range cloning
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: orange;"       | mostly OK
 | (reflink), heavily referenced extents have a noticeable performance hit ''[[Status#File_range_cloning|(see below)]]''
+|-
+| More checksum algorithms
+| style="background: lightgreen;"   | OK
+|
+| style="background: lightgreen;"   | OK
+| [[Manpage/btrfs(5)#CHECKSUM_ALGORITHMS|see manual page]]
 |-
 |colspan="5" | '''Reliabillity'''
 |-
 | Auto-repair
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 | automatically repair from a correct spare copy if possible (dup, raid1, raid10)
 |-
 | [[Manpage/btrfs-scrub|Scrub]]
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 |-
 | Scrub + RAID56
 | style="background: orange;"    | mostly OK
-| tbd
+| 
 | style="background: orange;"    | mostly OK
 |-
 | nodatacow
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 | also see [[Manpage/btrfs(5)]].
 |-
 | Device replace
 | style="background: orange;"       | mostly OK
-| tbd
+| 
 | style="background: orange;"       | mostly OK
 | [[Status#Device_replace|see below]]
 |-
@@ -106,53 +118,53 @@ The columns for each feature reflrect the status of the implementation in follow
 |-
 | Single (block group profile)
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 |-
 | DUP (block group profile)
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 |-
 | RAID0
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 |-
 | RAID1
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: orange;"       | mostly OK
 | reading from mirrors in parallel can be optimized further ''[[Status#RAID1,_RAID10|(see below)]]''
 |-
 | RAID1C3
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: orange;"       | mostly OK
 | reading from mirrors in parallel can be optimized further ''[[Status#RAID1,_RAID10|(see below)]]''
 |-
 | RAID1C4
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: orange;"       | mostly OK
 | reading from mirrors in parallel can be optimized further ''[[Status#RAID1,_RAID10|(see below)]]''
 
 |-
 | RAID10
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: orange;"       | mostly OK
 | reading from mirrors in parallel can be optimized further ''[[Status#RAID1,_RAID10|(see below)]]''
 |-
 | [[RAID56]]
 | style="background: FireBrick;"    | Unstable
-| tbd
+| 
 | n/a
 | write hole still exists ''[[Status#RAID56|(see below)]]''
 |-
 | Mixed block groups
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 | see documentation
 |-
@@ -160,58 +172,84 @@ The columns for each feature reflrect the status of the implementation in follow
 |-
 | Filesystem resize
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 | shrink, grow
 |-
 | Balance
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 | balance + qgroups can be slow when there are many snapshots
 |-
 | Offline UUID change
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 |-
 | Metadata UUID change
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 |-
 | [[SysadminGuide#Subvolumes|Subvolumes, snapshots]]
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 |-
 | [[Manpage/btrfs-send|Send]]
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 |-
 | [[Manpage/btrfs-receive|Receive]]
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 |-
 | Seeding
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 | needs to be better documented
 |-
 | [[Quota_support|Quotas, qgroups]]
 | style="background: orange;"       | mostly OK
-| tbd
+| 
 | style="background: orange;"       | mostly OK
 | qgroups with many snapshots slows down balance
 |-
 | Swapfile
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | n/a
 | [[Manpage/btrfs(5)#FILESYSTEM_FEATURES|check the limitations]]
+|-
+|colspan="5" | '''Interoperability'''
+|-
+| NFS
+| style="background: lightgreen;"   | OK
+| 
+| style="background: lightgreen;"   | OK
+|
+|-
+| cgroups
+| style="background: lightgreen;"   | OK
+| 
+| style="background: lightgreen;"   | OK
+| IO controler
+|-
+| Samba
+| style="background: lightgreen;"   | OK
+| 
+| style="background: lightgreen;"   | OK
+| Compression, server-side copies, snapshots
+|-
+| io_uring
+| style="background: lightgreen;"   | OK
+| 
+| style="background: lightgreen;"   | OK
+|
 |-
 |colspan="5" | '''Features'''
 |-
@@ -223,21 +261,26 @@ The columns for each feature reflrect the status of the implementation in follow
 |-
 | [[Manpage/mkfs.btrfs#FILESYSTEM_FEATURES|no-holes]]
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 | see documentation for compatibility
 |-
 | [[Manpage/mkfs.btrfs#FILESYSTEM_FEATURES|skinny-metadata]]
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 | see documentation for compatibility
 |-
 | [[Manpage/mkfs.btrfs#FILESYSTEM_FEATURES|extended-refs]]
 | style="background: lightgreen;"   | OK
-| tbd
+| 
 | style="background: lightgreen;"   | OK
 | see documentation for compatibility
+|-
+| [[Zoned|zoned mode]]
+| style="background: lightgreen;"   | OK
+| 5.12
+| style="background: lightgreen;"   | OK
 |}
 
 '''Note to editors:'''

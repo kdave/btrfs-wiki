@@ -1,24 +1,28 @@
+This guide will help you in setting up the btrfs filesystem and using it in your Linux system.
+
+= Before you start =
+
 btrfs is a '''fast-moving target'''. There are typically a great many bug fixes and enhancements between one kernel release and the next. Therefore:
 
-{{warning|If you have btrfs filesystems, '''run the latest kernel'''.}}
+{{warning|If you have btrfs filesystems, use a Linux distribution which supports btrfs or '''run the latest kernel'''.}}
 
-If you are running a kernel two or more versions behind the latest one available from [http://kernel.org kernel.org], the first thing you will be asked to when you report a problem is to upgrade to the latest kernel. Some distributions keep backports of recent kernels to earlier releases -- see the page below for details.
+Some distributions keep backports of recent kernels to earlier releases and it's a good idea to use them if you want to use btrfs.
+
+If you are running a kernel two or more versions behind the latest one available from [http://kernel.org kernel.org], the first thing you will be asked to when you report a problem is to upgrade to the latest kernel.
 
 Having the latest user-space tools are also useful, as they contain additional features and tools which may be of use in debugging or recovering your filesystem if something goes wrong.
 
 The status of btrfs was ''experimental'' for a long time, but the the core functionality is considered good enough for daily use. There are new features being implemented and these should be considered experimental for a few releases when the bugs get ironed out when number of brave users help stabilizing it.
 
-While many people use it reliably, there are still problems being found.
-
 {{warning|You should '''keep''' and test '''backups''' of your data, and be prepared to use them.}}
 
-= Reporting problems =
+== Distro support ==
 
-If you have a problem with btrfs, you should report it to either the [[Btrfs mailing list]] or to the [irc://irc.freenode.net:6667/btrfs IRC channel].
+Many distros already enable Btrfs support in their kernels and have packages for the Btrfs userspace utilities, therefore we recommend to use them. Refer to your distro for more documentation about the specifics, like package names or versions available. This wiki is focused on upstream community and for general information.
 
-= Enterprise distributions with btrfs support =
+=== Enterprise distributions ===
 
-Since February 2012 there are two vendors who support btrfs in their distributions. They've put additional efforts to make btrfs supportable, so not everything written in the section above necessarily applies and it's recommended to ask the respective vendors about that.
+Since February 2012, entrerprise distrubutions which support btrfs (including commercial support) are:
 
 ''' SUSE Enterprise Linux '''
 
@@ -30,13 +34,8 @@ Available for both Oracle Linux 5 and 6, also available to Oracle Linux Customer
 
 * [http://public-yum.oracle.com/ binary packages for UEK2] or [http://oss.oracle.com/git/?p=linux-uek-2.6.39.git;a=summary git source repository].
 
-= Distro support =
+=== Community distributions ===
 
-Many distros already enable Btrfs support in their kernels and have packages for the Btrfs userspace utilities. Refer to your distro for more documentation about the specifics, like package names or versions available. This wiki is focused on upstream community and for general information.
-
-Btrfs is under active development, the stable kernels receive bugfixes during the development phase of new version and should be safe to use. The distribution kernels do not necesessarily track the most recent kernels but probably backport important fixes.
-
-See also:
 
 * [https://wiki.debian.org/Btrfs Debian support]
 * [https://fedoraproject.org/wiki/Btrfs Fedora support]
@@ -46,53 +45,90 @@ See also:
 * [http://www.funtoo.org/BTRFS_Fun Funtoo support]
 * [[OpenSuSE support]]
 
-= Compiling Btrfs from sources =
+= Reporting problems =
 
-== Download ==
+If you have a problem with btrfs, you should report it to either the [[Btrfs mailing list]] or to the [irc://irc.libera.net:6667/btrfs libera.chat IRC channel].
 
-Download the latest utility programs and modules following [[Btrfs_source_repositories|these instructions]]
-
-For distribution-specific packages of the latest kernel or tools, please see the support links in the table above.
-
-== Compiling the kernel support ==
-
-Btrfs uses libcrc32c in the kernel for file and metadata checksums and zlib to compress data. The necessary options are automatically selected when you select to compile btrfs: CONFIG_LIBCRC32C, CONFIG_ZLIB_INFLATE and CONFIG_ZLIB_DEFLATE.
-
-== Compiling the userspace utilities ==
-
-The Btrfs utility programs require libuuid to build. This can be found in the e2fsprogs sources, and is usually available as libuuid, uuid-dev or e2fsprogs-devel from various distros. You also need the zlib development headers, usually available in a package called zlib-devel or zlib1g-dev.
-
-Building the ext3 conversion tools requires libe2fs (usually available in e2fsprogs-devel or e2fslibs-dev) and libacl (may be available in libacl1-dev).
-
-Building the utilities is just ''make''. If you would also like the ext3 conversion program, type ''make convert''.
-
-''make install'' will copy the programs into /usr/local/bin
-
-= Basic Filesystem Commands =
-
-{{note|the new command '''[[Btrfs(command)|btrfs]]''' has replaced the old '''btrfsctl''' and '''btrfs-vol''' commands.}}
+= Creating a filesystem =
 
 Creating a filesystem of at least 1GiB is recommended.
 
 {{note|Be aware that for that size, it will report full when reaching about 75%.}}
 
-* [[Mkfs.btrfs|mkfs.btrfs]]: create a filesystem
-* [[Btrfs(command)|btrfs]]: control program to create snapshots and subvolumes and scan devices
+== btrfs as root fileystem ==
+
+If you use a distro which supports btrfs, it's very likely that you decided to use btrfs as the root filesystem created during installation process. In that case, there procedure differs on each distribution and it's the best to follow their guides and rely on their installers.
+
+As a general information, the recommended partition layout for an installation for a desktop workstation or a laptop with one drive is:
+
+{| class="wikitable"
+|-
+! Partition !! Filesystem !! Start !! End !! Partition type
+|-
+| /dev/sda1 || (bootloader) || 0 || 4MiB|| BIOS boot partition
+|-
+| /dev/sda2 || Btrfs/FAT32* || 4MiB || 1GiB|| EFI system partition
+|-
+| /dev/sda3 || Swap || 1GiB || 4GiB || Swap partition
+|-
+| /dev/sda4|| Btrfs || 4GiB || 100% || Linux filesystem
+|-
+|colspan=5|''1) Note that if you use EFI you need a FAT32 formatted EFI System Partition.<br> 2) If you have a very old GRUB, then it may not support Btrfs for  /boot (/dev/sda2). In that case use Ext4'' 
+|}
+
+== Creating new filesystems ==
+
+If you want to create a new btrfs filesystem, you can use the [[Mkfs.btrfs|mkfs.btrfs]] tool.
+
+btrfs filesystems can be created on:
+
+* partitions (example: ''/dev/sdb1'')
+* raw disks, without partitioning (example: ''/dev/sdb'')
+
+Below we refer to both of them as ''devices''.
+
+=== On single device ===
+
+To create a btrfs filesystem on a single device, use the following command:
+
+ mkfs.btrfs -L mylabel /dev/disk
+
+For example, on a partition:
+
+ mkfs.btrfs -L mylabel /dev/sdb1
+
+Or on the full raw disk:
+
+ mkfs.btrfs -L mylabel /dev/sdb
+
+=== Multiple devices ===
+
+btrfs allows to create RAID consisting of multiple partitions or disks. See [[Using Btrfs with Multiple Devices]] for details and instructions.
+
+= btrfs (command) =
+
+[[Btrfs(command)|btrfs]] is the control program for managing btrfs filesystems. It's most commonly used for operations like creating snapshots, creating subvolumes and scanning devices.
+
+Examples:
+
+* Scanning devices:
 ** Scan all devices looking for btrfs filesystems, or scan just one partition
 
-   btrfs device scan
-   btrfs device scan /dev/sda
+ btrfs device scan
+ btrfs device scan /dev/sda
 
 * Snapshots and subvolumes
 ** mount -t btrfs /dev/sda2 /mnt/btrfs
 
-   btrfs subvolume create /mnt/btrfs/new_subvol
-   btrfs subvolume snapshot /mnt/btrfs /mnt/btrfs/snapshot_of_root
+ btrfs subvolume create /mnt/btrfs/new_subvol
+ btrfs subvolume snapshot /mnt/btrfs /mnt/btrfs/snapshot_of_root
 
 Now it is possible to mount the subvolumes
 
-   mount -t btrfs -o subvol=new_subvol /dev/sda2 /mnt/new_subvol
-   mount -t btrfs -o subvol=snapshot_of_root /dev/sda2 /mnt/snap
+ mount -t btrfs -o subvol=new_subvol /dev/sda2 /mnt/new_subvol
+ mount -t btrfs -o subvol=snapshot_of_root /dev/sda2 /mnt/snap
+
+= Other tools =
 
 * [[Btrfsck|btrfsck]]: do a limited check of the FS extent trees.
 * [[Btrfs-debug-tree| btrfs-debug-tree]]: print all of the FS metadata in text form

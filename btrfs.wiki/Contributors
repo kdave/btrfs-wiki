@@ -2,15 +2,16 @@ __TOC__
 
 The following companies contribute to Btrfs code, not counting the treewide and other subsystem changes. Infrequent contributions are not reflected in this list, please have a look to the git history for complete list.
 
-Sorted alphabetically:
+Sorted by amount of contributions:
 
-* Facebook
-* Fujitsu
 * SUSE
+* Facebook
+* Western Digital
 * Oracle
 
 The following contributed in the past (sorted alphabetically):
 
+* Fujitsu
 * Fusion-IO
 * Intel
 * Linux Foundation
@@ -63,6 +64,55 @@ The following contributed in the past (sorted alphabetically):
 | 138212
 | 168
 | +3055 -2729
+|-
+| 5.6
+| 18
+| 101482
+| 139742
+| 114
+| +3370 -1840
+|-
+| 5.7
+| 22
+| 101661
+| 140694
+| 221
+| +4484 -3532
+|-
+| 5.8
+| 21
+| 101562
+| 140930
+| 158
+| +3176 -2940
+|-
+| 5.9
+| 18
+| 101973
+| 141748
+| 188
+| +2218 -1400
+|-
+| 5.10
+| 22
+| 102378
+| 142760
+| 187
+| +3148 -2135
+|-
+| 5.11
+| 15
+| 102418
+| 143124
+| 229
+| +4872 -4507
+|-
+| 5.12
+| 20
+| 105026
+| 147099
+| 195
+| +5310 -1316
 |}
 
 Legend:

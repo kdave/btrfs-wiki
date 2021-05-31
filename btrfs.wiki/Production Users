@@ -1,6 +1,9 @@
 (this page is very incomplete, please add to it)
 
+= Companies =
+
 The following companies use Btrfs in production:
+
 * Facebook (testing in production as of 2014/04, [https://code.fb.com/open-source/linux/ deployed on millions of servers] as of 2018/10)
 * Jolla (smartphone)
 * [http://lavu.com Lavu] (iPad point of sale solution. Used for compressed log storage on webservers.)
@@ -18,7 +21,13 @@ These companies are currently working on adding Btrfs to production products:
 * Netgear (ReadyNAS products)
 * Ohio Gravure Technologies
 
-As of 2014, most Linux distributions offer Btrfs as an option.
-* openSUSE 13.2 offers [http://www.phoronix.com/scan.php?page=news_item&px=MTYzNjA|offer btrfs by default]
-
 You may also want to see a [[Contributors|list of contributing companies]]
+
+= Linux distributions =
+
+The most of Linux distributions offer btrfs as an option.
+
+The following distributions offer btrfs by default:
+
+* [https://getfedora.org/ Fedora] ([https://fedoraproject.org/wiki/Changes/BtrfsByDefault since 33])
+* [https://www.opensuse.org/ openSUSE] ([http://www.phoronix.com/scan.php?page=news_item&px=MTYzNjA since 13.2])

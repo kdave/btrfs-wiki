@@ -379,11 +379,225 @@ INO_LOOKUP ioctl.
 |version=5.5
 |text=RAID1 with 3- and 4- copies (over all devices).
 }}
+{{FeatureMerged
+|name=async discard
+|version=5.6
+|text=Mode of discard (''mount -o discard=async'') that merges freed extents to larger chunks and submits them for discard in a less intrusive way
+}}
+{{FeatureMerged
+|name=device info in sysfs
+|version=5.6
+|text=More information about device state can be found in per-filesystem sysfs directory.
+}}
+{{FeatureMerged
+|name=reflink/clone works on inline files
+|version=5.7
+|text=Inline files can be reflinked to the tail extent of other files
+}}
+{{FeatureMerged
+|name=faster balance cancel
+|version=5.7
+|text=More cancellation points in balance that will shorten the time to stop processing once <tt>btrfs balance cancel</tt> is called.
+}}
+{{FeatureMerged
+|name=''removed flag BTRFS_SUBVOL_CREATE_ASYNC''
+|version=5.7
+|text=Remove support of flag BTRFS_SUBVOL_CREATE_ASYNC from subvolume creation ioctl.
+}}
+{{FeatureMerged
+|name=v2 of snapshot deletion ioctl
+|version=5.7
+|text=New ioctl BTRFS_IOC_SNAP_DESTROY_V2, deletion by subvolume id is now possible.
+}}
+{{FeatureMerged
+|name=mount option ''rescue''
+|version=5.9
+|text=Unified mount option for actions that may help to access a damaged filesystem. Now supports: nologreplay, usebackuproot
+}}
+{{FeatureMerged
+|name=qgroups in sysfs
+|version=5.9
+|text=The information about qgroup status and relations is exported in ''/sys/fs/UUID/qgroups''
+}}
+{{FeatureMerged
+|name=FS_INFO ioctl
+|version=5.9
+|text=Export more information: checksum type, checksum size, generation, metadata_uuid
+}}
+{{FeatureMerged
+|name=exclusive ops in sysfs
+|version=5.10
+|text=Export which filesystem exclusive operation is running (balance, resize, device add/delete/relpace, ...)
+}}
+{{FeatureMerged
+|name=remove ''inode_cache''
+|version=5.11
+|text=Remove inode number caching feature (mount -o inode_cache)
+}}
+{{FeatureMerged
+|name=more rescue=
+|version=5.11
+|text=Additional modes for mount option ''rescue='': ignorebadroots/ibadroots, ignoredatacsums/idatacsums. All are exported in sysfs.
+}}
+{{FeatureMerged
+|name=zoned mode
+|version=5.12
+|text=Support for zoned devices with special allocation/write mode to fixed-size zones. See [[Zoned]].
+}}
 |}
 
 = By version (btrfs-progs) =
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/
+
+==  btrfs-progs v5.12 (May 2021) ==
+
+* libbtrfsutil: relicensed to LGPL v2.1+
+* mkfs: zoned mode support (kernel 5.12+)
+* fi df: show zone_unusable per profile type in zoned mode
+* fi usage: show total amount of zone_unusable
+* fi resize: fix message for exact size
+* image: fix warning and enlarge output file if necessary
+* core
+** refactor chunk allocator for more modes
+** implement zoned mode support: allocation and writes, sb log
+** crypto/hash refactoring and cleanups
+** refactoring and cleanups
+* other
+** test updates
+** CI updates
+**** travis-ci integration disabled
+**** docker images updated, more coverage
+*** incomplete build support for Android removed
+* doc updates
+** chattr mode m for 'NOCOMPRESS"
+** swapfile used from fstab
+** how to add a new export to libbtrfsutil
+** update status of mount options since 5.9
+{{ProgsReleaseMinor |title=btrfs-progs v5.12.1 (May 2021)}}
+* build: fix missing symbols in libbtrfs
+* mkfs: check for minimal number of zones
+* check: fix warning about cache generation when free space tree is enabled
+* fix superblock write in zoned mode on 16K pages
+
+== btrfs-progs v5.11 (Mar 2021) ==
+* fix device path canonicalization for device mapper devices
+* receive: remove workaround for setting capabilities, all stable kernels have been patched
+* receive: fix duplicate mount path detection
+* rescue: new subcommand create-control-device
+* device stats: minor fix for plain text format output
+* build: detect if e2fsprogs support 64bit timestamps
+* build: drop libmount, required functionality has been reimplemented
+* mkfs: warn when raid56 is used
+* balance convert: warn when raid56 is used
+* other
+** new and updated tests
+** documentation updates: seeding device, raid56 status
+** CI updates: docker images for various distros
+{{ProgsReleaseMinor |title=btrfs-progs v5.11.1 (Mar 2021)}}
+* properly format checksums when a mismatch is reported
+* check: fix false alert on tree block crossing 64K page boundary
+* convert:
+** refuse to convert filesystem with 'needs_recovery'
+** update documentation to require fsck before conversion
+* balance convert: fix raid56 warning when converting other profiles
+* fi resize: improved summary
+
+== btrfs-progs v5.10 (Jan 2021) ==
+* scrub status:
+** print percentage of progress
+** add size unit options
+* fi usage: also print free space from statfs
+* convert: copy full 64 bit timestamp from ext4 if availalble
+* check:
+** add ability to repair extent item generation
+** new option to remove leftovers from inode number cache (-o inode_cache)
+* check for already running exclusive operation (balance, device add/...) when starting one
+* preliminary json output support for 'device stats'
+* fixes:
+** subvolume set-default: id 0 correctly falls back to toplevel
+** receive: align internal buffer to allow fast CRC calculation
+** logical-resolve: distinguish -o subvol and bind mounts
+* build: new dependency libmount
+* other
+** doc fixes and updates
+** new tests
+** ci on gitlab temporarily disabled
+** debugging output enhancements
+{{ProgsReleaseMinor |title=btrfs-progs v5.10.1 (Feb 2021)}}
+* static build works again
+* libmount 2.24+ required, not available on Cent OS 7 and the like (fix planned)
+
+== btrfs-progs v5.9 (Oct 2020) ==
+* mkfs:
+** switch default to single profile for multi-device filesystem, up to now it was raid0 that may not be simple to convert to some other profile as raid0 needs a workspace on all device for that
+** new option -R for run-time options (eg. mount time enabled), now understands free-space-tree
+* subvolume delete:
+** refuse to delete the default subvolume (kernel will not allow that but the error reason is not obvious)
+** warn on EPERM, eg. if send is on progress on the subvolume
+* convert:
+** fix 32bit overflows on large filesystems
+** improved error handling and error messages
+** check free space taking fragmentation into account
+* check:
+** detect and repair wrong inode generation
+** minor improvement in error reporting on roots
+* libbtrfsutils: follow main package versioning (5.9)
+** add pkg-config file definitions
+* python-btrfsutil: follow main package versioning (5.9)
+* inspect tree-stats: print node counts for each level, fanout
+* docs:
+** remove obsolete mount options (alloc_start, subvolrootid)
+** deleting default subvolume is not permitted
+** sb-mod updates
+
+== btrfs-progs v5.7 (Jul 2020) ==
+* mkfs:
+** new option to enable features otherwise enabled at runtime, now implemented for quotas, 'mkfs.btrfs -R quota'
+** fix space accounting for small image, DUP and --rootdir
+** option -A removed
+* check: detect ranges with overlapping csum items
+* fi usage: report correct numbers when plain RAID56 profiles are used
+* convert: ensure the data chunks size never exceed device size
+* libbtrfsutil: update documentation regarding subvolume deletion
+* build: support libkcapi as implementation backend for cryptographic primitives
+* core: global options for verbosity (-v, -q), subcommands -v or -q are aliases and will continue to work but are considered deprecated, current command output is preserved to keep scripts working
+* other:
+** block group code cleanups
+** build warning fixes
+** more files moved to kernel-shared
+** btrfs-debugfs ported to python 3
+** documentation updates
+** new tests
+
+== btrfs-progs v5.6 (Apr 2020) ==
+* inspect logical-resolve: support LOGICAL_INO_V2 as new option '-o', helps advanced dedupe tools
+* inspect: user larger buffer (64K) for results
+* subvol delete: support deletion by id (requires kernel 5.7+)
+* libbtrfsutil:
+** support subvolume deletion by id
+** bump version to 1.2
+** library symbols are now versioned
+* dump-tree: new option --hide-names, replace any names (file, directory, subvolume, xattr) in the output with stubs
+* convert: warn if the filesystem is not mountable on the machine
+* fixes:
+** restore: proper mirror iteration on decompression error
+** restore: make symlink messages less noisy
+** check: handle holes at the begining or end of file
+** fix xxhash output on big endian machines
+** receive: fix lookup of subvolume by uuid in case it was already received before
+* other:
+** new and updated tests
+** add missing binaries in exported testsuite
+** docs updates
+** remove obsolete files
+** move files to more appropriate directories
+** fixes reported by valgrind
+** many typos fixed
+{{ProgsReleaseMinor |title=btrfs-progs v5.6.1 (May 2020)}}
+
+* print warning when multiple block group profiles exist, update 'fi usage' summary, add docs to maual page explaining the situation
+* build: optional support for libgcrypt or libsodium, providing hash implementations
 
 == btrfs-progs v5.4 (Dec 2019) ==
 * support new hash algorithms (kernel 5.5):
@@ -1451,6 +1665,100 @@ Bugfixes:
 * first release after 0.19 (2009/06) with a lot of changes
 
 = By version (linux kernel) =
+
+=== v5.12 (Apr 2021) ===
+* features
+** zoned mode (SMR/ZBC/ZNS friendly allocation mode), first working version with limitations
+* misc performance improvements
+** flushing and ticket space reservations
+** preemptive background flushing
+** less lock contention for delayed refs
+** dbench-like workload (+7% throughput, -20% latency)
+* core changes:
+** subpage block size support peparations
+* fixes
+** swapfile fixes (vs scrub, activation vs snapshot creation)
+
+=== v5.11 (Feb 2021) ===
+* new mount option ''rescue'', various modes how to access a damaged filesystem
+* sysfs updates: filesystem generation, supported ''rescue'' modes, read mirror policy
+* removed feature: ''mount -o inode_cache''
+* free space tree fixes, v1 cache removed during conversion
+* core
+** locking switched to standard rw semaphores
+** direct IO ported to iomap infrastructure
+** zoned allocation mode preparation
+** subpage blocksize preparation
+** various performance improvements (skipping unnecessary work)
+
+=== v5.10 (Dec 2020) ===
+* hilights
+** performance improvements in fsync (dbench workload: higher throughput, lower latency)
+** sysfs exports current exclusive operataion (balance, resize, device add/del/...)
+** sysfs exports supported send stream version
+* core
+** direct io uses iomap infrastructure (no more ''struct buffer_head'')
+** space reservations for data now use ticket infrastructure
+** cleanups, refactoring, preparatory work
+** error handling improvements
+** fixes
+* for other changes see the [https://git.kernel.org/linus/11e3235b4399f7e626caa791a68a0ea8337f6683 pull request]
+
+=== v5.9 (Oct 2020) ===
+* hilights
+** add mount option ''rescue'' to unify options for various recovery tasks on a mounted filesystems
+** mount option ''inode_cache'' is deprecated and will be removed in 5.11
+** removed deprecated options ''alloc_start'' and ''subvolrootid''
+** sysfs exports information about qgroups and relations
+** FS_INFO ioctl exports more information from the filesystem (notably type of checksum)
+** running balance detects Ctrl-C too
+** performance improvements in fsync
+** mount-time prefetch of chunk tree
+* for other changes see the [https://git.kernel.org/linus/6dec9f406c1f2de6d750de0fc9d19872d9c4bf0d pull request]
+
+=== v5.8 (Aug 2020) ===
+* Hilights:
+** speedup dead root detection during orphan cleanup
+** send will emit file capabilities after chown
+* Core changes:
+** improved global block reserve utilization
+** direct io cleanups and fixes
+** refactored block group reading code
+** lots of other core changes see the [https://git.kernel.org/linus/f3cdc8ae116e27d84e1f33c7a2995960cebb73ac pull request]
+
+=== v5.7 (May 2020) ===
+* hilights
+** v2 of ioctl to delete subvolumes, allowing to delete by id and more future extensions
+** removal of obsolete ioctl flag BTRFS_SUBVOL_CREATE_ASYNC
+** more responsive balance cancel
+** speedup of extent back reference resolution
+** reflink/clone_range works on inline extents
+* lots of othe core changes, see the [https://git.kernel.org/linus/15c981d16d70e8a5be297fa4af07a64ab7e080ed pull request]
+
+=== v5.6 (Mar 2020) ===
+* Highlights:
+** async discard
+*** "mount -o discard=async" to enable it
+*** freed extents are not discarded immediatelly, but grouped together and trimmed later, with IO rate limiting
+*** the actual discard IO requests have been moved out of transaction commit to a worker thread, improving commit latency
+*** IO rate and request size can be tuned by sysfs files, for now enabled only with CONFIG_BTRFS_DEBUG as we might need to add/delete the files and don't have a stable-ish ABI for general use, defaults are conservative
+** export device state info in sysfs, eg. missing, writeable
+** no discard of extents known to be untouched on disk (eg. after reservation)
+** device stats reset is logged with process name and PID that called the ioctl
+* Core changes:
+** qgroup assign returns ENOTCONN when quotas not enabled, used to return EINVAL that was confusing
+** device closing does not need to allocate memory anymore
+** snapshot aware code got removed, disabled for years due to performance problems, reimplmentation will allow to select wheter defrag breaks or does not break COW on shared extents
+** tree-checker:
+*** check leaf chunk item size, cross check against number of stripes
+*** verify location keys for DIR_ITEM, DIR_INDEX and XATTR items
+*** new self test for physical -> logical mapping code, used for super block range exclusion
+* Fixes:
+** fix missing hole after hole punching and fsync when using NO_HOLES
+** writeback: range cyclic mode could miss some dirty pages and lead to OOM
+** two more corner cases for metadata_uuid change after power loss during the change
+** fix infinite loop during fsync after mix of rename operations
+* see [https://git.kernel.org/linus/81a046b18b331ed6192e6fd9ff6d12a1f18058cf pull request]
 
 === v5.5 (Jan 2020) ===
 * new block group profiles: RAID1 with 3- and 4- copies

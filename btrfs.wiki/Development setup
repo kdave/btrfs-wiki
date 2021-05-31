@@ -1,0 +1,23 @@
+This guide describes how to build btrfs from (the Linux kernel) sources and prepare a development environment, if you are interested in testing or modifying btrfs code.
+
+= Compiling btrfs from sources =
+
+== Download ==
+
+Download the latest utility programs and modules following [[Btrfs_source_repositories|these instructions]]
+
+For distribution-specific packages of the latest kernel or tools, please see the support links in the table above.
+
+== Compiling the kernel support ==
+
+Btrfs uses libcrc32c in the kernel for file and metadata checksums and zlib to compress data. The necessary options are automatically selected when you select to compile btrfs: CONFIG_LIBCRC32C, CONFIG_ZLIB_INFLATE and CONFIG_ZLIB_DEFLATE.
+
+== Compiling the userspace utilities ==
+
+The Btrfs utility programs require libuuid to build. This can be found in the e2fsprogs sources, and is usually available as libuuid, uuid-dev or e2fsprogs-devel from various distros. You also need the zlib development headers, usually available in a package called zlib-devel or zlib1g-dev.
+
+Building the ext3 conversion tools requires libe2fs (usually available in e2fsprogs-devel or e2fslibs-dev) and libacl (may be available in libacl1-dev).
+
+Building the utilities is just ''make''. If you would also like the ext3 conversion program, type ''make convert''.
+
+''make install'' will copy the programs into /usr/local/bin

@@ -2,7 +2,7 @@
 
 == How do I report bugs and issues? ==
 
-Please '''report bugs on [https://bugzilla.kernel.org/ Bugzilla on kernel.org]''' (requires [https://bugzilla.kernel.org/createaccount.cgi registration]) setting the component to Btrfs, and '''report bugs and issues to the [[Btrfs mailing list|mailing list]]''' ([mailto:linux-btrfs@vger.kernel.org linux-btrfs@vger.kernel.org]; you are ''not'' required to subscribe). For quick questions you may want to join the IRC ''#btrfs'' channel on freenode (and stay around for some time in case you do not get the answer right away).
+Please '''report bugs on [https://bugzilla.kernel.org/ Bugzilla on kernel.org]''' (requires [https://bugzilla.kernel.org/createaccount.cgi registration]) setting the component to Btrfs, and '''report bugs and issues to the [[Btrfs mailing list|mailing list]]''' ([mailto:linux-btrfs@vger.kernel.org linux-btrfs@vger.kernel.org]; you are ''not'' required to subscribe). For quick questions you may want to join the IRC ''#btrfs'' channel on libera.chat (and stay around for some time in case you do not get the answer right away).
 
 Please use '''btrfs-progs''' somewhere in the bug subject if you're reporting a bug for the userspace tools.
 

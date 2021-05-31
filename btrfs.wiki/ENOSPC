@@ -1,3 +1,5 @@
+{{Outdated|}}
+
 ''' How to make ENOSPC handling not be such a performance drag? '''
 
 The problem is we have a single resource, the free space available on the disk, which needs to be accessed by many people at the same time, people writing to the disk.  This only refers to the actual reservation system, since the actual low level allocator is quite good at having multiple allocators at the same time.

@@ -1,18 +1,40 @@
-Btrfs is a modern copy on write (CoW) filesystem for Linux aimed at implementing advanced features while also focusing on fault tolerance, repair and easy administration. Jointly developed at [[Contributors|multiple companies]], Btrfs is licensed under the GPL and open for contribution from anyone.
-Not too many companies have said that they are using Btrfs in production, but we welcome those who can say so on the [[Production_Users|production users]] page.
+__NOTOC__
+<!-- Welcome Block -->
+<div style="margin:0; margin-top:10px; margin-right:10px; border:1px solid #dfdfdf; padding:0 1em 1em 1em; align:right; ">
+[[File:Btrfs_logo_small.png|200px|left|btrfs]]
 
-== Stability status ==
+'''btrfs''' is a modern copy on write (CoW) filesystem for Linux aimed at implementing advanced features while also focusing on fault tolerance, repair and easy administration. Its main features and benefits are:
 
-'''For a feature status and stability please refer to the [[Status]] page.''' The filesystem [[On-disk_Format|disk format]] is stable; this means it is not expected to change unless there are very strong reasons to do so. If there is a format change, filesystems which implement the previous disk format will continue to be mountable and usable by newer kernels.
+* '''Snapshots''' which do not make the full copy of files
+* '''RAID''' - support for software-based RAID 0, RAID 1, RAID 10
+* '''Self-healing''' - checksums for data and metadata, automatic detection of silent data corruptions
 
-The Btrfs code base is under heavy development. Not only is every effort being made to ensure that it remains stable and fast but to make it more so with each and every commit. This rapid pace of development means that the filesystem improves ''noticeably'' with every new Linux release so it's ''highly'' recommended that users run the most modern kernel possible.
+Development of Btrfs started in 2007. Since that time, Btrfs is a part of the Linux kernel and is under active development.
 
-For benchmarks, it's recommended to test the latest stable Linux version, and not any older, as well as the latest Linux development versions. Also, it's recommended to test the various [[mount options]] such as different compression options.
+Jointly developed at [[Contributors|multiple companies]], Btrfs is licensed under the GPL and open for contribution from anyone.
 
-As with all software, newly added features may need a few releases to stabilize.
+[[Production_Users|List of companies using btrfs in production]].
+</div>
+
+{| width="100%"
+|-
+|style="vertical-align:top" |
+
+<!-- Development and Issue Reporting Block -->
+<div style="margin:0; margin-top:10px; margin-right:10px; border:1px solid #dfdfdf; padding:0 1em 1em 1em; background-color:#dcf5ff; align:right;">
+== Development and Issue Reporting ==
+
+'''For feature status, please refer to the [[Status]] page.'''
+
+The Btrfs code base is stable. However, new features are still under development. Every effort is made to ensure that it remains stable and fast at each and every commit. This rapid pace of development means that the filesystem improves ''noticeably'' with every new Linux release so it's ''highly'' recommended that users run the most modern kernel possible.
+
+For benchmarks, it's recommended to test the latest stable Linux version, and not any older, as well as the latest Linux development versions. Also, it's recommended to test the various [[Manpage/btrfs(5)#MOUNT_OPTIONS|mount options]] such as different [[compression]] options.
 
 If you find any behavior you suspect to be caused by a bug, performance issues, or have any questions about using Btrfs, please email the [[Btrfs mailing list]] (no subscription required). Please report bugs on [[Problem_FAQ#How_do_I_report_bugs_and_issues.3F|Bugzilla]].
+</div>
 
+<!-- Features Block -->
+<div style="margin:0; margin-top:10px; margin-right:10px; border:1px solid #dfdfdf; padding:0 1em 1em 1em; background-color:#F8F8FF; align:right;">
 == Features ==
 
 Linux has a wealth of filesystems from which to choose, but we are facing a number of challenges with scaling to the large storage subsystems that are becoming common in today's data centers. Filesystems need to scale in their ability to address and manage large storage, and also in their ability to detect, repair and tolerate errors in the data stored on disk.
@@ -26,7 +48,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 * Writable snapshots, read-only snapshots
 * Subvolumes (separate internal filesystem roots)
 * Checksums on data and metadata (crc32c, xxhash, sha256, blake2b)
-* [[Compression]] (zlib, LZO, ZSTD), heuristics
+* [[Compression]] (ZLIB, LZO, ZSTD), heuristics
 * Integrated [[Multiple_Device_Support|multiple device support]]
 ** File Striping
 ** File Mirroring
@@ -44,7 +66,8 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 ** Efficient incremental filesystem mirroring
 * Batch, or out-of-band [[deduplication]] (happens after writes, not during)
 * Swapfile support
-* [[Tree-checker]] for extra robustness
+* [[Tree-checker]], post-read and pre-write metadata verification
+* [[Zoned]] mode support (SMR/ZBC/ZNS friendly allocation)
 
 === Features by kernel version ===
 As part of the changelog you can also review
@@ -53,47 +76,13 @@ As part of the changelog you can also review
 
 === Features Currently in Development or Planned for Future Implementation ===
 
-* Online filesystem check
-* Object-level mirroring and striping
-* In-band deduplication (happens during writes)
-* Hot data tracking and moving to faster devices (or provided on the generic VFS layer)
-* SMR (zoned block device) support
 * DAX/persistent memory support
 * The file/directory -level encryption support (fscrypt)
+* fsverity integration
+</div>
 
-== News and Changelog ==
-
-''' linux v5.5.2 (Feb 2020) '''
-* fix for <tt>df</tt> (statfs) reporting 0 after heavy metadata operation like balance
-
-''' linux v5.5 (Jan 2020) '''
-
-* new block group profiles: RAID1 with 3- and 4- copies                                                                                                                                                            
-** RAID1 in btrfs has always 2 copies, now add support for 3 and 4                                                                                                                                                 
-** this is an incompat feature (named RAID1C34)                                                                                                                                                                    
-** recommended use of RAID1C3 is replacement of RAID6 profile on metadata, this brings a more reliable resiliency against 2 device loss/damage                                                                     
-* support for new checksums                                                                                                                                                                                        
-** per-filesystem, set at mkfs time                                                                                                                                                                                
-** fast hash (crc32c successor): xxhash, 64bit digest                                                                                                                                                              
-** strong hashes (both 256bit): sha256 (slower, FIPS), blake2b (faster)                                                                                                                                            
-* speed up lseek, don't take inode locks unnecessarily, this can speed up parallel SEEK_CUR/SEEK_SET/SEEK_END by 80%                                                                                               
-* send:                                                                                                                                                                                                            
-** allow clone operations within the same file                                                                                                                                                                     
-** limit maximum number of sent clone references to avoid slow backref walking                                                                                                                                     
-* error message improvements: device scan prints process name and PID                                                                                                                                              
-* new tree-checker sanity tests (INODE_ITEM, DIR_ITEM, DIR_INDEX, INODE_REF, XATTR)
-* more in the [https://git.kernel.org/linus/97d0bf96a0d0986f466c3ff59f2ace801e33dc69 pull request]
-
-''' btrfs-progs v5.4.1 (Jan 2020) '''
-* build: fix docbook5 build                                                                                                                                                                                 
-* check: do extra verification of extent items, inode items and chunks                                                                                                                                      
-* qgroup: return ENOTCONN if quotas not running (needs updated kernel)                                                                                                                                      
-* other: various test fixups 
-
-Read about past releases in the [[Changelog]]
-* [[Changelog#By_feature|features by kernel version]]
-* [[Changelog#By_version_.28linux_kernel.29|kernel changes]]
-* [[Changelog#By_version_.28btrfs-progs.29|btrfs-progs]]
+<!-- Documentation Block -->
+<div style="margin:0; margin-top:10px; margin-right:10px; border:1px solid #dfdfdf; padding:0 1em 1em 1em; background-color:#fffff0; align:right; ">
 
 == Documentation ==
 
@@ -115,29 +104,12 @@ Links to Btrfs documentation of various Linux distributions:
 
 * "[https://docs.oracle.com/cd/E37670_01/E37355/html/ol_btrfs.html The Btrfs File System]" chapter in the [https://docs.oracle.com/cd/E37670_01/E37355/html/index.html Oracle Linux 6 Administrator's Solutions Guide]
 * Oracle Linux [https://wikis.oracle.com/display/oraclelinux/Hands-on+lab+-+Storage+Management+with+Btrfs Hands-on lab - Storage Management with Btrfs]
-* [https://www.suse.com/documentation/sles11/stor_admin/data/sec_filesystems_major.html Major File Systems in Linux] chapter in the [https://www.suse.com/documentation/sles11/stor_admin/data/bookinfo.html SLES 11 Storage Administration Guide]
+* [https://documentation.suse.com/sles/15-GA/single-html/SLES-storage/#sec-filesystems-major-btrfs Major File Systems in Linux] chapter in the [https://documentation.suse.com/en-us/sles/15-GA/single-html/SLES-storage/ SLES 15 Storage Administration Guide]
 * [https://access.redhat.com/site/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Storage_Administration_Guide/ch-btrfs.html Btrfs] chapter in the [https://access.redhat.com/site/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Storage_Administration_Guide/ Red Hat Enterprise Linux 6 Storage Administration Guide]
 * [https://help.ubuntu.com/community/btrfs Btrfs Wiki page] on the [https://help.ubuntu.com/community Ubuntu Community Help Wiki]
 * [https://wiki.archlinux.org/index.php/Btrfs Btrfs Wiki page] on the [https://wiki.archlinux.org/ Arch Linux Wiki]
 * [http://www.funtoo.org/BTRFS_Fun BTRFS Fun Wiki page] on the [http://www.funtoo.org/ Funtoo Wiki]
 * [http://marc.merlins.org/perso/btrfs/post_2014-05-21_My-Btrfs-Talk-at-Linuxcon-JP-2014.html Marc MERLIN's Btrfs talk at Linuxcon JP 2014] which gives an overview of Btrfs, best practices, and its more interesting features.
-
-=== Project information/Contact ===
-
-* [[Changelog]] — history of changes in linux kernel wrt btrfs
-** [[Changelog#By_feature | features added by release]]
-* [[Contributors#Statistics_for_5.x_series|Development statistics]] — contributors, commits, lines
-* [[Glossary]]
-* Contact information:
-** [[Btrfs mailing list]]
-** [http://en.wikipedia.org/wiki/Internet_Relay_Chat IRC] on freenode.net in the channel [irc://irc.freenode.net:6667/btrfs #btrfs]
-** Reporting bugs:
-*** for kernel code see [[Problem_FAQ#How_do_I_report_bugs_and_issues.3F | the Bugzilla FAQ]], quick tip: use product ''File System'' and component ''btrfs''.
-*** for btrfs-progs it's either bugzilla or [https://github.com/kdave/btrfs-progs/issues/ github issues]
-*** for read-only documentation exported on wiki eg. manual pages as [https://github.com/kdave/btrfs-progs/issues/ github issues]
-* [[Project ideas]]
-* [[Project_ideas#Cleanup_projects|Cleanup ideas]]
-* [[Project_ideas#Userspace_tools_projects|Userspace tools projects]]
 
 === Manual pages ===
 
@@ -152,10 +124,14 @@ Links to Btrfs documentation of various Linux distributions:
 
 === Developer documentation ===
 
+* [[Development setup]] - how to build btrfs from sources and prepare a development environment
+
+* [https://github.com/btrfs/btrfs-dev-docs Developer documentation on Github] - collection of documents describing internals of BTRFS
 * [[Developer's FAQ]] — hints and answers for contributors and developers, general information about patch formatting
 * [[Development notes]] — notes, hints, checklists for specific implementation tasks (eg. adding new ioctls)
 * [[Code documentation]] — trees, source files, sample code for manipulating trees
 * [[Data Structures]] — detailed on-disk data structures
+* [[On-disk_Format | On-disk Format]] - Details of data structures written on disk
 * [[Trees]] — detailed in-tree representation of files and directories
 
 * [[Btrfs design]] — design notes (possibly out of date in places)
@@ -174,18 +150,100 @@ Links to Btrfs documentation of various Linux distributions:
 * Unmerged features
 ** In-band (write) time deduplication
 *** [[User notes on dedupe]] — User/tester notes for using in-band deduplication feature
+</div>
 
-==== Source code download ====
+| width="50%" style="vertical-align:top" |
 
-* [[Btrfs source repositories]]
-* [http://git.kernel.org/?p=linux/kernel/git/mason/linux-btrfs.git;a=tree;f=fs/btrfs;hb=HEAD Gitweb source viewer] of the main kernel repository
-* [https://git.kernel.org/cgit/linux/kernel/git/kdave/btrfs-progs.git/ Gitweb source viewer] of the userspace tools repository
+<!-- News Block -->
+<div style="margin:0; margin-top:10px; border:1px solid #dfdfdf; padding: 0em 1em 1em 1em; background-color:#f0e0d0; align:left;">
+== News ==
 
-=== Wiki editing ===
+''' IRC channel is moving to libera.chat '''
 
-The wiki contributions are welcome! Please create an account and wait for approval (this is a necessary spam protection). You can try to catch some of the wiki admins on [[#Project_information.2FContact|IRC]] and expedite the account creation.
+Due to changes in ownership of freenode.net, there's a new #btrfs channel at [https://libera.chat libera.chat]
 
+---> '''Everybody please leave freenode channel, your questions will be answered at libera.''' <---
+
+'''2021-05-26: the freenode #btrfs channel is not accessible anymore, muted, we have no ops there'''
+
+''' btrfs-progs v5.12.1 (May 2021) '''
+
+* build: fix missing symbols in libbtrfs
+* mkfs: check for minimal number of zones
+* check: fix warning about cache generation when free space tree is enabled
+* fix superblock write in zoned mode on 16K pages
+
+
+''' btrfs-progs v5.12 (May 2021) '''
+
+* libbtrfsutil: relicensed to LGPL v2.1+
+* mkfs: zoned mode support (kernel 5.12+)
+* fi df: show zone_unusable per profile type in zoned mode
+* fi usage: show total amount of zone_unusable
+* fi resize: fix message for exact size
+* image: fix warning and enlarge output file if necessary
+* core
+** refactor chunk allocator for more modes
+** implement zoned mode support: allocation and writes, sb log
+** crypto/hash refactoring and cleanups
+** refactoring and cleanups
+* other
+** test updates
+** CI updates
+**** travis-ci integration disabled
+**** docker images updated, more coverage
+*** incomplete build support for Android removed
+* doc updates
+** chattr mode m for 'NOCOMPRESS"
+** swapfile used from fstab
+** how to add a new export to libbtrfsutil
+** update status of mount options since 5.9
+
+''' linux v5.12 (Apr 2021) '''
+
+* features
+** [[Zoned|zoned mode]] (SMR/ZBC/ZNS friendly allocation mode), first working version with limitations
+* misc performance improvements
+** flushing and ticket space reservations
+** preemptive background flushing
+** less lock contention for delayed refs
+** dbench-like workload (+7% throughput, -20% latency)
+* core changes:
+** subpage block size support peparations
+* fixes
+** swapfile fixes (vs scrub, activation vs snapshot creation)
+
+</div>
+
+<!-- Changelog Block -->
+<div style="margin:0; margin-top:10px; border:1px solid #dfdfdf; padding: 0em 1em 1em 1em; background-color:#dfefdf; align:left; margin-top:10px">
+
+== Changelog ==
+
+Read about past releases in the separate [[Changelog]] page
+
+* [[Changelog#By_feature|features by kernel version]]
+* [[Changelog#By_version_.28linux_kernel.29|kernel changes for each release]]
+* [[Changelog#By_version_.28btrfs-progs.29|btrfs-progs changes for each release]]
+</div>
+
+<!-- Source code Block -->
+<div style="margin:0; margin-top:10px; border:1px solid #dfdfdf; padding: 0em 1em 1em 1em; background-color:#dfefdf; align:left; margin-top:10px">
+== Source code download ==
+
+[[Btrfs source repositories]] describes purpose and contents, here are a few quick links:
+
+* repository for kernel pull requests: git://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git ([https://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git gitweb])
+* kernel development repository: git://github.com/kdave/btrfs-devel.git ([https://github.com/kdave/btrfs-devel.git web access])
+* kernel development repository (mirror): git://gitlab.com/kdave/btrfs-devel.git ([https://gitlab.com/kdave/btrfs-devel.git web access])
+* btrfs-progs development and release repository: git://github.com/kdave/btrfs-progs.git ([https://github.com/kdave/btrfs-progs.git web access])
+* released tarballs of btrfs-progs: https://mirrors.edge.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/
+</div>
+
+<!-- Articles Block -->
+<div style="margin:0; margin-top:10px; border:1px solid #dfdfdf; padding: 0em 1em 1em 1em; background-color:#dfefdf; align:left; margin-top:10px">
 == Articles, presentations, podcasts ==
+* '''Video:''' [https://www.youtube.com/watch?v=U7gXR2L05IU Deploying Btrfs at Facebook Scale] by Josef Bacik at the Open Source Summit 2020 (2020-06-29)
 * '''Video:''' [https://youtu.be/qHalOdCZO9Q btrfs is awesome, except when it isn't] by Richard Brown at openSUSE Conferece 2018 (2018-05-25)
 * '''Video:''' [https://youtu.be/-m01x3gHNjg btrfs: The Best Filesystem You've Never Heard Of] by poiupoiu at PhreakNIC 21 (2017-11-3)
 * '''Video''' [https://youtu.be/iwNg_fusT9A TUT91782 Getting the most out of the btrfs filesystem by Thorsthen Kukuk and Jeff Mahoney] (SUSECON, 2017)
@@ -198,11 +256,10 @@ The wiki contributions are welcome! Please create an account and wait for approv
 * '''Article:''' [http://www.zdnet.com/btrfs-hands-on-an-extremely-cool-file-system-7000023734 Btrfs hands on: An extremely cool file system] (ZDNet, 2013/11)
 * '''Technical report:''' [http://domino.watson.ibm.com/library/cyberdig.nsf/1e4115aea78b6e7c85256b360066f0d4/9e29fdded06e5de785257c1d005e7e9e!OpenDocument Visualizating Block IO Workloads]. Section six shows a visual comparison of the IO patterns for BTRFS, XFS, and EXT4. Submitted to ACM Transactions on Storage, November 2013.
 * '''Paper:''' [http://dl.acm.org/citation.cfm?id=2501623 BTRFS: The Linux B-Tree Filesystem] describing the overall concepts and architecture, appeared in ACM Transactions on Storage, August 2013. Includes a detailed comparison with ZFS. There is a free ACM authorized link, from O. Rodeh's [https://sites.google.com/site/ohadrodehshomepage/research] page. Otherwise, try [http://domino.research.ibm.com/library/cyberdig.nsf/papers/6E1C5B6A1B6EDD9885257A38006B6130/$File/rj10501.pdf IBM Research link]
+</div>
 
-<!--
-== Benchmarking ==
--->
-
+<!-- Historical Block -->
+<div style="margin:0; margin-top:10px; border:1px solid #dfdfdf; padding: 0em 1em 1em 1em; background-color:#dfefdf; align:left; margin-top:10px">
 == Historical resources ==
 
 Links to old or obsolete documentation, articles. Kept for historical reasons. Stuff that's more than 3 years old.
@@ -221,8 +278,36 @@ Links to old or obsolete documentation, articles. Kept for historical reasons. S
 * '''Article:''' [http://www.linux.com/learn/tutorials/371623-weekend-project-get-started-with-btrfs Linux.com Weekend Project: Get Started with Btrfs] (2010-10-15)
 * '''Webcast:''' [https://event.on24.com/eventRegistration/EventLobbyServlet?target=registration.jsp&eventid=233161&sessionid=1&key=D0B1D3285FA444C5745C344A1C859CE0&partnerref=banner&sourcepage=register State of "Btrfs" File System for Linux by Chris Mason] (2010-08-26) [email registration and flash required]
 * '''Article:''' [http://lwn.net/Articles/342892/ Valerie Aurora: A short history of btrfs] (2009-07-22)
+</div>
 
-=== Benchmarks ===
-* '''2019-12''' [https://www.phoronix.com/scan.php?page=article&item=linux54-hdd-raid&num=1 Linux 5.4 EXT4 / XFS / Btrfs RAID Performance On Four HDDs]
-* '''2012-10''' [http://www.ilsistemista.net/index.php/linux-a-unix/36-btrfs-mount-options-and-virtual-machines-an-in-depth-look.html BTRFS, mount options and virtual machines: an in-depth look] (Ilsistemista.net)
-* '''2010-10''' [http://www.linux-mag.com/id/7876 One Billion Files] Btrfs performs well in comparison to other filesystems, when there are a billion files in the filesystem.
+<!-- Project Block -->
+<div style="margin:0; margin-top:10px; border:1px solid #dfdfdf; padding: 0em 1em 1em 1em; background-color:#dfefdf; align:left; margin-top:10px">
+== Project information/Contact ==
+
+* [[Changelog]] — history of changes in linux kernel wrt btrfs
+** [[Changelog#By_feature | features added by release]]
+* [[Contributors#Statistics_for_5.x_series|Development statistics]] — contributors, commits, lines
+* [[Glossary]]
+* Contact information:
+** [[Btrfs mailing list]]
+** [http://en.wikipedia.org/wiki/Internet_Relay_Chat IRC] on [https://libera.chat libera.chat] in the channel [irc://irc.libera.chat:6667/btrfs #btrfs]
+** Reporting bugs:
+*** for kernel code see [[Problem_FAQ#How_do_I_report_bugs_and_issues.3F | the Bugzilla FAQ]], quick tip: use product ''File System'' and component ''btrfs''.
+*** for btrfs-progs it's either bugzilla or [https://github.com/kdave/btrfs-progs/issues/ github issues]
+*** for read-only documentation exported on wiki eg. manual pages as [https://github.com/kdave/btrfs-progs/issues/ github issues]
+* [[Project ideas]]
+* [[Project_ideas#Cleanup_projects|Cleanup ideas]]
+* [[Project_ideas#Userspace_tools_projects|Userspace tools projects]]
+</div>
+
+<!-- Wiki Block -->
+<div style="margin:0; margin-top:10px; border:1px solid #dfdfdf; padding: 0em 1em 1em 1em; background-color:#dfefdf; align:left; margin-top:10px">
+
+== Wiki accounts, editing ==
+
+The wiki contributions are welcome! Please create an account and wait for approval (this is a necessary spam protection and we cannot remove it). You can try to catch some of the wiki admins on [[#Project_information.2FContact|IRC]] (or ping user 'kdave' in a query) to expedite the account creation.
+
+The registration requires full name for account but it's not mandatory from our perspective. The wiki User and User talk pages are created automatically but removed after account is approved. If you want to use the pages, create them manually, they won't be deleted.
+</div>
+
+|}

@@ -28,6 +28,14 @@ The differences depend on the actual data set and cannot be expressed by a singl
 
 Currently no, and with ZSTD, there are no further plans to add more. The [http://code.google.com/p/lz4/ LZ4] algorithm was considered but has not brought significant gains.
 
+re LZ4: patches apparently as old as 2012 were submitted by DSterba when lz4 was claiming "only" 1G/s [https://www.phoronix.com/scan.php?page=news_item&px=MTA1OTQ Phoronix].  Current ZSTD homepage recommends LZ4 for usecases benefiting from higher IO than zstd's practical drop-off. 
+
+Also of notable significance:
+ 
+ * improvements in more recent code enabling effective 128k+ block contiguous dictionaries 
+ * recent [https://en.wikipedia.org/wiki/Asymmetric_numeral_systems Asymmetric Numeral Systems developments] enabling even  more efficient decompression bias    
+ * that LZ4 is available in kernel and in at least 2 other vanilla VFS options presently(2021). 
+
 Snappy support (compresses slower than LZ0 but decompresses much faster) has also been [http://article.gmane.org/gmane.comp.file-systems.btrfs/15316 proposed].
 
 Some work has been done toward adding lzma (very slow, high compression) support as well.  Current status is "not considered anymore".
@@ -38,7 +46,7 @@ Yes. The compression algorithm is stored per-extent. Setting the compression met
 = How can I determine compressed size of a file? =
 compsize takes a list of files on a btrfs filesystem and measures used compression types and effective compression ratio: https://github.com/kilobyte/compsize
 
-There is a patch adding support fort that, currently it's not merged.  You can kind of guess at its compressed size by comparing the output from the <code>df</code> command before and after writing a file, if this is available to you.
+There is a patch adding support for that, currently it's not merged.  You can kind of guess at its compressed size by comparing the output from the <code>df</code> command before and after writing a file, if this is available to you.
 
 == Why does not <code>du</code> report the compressed size? ==
 Traditionally the UNIX/Linux filesystems did not support compression and there was no item in <code>stat</code> data structure allocated for a similar purpose. There's the file size, that denotes nominal file size independent of the actually allocated size on-disk. For that purpose, the <code>stat.st_blocks</code> item contains a value that corresponds to the number of blocks allocated, i.e. in case of [http://en.wikipedia.org/wiki/Sparse_file sparse files]. However, when a compression is involved, the actually allocated size may be smaller than nominal, although the file is not sparse.<br>
@@ -51,7 +59,7 @@ Not directly, but this is possible from a userspace tool without any special ker
 Yes. The utility [http://en.wikipedia.org/wiki/Chattr chattr] supports setting file attribute ''c'' that  marks the inode to compress newly written data. Setting the compression property on a file using <code>btrfs property set <file> compression <zlib|lzo|zstd></code> will '''force''' compression to be used on that file using the specified algorithm.
 
 = Can I disable compression on a file? =
-It is possible to disable compression of new extents on a file using the <code>btrfs property set <file> compression ""</code> command. This will set the "no compression" flag on the file and newly written extents will not be compressed until the flag is cleared either by <code>chattr +c</code> or by using the compression property to specify an algorithm. Already written extents will not be rewritten.
+It is possible to disable compression of new extents on a file using the <code>btrfs property set <file> compression ""</code> command. This will set the "no compression" flag on the file and newly written extents will not be compressed until the flag is cleared either by <code>chattr +c</code> or by using the compression property to specify an algorithm. The flag can be removed with <code>chattr -c</code>. Already written extents will not be rewritten.
 
 = Can I set compression per-subvolume? =
 Currently no, this is planned. You can simulate this by enabling compression on the subvolume directory and the files/directories will inherit the compression flag.

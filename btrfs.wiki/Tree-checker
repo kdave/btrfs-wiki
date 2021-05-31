@@ -3,15 +3,15 @@ Starting from kernel version 4.18, btrfs has introduced a new verification layer
 
 The design principle is, detect and reject, with comprehensive check.
 
-- '''Detect'''
+* '''Detect'''
 : For read time tree-checker, the check happens when btrfs reads tree block from disk, after basic checks like csum, tree-checker verifies the content.
 : For write time tree-checker, the check happens before btrfs writes tree block to disk, after csum calculation, tree-checker verifies the content.
 
-- '''Reject'''
+* '''Reject'''
 : For read time tree-checker, it rejects the tree block just as it doesn't pass csum, thus btrfs will still try to read other mirrors.
 : For write time tree-checker, it rejects the tree block as it fails to reach disk. This will cause the current transaction to be aborted, so the fs is not further corrupted.
 
-- '''Comprehensive check'''
+* '''Comprehensive check'''
 : In theory, tree-checker verifies every member of on-disk data.
 : Although sometimes compromise is made to accept some older kernel, but if older behavior breaks the definition of on-disk format,
 : tree-checker will reject them.
@@ -30,11 +30,11 @@ One example is <code>check_block_group_item()</code> of <code>fs/btrfs/tree-chec
 : For block group item it's fixed size, so everything else is invalid
 
 * block group item
-:- chunk objectid
+:* chunk objectid
 ::Fixed value
-:- used bytes
+:* used bytes
 :: Should never exceed block group size
-:- flags
+:* flags
 :: Only certain combination is allowed
 
 By such comprehensive check, we ensure every tree block (<code>struct extent_buffer</code>) has valid structure and data.
@@ -74,14 +74,14 @@ Furthermore, for kernel newer than v5.2, it will include the following message t
 === How to handle such error ===
 Please report to btrfs mail list <linux-btrfs@vger.kernel.org> first.
 
-- If it's write time corruption
+* If it's write time corruption
 : Normally this means runtime memory corruption, either memory is unreliable or some other kernel memory corruption is causing the problem.
 : Reporting to the mail list will help end user to pin down the cause by some extent.
 : But for write time corruption, since the corruption is prevented, the fs is not further corrupted. But a <code>btrfs check --readonly</code> is still recommended to make sure the fs is OK.
 
-- If it's read time corruption
+* If it's read time corruption
 : This needs to be determined case by case
 : If it's false alert, developers would fix it and before that, use an older kernel should be OK.
 : If it's really a corruption, depends on the solution provided, either user need to salvage the data from the corrupted image either by mounting it RO, or "btrfs-restore".
 
-Please *NOT* use <code>btrfs check --repair</code> until instructed by a developer.
+Please do *NOT* use <code>btrfs check --repair</code> until instructed by a developer.

@@ -48,6 +48,60 @@ It is <em>quite useful</em> to <tt>balance</tt> periodically any Btrfs volume su
 
 '''Q''' - what kernel threads do this operation?
 
+=== With Striped Profiles ===
+
+After adding a device to a raid0/5/6/10 volume, only newly written data will be striped across all drives in the array, while existing data will remain striped across the originally present devices.
+As an example, if you wrote 10GiB to two devices in raid0, added another device, and then wrote an additional 100GiB, you would end up with (approx)
+ :~$ btrfs fi show <path>
+     devid    1 size 100.00GiB used 38.33GiB path /dev/sda1
+     devid    2 size 100.00GiB used 38.33GiB path /dev/sdb1
+     devid    3 size 100.00GiB used 33.33GiB path /dev/sdc1
+
+It's not immediately clear how much data is striped across all 3 devices, and how much is striped across only 2 (especially in real-world scenarios, where multiple add/remove/resize operations may have taken place over multiple months). Note how in the command below, despite the full 38.33GiB using the the same profile (RAID0), there are 2 separate entries. This means each of the two entries are striped across a different number of devices.
+ :~$ btrfs device usage <path>
+     /dev/sda1, ID: 1
+        Data,RAID0:            33.33GiB
+        Data,RAID0:            5.00GiB
+        ...
+     /dev/sdb1, ID: 2
+        Data,RAID0:            33.33GiB
+        Data,RAID0:            5.00GiB
+        ...
+     /dev/sdc1, ID: 3
+        Data,RAID0:            33.33GiB
+        ...
+
+You can view how many devices each chunk is striped across using the commands below:
+ # Data + Metadata Chunks
+ btrfs inspect-internal dump-tree -d /dev/<device> | grep num_stripes
+
+ # Data Only Chunks
+ btrfs inspect-internal dump-tree -d /dev/<device> | grep "type DATA" -A2 | grep num_stripes
+
+By using the steps below, we can balance chunks only if they aren't properly striped across all devices, making the balancing process much faster. In our above example, this would allow us to only balance the 10GiB which required it, instead of the full 110GiB. We first find any chunks striped across only 2 devices (using <code>grep "num_stripes 2"</code>). Then we make note of the addresses where they are stored, and run a balance only within that range. Make sure to check your math (using the "length" value of the chunks) to ensure the address range is contiguous, otherwise you may end up balancing chunks you don't need to.
+
+ # Find the chunks with only 2 stripes
+ :~$ btrfs inspect-internal dump-tree -d /dev/<device> | grep "num_stripes 2" -B3
+     item 2 key (FIRST_CHUNK_TREE CHUNK_ITEM 9236593770496) itemoff 15719 itemsize 368
+         length 1073741824 owner 2 stripe_len 65536 type DATA|RAID0
+         io_align 65536 io_width 65536 sector_size 4096
+         num_stripes 2 sub_stripes 1
+ --
+     item 3 key (FIRST_CHUNK_TREE CHUNK_ITEM 9245183705088) itemoff 15351 itemsize 368
+         length 1073741824 owner 2 stripe_len 65536 type DATA|RAID0
+         io_align 65536 io_width 65536 sector_size 4096
+         num_stripes 2 sub_stripes 1
+ --
+ <Etc Etc>
+ --
+     item 10 key (FIRST_CHUNK_TREE CHUNK_ITEM 9305313247232) itemoff 12775 itemsize 368
+         length 1073741824 owner 2 stripe_len 65536 type DATA|RAID0
+         io_align 65536 io_width 65536 sector_size 4096
+         num_stripes 2 sub_stripes 1
+ 
+ # Balance the range
+ :~$ btrfs balance start -dvrange=9236593770496..9305313247232 /media/user/<volume>
+
 = Copy on Write (CoW) =
 
 * The CoW operation is used on <u>all</u> writes to the filesystem (unless turned off, see below).

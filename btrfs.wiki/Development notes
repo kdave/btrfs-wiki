@@ -76,10 +76,6 @@ There are several ways how to react to the unexpected conditions:
 * WARN_ON -- light check that is visible in the log and allows the code to continue but the reasons must be investigated
 * BUG_ON -- last resort, checks condition that 'must never happen' and continuing would cause more harm than the instant crash; code should always try to avoid using it, but there are cases when sanity and invariant checks are done in advance
 
-== BCP ==
-
-* do not use <tt>spin_is_locked</tt> but <tt>lockdep_assert_held</tt>
-
 == Error injection using eBPF ==
 
 Functions can be annotated to enable error injection using the eBPF scripts. See eg. <tt>disk-io.c:open_ctree</tt>. For btrfs-specific injection, the annotation is ALLOW_ERROR_INJECTION, but beware that this only overrides the return value and this can leak memory or other resources. For error injection to generic helpers (eg. memory allocation), you cau se something like <tt>bcc/tools/inject.py kmalloc btrfs_alloc_device() -P 0.001</tt>
@@ -92,8 +88,107 @@ Resources:
 
 Before applying recommendations from this sections, please make sure you're familiar with the [https://www.kernel.org/doc/html/latest/process/coding-style.html|generic kernel coding style guide].
 
-* comment new data structures
+The purpose of coding style is to maintain unified and consistent look & feel of the patches and code, keeping distractions to minimum which decreases cognitive load and allows focus on the important things. Coding style is not only where to put whitespace or curly brackets but also coding patterns with meaning that is established and understood in the developer group. The code in linux kernel is maintained for a long period of time and maintainability is of crucial importance. This means it does take time to write good code, with attention to detail. Once written the code could stay unchanged for years but will be read many times. [https://simpleprogrammer.com/maintaining-code/ Read more].
+
+== Patches ==
+
+* for patch subject use "btrfs:" followed by a lowercase
+* read the patch again and fix all typos and grammar
+* size units should use short form K/M/G/T or IEC form KiB/MiB/GiB
+* don't write references to parameters to subject (like removing @pointer)
+* do not end subject with a dot '.'
+* parts of btrfs that could have a subject prefix to point to a specific subsystem
+** scrub, tests, integrity-checker, tree-checker, discard, locking, sysfs, raid56, qgroup, compression, send, ioctl
+* additional information
+** if there's a stack trace relevant for the patch, add it ther (lockdep, crash, warning)
+** steps to reproduce a bug (that will also get turned to a proper fstests case)
+** sample output before/after if it could have impact on userspace
+** ''pahole'' output if structure is being reorganized and optimized
+
+== Function declarations ==
+
+* avoid prototypes for static functions, order them in new code in a way that does not need it
+** but don't move static functions just to get rid of the prototype
+* exported functions have btrfs_ prefix
+* do not use functions with double underscore, there's only a few valid uses of that, namely when ''__function'' is doing the core of the work with looser checks, no locks or more parameters than ''function''
+* function type and name are on the same line, if this is too long, the parameters continue on the next line (indented)
+* 'static inline' functions should be small (measured by their resulting binary size)
+* conditional definitions should follow the style below, where the full function body is in .c
+  #ifdef CONFIG_BTRFS_DEBUG
+  void btrfs_assert_everything_is_fine(void *ptr);
+  #else
+  void btrfs_assert_everything_is_fine(void *ptr) { }
+  #endif
+
+== Headers ==
+
+* leave one newline before #endif in headers
+
+== Comments ==
+
+* function comment goes to the .c file, not the header
+** kdoc style is recommended but the exact syntax is not mandated and we're using only subset of the formatting
+** the first line (mandatory): contains a brief description of what the function does and should provide a summary information
+*** do write in the imperative style "Iterate all pages and clear some bits"
+*** don't write "This function is a helper to ...", "This is used to ..."
+** parameter description (optional):
+*** each line describes the parameter
+*** the list needs to be in the same order as for the function 
+*** the list needs to be complete
+*** trivial parameters don't need to be explained, eg. fs_info is clear so the description could be 'the filesystem'
+*** context of the parameters matters a lot in some cases and cannot be inferred from the name, then it should be documented
+  /**
+   * Look for blocks in the given offset.
+   * 
+   * @fs_info:    trivial parameters should be in the list but with some short description
+   * @offset:     describe the context of the argument, eg. offset to page or inode ...
+   *
+   * Long description comes here if necessary.
+   *
+   * Return value semantics if it's not obvious
+   */
 * comment new enum/define values, brief description or pointers to the code that uses them
+* comment new data structures, their purpose and context of use
+* do not put struct member comments on the same line, put it on the line before and do not trim/abbreviate the text
+* comment text that fits on one line can use the ''/* text */'' format, slight overflow of 80 chars is ok
+
+== Misc ==
+
+* fix spelling, grammar and formatting of comments that get moved or changed
+* fix coding style in code that's only moved
+* one newline between functions
+
+== Locking ==
+
+* do not use <tt>spin_is_locked</tt> but <tt>lockdep_assert_held</tt>
+* do not use <tt>assert_spin_locked</tt> without reading it's semantics (it does not check if the caller hold the lock)
+* use <tt>lockdep_assert_held</tt> and its friends for lock assertions
+* add lock assertions to functions called deep in the call chain
+
+== Code ==
+
+* default function return value is ''int ret'', temporary return values should be named like ''ret2'' etc
+* structure initializers should use ''{ 0 }''
+* do not use ''short'' type if possible, if it fits to char/u8 use it instead, or plain int
+
+== Output ==
+
+* when dumping a lot of data after an error, consider what will remain visible last
+** in case of <tt>btrfs_print_leaf</tt>, print the specific error message after that
+
+== Expressions, operators ==
+
+* spaces around binary operators, no spaces for unary operators
+* extra braces around expressions that might be harder to understand wrt precedence are fine (logical and/or, shifts with other operations)
+** ''a * b + c'', ''(a << b) + c'', ''(a % b) + c''
+* 64bit division is not allowed, either avoid it completely, or use bit shifts or use div_u64 helpers
+* do not use chained assignments: no ''a = b = c;''
+
+== Variable declarations, parameters ==
+
+* declaration block in a function should do only simple initializations (pointers, constants); nothing that would require error handling or has non-trivial sideefects
+* use ''const'' extensively
+* add temporary variable to store a value if it's used multiple times in the function, or if reading the value needs to chase a long pointer chain
 
 = Kernel config options =
 
@@ -120,8 +215,11 @@ Please refer to the option documentation for further details.
 ** CONFIG_DEBUG_LIST
 ** CONFIG_BUG_ON_DATA_CORRUPTION
 * btrfs
-** '''CONFIG_BTRFS_DEBUG''', '''CONFIG_BTRFS_ASSERT''', '''CONFIG_BTRFS_FS_RUN_SANITY_TESTS'''
-** '''CONFIG_BTRFS_FS_CHECK_INTEGRITY'''
+** '''CONFIG_BTRFS_DEBUG'''
+** '''CONFIG_BTRFS_ASSERT'''
+** '''CONFIG_BTRFS_FS_RUN_SANITY_TESTS''' -- basic tests on module load
+** '''CONFIG_BTRFS_FS_CHECK_INTEGRITY''' -- block integrity checker enabled by mount options
+** '''CONFIG_BTRFS_FS_REF_VERIFY''' -- additional checks for block references
 * locking
 ** CONFIG_DEBUG_SPINLOCK, CONFIG_DEBUG_MUTEXES
 ** CONFIG_DEBUG_LOCK_ALLOC
@@ -134,6 +232,7 @@ Please refer to the option documentation for further details.
 ** CONFIG_STACKTRACE
 ** CONFIG_KASAN -- address sanitizer
 ** CONFIG_UBSAN -- undefined behaviour sanitizer
+** CONFIG_KCSAN -- concurrency checker
 * verbose reporting
 ** CONFIG_DEBUG_BUGVERBOSE
 * tracing
@@ -153,9 +252,11 @@ The fstests suite has very few "hard" requirements and will succeed without actu
 * <code>CONFIG_DM_DELAY=m</code> or <code>y</code>
 * <code>CONFIG_DM_ERROR=m</code> or <code>y</code>
 * <code>CONFIG_DM_LOG_WRITES=m</code> or <code>y</code>
+* <code>CONFIG_DM_DUST=m</code> or <code>y</code>
 * <code>CONFIG_BLK_DEV_LOOP=m</code> or <code>y</code>
 * <code>CONFIG_EXT4_FS=m</code> or <code>y</code>
 * <code>CONFIG_SCSI_DEBUG=m</code>
+* <code>CONFIG_BLK_DEV_ZONED=y</code> for zoned mode test coverage
 
 == Kernel config options for better bug reports ==
 

@@ -43,9 +43,12 @@ implementation.
 
 === Better data balancing over multiple devices for raid1/10 (read) ===
 {{project
-|text=Currently (4.15) the mirrors are selected based on process id of the ''endio-metadata'' worker threads, this may lead to a pathological case when only one mirror is always used (with more common case of uneven mirror use, not that bad in practice).
+|who=[[User:Michal Rostecki|Michal Rostecki]]
+|patch=[https://patchwork.kernel.org/project/linux-btrfs/list/?series=430965 RFC v1]
+|text=Currently (5.11) the mirrors are selected based on process id of the ''endio-metadata'' worker threads, this may lead to a pathological case when only one mirror is always used (with more common case of uneven mirror use, not that bad in practice).
 <br>[http://www.spinics.net/lists/linux-btrfs/msg12745.html First attempt] with random mirror selection proved to be very wrong, the heuristic has to be improved ([http://article.gmane.org/gmane.comp.file-systems.btrfs/17985 more comments]), possibly in connection with readahead infrastructure within btrfs.
 <br>[https://patchwork.kernel.org/patch/10137909 Second attempt] with balance based on queue size of device.
+<br>[https://patchwork.kernel.org/project/linux-btrfs/list/?series=430965 Third attempt] based on queue depth of devices
 }}
 
 === dm_cache or bcache like cache e.g. on a SSD ===
@@ -146,18 +149,6 @@ It is possible to fix the allocation logic so it is more even while (almost almo
 
 
 == Core updates ==
-
-=== Track link count for directories ===
-
-{{project
-|who=Praveen
-|text=The link count for directories is traditionally used to count the number of subdirectores iff the link count is >= 2. Btrfs sets this to 1 and does not track the link count at all. The link count could be used by some utilities to do optimizations when traversing the file hierarchy (at least <tt>find</tt> does that).
-
-It seems that the link count can be tracked like the other filesystems do. This will be even backward compatible:
-
-* for new directories and subvolumes , set the initial link count to 2
-* a mkdir/rmdir/move/snapshot will update the link count accordingly iff the current link count is not 1
-}}
 
 === Btree lock contention ===
 {{project
@@ -549,7 +540,12 @@ But these still allow a single large subvolume to span huge amounts of data. We 
 The key range restriction would consist of a new btree that provided very coarse grained indexing of chunk allocations against key ranges. This could provide hints to fsck in order to limit consistency checking.
 }}
 
+=== Scrub to compare all data copies ===
+{{project
+|text=Currently scrub only checks that data matches the checksums independently for each device.
 
+This is insufficient for ensuring that multiple redundant copies of all data exist. There should be a check that all file data exists on all devices, and that the data is the same (not just that the checksums are the same).
+}}
 
 == Feature parity, upstream changes ==
 
@@ -747,6 +743,8 @@ The functions should be tagged with <code>noinline_for_stack</code>.
 |patch=patch in development
 |text=rcu-string.h implements helpers and wrappers around RCU-friendly strings. This is a generic piece of code and should live in the generic library (linux.git/lib/). The task involves documenting API and pushing through lkml and updating according to the feedback.
 }}
+
+== Feature deprecation ==
 
 = '''Unbound or ongoing projects''' =
 
@@ -1044,4 +1042,17 @@ http://thread.gmane.org/gmane.comp.file-systems.btrfs/27452
 See also [http://www.bestbits.at/richacl/ RichACLs project site].
 
 '''Note: the richacl feature is unlikely to get merged'''
+}}
+
+
+=== Track link count for directories ===
+{{project
+|text=The link count for directories is traditionally used to count the number of subdirectores iff the link count is >= 2. Btrfs sets this to 1 and does not track the link count at all. The link count could be used by some utilities to do optimizations when traversing the file hierarchy (at least <tt>find</tt> does that).
+
+It seems that the link count can be tracked like the other filesystems do. This will be even backward compatible:
+
+* for new directories and subvolumes , set the initial link count to 2
+* a mkdir/rmdir/move/snapshot will update the link count accordingly iff the current link count is not 1
+
+'''Rejected''': implementing that brings backward compatibility issues that are not easy to resolve compared to the overall benefit of the link tracking.
 }}

@@ -2,55 +2,75 @@ Due to its copy-on-write nature, BTRFS is able to copy files (eg with <code>cp -
 
 Deduplication takes this a step further, by actively identifying when the same data has been written twice, and retrospectively combining them into an extent with the same copy-on-write semantics.
 
-= Batch =
+= Out of band / batch deduplication =
 
 Out of band / batch deduplication is deduplication done outside of the write path.  We've sometimes called it [http://www.ssrc.ucsc.edu/pub/jones-ssrctr-11-03.html offline] deduplication, but that can confuse people: btrfs dedup involves the kernel and always happens on ''mounted'' filesystems. To use out-of-band deduplication, you run a tool which searches your filesystem for identical blocks, and then deduplicates them.
 
-== Dedicated btrfs deduplicators ==
+Deduplication in BTRFS is mainly supported by [https://man7.org/linux/man-pages/man2/ioctl_fideduperange.2.html ioctl_fideduperange(2)], a compare-and-share operation, although some other tools may use the clone-oriented APIs instead.
 
-'''[https://github.com/markfasheh/duperemove duperemove]''' finds and lists duplicate extents, and optionally will submit the duplicates to the kernel for deduplication.  From the [https://github.com/markfasheh/duperemove/blob/master/README.md README]:
+There are multiple tools that take different approaches to deduplication, offer additional features or make trade-offs. The following table lists tools that are known to be up-to-date, maintained and widely used. There are more tools but not all of them meet the criteria and some of them [[#Historical resources|have been removed]]. The projects are 3rd party, please check their status before you decide to use them.
 
-<blockquote>
-Duperemove is a simple tool for finding duplicated extents and
-submitting them for deduplication. When given a list of files it will
-hash their contents on a block by block basis and compare those hashes
-to each other, finding and categorizing blocks that match each
-other. When given the -d option, duperemove will submit those
-extents for deduplication using the Linux kernel extent-same ioctl.
-</blockquote>
+{| class=wikitable
+|+Batch deduplicators for BTRFS
+! Name !! File-based !! Block-based !! Works on other filesystems !! Incremental !! Notes
+|-
+|[https://github.com/markfasheh/duperemove duperemove] || {{Yes}} || {{No}} || {{Yes}} || {{Yes}} || Sqlite database for csum. Runs by extent boundary by default, but has an option to more carefully compare.
+|-
+|[https://github.com/Zygo/bees bees] || {{No}} || {{Yes}} || {{No}} || {{Yes}} || Runs as a daemon. Very light database, useful for large colder storages like backup servers. Uses SEARCH_V2 and LOGICAL_INO. Has workarounds for kernel bugs.
+|-
+| [https://github.com/lakshmipathi/dduper dduper] || {{Yes}} || {{Yes}} || {{No}} || {{Yes}} || Uses built-in BTRFS csum-tree, so is extremely fast and lightweight (13.8 seconds for identical 10GB files). Requires BTRFS-PROGS patch for csum access.
+|}
 
-'''[https://github.com/g2p/bedup bedup]''' implements incremental whole-file batch deduplication for Btrfs.  It integrates deeply with btrfs so that scans are incremental and low-impact.  It uses the btrfs clone ioctl to do the deduplication, rather than the extent-same ioctl, due to concerns regarding kernel crashes with the latter as of kernel 4.2. Appears to be unmaintained and is [https://github.com/g2p/bedup/issues/101 broken on 5.x kernels].
-
-'''[https://github.com/wellbehavedsoftware/btrfs-dedupe btrfs-dedupe]''' is a Rust library which implements incremental whole-file batch deduplication for Btrfs. It is written in Rust for safety and performance and uses the kernel ioctls to offload the actual deduplication to the kernel for safety. It maintains state for efficient regular operation, scanning file metadata on every run, hashing contents for files with new metadata, hashing file extent maps for files with new contents, and performing defragmentation and deduplication of files with matching content but non-matching extent maps.
-
-'''[https://github.com/Zygo/bees bees]''' block-oriented userspace dedup agent, designed to avoid scalability problems on large filesystems. Work as a daemon, not store any information about filesystem structure (only store some extent info and hashes in simple mmap'ed db), retrieves such information on demand through btrfs SEARCH_V2 and LOGICAL_INO ioctls. Very useful on large not write heavy storages, like backup servers. See more info at Bees GitHub.
-
-'''[https://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg79853.html dduper]''' is a block-level off-line deduplication tool. It relies on built-in BTRFS csum-tree. dduper avoids CPU intense operation like fetching each file data block and then computing its checksum by reusing BTRFS csum-tree. It is pretty fast, for example dduper took 13.8 seconds to dedupe two 10GB files with same data. Currently it uses ioctl_ficlonerange call for deduplication process, future plans include support for ioctl_fideduperange
+Legend:
+* '''File based:''' the tool takes a list of files and deduplicates blocks only from that
+* '''Block based:''' the tool enumerates blocks and looks for duplicates
+* '''Works on other filesystems:''' some other filesystems (XFS, OCFS2) support the deduplication ioctl, the tool can make use of it but may lack 
 
 == Duplicate file finders with btrfs support ==
 
 While any duplicate file finder utility (e.g. [https://github.com/adrianlopezroche/fdupes fdupes], [http://www.pixelbeat.org/fslint/ fslint], etc) can find files for deduplication using another tool (eg duperemove), the following duplicate file finders have build-in btrfs deduplication capabilities:
 
-'''[https://rmlint.readthedocs.io/en/latest/ rmlint]''' is a duplicate file finder with btrfs support.  To find and reflink duplicate files:
+* '''[https://rmlint.readthedocs.io/en/latest/ rmlint]''' is a duplicate file finder with btrfs support.  To find and reflink duplicate files:
 
- $ rmlint -T df --config=sh:handler=clone [paths...]   # finds duplicates under paths and creates a batch file 'rmlint.sh' for post-processing
-                                                       # ...review contents of rmlint.sh, then:
- $ ./rmlint.sh                                         # clones/reflinks duplicates (if possible)
+ $ rmlint --types="duplicates" --config=sh:handler=clone [paths...]
 
-Note if reflinking read-only snapshots, rmlint.sh must be run with -r option and with root priveleges, eg:
+[https://rmlint.readthedocs.io/en/latest/rmlint.1.html#general-options This command finds duplicate files] under <code>paths</code> and creates a batch file <code>rmlint.sh</code> for post-processing. <code>handler=clone</code> uses [https://man7.org/linux/man-pages/man2/ioctl_fideduperange.2.html FIDEDUPERANGE], which [https://unix.stackexchange.com/a/428253/19012 maintains metadata of each file (instead of deleting one and recreating it as a reflink)].
+
+After reviewing the contents of <code>rmlint.sh</code>, run it to clone/reflink the duplicates (if possible):
+
+ $ ./rmlint.sh
+
+Note if reflinking read-only snapshots, rmlint.sh must be run with -r option and with root privileges, e.g.:
 
  $ sudo ./rmlint.sh -r
 
-'''[https://github.com/jbruchon/jdupes jdupes]''' is a fork of '''fdupes''' which includes support for BTRFS deduplication when it identifies duplicate files.
+* '''[https://github.com/jbruchon/jdupes jdupes]''' is a fork of '''fdupes''' which includes support for BTRFS deduplication when it identifies duplicate files.
 
 == Other tools ==
 
 Now that the ioctl has been lifted to the VFS layer, rather than being a BTRFS-specific function, deduplication functionality can be implemented in a filesystem-independent way.
 
-As such, '''[http://man7.org/linux/man-pages/man8/xfs_io.8.html xfs_io]''', is able to perform deduplication on a BTRFS file system, and provides a simple way to invoke the deduplication function from the command line, on any filesystem which supports the ioctl.
+As such, '''[http://man7.org/linux/man-pages/man8/xfs_io.8.html xfs_io(8)]''' is able to perform deduplication on a BTRFS file system, and provides a simple way to invoke the deduplication function from the command line, on any filesystem which supports the ioctl.
 
-= Inband =
+Example for deduplicating two identical files:
 
-Inband / synchronous / inline deduplication is deduplication done in the write path, so it happens as data is written to the filesystem. This typically requires large amounts of RAM to store the lookup table of known block hashes. [https://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg82003.html Patches] are currently being worked on and have been in development since at least 2014. See the [[User notes on dedupe]] page for more details.
+<pre>
+# NOTE: xfs_io commands strictly use a single space for tokenization. No quoting is allowed.
+if cmp -s file1 file2; then
+  size=$(stat --format="%s" -- file1)
+  xfs_io -c "dedupe -C file2 0 0 $size" file1
+fi
+</pre>
+
+== Historical resources ==
+
+Over the years, the deduplication tools emerged and then went unmaintained or haven't kept up with kernel updates. They may be still useful for research purposed but be aware that they're '''not recommended''' to be used today.
+
+* [https://github.com/wellbehavedsoftware/btrfs-dedupe btrfs-dedupe] -- (last update 2017) written in rust, maintains state with metadata
+* [https://github.com/g2p/bedup bedup] -- (last update 2016) uses the clone ioctl due to concerns regarding kernel crashes with the latter as of kernel 4.2, appears to be unmaintained and is [https://github.com/g2p/bedup/issues/101 broken on 5.x kernels]
+
+= In-band deduplication =
+
+Inband / synchronous / inline deduplication is deduplication done in the write path, so it happens as data is written to the filesystem. This typically requires large amounts of RAM to store the lookup table of known block hashes and adds IO overhead to store the hashes. The feature is not actively developed, some [https://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg82003.html patches] patches have been posted. See the [[User notes on dedupe]] page for more details.
 
 [[Category: Features]]

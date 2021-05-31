@@ -31,11 +31,11 @@ to push it for mainline.<br/>
 
 === Software requirement for dedupe ===
 * Kernel support
-*: Can be fetched from https://github.com/littleroad/linux.git dedupe_latest
+*: Can be fetched from [https://github.com/littleroad/linux/tree/dedupe_latest https://github.com/littleroad/linux.git dedupe_latest]
 * Kernel config
 *: Need '''CONFIG_BTRFS_DEBUG'''
 * Btrfs-progs support
-*: Can be fetched from https://github.com/littleroad/btrfs-progs.git dedupe_latest
+*: Can be fetched from [https://github.com/littleroad/btrfs-progs/tree/dedupe_latest https://github.com/littleroad/btrfs-progs.git dedupe_latest]
 
 === Write pattern requirement for dedupe ===
 * Data copy-on-write
@@ -69,7 +69,7 @@ backend.
 Memory limit will be 32K hashes.
 
 For more info about the dedupe parameters and their impact, check
-[[#Detail Notes]] section and '''btrfs-dedupe'''(5) man page.
+[[#Detail Notes]] section and [https://github.com/littleroad/btrfs-progs/blob/dedupe_latest/Documentation/btrfs-dedupe-inband.asciidoc '''btrfs-dedupe-inband'''(8)] man page.
 
 === Disable dedupe ===
  # btrfs dedupe disable <mnt_point>
@@ -168,11 +168,12 @@ trigger dedupe to calculate hash immediately.
 
 === Dedupe block size ===
 Dedupe is done in dedupe block size.
-This means, only continuous data whose length is larger than or equal to dedupe
+This means only continuous data whose length is larger than or equal to dedupe
 block size will go through dedupe routine.
 
-And dedupe write will extent size to be the same as dedupe block size,
-which is much smaller than normal file extent size.
+Dedupe write also forces the extent size to be the same as dedupe block size,
+which is much smaller than normal file extent size (128M on creation or 32M
+for [[Manpage/btrfs-filesystem|defragmenting]]).
 This behavior may cause a lot of small extents, leading to large metadata
 and long mount time.
 
@@ -196,6 +197,10 @@ Will cause the following extent layout:
 Only Extent A will go through dedupe routine, Extent B will go through
 normal write routine.
 
+The block size should be a multiple of the underlying block size of btrfs
+(16K by default). A larger blocksize is faster, but results in less dedupe
+power. You are recommended to match the blocksize to your specific workload.
+
 === Hash and memory limit ===
 For in-memory backend, one can set either memory usage limit or number
 of hash limit.
@@ -207,11 +212,12 @@ The hash drop follows last-recent-use(LRU) behavior.
 Newly added hash or hash search hit will cause the hash to be the
 newest hash of the hash pool.
 
-   
 And the memory usage of dedupe grows with the dedupe hash pool size.
 Btrfs will not pre-allocating memory for dedupe at the enabling time.
 So it's possible to set a very huge dedupe pool size, as long as
 OOM is not triggered.
+
+The dedupe hash is not shared with the checksum hash.
 
 === Global hash pool  ===
 At the time of writing (wang_dedupe_20160719 branch), the dedupe hash
@@ -235,3 +241,5 @@ The bug is already fixed in v4.8 mainline.
 Much like fiemap soft lockup, send will hang and cause soft lockup.
 And if the system doesn't have enough RAM, it will also trigger OOM.
 Increase swap won't help, as the memory btrfs is allocating is not swapable.
+
+Kernel 5.2-rc1 [https://github.com/Zygo/bees/blob/master/docs/btrfs-kernel.md seems to have fixed this].

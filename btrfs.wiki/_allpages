@@ -6,9 +6,7 @@ Btree Items
 Btrees
 Btrfs(command)
 Btrfs-convert
-Btrfs-debug-tree
 Btrfs-image
-Btrfs-show-blocks
 Btrfs-zero-log
 Btrfs design
 Btrfs mailing list
@@ -29,6 +27,7 @@ Design notes on Send/Receive
 Design notes on dedupe
 Developer's FAQ
 Development notes
+Development setup
 ENOSPC
 FAQ
 Feature:Skinny Metadata
@@ -79,7 +78,6 @@ Resolving Extent Backrefs
 Restore
 Scrub corruption cases
 Seed-device
-Show-blocks
 SnapBtr
 Status
 SysadminGuide
@@ -89,3 +87,4 @@ UseCases
 User notes on dedupe
 Using Btrfs with Multiple Devices
 Writing patch for btrfs
+Zoned

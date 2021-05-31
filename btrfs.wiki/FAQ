@@ -1,10 +1,10 @@
 = Important Questions =
 
-== I have a problem with my btrfs filesystem! ==
+== I have a problem with my Btrfs filesystem! ==
 
 See the [[Problem FAQ]] for commonly-encountered problems and solutions.
 
-If that page doesn't help you, try asking on [irc://irc.freenode.net:6667/btrfs IRC] or the [[Btrfs mailing list]].
+If that page doesn't help you, try asking on [irc://irc.libera.chat:6667/btrfs IRC] or the [[Btrfs mailing list]].
 
 Explicitly said: please '''report bugs and issues to the mailing list''' (you are ''not'' required to subscribe).
 
@@ -77,7 +77,7 @@ The "Data" field in btrfs fi df fills up and doesn't become larger, and then the
 
 The bug would only happen after some time, so I was able to move a lot of data onto the fs before btrfs crashed, and then it was just a case of unmounting and mounting again.
 
-== Are btrfs changes backported to stable kernel releases? ==
+== Are Btrfs changes backported to stable kernel releases? ==
 
 Yes, the obviously critical fixes get to the latest stable kernel and sometimes get also applied to the long-term branches. Please note that there's yet no one appointed and submitting the patches is done on voluntary basis or when the maintainer(s) do that.
 
@@ -120,7 +120,7 @@ By default the file system is mounted with relatime flag, which means it must up
 
 You need to mount file system with noatime flag to prevent this from happening.
 
-More details are in [[Mount_options#Performance]]
+More details are in [[Manpage/btrfs(5)#NOTES_ON_GENERIC_MOUNT_OPTIONS]]
 
 == What are the crash guarantees of rename? ==
 
@@ -236,7 +236,7 @@ There are two ways how to apply the discard:
 
 The ''fstrim'' way is more flexible as it allows to apply trim on a specific block range, or can be scheduled to time when the filesystem perfomace drop is not critical.
 
-== Does btrfs support encryption? ==
+== Does Btrfs support encryption? ==
 
 There are several different ways in which a filesystem can interoperate with encryption to keep your data secure:
 
@@ -264,18 +264,18 @@ This is [http://permalink.gmane.org/gmane.comp.file-systems.btrfs/15564 deemed s
 
 If you are trying to mount a btrfs filesystem based on multiple dm-crypted devices, you can see an example script on Marc's btrfs blog: [http://marc.merlins.org/perso/btrfs/post_2014-04-27_Btrfs-Multi-Device-Dmcrypt.html start-btrfs-dmcrypt].
 
-== Does btrfs support deduplication? ==
+== Does Btrfs support deduplication? ==
 
 Deduplication is supported, with some limitations. See [[Deduplication]].
 
-== Does btrfs support swap files? ==
+== Does Btrfs support swap files? ==
 
 From kernel 5.0+ btrfs have native swap files support, but with some limitations.
 Swap file - must be fully allocated as NOCOW with no compression on one device. 
 
 For kernels before 5.0, swap files not supported. Just making a file NOCOW does not help, swap file support relies on one function that btrfs intentionally does not implement due to potential corruptions. The swap implementation used to rely on some assumptions which may not hold in btrfs, like block numbers in the swap file while btrfs has a different block number mapping in case of multiple devices. There is a new API that could be used to port swap to btrfs; for more details have a look at [[project ideas#Swap file support]].
 
-== Does grub support btrfs? ==
+== Does grub support Btrfs? ==
 
 In most cases. Grub supports many btrfs configurations, including zlib and lzo compression (but not [[Compression#|zstd]], depending on the Grub version) and RAID0/1/10 multi-dev filesystems.
 If your distribution only provides older versions of Grub, you'll have to build it for yourself.
@@ -287,17 +287,17 @@ References:
 * [https://git.savannah.gnu.org/cgit/grub.git/commit/?id=050e8e908085d69c7ac2b6b99f4361787b046d74 Add support for LZO compression in GRUB] (2011-10-06)
 * [https://git.savannah.gnu.org/cgit/grub.git/commit/?id=386128648606a3aa6ae7108d1c9af52258202279 btrfs: Add zstd support to grub btrfs] (2018-11-19)
 
-== Is it possible to boot to btrfs without an initramfs? ==
+== Is it possible to boot to Btrfs without an initramfs? ==
 
 With multiple devices, btrfs normally needs an initramfs to perform a device scan. It may be necessary to modprobe (and then rmmod) scsi-wait-scan to work around a race condition. See [[using Btrfs with Multiple Devices|using Btrfs with multiple devices]].
 
 With grub and a single disk, you might not need an initramfs.  Grub generates a root=UUID=… command line that the kernel should handle on its own.  Some people have also used GPT and root=PARTUUID= specs instead [https://archives.gentoo.org/gentoo-user/msg_35eb3187ef8be8a23cdec253b66b5a59.xml].
 
-== Compression support in btrfs ==
+== Compression support in Btrfs ==
 
 There's a separate page for compression related questions, [[Compression]].
 
-=== Will btrfs support LZ4? ===
+=== Will Btrfs support LZ4? ===
 
 Maybe, if there is a clear benefit compared to existing compression support. Technically there are no obstacles, but supporing a new algorithm has impact on the the userpace tools or bootloader, that has to be justified. There's a project idea [[Project_ideas#Compression_enhancements|Compression enhancements]] that targets more than just adding a new compression algorithm.
 
@@ -309,7 +309,7 @@ Reasons against adding simple LZ4 support are stated [https://lore.kernel.org/li
 
 See also the [[UseCases]] page.
 
-== Is btrfs stable? ==
+== Is Btrfs stable? ==
 
 '''Short answer''': Maybe.
 
@@ -743,7 +743,7 @@ Yes and no. Device management is a complex subject, and there are many different
 
 Many advanced features such as checking alternate mirrors for good copies of a corrupted block are meant to be used with RAID implementations below the FS.
 
-== What are the differences among MD-RAID / device mapper / btrfs raid? ==
+== What are the differences among MD-RAID / device mapper / Btrfs raid? ==
 
 Note: ''device'' here means a ''block device'' -- often a partition, but it might also be something like a full disk, or a DRBD network device. It is possible with all of the descriptions below, to construct a RAID-1 array from two or more devices, and have those devices live on the same physical drive. This configuration does '''not''' offer any form of redundancy for your data.
 
@@ -758,10 +758,10 @@ RAID-10 requires at least 4 devices, and is constructed as a stripe across 2 mir
 
 ====device mapper====
 
-====btrfs====
-btrfs supports RAID-0, RAID-1, and RAID-10. As of Linux 3.9, btrfs also supports RAID-5 and RAID-6 although that code is still experimental.
+====Btrfs====
+Btrfs supports RAID-0, RAID-1, and RAID-10. As of Linux 3.9, btrfs also supports RAID-5 and RAID-6 although that code is still experimental.
 
-btrfs combines all the devices into a storage pool first, and then duplicates the chunks as file data is created. RAID-1 is defined currently as "2 copies of all the data on different devices". This differs from MD-RAID and dmraid, in that those make exactly n copies for n devices. In a btrfs RAID-1 on three 1 TB devices we get 1.5 TB of usable data. Because each block is only copied to 2 devices, writing a given block only requires exactly 2 devices to be written to; reading can be made from only one.
+Btrfs combines all the devices into a storage pool first, and then duplicates the chunks as file data is created. RAID-1 is defined currently as "2 copies of all the data on different devices". This differs from MD-RAID and dmraid, in that those make exactly n copies for n devices. In a btrfs RAID-1 on three 1 TB devices we get 1.5 TB of usable data. Because each block is only copied to 2 devices, writing a given block only requires exactly 2 devices to be written to; reading can be made from only one.
 
 RAID-0 is similarly defined, with the stripe split across as many devices as possible. 3 × 1 TB devices yield 3 TB usable space, but offers no redundancy at all.
 
@@ -787,7 +787,7 @@ To learn more about using Raid 5 and Raid 6 with btrfs, see the [[RAID56]] page.
 
 == What is your affiliation with WinBtrfs ==
 
-None.
+None. It's an independent implementation that works with the same on-disk data structures and builds on top of the same design principles but the linux and windows operating system internals are different. There is no shared code as it's implemented in C++. You can find it [https://github.com/maharmstone/btrfs here].
 
 == What is CRFS? Is it related to Btrfs? ==
 
@@ -799,8 +799,6 @@ No. Btrfs's main goal right now is to be the best non-cluster file system.
 
 If you want a cluster file system, there are many production choices that can be found in the [http://en.wikipedia.org/wiki/Category:Distributed_file_systems Distributed file systems] section on Wikipedia. Keep in mind that each file system has their own benefits or limitations, so find the best fit for your environment.
 
-The closest cluster file system that uses Btrfs as its underlying file system is [http://en.wikipedia.org/wiki/Ceph Ceph]
-
 = I've heard that ... =
 
 == ... files cannot be deleted once the filesystem is full ==
@@ -809,7 +807,7 @@ Not true. Even though the deletion requires some extra space (because of the cop
 
 Historically (before about 3.16 or so), it was indeed possible to reach a situation where files could not be deleted. This was due to bugs in the handling of space. However, many of these bugs have been fixed, and current evidence (May 2015) suggests that if there are remaining bugs in this area, they are very, very hard to hit.
 
-== ... btrfs is broken by design (aka. Edward Shishkin's "Unbound(?) internal fragmentation in Btrfs") ==
+== ... Btrfs is broken by design (aka. Edward Shishkin's "Unbound(?) internal fragmentation in Btrfs") ==
 
 Mailing list thread [http://thread.gmane.org/gmane.linux.file-systems/41933 Unbound(?) internal fragmentation in Btrfs] (2010)
 

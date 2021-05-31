@@ -582,7 +582,7 @@ Represents a chunk of data on disk belonging to a file. In the fs-trees, the cor
 |<code>8</code>
 |<code>__le64</code>
 |<code>ram_bytes</code>
-|size of the device
+|Upper limit on the size of the extent in ram
 |-
 |<code>16</code>
 |<code>__u8</code>
@@ -637,10 +637,32 @@ TODO
 TODO
 
 = btrfs_free_space_info =
-TODO
+This struct is only used with space_cache v2.
+Every block group is represented in the free space tree by a free space info item, which stores some accounting information.
+
+It is keyed on (block_group_start, FREE_SPACE_INFO, block_group_length).
+
+{|class="wikitable"
+!colspan="4"|struct btrfs_inode_ref (8 bytes)
+|-
+!offset
+!type
+!field
+!description
+|-
+|<code>0</code>
+|<code>__le32</code>
+|<code>extent_count</code>
+|Number of extents that are tracking the free space for this block group
+|-
+|<code>4</code>
+|<code>__le32</code>
+|<code>flags</code>
+|Flags associated with this free_space_info (current it can be 0 or BTRFS_FREE_SPACE_BITMAP_KEY)
+|}
 
 = btrfs_inode_ref =
-TODO
+Indexed by (inode_number, BTRFS_INODE_REF_ITEM, parent_inode). Allows you to find the btrfs_dir_item entries or the filename for a given inode. There is one of these for each hard-linked copy of a file.
 
 {|class="wikitable"
 !colspan="4"|struct btrfs_inode_ref (10 bytes)
@@ -806,15 +828,6 @@ NOTE: The <i>unimplemented</i> status of any of these flags was evaluated agains
 
 *<code>BTRFS_INODE_COMPRESS [0x800]</code>
 : Compression is enabled on this inode.
-
-= btrfs_inode_ref =
-
-Indexed by (inode_number, BTRFS_INODE_REF_ITEM, parent_inode). Allows you to find the [[#btrfs dir item|btrfs_dir_item]] entries for a given inode. There is one of these for each hard-linked copy of a file.
-
-; index 
-: directory index number in parent directory (given by '''parent_inode''' in key)
-; name_len 
-: length of subsequent name record
 
 = btrfs_header =
 

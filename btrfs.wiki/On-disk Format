@@ -523,7 +523,7 @@ The dev tree holds all [[#DEV EXTENT .28cc.29|DEV_EXTENTs]], making it possible 
 
 TODO
 
-* Holds INODE_ITEMs, INODE_REFs, DIR_ITEMs, DIR_INDEXen, XATTR_ITEMs, EXTENT_DATAs for a filesystem
+* Holds <code>[[Data_Structures#btrfs_inode_item|INODE_ITEM]]</code>s, <code>[[Data_Structures#btrfs_inode_ref|INODE_REF]]</code>s, <code>[[Data_Structures#btrfs_dir_item|DIR_ITEM]]</code>s, DIR_INDEXen, XATTR_ITEMs,  <code>[[Data_Structures#btrfs_file_extent_item|EXTENT_DATA]]</code>s for a filesystem
 * Pointed to by ROOT
 * TODO: ".."
 

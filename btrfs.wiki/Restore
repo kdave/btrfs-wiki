@@ -6,9 +6,9 @@ For best results, use btrfs-progs no older than v3.12.
 
 == How to Run ==
 
-Suppose that your device is /dev/sda and you want to restore files to /mnt/restore.  If you're ''really'' lucky, this might be enough:
+Suppose that your device is /dev/sda1 and you want to restore files to /mnt/restore.  If you're ''really'' lucky, this might be enough:
 
- # ./btrfs restore /dev/sda /mnt/restore
+ # ./btrfs restore /dev/sda1 /mnt/restore
 
 You're here though, so chances are you aren't that lucky.  Here are the options for restore that might help you.
 * -s: Also restore snapshots.  Without this option snapshots will not be restored.
@@ -34,7 +34,7 @@ Note that the restore point (/mnt/restore) does not have to be a btrfs filesyste
 
 If you're unlucky, the above command won't work directly, so you will have to look for a better set of trees. You can do this with the <code>find-root</code> command:
 
- # btrfs-find-root /dev/sda
+ # btrfs-find-root /dev/sda1
  Super thinks the tree root is at 11518584545280, chunk root 11517998731264
  Generation: 86342 Root bytenr: 11516718059520 Root objectid: 2
  Generation: 86342 Root bytenr: 11516684206080 Root objectid: 4
@@ -100,9 +100,9 @@ What this is is a listing of all of the tree roots that have been found. For eac
 
 You should pick the latest tree root (i.e. with the largest transid) which has all, or as many as possible, of the filesystem trees in it. If you see objectids 2, 4, 5, 7, then you will have all the base FS trees. Objectids from 256 upwards are your subvolumes. Once you have decided which tree root to use, note down the block number for it from the corresponding "<code>Well block ''n'' seems great</code>..." line, and then run
 
- # ./btrfs restore -t ''n'' /dev/sda /mnt/restore
+ # ./btrfs restore -t ''n'' /dev/sda1 /mnt/restore
 
 You can extract files from just a subvolume with the <code>-r</code> switch, which takes the objectid of the subvolume you want to restore from.
 
 == I need more help! ==
-For now, most of the information exists in people's heads.  We're trying to get a brain dump to this wiki page, but until we get this fleshed out more your best bet is the #btrfs channel on freenode.
+For now, most of the information exists in people's heads.  We're trying to get a brain dump to this wiki page, but until we get this fleshed out more your best bet is the #btrfs channel on libera.chat.
