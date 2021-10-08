@@ -144,7 +144,7 @@ No, it is an important part of keeping data and checksums consistent. The Btrfs 
 
 == What checksum function does Btrfs use? ==
 
-Currently Btrfs uses crc32c for data and metadata. The disk format has room for 256bits of checksum for metadata and up to a full leaf block (roughly 4k or more) for data blocks. Over time we'll add support for more checksum alternatives.
+Please see [https://btrfs.wiki.kernel.org/index.php/Manpage/btrfs(5)#CHECKSUM_ALGORITHMS this section in manual page].
 
 == Can data checksumming be turned off? ==
 
@@ -270,10 +270,7 @@ Deduplication is supported, with some limitations. See [[Deduplication]].
 
 == Does Btrfs support swap files? ==
 
-From kernel 5.0+ btrfs have native swap files support, but with some limitations.
-Swap file - must be fully allocated as NOCOW with no compression on one device. 
-
-For kernels before 5.0, swap files not supported. Just making a file NOCOW does not help, swap file support relies on one function that btrfs intentionally does not implement due to potential corruptions. The swap implementation used to rely on some assumptions which may not hold in btrfs, like block numbers in the swap file while btrfs has a different block number mapping in case of multiple devices. There is a new API that could be used to port swap to btrfs; for more details have a look at [[project ideas#Swap file support]].
+Yes, please see [https://btrfs.wiki.kernel.org/index.php/Manpage/btrfs(5)#SWAPFILE_SUPPORT this section in manual page].
 
 == Does grub support Btrfs? ==
 
@@ -511,27 +508,9 @@ There is no simple undelete tool for btrfs, and it is likely there never will be
 
 Mount -o ssd_spread is more strict about finding a large unused region of the disk for new allocations, which tends to fragment the free space more over time. Mount -o ssd_spread is often faster on the less expensive SSD devices. The default for autodetected SSD devices is mount -o ssd.
 
-== Will Btrfs be in the mainline Linux Kernel? ==
-
-Btrfs is already in the mainline Linux kernel. It was [http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=73d59314e6ed268d6f322ae1bdd723b23fa5a4ed merged] on 9th January 2009, and was available in the Linux 2.6.29 release.
-
-== Does Btrfs run with older kernels? ==
-
-v0.16 of (out-of-tree) Btrfs maintains compatibility with kernels back to 2.6.18. Kernels older than that will not work.
-
-btrfs made it into mainline in 2.6.29, and development and bugfixes since then have gone directly into the main kernel. Backporting btrfs from a newer kernel to an earlier one may be a difficult process due to changes in the VFS or block layer APIs; there are no known projects or people doing this on a regular basis.
-
-We strongly recommend that you keep up-to-date with the latest released kernels from kernel.org -- we try to maintain a list of sources that make that task easier for [[Getting_started#Distro_support|most major distributions]].
-
 == How long will the Btrfs disk format keep changing? ==
 
 The Btrfs disk format is not immutable. However, any changes that are made will not invalidate existing filesystems. If a new feature results in a change to the filesystem format, it will be implemented in a way which is both safe and compatible: filesystems made with the new feature will safely refuse to mount on older kernels which do not support the feature, and existing filesystems will not have the new feature enabled without explicit manual intervention to add the feature to the filesystem.
-
-== How do I upgrade to the 2.6.31 format? ==
-
-The 2.6.31 kernel can read and write Btrfs filesystems created by older kernels, but it writes a slightly different format for the extent allocation trees. Once you have mounted with 2.6.31, the stock Btrfs in 2.6.30 and older kernels will not be able to mount your filesystem.
-
-We don't want to force people into 2.6.31 only, and so the newformat code is available against 2.6.30 as well. All fixes will also be maintained against 2.6.30. For details on downloading, see the [[Btrfs source repositories]].
 
 == Can I find out compression ratio of a file? ==
 compsize takes a list of files on a btrfs filesystem and measures used compression types and effective compression ratio: https://github.com/kilobyte/compsize
@@ -788,10 +767,6 @@ To learn more about using Raid 5 and Raid 6 with btrfs, see the [[RAID56]] page.
 == What is your affiliation with WinBtrfs ==
 
 None. It's an independent implementation that works with the same on-disk data structures and builds on top of the same design principles but the linux and windows operating system internals are different. There is no shared code as it's implemented in C++. You can find it [https://github.com/maharmstone/btrfs here].
-
-== What is CRFS? Is it related to Btrfs? ==
-
-[[http://en.wikipedia.org/wiki/CRFS CRFS]] is a network file system protocol. It was designed at around the same time as Btrfs. Its wire format uses some Btrfs disk formats and crfsd, a CRFS server implementation, uses Btrfs to store data on disk. More information can be found at http://oss.oracle.com/projects/crfs/ and http://en.wikipedia.org/wiki/CRFS.
 
 == Will Btrfs become a clustered file system ==
 

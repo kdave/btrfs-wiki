@@ -66,6 +66,14 @@ do not merge them to one. This pattern should be used everwhere and is
 important when debugging because we can pinpoint the line in the code from the
 syslog message and do not have to guess which way it got to the merged call.
 
+== Error handling and return values ==
+
+Functions are supposed to handle all errors of the callees and clean up the local context before returning. If a function does not need to pass errors to the caller it can be switched to return ''void''. Before doing so make sure that:
+
+* the function does not call any BUG/BUG_ON
+* all callees properly handle errors and do not call BUG/BUG_ON in place of error handling
+* the whole call chain starting from the function satisfies the above
+
 == Handling unexpected conditions ==
 
 This is different than error handling. An unexpected condtion happens when the code invariants/assumptions do not hold and there's no way to recover from the situation. This means that returning an error to the caller can't be done and continuing would only propagate the logic error further. The reasons for that bug can be two fold: internal (a genuine bug) or external (eg. memory biflip, memory corrupted by other subystem). In this case it is allowed to use the nuclear option and do BUG_ON, that is otherwise highly discouraged.
@@ -83,6 +91,22 @@ Functions can be annotated to enable error injection using the eBPF scripts. See
 Resources:
 * eBPF
 * BCC tools
+
+== Warnings and issues found by static checkers and similar tools ==
+
+There are tools to automatically identify known issues in code and report them as problems to be fixed, but not all such reports are valid or relevant in the context of the code base. The fix should really fix the code, not just the tool's warning. Such patches will be rejected with explanation first time and ignored when sent repeatedly. Patches fixing real problems with a good explanation are welcome. If you're not sure about sending such patch, please ask the https://kernelnewbies.org/KernelJanitors for help.
+
+Do not blindly report issues caught by:
+
+* checkpatch.pl -- the script is good for catching some coding style but this whole wiki page exists to be explicit what we want, not necessarily what checkpatch wants
+* clang static analyzer -- lots of the reports are not real problems and may depend on a condition that's not recognized by the checker
+* gcc -Wunused -- any of the -Wunused-* options can report a valid issue but it must be viewed in wider context and not just removed to get rid of the warning
+* codespell -- fixing typos is fine but should be done in batches and over whole code base
+
+Hints:
+
+* if you find an issue, look in the whole code base if there are more instances same or following a similar pattern
+* look into git history of the changed code, why it got there and when, it may help to understand if it's a bug or e.g. a stale code
 
 = Coding style preferences =
 

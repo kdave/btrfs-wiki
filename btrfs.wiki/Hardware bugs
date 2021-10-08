@@ -1,0 +1,23 @@
+TBD: list hardware classes, list specific types of known buggy firmware/drive type combinations, possible workarounds, recommendations, warnings
+
+Collective knowledge of buggy hardware, community based.
+
+Confidence:
+
+* ''low'' -- not enough reports, the cause could be something else
+* ''moderate'' -- likely that's a hardware problem, better avoid if not sure
+* ''high'' -- enough reports have been analyzed to pinpoint the cause to a particular hardware type/version
+
+The section 5 of manual page contains general overview of the [https://github.com/kdave/btrfs-progs/blob/master/Documentation/btrfs-man5.asciidoc#storage-model storage model] and classes of [https://github.com/kdave/btrfs-progs/blob/master/Documentation/btrfs-man5.asciidoc#hardware-considerations hardware-induced bugs].
+
+'''New entries''' -- please open an issue at https://github.com/kdave/btrfs-progs/ or send a mail request to linux-btrfs@vger.kernel.org or add the entry manually.
+
+= Hard disks =
+
+== WD Green, Blue ==
+
+* Frimware: 80.00A80 (in low-end drives)
+* Confidence: high
+
+* Firmware: 81.00A81, 82.00A82 (those two revisions appear on some NAS vendor blacklists as well)
+* Confidence: moderate

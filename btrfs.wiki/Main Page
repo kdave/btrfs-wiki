@@ -158,60 +158,47 @@ Links to Btrfs documentation of various Linux distributions:
 <div style="margin:0; margin-top:10px; border:1px solid #dfdfdf; padding: 0em 1em 1em 1em; background-color:#f0e0d0; align:left;">
 == News ==
 
-''' IRC channel is moving to libera.chat '''
+''' IRC channel at libera.chat '''
 
-Due to changes in ownership of freenode.net, there's a new #btrfs channel at [https://libera.chat libera.chat]
+The #btrfs channel is at [https://libera.chat libera.chat], matrix.org bridge works (persistent room #btrfs:matrix.org).
 
----> '''Everybody please leave freenode channel, your questions will be answered at libera.''' <---
+''' btrfs-progs v5.14.2 (Oct 2021) '''
 
-'''2021-05-26: the freenode #btrfs channel is not accessible anymore, muted, we have no ops there'''
-
-''' btrfs-progs v5.12.1 (May 2021) '''
-
-* build: fix missing symbols in libbtrfs
-* mkfs: check for minimal number of zones
-* check: fix warning about cache generation when free space tree is enabled
-* fix superblock write in zoned mode on 16K pages
-
-
-''' btrfs-progs v5.12 (May 2021) '''
-
-* libbtrfsutil: relicensed to LGPL v2.1+
-* mkfs: zoned mode support (kernel 5.12+)
-* fi df: show zone_unusable per profile type in zoned mode
-* fi usage: show total amount of zone_unusable
-* fi resize: fix message for exact size
-* image: fix warning and enlarge output file if necessary
-* core
-** refactor chunk allocator for more modes
-** implement zoned mode support: allocation and writes, sb log
-** crypto/hash refactoring and cleanups
-** refactoring and cleanups
-* other
-** test updates
-** CI updates
-**** travis-ci integration disabled
-**** docker images updated, more coverage
-*** incomplete build support for Android removed
-* doc updates
-** chattr mode m for 'NOCOMPRESS"
-** swapfile used from fstab
-** how to add a new export to libbtrfsutil
-** update status of mount options since 5.9
-
-''' linux v5.12 (Apr 2021) '''
-
-* features
-** [[Zoned|zoned mode]] (SMR/ZBC/ZNS friendly allocation mode), first working version with limitations
-* misc performance improvements
-** flushing and ticket space reservations
-** preemptive background flushing
-** less lock contention for delayed refs
-** dbench-like workload (+7% throughput, -20% latency)
-* core changes:
-** subpage block size support peparations
 * fixes
-** swapfile fixes (vs scrub, activation vs snapshot creation)
+** zoned mode
+**** properly detect non-zoned devices in emulation mode
+**** properly create quota tree
+**** raid1c3/4 also excluded from unsupported profiles
+** use sysfs-based detection of device discard capability, fix mkfs-time trim for non-standard devices
+** mkfs: fix creation of populated filesystem with free space tree
+** detect multipath devices (needs libudev)
+* replace start: add option -K/--nodiscard, similar to what mkfs or device add has
+* dump-tree: print complete root_item
+* mkfs: add option --verbose
+* sb-mod: better help, no checksum calculation on read-only actions
+* subvol show:
+** print more information (regarding send and receive)
+** print warning if read-write subvolume has received_uuid set
+* property set:
+** add parameter -f to force changes
+** changing ro->rw switch now needs -f if subvolume has received_uuid set, (see documentation)
+* build: optional libudev (on by default)
+* other
+** remove deprecated support for CREATE_ASYNC bit for subvolume ioctl
+** CI updates
+** new and updated tests
+
+''' linux v5.14 (Aug 2021) '''
+
+Hilights
+* new sysfs knob to limit scrub IO bandwidth per device
+* device stats are also available in /sys/fs/btrfs/FSID/devinfo/DEVID/error_stats
+* support cancellable resize and device delete ioctls
+* change how the empty value is interpreted when setting a property, so far we have only 'btrfs.compression' and we need to distinguish a reset to defaults and setting "do not compress", in general the empty value will always mean 'reset to defaults' for any other property, for compression it's either 'no' or 'none' to forbid compression
+* performance improvements (xattrs, truncate)
+* space handling improvements, preemptive flushing
+* more subpage support preparation
+* for other changes see the [https://git.kernel.org/linus/122fa8c588316aacafe7e5a393bb3e875eaf5b25 pull request]
 
 </div>
 

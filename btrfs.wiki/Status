@@ -10,7 +10,7 @@ mean that its useful, for example in meeting your performance expectations for
 your specific workload. Combination of features can vary in performance, the
 table does not cover all possibilities.
 
-'''The table is based on the latest released linux kernel: 5.12'''
+'''The table is based on the latest released linux kernel: 5.13'''
 
 The columns for each feature reflrect the status of the implementation in following ways:
 
@@ -237,7 +237,7 @@ The columns for each feature reflrect the status of the implementation in follow
 | style="background: lightgreen;"   | OK
 | 
 | style="background: lightgreen;"   | OK
-| IO controler
+| IO controller
 |-
 | Samba
 | style="background: lightgreen;"   | OK
@@ -278,9 +278,10 @@ The columns for each feature reflrect the status of the implementation in follow
 | see documentation for compatibility
 |-
 | [[Zoned|zoned mode]]
-| style="background: lightgreen;"   | OK
-| 5.12
-| style="background: lightgreen;"   | OK
+| style="background: orange;"       | mostly OK
+| 5.13
+| style="background: orange;"       | mostly OK
+| there are known bugs, use only for testing
 |}
 
 '''Note to editors:'''

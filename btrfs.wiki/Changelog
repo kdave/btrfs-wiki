@@ -444,15 +444,140 @@ INO_LOOKUP ioctl.
 |version=5.12
 |text=Support for zoned devices with special allocation/write mode to fixed-size zones. See [[Zoned]].
 }}
+{{FeatureMerged
+|name=supported_sectorsizes in sysfs
+|version=5.13
+|text=List supported sector sizes in sysfs file /sys/fs/btrfs/features/supported_sectorsizes
+}}
+{{FeatureMerged
+|name=sysfs scrub bw limit
+|version=5.14
+|text=Tunable bandwidth limit (/sys/fs/btrfs/FSID/devinfo/DEVID/scrub_speed_max) for scrub (and device replace) for a given device.
+}}
+{{FeatureMerged
+|name=sysfs device stats
+|version=5.14
+|text=The device stats can be also found in /sys/fs/btrfs/FSID/devinfo/DEVID/error_stats.
+}}
+{{FeatureMerged
+|name=cancellable resize, device delete
+|version=5.14
+|text=The filesystem resize and device delete operations can be cancelled by specifying ''cancel'' as the device name.
+}}
+{{FeatureMerged
+|name=property value reset
+|version=5.14
+|text=Change how empty value is interpreted. New behaviour will delete the value and reset it to default. This affects ''btrfs.compression'' where value ''no'' sets NOCOMPRESS bit while empty value resets all compression settings (either compression or NOCOMPRESS bit).
+}}
+{{FeatureMerged
+|name=fsverity
+|version=5.15
+|text=The fs-verity is a support layer that filesystems can hook into to support transparent integrity and authenticity protection of read-only files. https://www.kernel.org/doc/html/latest/filesystems/fsverity.html
+}}
+{{FeatureMerged
+|name=idmapped mount
+|version=5.15
+|text=Support mount with uid/git mapped according to another namespace. https://lwn.net/Articles/837566/
+}}
 |}
 
 = By version (btrfs-progs) =
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/
 
+==  btrfs-progs v5.14 (Sep 2021) ==
+
+* convert:
+** new option --uuid to copy, generate or set a given uuid
+** improve output
+* mkfs: allow to create degenerate raid0 (on 1 device) and raid10 (on 2 devices)
+* image:
+** improved error messages
+** fix some alignment of restored image
+* subvol delete: allow to delete by id when path is not resolvable
+* check:
+** require alignment of nodesize for 64k page systems
+** detect and fix invalid block groups
+* libbtrfs (deprecated):
+** remove most exported symbols, leave only a few that are used by snapper
+** no version change (still 0.1)
+** remove btrfs-list.h, btrfsck.h
+* fixes:
+** reset generation of space v1 if v2 is used
+** fi us: don't wrongly report missing device size when partition is not readable
+* other:
+** build: experimental features
+** build: better detection of 64bit timestamp support for ext4
+** corrupt-block: block group items
+** new and updated tests
+** refactoring
+* experimental features: new image dump format, with data
+{{ProgsReleaseMinor |title=btrfs-progs v5.14.1 (Sep 2021)}}
+* fixes:
+** defrag: fix parsing of compression (option -c)
+** add workaround for old kernels when reading zone sizes
+** let only check and restore open the fs with transid failures, namely preventing btrfstune to do so
+** convert: --uuid copy does not fail on duplicate uuids
+{{ProgsReleaseMinor |title=btrfs-progs v5.14.2 (Oct 2021)}}
+* fixes
+** zoned mode
+**** properly detect non-zoned devices in emulation mode
+**** properly create quota tree
+**** raid1c3/4 also excluded from unsupported profiles
+** use sysfs-based detection of device discard capability, fix mkfs-time trim for non-standard devices
+** mkfs: fix creation of populated filesystem with free space tree
+** detect multipath devices (needs libudev)
+* replace start: add option -K/--nodiscard, similar to what mkfs or device add has
+* dump-tree: print complete root_item
+* mkfs: add option --verbose
+* sb-mod: better help, no checksum calculation on read-only actions
+* subvol show:
+** print more information (regarding send and receive)
+** print warning if read-write subvolume has received_uuid set
+* property set:
+** add parameter -f to force changes
+** changing ro->rw switch now needs -f if subvolume has received_uuid set, (see documentation)
+* build: optional libudev (on by default)
+* other
+** remove deprecated support for CREATE_ASYNC bit for subvolume ioctl
+** CI updates
+** new and updated tests
+
+==  btrfs-progs v5.13 (Jul 2021) ==
+
+* restore: remove loop checks for extent count and directory scan
+* inspect dump-tree: new options to print node (--csum-headers) and data checksums (--csum-items)
+* fi usage:
+** print stripe count for striped profiles
+** print zoned information: size, total unusable
+* mkfs: print note about sha256 accelerated module loading issue
+* check: ability to reset dev_item::bytes_used
+* fixes
+** detect zoned kernel support at run time too
+** exclusive op running check return value
+* fi resize: support cancel (kernel 5.14)
+* device remove: support cancel (kernel 5.14)
+* documentation about general topics
+** compression
+** zoned mode
+** storage model
+** hardware considerations
+* other
+** libbtrfsutil API overview
+** help text fixes and updates
+** hash speedtest measure time, cycles using perf and print throughput
+{{ProgsReleaseMinor |title=btrfs-progs v5.13.1 (Jul 2021)}}
+* build: fix build on musl libc due to missing definition of NAME_MAX
+* check:
+** batch more work into one transaction when clearing v1 free space inodes
+** detect directoris with wrong number of links
+* libbtrfsutil: fix race between subvolume iterator and deletion
+* mkfs: be more specific about supported profiles for zoned device
+* documentation updates
+
 ==  btrfs-progs v5.12 (May 2021) ==
 
-* libbtrfsutil: relicensed to LGPL v2.1+
+* '''libbtrfsutil: relicensed to LGPL v2.1+'''
 * mkfs: zoned mode support (kernel 5.12+)
 * fi df: show zone_unusable per profile type in zoned mode
 * fi usage: show total amount of zone_unusable
@@ -466,9 +591,9 @@ Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/
 * other
 ** test updates
 ** CI updates
-**** travis-ci integration disabled
-**** docker images updated, more coverage
-*** incomplete build support for Android removed
+*** travis-ci integration disabled
+*** docker images updated, more coverage
+** incomplete build support for Android removed
 * doc updates
 ** chattr mode m for 'NOCOMPRESS"
 ** swapfile used from fstab
@@ -1666,6 +1791,44 @@ Bugfixes:
 
 = By version (linux kernel) =
 
+=== v5.14 (Aug 2021) ===
+Hilights:
+* new sysfs knob to limit scrub IO bandwidth per device
+* device stats are also available in /sys/fs/btrfs/FSID/devinfo/DEVID/error_stats
+* support cancellable resize and device delete ioctls
+* change how the empty value is interpreted when setting a property, so far we have only 'btrfs.compression' and we need to distinguish a reset to defaults and setting "do not compress", in general the empty value will always mean 'reset to defaults' for any other property, for compression it's either 'no' or 'none' to forbid compression
+* performance improvements (xattrs, truncate)
+* space handling improvements, preemptive flushing
+* more subpage support preparation
+* for other changes see the [https://git.kernel.org/linus/122fa8c588316aacafe7e5a393bb3e875eaf5b25 pull request]
+
+=== v5.13 (Jun 2021) ===
+* User visible improvements
+** readahead for send, improving run time of full send by 10% and for incremental by 25%
+** make reflinks respect O_SYNC, O_DSYNC and S_SYNC flags
+** export supported sectorsize values in sysfs (currently only page size, more once full subpage support lands)
+** more graceful errors and warnings on 32bit systems when logical addresses for metadata reach the limit posed by unsigned long in page::index
+*** error: fail mount if there's a metadata block beyond the limit
+*** error: new metadata block would be at unreachable address
+*** warn when 5/8th of the limit is reached, for 4K page systems it's 10T, for 64K page it's 160T
+** zoned mode
+*** relocated zones get reset at the end instead of discard
+*** automatic background reclaim of zones that have 75%+ of unusable space, the threshold is tunable in sysfs
+* Fixes
+** fix inefficient preemptive reclaim calculations
+** fix exhaustion of the system chunk array due to concurrent allocations
+** fix fallback to no compression when racing with remount
+** fix unmountable seed device after fstrim
+** fix fiemap to print extents that could get misreported due to internal extent splitting and logical merging for fiemap output
+** preemptive fix for dm-crypt on zoned device that does not properly advertise zoned support
+* Core changes
+** add inode lock to synchronize mmap and other block updates (eg. deduplication, fallocate, fsync)
+** subpage support (continued)
+*** metadata changes now support read and write
+** error handling through out relocation call paths
+** many other cleanups and code simplifications
+* for other changes see the [https://git.kernel.org/linus/55ba0fe059a577fa08f23223991b24564962620f pull request]                                                                                                
+
 === v5.12 (Apr 2021) ===
 * features
 ** zoned mode (SMR/ZBC/ZNS friendly allocation mode), first working version with limitations
@@ -1678,6 +1841,7 @@ Bugfixes:
 ** subpage block size support peparations
 * fixes
 ** swapfile fixes (vs scrub, activation vs snapshot creation)
+* for other changes see the [https://git.kernel.org/linus/6f3952cbe00b74739f540981d1afe84cd4dac879 pull request]                                                                                                
 
 === v5.11 (Feb 2021) ===
 * new mount option ''rescue'', various modes how to access a damaged filesystem
@@ -1690,6 +1854,7 @@ Bugfixes:
 ** zoned allocation mode preparation
 ** subpage blocksize preparation
 ** various performance improvements (skipping unnecessary work)
+* for other changes see the [https://git.kernel.org/linus/f1ee3b8829006b3fda999f00f0059aa327e3f3d0 pull request]                                                                                                
 
 === v5.10 (Dec 2020) ===
 * hilights

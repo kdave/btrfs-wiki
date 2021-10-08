@@ -14,7 +14,14 @@ The above is really incompatible because it expects an in-place write at some po
 * only 'single' profile works, TBD: synchronize zone write pointers among the block groups
 * fitrim, TBD: do not depend on free space cache
 
-Creating a zoned filesystem needs ''btrfs-progs'' 5.12. Proper detection of zoned devices with btrfs needs ''util-linux'' 2.37+ (not yet released).
+Creating a zoned filesystem needs ''btrfs-progs'' 5.12. '''Proper detection of zoned devices with btrfs needs ''util-linux'' 2.38+ (not yet released, we tried, ETA September?).'''
+
+Status:
+
+* 5.12
+** first release
+* 5.13
+** background zone reclaim added
 
 = Devices =
 
@@ -22,9 +29,13 @@ Creating a zoned filesystem needs ''btrfs-progs'' 5.12. Proper detection of zone
 
 The WD Ultrastar series 600 advertises HM-SMR, ie. the host-managed zoned mode. There are two more: DA (device managed, no zoned information exported to the system), HA (host aware, can be used as regular disk but zoned writes improve performance). There are not many devices available at the moment, the information about exact zoned mode is hard to find, check data sheets or community sources gathering information from real devices.
 
+Note: zoned mode won't work with DM-SMR disks.
+
+* Ultrastar® DC ZN540 NVMe ZNS SSD ([https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/collateral/product-brief/product-brief-ultrastar-dc-zn540.pdf product brief])
+
 == Emulated: null_blk ==
 
-The driver ''null_blk'' provides memory backed device and is suitable for testing. There are some quirks setting up the devices. The module must be loaded with ''nr_devices=0'' or the numbering of device nodes will be offset. The ''configfs'' must be mounted at ''/sys/kernel/config'' and the administration of the null_blk devices is done in ''/sys/kernel/config/nullb''. The device nodes are named like ''/dev/nullb0'' and are numbered sequentially. NOTE: the device name may be differen than the named direcotry in sysfs!
+The driver ''null_blk'' provides memory backed device and is suitable for testing. There are some quirks setting up the devices. The module must be loaded with ''nr_devices=0'' or the numbering of device nodes will be offset. The ''configfs'' must be mounted at ''/sys/kernel/config'' and the administration of the null_blk devices is done in ''/sys/kernel/config/nullb''. The device nodes are named like ''/dev/nullb0'' and are numbered sequentially. NOTE: the device name may be different than the named directory in sysfs!
 
 Setup:
 
@@ -50,6 +61,12 @@ Remove the device:
 
 Then continue with ''mkfs.btrfs /dev/nullb0'', the zoned mode is auto-detected.
 
+For convenience, there's a script wrapping the basic null_blk management operations https://github.com/kdave/nullb.git
+
+== Emulated: TCMU runner ==
+
+TCMU is a framework to emulate SCSI devices in userspace, providing various backends for the storage, with zoned support as well. A file-backed zoned device can provide more options for larger storage and zone size. Pleae follow the instructions at https://zonedstorage.io/projects/tcmu-runner/ .
+
 = Compatiblity, incompatibility =
 
 * the feature sets an incompat bit and requires new kernel to access the filesystem (for both read and write)
@@ -58,7 +75,7 @@ Then continue with ''mkfs.btrfs /dev/nullb0'', the zoned mode is auto-detected.
 * mixing zoned devices with different zone sizes is not possible
 * zone sizes must be power of two, zone sizes of real devices are eg. 256MiB or 1GiB, larger size is expected, maximum zone size supported by btrfs is 8GiB
 
-= Status, stability =
+= Status, stability, reporting bugs =
 
 The zoned mode has been released in 5.12 and there are still some rough edges and corner cases one can hit during testing. Please report bugs to https://github.com/naota/linux/issues/ .
 
@@ -69,3 +86,4 @@ The zoned mode has been released in 5.12 and there are still some rough edges an
 ** https://zonedstorage.io/projects/libzbd/ -- ''libzbd'' uses the kernel provided zoned block device interface based on the ioctl() system calls
 * https://hddscan.com/blog/2020/hdd-wd-smr.html -- some details about exact device types
 * https://lwn.net/Articles/853308/ -- ''Btrfs on zoned block devices''
+* https://www.usenix.org/conference/vault20/presentation/bjorling -- Zone Append: A New Way of Writing to Zoned Storage
