@@ -6,14 +6,14 @@ doedit=True
 doautoupload=True
 whoami='kdave'
 
-summary='Update from git, v5.4'
+summary='Update from git, v5.14.2'
 
 import os
 import sys
 import re
 import difflib
 if os.path.exists('wikitools/wikitools'):
-    sys.path.append('wikitools')
+	sys.path.append('wikitools')
 
 from wikitools import wiki
 from wikitools import category
@@ -24,7 +24,7 @@ import config
 from getpass import getpass
 
 def message(*args, **kwargs):
-    print('*** '+' '.join(args))
+	print('*** '+' '.join(args))
 
 # main -------------------------------------------------------
 
@@ -44,12 +44,18 @@ if len(files) == 0:
 message('Start')
 message('URL',config.wiki_api_url())
 site=wiki.Wiki(config.wiki_api_url())
+pw = config.readpassword()
+if not pw:
+	print("No password read from file")
+else:
+	print("Found password:", pw[:4], "...")
+
 if site.isLoggedIn(whoami):
 	message("Already logged in")
 	site.login(whoami, remember=True, force=False, password=True, verify=True)
 else:
 	message("Not logged in")
-	site.login(whoami, remember=True, force=True, password=False, verify=True)
+	site.login(whoami, remember=True, force=True, password=pw, verify=True)
 
 print(site)
 
@@ -61,6 +67,8 @@ cat = category.Category(site, "Manpage")
 for page in cat.getAllMembersGen():
 	message('Page: ',page.title)
 	pn=re.search(r'Manpage/(.*)', page.title).group(1)
+	if pn == 'btrfs(5)':
+		pn = 'btrfs-man5'
 	if pn in files:
 		message("Found %s in files" % pn)
 		wt=page.getWikiText()
@@ -76,14 +84,16 @@ for page in cat.getAllMembersGen():
 			if hasdiff:
 				message("Found differences")
 				if doedit:
-                                        if not doautoupload:
-                                            p=getpass("Really apply changes? [y/N]")
-                                            if p!='y':
-                                                    message("Skip update of %s" % pn)
-                                                    continue
-                                        else:
-                                            message("AUTOULPLOAD")
+					if not doautoupload:
+						p=getpass("Really apply changes? [y/N]")
+						if p!='y':
+							message("Skip update of %s" % pn)
+							continue
+					else:
+						message("AUTOULPLOAD")
 					txt=''.join(files[pn])
 					message("Update wiki page %s" % pn)
 					res=page.edit(text=txt, summary=summary, notminor=True, bot=True)
 					print("RES:", res)
+	else:
+		print "INFO: skipping page %s" % (pn)
