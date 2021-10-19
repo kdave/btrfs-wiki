@@ -1,5 +1,4 @@
 btrfs.wiki-*
-/wikitools
 *.pyc
 *.cookies
 /git2wiki/*.asciidoc

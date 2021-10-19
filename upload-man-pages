@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 # usage: $0 file.mw [more...]
 
 dodiff=True
@@ -6,7 +6,7 @@ doedit=True
 doautoupload=True
 whoami='kdave'
 
-summary='Update from git, v4.5.3'
+summary='Update from git, v5.4'
 
 import os
 import sys
