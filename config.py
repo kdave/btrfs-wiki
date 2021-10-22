@@ -8,6 +8,9 @@ wiki_proto='https://'
 wiki_api='/api.php'
 wiki_name='btrfs.wiki'
 
+# Encrypted password with keyfile in variable 'encryptedpass'
+from password import encryptedpass
+
 def wiki_api_url():
     return wiki_proto + wiki_url + wiki_api
 

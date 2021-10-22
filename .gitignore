@@ -1,7 +1,10 @@
 btrfs.wiki-*
 *.pyc
 *.cookies
+/password.py
+/keyfile
 /git2wiki/*.asciidoc
 /git2wiki/*.asciidoc-tmp
 /git2wiki/*.html
 /git2wiki/*.mw
+/git2wiki/*.mw-tmp
