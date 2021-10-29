@@ -1,10 +1,7 @@
-Autosnap
 Balance Filters
 Balance filters
-Bcp
 Btree Items
 Btrees
-Btrfs(command)
 Btrfs-convert
 Btrfs-image
 Btrfs-zero-log
@@ -20,7 +17,6 @@ Contributors
 Conversion from Ext3
 Conversion from Ext3/4 and ReiserFS
 Data Structures
-Debug-tree
 Debugging Btrfs with GDB
 Deduplication
 Design notes on Send/Receive
@@ -31,7 +27,6 @@ Development setup
 ENOSPC
 FAQ
 Feature:Skinny Metadata
-Features
 Getting started
 Glossary
 Gotchas
@@ -68,7 +63,6 @@ Mkfs.btrfs
 Mount options
 Multiple Device Support
 On-disk Format
-OpenSuSE support
 Problem FAQ
 Production Users
 Project ideas
@@ -81,6 +75,7 @@ Scrub corruption cases
 Seed-device
 SnapBtr
 Status
+SyncTest
 SysadminGuide
 Tree-checker
 Trees

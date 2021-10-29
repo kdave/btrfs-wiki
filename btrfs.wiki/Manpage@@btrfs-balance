@@ -15,7 +15,9 @@ all devices so they match constraints defined by the respective profiles. See
 [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] section <em>PROFILES</em> for more details.
 The scope of the balancing process can be further tuned by use of filters that
 can select the block groups to process. Balance works only on a mounted
-filesystem.</p>
+filesystem.  Extent sharing is preserved and reflinks are not broken.
+Files are not defragmented nor recompressed, file extents are preserved
+but the physical location on devices will change.</p>
 <p>The balance operation is cancellable by the user. The on-disk state of the
 filesystem is always consistent so an unexpected interruption (eg. system crash,
 reboot) does not corrupt the filesystem. The progress of the balance operation
@@ -23,7 +25,7 @@ is temporarily stored as an internal state and will be resumed upon mount,
 unless the mount option <em>skip_balance</em> is specified.</p>
 <blockquote><b>Warning:</b>
 running balance without filters will take a lot of time as it basically
-rewrites the entire filesystem and needs to update all block pointers.</blockquote>
+move data/metadata from the whol filesystem and needs to update all block pointers.</blockquote>
 <p>The filters can be used to perform following actions:</p>
 <ul>
 <li>
@@ -43,7 +45,11 @@ perform actions only on a given device (filters <em>devid</em>, <em>drange</em>)
 </li>
 </ul>
 <p>The filters can be applied to a combination of block group types (data,
-metadata, system). Note that changing <em>system</em> needs the force option.</p>
+metadata, system). Note that changing only the <em>system</em> type needs the force
+option. Otherwise <em>system</em> gets automatically converted whenever <em>metadata</em>
+profile is converted.</p>
+<p>When metadata redundancy is reduced (eg. from RAID1 to single) the force option
+is also required and it is noted in system log.</p>
 <blockquote><b>Note:</b>
 the balance operation needs enough work space, ie. space that is
 completely unused in the filesystem, otherwise this may lead to ENOSPC reports.
@@ -75,6 +81,9 @@ on rotational devices is noticeably worse compared to SSDs or fast arrays.</p>
 cancels a running or paused balance, the command will block and wait until the
 current blockgroup being processed completes
 </p>
+<p>Since kernel 5.7 the response time of the cancellation is significantly
+improved, on older kernels it might take a long time until currently
+processed chunk is completely finished.</p>
 
 <dt>
 <b>pause</b> <em>&lt;path&gt;</em>
@@ -89,26 +98,32 @@ progress and used filters to the filesystem
 <dd>
 <p>
 resume interrupted balance, the balance status must be stored on the filesystem
-from previous run, eg. after it was forcibly interrupted and mounted again with
-<em>skip_balance</em>
+from previous run, eg. after it was paused or forcibly interrupted and mounted
+again with <em>skip_balance</em>
 </p>
 
 <dt>
 <b>start</b> [options] <em>&lt;path&gt;</em>
 <dd>
 <p>
-start the balance operation according to the specified filters, no filters
-will rewrite the entire filesystem. The process runs in the foreground.
+start the balance operation according to the specified filters, without any filters
+the data and metadata from the whole filesystem are moved. The process runs in
+the foreground.
 </p>
 <blockquote><b>Note:</b>
-the balance command without filters will basically rewrite everything
-in the filesystem. The run time is potentially very long, depending on the
-filesystem size. To prevent starting a full balance by accident, the user is
-warned and has a few seconds to cancel the operation before it starts. The
-warning and delay can be skipped with <em>--full-balance</em> option.</blockquote>
+the balance command without filters will basically move everything in the
+filesystem to a new physical location on devices (ie. it does not affect the
+logical properties of file extents like offsets within files and extent
+sharing).  The run time is potentially very long, depending on the filesystem
+size. To prevent starting a full balance by accident, the user is warned and
+has a few seconds to cancel the operation before it starts.  The warning and
+delay can be skipped with <em>--full-balance</em> option.</blockquote>
 <p>Please note that the filters must be written together with the <em>-d</em>, <em>-m</em> and
-<em>-s</em> options, because they&#8217;re optional and bare <em>-d</em> etc also work and mean no
-filters.</p>
+<em>-s</em> options, because they&#8217;re optional and bare <em>-d</em> and <em>-m</em> also work and
+mean no filters.</p>
+<blockquote><b>Note:</b>
+when the target profile for conversion filter is <em>raid5</em> or <em>raid6</em>,
+there&#8217;s a safety timeout of 10 seconds to warn users about the status of the feature</blockquote>
 <p><tt>Options</tt></p>
 <dl>
 <dt>
@@ -133,17 +148,12 @@ act on system chunks (requires <em>-f</em>), see <tt>FILTERS</tt> section for de
 </p>
 
 <dt>
--v
-<dd>
-<p>
-be verbose and print balance filter arguments
-</p>
-
-<dt>
 -f
 <dd>
 <p>
-force a reduction of metadata integrity, eg. when going from <em>raid1</em> to <em>single</em>
+force a reduction of metadata integrity, eg. when going from <em>raid1</em> to
+<em>single</em>, or skip safety timeout when the target conversion profile is <em>raid5</em>
+or <em>raid6</em>
 </p>
 
 <dt>
@@ -154,6 +164,20 @@ run the balance operation asynchronously in the background, uses [http://man7.or
 start the process that calls the kernel ioctl
 </p>
 
+<dt>
+--enqueue
+<dd>
+<p>
+wait if there&#8217;s another exclusive operation running, otherwise continue
+</p>
+
+<dt>
+-v
+<dd>
+<p>
+(deprecated) alias for global <em>-v</em> option
+</p>
+
 </dl>
 
 <dt>
@@ -162,7 +186,16 @@ start the process that calls the kernel ioctl
 <p>
 Show status of running or paused balance.
 </p>
-<p>If <em>-v</em> option is given, output will be verbose.</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-v
+<dd>
+<p>
+(deprecated) alias for global <em>-v</em> option
+</p>
+
+</dl>
 
 </dl>
 ==FILTERS==
@@ -280,10 +313,10 @@ while converting data chunks selectively with soft switch.</p>
 
 </dl>
 <p>Profile names, used in <em>profiles</em> and <em>convert</em> are one of: <em>raid0</em>, <em>raid1</em>,
-<em>raid10</em>, <em>raid5</em>, <em>raid6</em>, <em>dup</em>, <em>single</em>. The mixed data/metadata profiles
-can be converted in the same way, but it&#8217;s conversion between mixed and non-mixed
-is not implemented. For the constraints of the profiles please refer to [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
-section <em>PROFILES</em>.</p>
+<em>raid1c3</em>, <em>raid1c4</em>, <em>raid10</em>, <em>raid5</em>, <em>raid6</em>, <em>dup</em>, <em>single</em>.  The mixed
+data/metadata profiles can be converted in the same way, but it&#8217;s conversion
+between mixed and non-mixed is not implemented. For the constraints of the
+profiles please refer to [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]], section <em>PROFILES</em>.</p>
 ==ENOSPC==
 
 <p>The way balance operates, it usually needs to temporarily create a new block

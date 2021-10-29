@@ -27,6 +27,16 @@ checksum algorithms
 </li>
 <li>
 <p>
+compression
+</p>
+</li>
+<li>
+<p>
+filesystem exclusive operations
+</p>
+</li>
+<li>
+<p>
 filesystem limits
 </p>
 </li>
@@ -42,7 +52,37 @@ file attributes
 </li>
 <li>
 <p>
+zoned mode
+</p>
+</li>
+<li>
+<p>
 control device
+</p>
+</li>
+<li>
+<p>
+filesystems with multiple block group profiles
+</p>
+</li>
+<li>
+<p>
+seeding device
+</p>
+</li>
+<li>
+<p>
+raid56 status and recommended practices
+</p>
+</li>
+<li>
+<p>
+storage model
+</p>
+</li>
+<li>
+<p>
+hardware considerations
 </p>
 </li>
 </ol>
@@ -58,6 +98,10 @@ and may change in the future. This means that (for example) you can&#8217;t set
 per-subvolume <em>nodatacow</em>, <em>nodatasum</em>, or <em>compress</em> using mount options. This
 should eventually be fixed, but it has proved to be difficult to implement
 correctly within the Linux VFS framework.</blockquote>
+<p>Mount options are processed in order, only the last occurrence of an option
+takes effect and may disable other options due to constraints (see eg.
+<em>nodatacow</em> and <em>compress</em>). The output of <em>mount</em> command shows which options
+have been applied.</p>
 <dl>
 <dt>
 <b>acl</b>
@@ -183,8 +227,8 @@ if the compression would make them larger.</p>
 tunable knob with higher levels trading speed and memory (<em>zstd</em>) for higher
 compression ratios. This can be set by appending a colon and the desired level.
 Zlib accepts the range [1, 9] and zstd accepts [1, 15]. If no level is set,
-both currently use a default level of 3. The value 0 is an alias for the defaul
-level.</p>
+both currently use a default level of 3. The value 0 is an alias for the
+default level.</p>
 <p>Otherwise some simple heuristics are applied to detect an incompressible file.
 If the first blocks written to a file are not compressible, the whole file is
 permanently marked to skip compression. As this is too simple, the
@@ -269,17 +313,26 @@ system at that point.</blockquote>
 <dt>
 <b>discard</b>
 <dt>
+<b>discard=sync</b>
+<dt>
+<b>discard=async</b>
+<dt>
 <b>nodiscard</b>
 <dd>
 <p>
-(default: off)
+(default: off, async support since: 5.6)
 </p>
 <p>Enable discarding of freed file blocks.  This is useful for SSD devices, thinly
 provisioned LUNs, or virtual machine images; however, every storage layer must
-support discard for it to work. if the backing device does not support
-asynchronous queued TRIM, then this operation can severely degrade performance,
+support discard for it to work.</p>
+<p>In the synchronous mode (<em>sync</em> or without option value), lack of asynchronous
+queued TRIM on the backing device TRIM can severely degrade performance,
 because a synchronous TRIM operation will be attempted instead. Queued TRIM
 requires newer than SATA revision 3.1 chipsets and devices.</p>
+<p>The asynchronous mode (<em>async</em>) gathers extents in larger chunks before sending
+them to the devices for TRIM. The overhead and performance impact should be
+negligible compared to the previous mode and it&#8217;s supposed to be the preferred
+mode if needed.</p>
 <p>If it is not necessary to immediately discard freed blocks, then the <tt>fstrim</tt>
 tool can be used to discard all free blocks in a batch. Scheduling a TRIM
 during a period of low system activity will prevent latent interference with
@@ -354,41 +407,14 @@ outside of debugging environments and is not recognized if the kernel config
 option <em>BTRFS_DEBUG</em> is not enabled.</p>
 
 <dt>
-<b>inode_cache</b>
-<dt>
-<b>noinode_cache</b>
-<dd>
-<p>
-(since: 3.0, default: off)
-</p>
-<p>Enable free inode number caching. Not recommended to use unless files on your
-filesystem get assigned inode numbers that are approaching 2<sup>64</sup>. Normally, new
-files in each subvolume get assigned incrementally (plus one from the last
-time) and are not reused. The mount option turns on caching of the existing
-inode numbers and reuse of inode numbers of deleted files.</p>
-<p>This option may slow down your system at first run, or after mounting without
-the option.</p>
-<blockquote><b>Note:</b>
-Defaults to off due to a potential overflow problem when the free space
-checksums don&#8217;t fit inside a single page.</blockquote>
-<p>Don&#8217;t use this option unless you really need it. The inode number limit
-on 64bit system is 2<sup>64</sup>, which is practically enough for the whole filesystem
-lifetime. Due to implementation of linux VFS layer, the inode numbers on 32bit
-systems are only 32 bits wide. This lowers the limit significantly and makes
-it possible to reach it. In such case, this mount option will help.
-Alternatively, files with high inode numbers can be copied to a new subvolume
-which will effectively start the inode numbers from the beginning again.</p>
-
-<dt>
-<b>logreplay</b>
-<dt>
 <b>nologreplay</b>
 <dd>
 <p>
-(default: on, even read-only)
+(default: off, even read-only)
 </p>
-<p>Enable/disable log replay at mount time. See also <em>treelog</em>.
-Note that <em>nologreplay</em> is the same as <em>norecovery</em>.</p>
+<p>The tree-log contains pending updates to the filesystem until the full commit.
+The log is replayed on next mount, this can be disabled by this option.  See
+also <em>treelog</em>.  Note that <em>nologreplay</em> is the same as <em>norecovery</em>.</p>
 <blockquote><b>Warning:</b>
 currently, the tree log is replayed even with a read-only mount! To
 disable that behaviour, mount also with <em>nologreplay</em>.</blockquote>
@@ -451,6 +477,41 @@ write operations.</blockquote>
 normally be needed.</p>
 
 <dt>
+<b>rescue</b>
+<dd>
+<p>
+(since: 5.9)
+</p>
+<p>Modes allowing mount with damaged filesystem structures.</p>
+<ul>
+<li>
+<p>
+<em>usebackuproot</em> (since: 5.9, replaces standalone option <em>usebackuproot</em>)
+</p>
+</li>
+<li>
+<p>
+<em>nologreplay</em> (since: 5.9, replaces standalone option <em>nologreplay</em>)
+</p>
+</li>
+<li>
+<p>
+<em>ignorebadroots</em>, <em>ibadroots</em> (since: 5.11)
+</p>
+</li>
+<li>
+<p>
+<em>ignoredatacsums</em>, <em>idatacsums</em> (since: 5.11)
+</p>
+</li>
+<li>
+<p>
+<em>all</em> (since: 5.9)
+</p>
+</li>
+</ul>
+
+<dt>
 <b>skip_balance</b>
 <dd>
 <p>
@@ -484,10 +545,9 @@ implementation, which adds a new B-tree called the free space tree, addresses
 this issue. Once enabled, the <em>v2</em> space cache will always be used and cannot
 be disabled unless it is cleared. Use <em>clear_cache,space_cache=v1</em> or
 <em>clear_cache,nospace_cache</em> to do so. If <em>v2</em> is enabled, kernels without <em>v2</em>
-support will only be able to mount the filesystem in read-only mode. The
-[[Manpage/btrfs|btrfs(8)]] command currently only has read-only support for <em>v2</em>. A read-write
-command may be run on a <em>v2</em> filesystem by clearing the cache, running the
-command, and then remounting with <em>space_cache=v2</em>.</p>
+support will only be able to mount the filesystem in read-only mode.</p>
+<p>The [[Manpage/btrfs-check|btrfs-check(8)]] and [[Manpage/mkfs.btrfs|mkfs.btrfs(8)]] commands have full <em>v2</em> free space
+cache support since v4.19.</p>
 <p>If a version is not explicitly specified, the default implementation will be
 chosen, which is <em>v1</em>.</p>
 
@@ -578,8 +638,6 @@ a mounted filesystem if the log is not replayed.</p>
 
 <dt>
 <b>usebackuproot</b>
-<dt>
-<b>nousebackuproot</b>
 <dd>
 <p>
 (since: 4.6, default: off)
@@ -613,16 +671,6 @@ ordinary directory. Whether this is possible can be detected at runtime, see
 <p>List of mount options that have been removed, kept for backward compatibility.</p>
 <dl>
 <dt>
-<b>alloc_start=<em>bytes</em></b>
-<dd>
-<p>
-(default: 1M, minimum: 1M, deprecated since: 4.13)
-</p>
-<p>Debugging option to force all block allocations above a certain
-byte threshold on each block device.  The value is specified in
-bytes, optionally with a K, M, or G suffix (case insensitive).</p>
-
-<dt>
 <b>recovery</b>
 <dd>
 <p>
@@ -633,13 +681,17 @@ this option has been replaced by <em>usebackuproot</em> and should not be used
 but will work on 4.5+ kernels.</blockquote>
 
 <dt>
-<b>subvolrootid=<em>objectid</em></b>
+<b>inode_cache</b>
+<dt>
+<b>noinode_cache</b>
 <dd>
 <p>
-(irrelevant since: 3.2, formally deprecated since: 3.10)
+(removed in: 5.11, since: 3.0, default: off)
 </p>
-<p>A workaround option from times (pre 3.2) when it was not possible to mount a
-subvolume that did not reside directly under the toplevel subvolume.</p>
+<blockquote><b>Note:</b>
+the functionality has been removed in 5.11, any stale data created by
+previous use of the <em>inode_cache</em> option can be removed by <b>btrfs check
+--clear-ino-cache</b>.</blockquote>
 
 </dl>
 ===NOTES ON GENERIC MOUNT OPTIONS===
@@ -751,6 +803,14 @@ supported a varying number of hardlinks depending on the sum of all file name
 sizes that can be stored into one metadata block</p>
 
 <dt>
+<b>free_space_tree</b>
+<dd>
+<p>
+(since: 4.5)
+</p>
+<p>free space representation using a dedicated b-tree, successor of v1 space cache</p>
+
+<dt>
 <b>metadata_uuid</b>
 <dd>
 <p>
@@ -792,6 +852,14 @@ fragmented, which means worse performance</p>
 stored as an extent, saves a few percent of metadata if sparse files are used</p>
 
 <dt>
+<b>raid1c34</b>
+<dd>
+<p>
+(since: 5.5)
+</p>
+<p>extended RAID1 mode with copies on 3 or 4 devices respectively</p>
+
+<dt>
 <b>raid56</b>
 <dd>
 <p>
@@ -816,16 +884,67 @@ ordinary directory. Note that this feature only depends on the kernel version.</
 </p>
 <p>reduced-size metadata for extent references, saves a few percent of metadata</p>
 
+<dt>
+<b>send_stream_version</b>
+<dd>
+<p>
+(since: 5.10)
+</p>
+<p>number of the highest supported send stream version</p>
+
+<dt>
+<b>supported_checksums</b>
+<dd>
+<p>
+(since: 5.5)
+</p>
+<p>list of checksum algorithms supported by the kernel module, the respective
+modules or built-in implementing the algorithms need to be present to mount
+the filesystem, see <em>CHECKSUM ALGORITHMS</em></p>
+
+<dt>
+<b>supported_sectorsizes</b>
+<dd>
+<p>
+(since: 5.13)
+</p>
+<p>list of values that are accepted as sector sizes (<b>mkfs.btrfs --sectorsize</b>) by
+the running kernel</p>
+
+<dt>
+<b>supported_rescue_options</b>
+<dd>
+<p>
+(since: 5.11)
+</p>
+<p>list of values for the mount option <em>rescue</em> that are supported by the running
+kernel, see [[Manpage/btrfs|btrfs(5)]]</p>
+
+<dt>
+<b>zoned</b>
+<dd>
+<p>
+(since: 5.12)
+</p>
+<p>zoned mode is allocation/write friendly to host-managed zoned devices,
+allocation space is partitioned into fixed-size zones that must be updated
+sequentially, see <em>ZONED MODE</em></p>
+
 </dl>
 ===SWAPFILE SUPPORT===
 
 <p>The swapfile is supported since kernel 5.0. Use [http://man7.org/linux/man-pages/man8/swapon.8.html swapon(8)] to activate the
 swapfile. There are some limitations of the implementation in btrfs and linux
-swap subystem:</p>
+swap subsystem:</p>
 <ul>
 <li>
 <p>
 filesystem - must be only single device
+</p>
+</li>
+<li>
+<p>
+filesystem - must have only <em>single</em> data profile
 </p>
 </li>
 <li>
@@ -890,12 +1009,27 @@ device replace - ditto
 <p>When there are no active swapfiles and a whole-filesystem exclusive operation
 is running (ie. balance, device delete, shrink), the swapfiles cannot be
 temporarily activated. The operation must finish first.</p>
+<p>To create and activate a swapfile run the following commands:</p>
 <pre># truncate -s 0 swapfile
 # chattr +C swapfile
 # fallocate -l 2G swapfile
 # chmod 0600 swapfile
 # mkswap swapfile
 # swapon swapfile</pre>
+<p>Please note that the UUID returned by the <em>mkswap</em> utility identifies the swap
+"filesystem" and because it&#8217;s stored in a file, it&#8217;s not generally visible and
+usable as an identifier unlike if it was on a block device.</p>
+<p>The file will appear in <em>/proc/swaps</em>:</p>
+<pre># cat /proc/swaps
+Filename          Type          Size           Used      Priority
+/path/swapfile    file          2097152        0         -2</pre>
+<p>The swapfile can be created as one-time operation or, once properly created,
+activated on each boot by the <em>swapon -a</em> command (usually started by the
+service manager). Add the following entry to <em>/etc/fstab</em>, assuming the
+filesystem that provides the <em>/path</em> has been already mounted at this point.
+Additional mount options relevant for the swapfile can be set too (like
+priority, not the btrfs mount options).</p>
+<pre>/path/swapfile        none        swap        defaults      0 0</pre>
 ==CHECKSUM ALGORITHMS==
 
 <p>There are several checksum algorithms supported. The default and backward
@@ -953,33 +1087,265 @@ frame="border"
 cellspacing="0" cellpadding="4">
 <tbody>
 <tr>
-<td align="center" width="33%" valign="top"><p><strong>Digest</strong></p></td>
-<td align="right" width="33%" valign="top"><p><strong>Cycles/4KiB</strong></p></td>
-<td align="right" width="33%" valign="top"><p><strong>Ratio</strong></p></td>
+<td align="center" width="25%" valign="top"><p><strong>Digest</strong></p></td>
+<td align="right" width="25%" valign="top"><p><strong>Cycles/4KiB</strong></p></td>
+<td align="right" width="25%" valign="top"><p><strong>Ratio</strong></p></td>
+<td align="right" width="25%" valign="top"><p><strong>Implementation</strong></p></td>
 </tr>
 <tr>
-<td align="center" width="33%" valign="top"><p>CRC32C</p></td>
-<td align="right" width="33%" valign="top"><p>1700</p></td>
-<td align="right" width="33%" valign="top"><p>1.00</p></td>
+<td align="center" width="25%" valign="top"><p>CRC32C</p></td>
+<td align="right" width="25%" valign="top"><p>1700</p></td>
+<td align="right" width="25%" valign="top"><p>1.00</p></td>
+<td align="right" width="25%" valign="top"><p>CPU instruction</p></td>
 </tr>
 <tr>
-<td align="center" width="33%" valign="top"><p>XXHASH</p></td>
-<td align="right" width="33%" valign="top"><p>2500</p></td>
-<td align="right" width="33%" valign="top"><p>1.44</p></td>
+<td align="center" width="25%" valign="top"><p>XXHASH</p></td>
+<td align="right" width="25%" valign="top"><p>2500</p></td>
+<td align="right" width="25%" valign="top"><p>1.44</p></td>
+<td align="right" width="25%" valign="top"><p>reference impl.</p></td>
 </tr>
 <tr>
-<td align="center" width="33%" valign="top"><p>SHA256</p></td>
-<td align="right" width="33%" valign="top"><p>105000</p></td>
-<td align="right" width="33%" valign="top"><p>61</p></td>
+<td align="center" width="25%" valign="top"><p>SHA256</p></td>
+<td align="right" width="25%" valign="top"><p>105000</p></td>
+<td align="right" width="25%" valign="top"><p>61</p></td>
+<td align="right" width="25%" valign="top"><p>reference impl.</p></td>
 </tr>
 <tr>
-<td align="center" width="33%" valign="top"><p>BLAKE2b</p></td>
-<td align="right" width="33%" valign="top"><p>22000</p></td>
-<td align="right" width="33%" valign="top"><p>13</p></td>
+<td align="center" width="25%" valign="top"><p>SHA256</p></td>
+<td align="right" width="25%" valign="top"><p>36000</p></td>
+<td align="right" width="25%" valign="top"><p>21</p></td>
+<td align="right" width="25%" valign="top"><p>libgcrypt/AVX2</p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>SHA256</p></td>
+<td align="right" width="25%" valign="top"><p>63000</p></td>
+<td align="right" width="25%" valign="top"><p>37</p></td>
+<td align="right" width="25%" valign="top"><p>libsodium/AVX2</p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>BLAKE2b</p></td>
+<td align="right" width="25%" valign="top"><p>22000</p></td>
+<td align="right" width="25%" valign="top"><p>13</p></td>
+<td align="right" width="25%" valign="top"><p>reference impl.</p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>BLAKE2b</p></td>
+<td align="right" width="25%" valign="top"><p>19000</p></td>
+<td align="right" width="25%" valign="top"><p>11</p></td>
+<td align="right" width="25%" valign="top"><p>libgcrypt/AVX2</p></td>
+</tr>
+<tr>
+<td align="center" width="25%" valign="top"><p>BLAKE2b</p></td>
+<td align="right" width="25%" valign="top"><p>19000</p></td>
+<td align="right" width="25%" valign="top"><p>11</p></td>
+<td align="right" width="25%" valign="top"><p>libsodium/AVX2</p></td>
 </tr>
 </tbody>
 </table>
 </div>
+<p>Many kernels are configured with SHA256 as built-in and not as a module.
+The accelerated versions are however provided by the modules and must be loaded
+explicitly (<b>modprobe sha256</b>) before mounting the filesystem to make use of
+them. You can check in <em>/sys/fs/btrfs/FSID/checksum</em> which one is used. If you
+see <em>sha256-generic</em>, then you may want to unmount and mount the filesystem
+again, changing that on a mounted filesystem is not possible.
+Check the file <em>/proc/crypto</em>, when the implementation is built-in, you&#8217;d find</p>
+<pre>name         : sha256
+driver       : sha256-generic
+module       : kernel
+priority     : 100
+...</pre>
+<p>while accelerated implementation is e.g.</p>
+<pre>name         : sha256
+driver       : sha256-avx2
+module       : sha256_ssse3
+priority     : 170
+...</pre>
+==COMPRESSION==
+
+<p>Btrfs supports transparent file compression. There are three algorithms
+available: ZLIB, LZO and ZSTD (since v4.14). Basically, compression is on a file
+by file basis. You can have a single btrfs mount point that has some files that
+are uncompressed, some that are compressed with LZO, some with ZLIB, for
+instance (though you may not want it that way, it is supported).</p>
+<p>To enable compression, mount the filesystem with options <em>compress</em> or
+<em>compress-force</em>. Please refer to section <em>MOUNT OPTIONS</em>. Once compression is
+enabled, all new writes will be subject to compression. Some files may not
+compress very well, and these are typically not recompressed but still written
+uncompressed.</p>
+<p>Each compression algorithm has different speed/ratio trade offs. The levels
+can be selected by a mount option and affect only the resulting size (ie.
+no compatibility issues).</p>
+<p>Basic characteristics:</p>
+<table cellpadding="4">
+<tr valign="top">
+<td>
+ZLIB
+<br>
+</td>
+<td>
+<p>
+slower, higher compression ratio
+</p>
+<ul>
+<li>
+<p>
+levels: 1 to 9, mapped directly, default level is 3
+</p>
+</li>
+<li>
+<p>
+good backward compatibility
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr valign="top">
+<td>
+LZO
+<br>
+</td>
+<td>
+<p>
+faster compression and decompression than zlib, worse compression ratio, designed to be fast
+</p>
+<ul>
+<li>
+<p>
+no levels
+</p>
+</li>
+<li>
+<p>
+good backward compatibility
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr valign="top">
+<td>
+ZSTD
+<br>
+</td>
+<td>
+<p>
+compression comparable to zlib with higher compression/decompression speeds and different ratio
+</p>
+<ul>
+<li>
+<p>
+levels: 1 to 15
+</p>
+</li>
+<li>
+<p>
+since 4.14, levels since 5.1
+</p>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<p>The differences depend on the actual data set and cannot be expressed by a
+single number or recommendation. Higher levels consume more CPU time and may
+not bring a significant improvement, lower levels are close to real time.</p>
+<p>The algorithms could be mixed in one file as they&#8217;re stored per extent. The
+compression can be changed on a file by <b>btrfs filesystem defrag</b> command,
+using the <em>-c</em> option, or by <b>btrfs property set</b> using the <em>compression</em>
+property. Setting compression by <em>chattr +c</em> utility will set it to zlib.</p>
+===INCOMPRESSIBLE DATA===
+
+<p>Files with already compressed data or with data that won&#8217;t compress well with
+the CPU and memory constraints of the kernel implementations are using a simple
+decision logic. If the first portion of data being compressed is not smaller
+than the original, the compression of the file is disabled&#8201;&#8212;&#8201;unless the
+filesystem is mounted with <em>compress-force</em>. In that case compression will
+always be attempted on the file only to be later discarded. This is not optimal
+and subject to optimizations and further development.</p>
+<p>If a file is identified as incompressible, a flag is set (NOCOMPRESS) and it&#8217;s
+sticky. On that file compression won&#8217;t be performed unless forced. The flag
+can be also set by <em>chattr +m</em> (since e2fsprogs 1.46.2) or by properties with
+value <em>no</em> or <em>none</em>. Empty value will reset it to the default that&#8217;s currently
+applicable on the mounted filesystem.</p>
+<p>There are two ways to detect incompressible data:</p>
+<ul>
+<li>
+<p>
+actual compression attempt - data are compressed, if the result is not smaller,
+  it&#8217;s discarded, so this depends on the algorithm and level
+</p>
+</li>
+<li>
+<p>
+pre-compression heuristics - a quick statistical evaluation on the data is
+  peformed and based on the result either compression is performed or skipped,
+  the NOCOMPRESS bit is not set just by the heuristic, only if the compression
+  algorithm does not make an improvent
+</p>
+</li>
+</ul>
+===PRE-COMPRESSION HEURISTICS===
+
+<p>The heuristics aim to do a few quick statistical tests on the compressed data
+in order to avoid probably costly compression that would turn out to be
+inefficient. Compression algorithms could have internal detection of
+incompressible data too but this leads to more overhead as the compression is
+done in another thread and has to write the data anyway. The heuristic is
+read-only and can utilize cached memory.</p>
+<p>The tests performed based on the following: data sampling, long repated
+pattern detection, byte frequency, Shannon entropy.</p>
+===COMPATIBILITY WITH OTHER FEATURES===
+
+<p>Compression is done using the COW mechanism so it&#8217;s incompatible with
+<em>nodatacow</em>. Direct IO works on compressed files but will fall back to buffered
+writes. Currently <em>nodatasum</em> and compression don&#8217;t work together.</p>
+==FILESYSTEM EXCLUSIVE OPERATIONS==
+
+<p>There are several operations that affect the whole filesystem and cannot be run
+in parallel. Attempt to start one while another is running will fail.</p>
+<p>Since kernel 5.10 the currently running operation can be obtained from
+<tt>/sys/fs/UUID/exclusive_operation</tt> with following values and operations:</p>
+<ul>
+<li>
+<p>
+balance
+</p>
+</li>
+<li>
+<p>
+device add
+</p>
+</li>
+<li>
+<p>
+device delete
+</p>
+</li>
+<li>
+<p>
+device replace
+</p>
+</li>
+<li>
+<p>
+resize
+</p>
+</li>
+<li>
+<p>
+swapfile activate
+</p>
+</li>
+<li>
+<p>
+none
+</p>
+</li>
+</ul>
+<p>Enqueuing is supported for several btrfs subcommands so they can be started
+at once and then serialized.</p>
 ==FILESYSTEM LIMITS==
 
 <dl>
@@ -1040,17 +1406,51 @@ maximum number of hardlinks of a file in a directory
 100 otherwise
 </p>
 
+<dt>
+minimum filesystem size
+<dd>
+<p>
+the minimal size of each device depends on the <em>mixed-bg</em> feature, without that
+(the default) it&#8217;s about 109MiB, with mixed-bg it&#8217;s is 16MiB
+</p>
+
 </dl>
 ==BOOTLOADER SUPPORT==
 
 <p>GRUB2 (https://www.gnu.org/software/grub) has the most advanced support of
 booting from BTRFS with respect to features.</p>
+<p>U-boot (https://www.denx.de/wiki/U-Boot/) has decent support for booting but
+not all BTRFS features are implemented, check the documentation.</p>
 <p>EXTLINUX (from the https://syslinux.org project) can boot but does not support
 all features. Please check the upstream documentation before you use it.</p>
+<p>The first 1MiB on each device is unused with the exception of primary
+superblock that is on the offset 64KiB and spans 4KiB.</p>
 ==FILE ATTRIBUTES==
 
-<p>The btrfs filesystem supports setting the following file attributes using the
-[http://man7.org/linux/man-pages/man1/chattr.1.html chattr(1)] utility:</p>
+<p>The btrfs filesystem supports setting file attributes or flags. Note there are
+old and new interfaces, with confusing names. The following list should clarify
+that:</p>
+<ul>
+<li>
+<p>
+<em>attributes</em>: [http://man7.org/linux/man-pages/man1/chattr.1.html chattr(1)] or [http://man7.org/linux/man-pages/man1/lsattr.1.html lsattr(1)] utilities (the ioctls are
+FS_IOC_GETFLAGS and FS_IOC_SETFLAGS), due to the ioctl names the attributes are
+also called flags
+</p>
+</li>
+<li>
+<p>
+<em>xflags</em>: to distinguish from the previous, it&#8217;s extended flags, with tunable
+bits similar to the attributes but extensible and new bits will be added in the
+future (the ioctls are FS_IOC_FSGETXATTR and FS_IOC_FSSETXATTR but they are not
+related to extended attributes that are also called xattrs), there&#8217;s no standard
+tool to change the bits, there&#8217;s support in [http://man7.org/linux/man-pages/man8/xfs_io.8.html xfs_io(8)] as command <b>xfs_io -c
+chattr</b>
+</p>
+</li>
+</ul>
+===ATTRIBUTES===
+
 <dl>
 <dt>
 <b>a</b>
@@ -1074,13 +1474,14 @@ all features. Please check the upstream documentation before you use it.</p>
 Please note that compression is also affected by the mount options or the parent
 directory attributes.
 </p>
-<p>When set on a directory, all newly created files will inherit this attribute.</p>
+<p>When set on a directory, all newly created files will inherit this attribute.
+This attribute cannot be set with <em>m</em> at the same time.</p>
 
 <dt>
 <b>C</b>
 <dd>
 <p>
-<em>no copy-on-write</em>, file modifications are done in-place
+<em>no copy-on-write</em>, file data modifications are done in-place
 </p>
 <p>When set on a directory, all newly created files will inherit this attribute.</p>
 <blockquote><b>Note:</b>
@@ -1112,6 +1513,17 @@ long as this attribute is set (obviously the exception is unsetting the attribut
 </p>
 
 <dt>
+<b>m</b>
+<dd>
+<p>
+<em>no compression</em>, permanently turn off compression on the given file. Any
+compression mount options will not affect this file. (<tt>chattr</tt> support added in
+1.46.2)
+</p>
+<p>When set on a directory, all newly created files will inherit this attribute.
+This attribute cannot be set with <em>c</em> at the same time.</p>
+
+<dt>
 <b>S</b>
 <dd>
 <p>
@@ -1119,18 +1531,163 @@ long as this attribute is set (obviously the exception is unsetting the attribut
 <em>O_DSYNC</em>
 </p>
 
-<dt>
-<b>X</b>
-<dd>
-<p>
-<em>no compression</em>, permanently turn off compression on the given file. Any
-compression mount options will not affect this file.
-</p>
-<p>When set on a directory, all newly created files will inherit this attribute.</p>
-
 </dl>
 <p>No other attributes are supported.  For the complete list please refer to the
 [http://man7.org/linux/man-pages/man1/chattr.1.html chattr(1)] manual page.</p>
+===XFLAGS===
+
+<p>There&#8217;s overlap of letters assigned to the bits with the attributes, this list
+refers to what [http://man7.org/linux/man-pages/man8/xfs_io.8.html xfs_io(8)] provides:</p>
+<dl>
+<dt>
+<b>i</b>
+<dd>
+<p>
+<em>immutable</em>, same as the attribute
+</p>
+
+<dt>
+<b>a</b>
+<dd>
+<p>
+<em>append only</em>, same as the attribute
+</p>
+
+<dt>
+<b>s</b>
+<dd>
+<p>
+<em>synchronous updates</em>, same as the attribute <em>S</em>
+</p>
+
+<dt>
+<b>A</b>
+<dd>
+<p>
+<em>no atime updates</em>, same as the attribute
+</p>
+
+<dt>
+<b>d</b>
+<dd>
+<p>
+<em>no dump</em>, same as the attribute
+</p>
+
+</dl>
+==ZONED MODE==
+
+<p>Since version 5.12 btrfs supports so called <em>zoned mode</em>. This is a special
+on-disk format and allocation/write strategy that&#8217;s friendly to zoned devices.
+In short, a device is partitioned into fixed-size zones and each zone can be
+updated by append-only manner, or reset. As btrfs has no fixed data structures,
+except the super blocks, the zoned mode only requires block placement that
+follows the device constraints. You can learn about the whole architecture at
+https://zonedstorage.io .</p>
+<p>The devices are also called SMR/ZBC/ZNS, in <em>host-managed</em> mode. Note that
+there are devices that appear as non-zoned but actually are, this is
+<em>drive-managed</em> and using zoned mode won&#8217;t help.</p>
+<p>The zone size depends on the device, typical sizes are 256MiB or 1GiB. In
+general it must be a power of two. Emulated zoned devices like <em>null_blk</em> allow
+to set various zone sizes.</p>
+===REQUIREMENTS, LIMITATIONS===
+
+<ul>
+<li>
+<p>
+all devices must have the same zone size
+</p>
+</li>
+<li>
+<p>
+maximum zone size is 8GiB
+</p>
+</li>
+<li>
+<p>
+mixing zoned and non-zoned devices is possible, the zone writes are emulated,
+  but this is namely for testing
+</p>
+</li>
+<li>
+<p>
+the super block is handled in a special way and is at different locations
+  than on a non-zoned filesystem:
+</p>
+</li>
+<li>
+<p>
+primary: 0B (and the next two zones)
+</p>
+</li>
+<li>
+<p>
+secondary: 512G (and the next two zones)
+</p>
+</li>
+<li>
+<p>
+tertiary: 4TiB (4096GiB, and the next two zones)
+</p>
+</li>
+</ul>
+===INCOMPATIBLE FEATURES===
+
+<p>The main constraint of the zoned devices is lack of in-place update of the data.
+This is inherently incompatbile with some features:</p>
+<ul>
+<li>
+<p>
+nodatacow - overwrite in-place, cannot create such files
+</p>
+</li>
+<li>
+<p>
+fallocate - preallocating space for in-place first write
+</p>
+</li>
+<li>
+<p>
+mixed-bg - unordered writes to data and metadata, fixing that means using
+  separate data and metadata block groups
+</p>
+</li>
+<li>
+<p>
+booting - the zone at offset 0 contains superblock, resetting the zone would
+  destroy the bootloader data
+</p>
+</li>
+</ul>
+<p>Initial support lacks some features but they&#8217;re planned:</p>
+<ul>
+<li>
+<p>
+only single profile is supported
+</p>
+</li>
+<li>
+<p>
+fstrim - due to dependency on free space cache v1
+</p>
+</li>
+</ul>
+===SUPER BLOCK===
+
+<p>As said above, super block is handled in a special way. In order to be crash
+safe, at least one zone in a known location must contain a valid superblock.
+This is implemented as a ring buffer in two consecutive zones, starting from
+known offsets 0, 512G and 4TiB. The values are different than on non-zoned
+devices. Each new super block is appended to the end of the zone, once it&#8217;s
+filled, the zone is reset and writes continue to the next one. Looking up the
+latest super block needs to read offsets of both zones and determine the last
+written version.</p>
+<p>The amount of space reserved for super block depends on the zone size. The
+secondary and tertiary copies are at distant offsets as the capacity of the
+devices is expected to be large, tens of terabytes. Maximum zone size supported
+is 8GiB, which would mean that eg. offset 0-16GiB would be reserved just for
+the super block on a hypothetical device of that zone size. This is wasteful
+but required to guarantee crash safety.</p>
 ==CONTROL DEVICE==
 
 <p>There&#8217;s a character special device <tt>/dev/btrfs-control</tt> with major and minor
@@ -1158,12 +1715,564 @@ get the supported features (can be also found under <em>/sys/fs/btrfs/features</
 </p>
 </li>
 </ul>
-<p>The device is usually created by a system device node manager (eg. udev), but
-can be created manually:</p>
-<pre># mknod --mode=600 c 10 234 /dev/btrfs-control</pre>
+<p>The device is created when btrfs is initialized, either as a module or a
+built-in functionality and makes sense only in connection with that. Running
+eg. mkfs without the module loaded will not register the device and will
+probably warn about that.</p>
+<p>In rare cases when the module is loaded but the device is not present (most
+likely accidentally deleted), it&#8217;s possible to recreate it by</p>
+<pre># mknod --mode=600 /dev/btrfs-control c 10 234</pre>
+<p>or (since 5.11) by a convenience command</p>
+<pre># btrfs rescue create-control-device</pre>
 <p>The control device is not strictly required but the device scanning will not
 work and a workaround would need to be used to mount a multi-device filesystem.
-The mount option <em>device</em> can trigger the device scanning during mount.</p>
+The mount option <em>device</em> can trigger the device scanning during mount, see
+also <b>btrfs device scan</b>.</p>
+==FILESYSTEM WITH MULTIPLE PROFILES==
+
+<p>It is possible that a btrfs filesystem contains multiple block group profiles
+of the same type.  This could happen when a profile conversion using balance
+filters is interrupted (see [[Manpage/btrfs-balance|btrfs-balance(8)]]).  Some <em>btrfs</em> commands perform
+a test to detect this kind of condition and print a warning like this:</p>
+<pre>WARNING: Multiple block group profiles detected, see 'man btrfs(5)'.
+WARNING:   Data: single, raid1
+WARNING:   Metadata: single, raid1</pre>
+<p>The corresponding output of <b>btrfs filesystem df</b> might look like:</p>
+<pre>WARNING: Multiple block group profiles detected, see 'man btrfs(5)'.
+WARNING:   Data: single, raid1
+WARNING:   Metadata: single, raid1
+Data, RAID1: total=832.00MiB, used=0.00B
+Data, single: total=1.63GiB, used=0.00B
+System, single: total=4.00MiB, used=16.00KiB
+Metadata, single: total=8.00MiB, used=112.00KiB
+Metadata, RAID1: total=64.00MiB, used=32.00KiB
+GlobalReserve, single: total=16.25MiB, used=0.00B</pre>
+<p>There&#8217;s more than one line for type <em>Data</em> and <em>Metadata</em>, while the profiles
+are <em>single</em> and <em>RAID1</em>.</p>
+<p>This state of the filesystem OK but most likely needs the user/administrator to
+take an action and finish the interrupted tasks. This cannot be easily done
+automatically, also the user knows the expected final profiles.</p>
+<p>In the example above, the filesystem started as a single device and <em>single</em>
+block group profile. Then another device was added, followed by balance with
+<em>convert=raid1</em> but for some reason hasn&#8217;t finished. Restarting the balance
+with <em>convert=raid1</em> will continue and end up with filesystem with all block
+group profiles <em>RAID1</em>.</p>
+<blockquote><b>Note:</b>
+If you&#8217;re familiar with balance filters, you can use
+<em>convert=raid1,profiles=single,soft</em>, which will take only the unconverted
+<em>single</em> profiles and convert them to <em>raid1</em>. This may speed up the conversion
+as it would not try to rewrite the already convert <em>raid1</em> profiles.</blockquote>
+<p>Having just one profile is desired as this also clearly defines the profile of
+newly allocated block groups, otherwise this depends on internal allocation
+policy. When there are multiple profiles present, the order of selection is
+RAID6, RAID5, RAID10, RAID1, RAID0 as long as the device number constraints are
+satisfied.</p>
+<p>Commands that print the warning were chosen so they&#8217;re brought to user
+attention when the filesystem state is being changed in that regard. This is:
+<em>device add</em>, <em>device delete</em>, <em>balance cancel</em>, <em>balance pause</em>. Commands
+that report space usage: <em>filesystem df</em>, <em>device usage</em>. The command
+<em>filesystem usage</em> provides a line in the overall summary:</p>
+<pre>    Multiple profiles:                 yes (data, metadata)</pre>
+==SEEDING DEVICE==
+
+<p>The COW mechanism and multiple devices under one hood enable an interesting
+concept, called a seeding device: extending a read-only filesystem on a single
+device filesystem with another device that captures all writes. For example
+imagine an immutable golden image of an operating system enhanced with another
+device that allows to use the data from the golden image and normal operation.
+This idea originated on CD-ROMs with base OS and allowing to use them for live
+systems, but this became obsolete. There are technologies providing similar
+functionality, like <em>unionmount</em>, <em>overlayfs</em> or <em>qcow2</em> image snapshot.</p>
+<p>The seeding device starts as a normal filesystem, once the contents is ready,
+<b>btrfstune -S 1</b> is used to flag it as a seeding device. Mounting such device
+will not allow any writes, except adding a new device by <b>btrfs device add</b>.
+Then the filesystem can be remounted as read-write.</p>
+<p>Given that the filesystem on the seeding device is always recognized as
+read-only, it can be used to seed multiple filesystems, at the same time. The
+UUID that is normally attached to a device is automatically changed to a random
+UUID on each mount.</p>
+<p>Once the seeding device is mounted, it needs the writable device. After adding
+it, something like <em>remount -o remount,rw /path</em> makes the filesystem at
+<em>/path</em> ready for use. The simplest usecase is to throw away all changes by
+unmounting the filesystem when convenient.</p>
+<p>Alternatively, deleting the seeding device from the filesystem can turn it into
+a normal filesystem, provided that the writable device can also contain all the
+data from the seeding device.</p>
+<p>The seeding device flag can be cleared again by <b>btrfstune -f -s 0</b>, eg.
+allowing to update with newer data but please note that this will invalidate
+all existing filesystems that use this particular seeding device. This works
+for some usecases, not for others, and a forcing flag to the command is
+mandatory to avoid accidental mistakes.</p>
+<p>Example how to create and use one seeding device:</p>
+<pre># mkfs.btrfs /dev/sda
+# mount /dev/sda /mnt/mnt1
+# ... fill mnt1 with data
+# umount /mnt/mnt1
+# btrfstune -S 1 /dev/sda
+# mount /dev/sda /mnt/mnt1
+# btrfs device add /dev/sdb /mnt
+# mount -o remount,rw /mnt/mnt1
+# ... /mnt/mnt1 is now writable</pre>
+<p>Now <em>/mnt/mnt1</em> can be used normally. The device <em>/dev/sda</em> can be mounted
+again with a another writable device:</p>
+<pre># mount /dev/sda /mnt/mnt2
+# btrfs device add /dev/sdc /mnt/mnt2
+# mount -o remount,rw /mnt/mnt2
+# ... /mnt/mnt2 is now writable</pre>
+<p>The writable device (<em>/dev/sdb</em>) can be decoupled from the seeding device and
+used independently:</p>
+<pre># btrfs device delete /dev/sda /mnt/mnt1</pre>
+<p>As the contents originated in the seeding device, it&#8217;s possible to turn
+<em>/dev/sdb</em> to a seeding device again and repeat the whole process.</p>
+<p>A few things to note:</p>
+<ul>
+<li>
+<p>
+it&#8217;s recommended to use only single device for the seeding device, it works
+  for multiple devices but the <em>single</em> profile must be used in order to make
+  the seeding device deletion work
+</p>
+</li>
+<li>
+<p>
+block group profiles <em>single</em> and <em>dup</em> support the usecases above
+</p>
+</li>
+<li>
+<p>
+the label is copied from the seeding device and can be changed by <b>btrfs filesystem label</b>
+</p>
+</li>
+<li>
+<p>
+each new mount of the seeding device gets a new random UUID
+</p>
+</li>
+</ul>
+==RAID56 STATUS AND RECOMMENDED PRACTICES==
+
+<p>The RAID56 feature provides striping and parity over several devices, same as
+the traditional RAID5/6. There are some implementation and design deficiencies
+that make it unreliable for some corner cases and the feature <b>should not be
+used in production, only for evaluation or testing</b>.  The power failure safety
+for metadata with RAID56 is not 100%.</p>
+===Metadata===
+
+<p>Do not use <em>raid5</em> nor <em>raid6</em> for metadata. Use <em>raid1</em> or <em>raid1c3</em>
+respectively.</p>
+<p>The substitute profiles provide the same guarantees against loss of 1 or 2
+devices, and in some respect can be an improvement.  Recovering from one
+missing device will only need to access the remaining 1st or 2nd copy, that in
+general may be stored on some other devices due to the way RAID1 works on
+btrfs, unlike on a striped profile (similar to <em>raid0</em>) that would need all
+devices all the time.</p>
+<p>The space allocation pattern and consumption is different (eg. on N devices):
+for <em>raid5</em> as an example, a 1GiB chunk is reserved on each device, while with
+<em>raid1</em> there&#8217;s each 1GiB chunk stored on 2 devices. The consumption of each
+1GiB of used metadata is then <em>N * 1GiB</em> for vs <em>2 * 1GiB</em>. Using <em>raid1</em>
+is also more convenient for balancing/converting to other profile due to lower
+requirement on the available chunk space.</p>
+===Missing/incomplete support===
+
+<p>When RAID56 is on the same filesystem with different raid profiles, the space
+reporting is inaccurate, eg. <em>df</em>, <em>btrfs filesystem df</em> or <em>btrfs filesystem
+usge</em>. When there&#8217;s only a one profile per block group type (eg. raid5 for data)
+the reporting is accurate.</p>
+<p>When scrub is started on a RAID56 filesystem, it&#8217;s started on all devices that
+degrade the performance. The workaround is to start it on each device
+separately. Due to that the device stats may not match the actual state and
+some errors might get reported multiple times.</p>
+<p>The <em>write hole</em> problem.</p>
+==STORAGE MODEL==
+
+<p><em>A storage model is a model that captures key physical aspects of data
+structure in a data store. A filesystem is the logical structure organizing
+data on top of the storage device.</em></p>
+<p>The filesystem assumes several features or limitations of the storage device
+and utilizes them or applies measures to guarantee reliability. BTRFS in
+particular is based on a COW (copy on write) mode of writing, ie. not updating
+data in place but rather writing a new copy to a different location and then
+atomically switching the pointers.</p>
+<p>In an ideal world, the device does what it promises. The filesystem assumes
+that this may not be true so additional mechanisms are applied to either detect
+misbehaving hardware or get valid data by other means. The devices may (and do)
+apply their own detection and repair mechanisms but we won&#8217;t assume any.</p>
+<p>The following assumptions about storage devices are considered (sorted by
+importance, numbers are for further reference):</p>
+<ol>
+<li>
+<p>
+atomicity of reads and writes of blocks/sectors (the smallest unit of data
+   the device presents to the upper layers)
+</p>
+</li>
+<li>
+<p>
+there&#8217;s a flush command that instructs the device to forcibly order writes
+   before and after the command; alternatively there&#8217;s a barrier command that
+   facilitates the ordering but may not flush the data
+</p>
+</li>
+<li>
+<p>
+data sent to write to a given device offset will be written without further
+   changes to the data and to the offset
+</p>
+</li>
+<li>
+<p>
+writes can be reordered by the device, unless explicitly serialized by the
+   flush command
+</p>
+</li>
+<li>
+<p>
+reads and writes can be freely reordered and interleaved
+</p>
+</li>
+</ol>
+<p>The consistency model of BTRFS builds on these assumptions. The logical data
+updates are grouped, into a generation, written on the device, serialized by
+the flush command and then the super block is written ending the generation.
+All logical links among metadata comprising a consistent view of the data may
+not cross the generation boundary.</p>
+===WHEN THINGS GO WRONG===
+
+<p><b>No or partial atomicity of block reads/writes (1)</b></p>
+<ul>
+<li>
+<p>
+<em>Problem</em>: a partial block contents is written (<em>torn write</em>), eg. due to a
+  power glitch or other electronics failure during the read/write
+</p>
+</li>
+<li>
+<p>
+<em>Detection</em>: checksum mismatch on read
+</p>
+</li>
+<li>
+<p>
+<em>Repair</em>: use another copy or rebuild from multiple blocks using some encoding
+  scheme
+</p>
+</li>
+</ul>
+<p><b>The flush command does not flush (2)</b></p>
+<p>This is perhaps the most serious problem and impossible to mitigate by
+filesystem without limitations and design restrictions. What could happen in
+the worst case is that writes from one generation bleed to another one, while
+still letting the filesystem consider the generations isolated. Crash at any
+point would leave data on the device in an inconsistent state without any hint
+what exactly got written, what is missing and leading to stale metadata link
+information.</p>
+<p>Devices usually honor the flush command, but for performance reasons may do
+internal caching, where the flushed data are not yet persistently stored. A
+power failure could lead to a similar scenario as above, although it&#8217;s less
+likely that later writes would be written before the cached ones. This is
+beyond what a filesystem can take into account. Devices or controllers are
+usually equipped with batteries or capacitors to write the cache contents even
+after power is cut. (<em>Battery backed write cache</em>)</p>
+<p><b>Data get silently changed on write (3)</b></p>
+<p>Such thing should not happen frequently, but still can happen spuriously due
+the complex internal workings of devices or physical effects of the storage
+media itself.</p>
+<ul>
+<li>
+<p>
+<em>Problem</em>: while the data are written atomically, the contents get changed
+</p>
+</li>
+<li>
+<p>
+<em>Detection</em>: checksum mismatch on read
+</p>
+</li>
+<li>
+<p>
+<em>Repair</em>: use another copy or rebuild from multiple blocks using some
+  encoding scheme
+</p>
+</li>
+</ul>
+<p><b>Data get silently written to another offset (3)</b></p>
+<p>This would be another serious problem as the filesystem has no information
+when it happens. For that reason the measures have to be done ahead of time.
+This problem is also commonly called <em>ghost write</em>.</p>
+<p>The metadata blocks have the checksum embedded in the blocks, so a correct
+atomic write would not corrupt the checksum. It&#8217;s likely that after reading
+such block the data inside would not be consistent with the rest. To rule that
+out there&#8217;s embedded block number in the metadata block. It&#8217;s the logical
+block number because this is what the logical structure expects and verifies.</p>
+==HARDWARE CONSIDERATIONS==
+
+<p>The following is based on information publicly available, user feedback,
+community discussions or bug report analyses. It&#8217;s not complete and further
+research is encouraged when in doubt.</p>
+===MAIN MEMORY===
+
+<p>The data structures and raw data blocks are temporarily stored in computer
+memory before they get written to the device. It is critical that memory is
+reliable because even simple bit flips can have vast consequences and lead to
+damaged structures, not only in the filesystem but in the whole operating
+system.</p>
+<p>Based on experience in the community, memory bit flips are more common than one
+would think. When it happens, it&#8217;s reported by the tree-checker or by a checksum
+mismatch after reading blocks. There are some very obvious instances of bit
+flips that happen, e.g. in an ordered sequence of keys in metadata blocks. We can
+easily infer from the other data what values get damaged and how. However, fixing
+that is not straightforward and would require cross-referencing data from the
+entire filesystem to see the scope.</p>
+<p>If available, ECC memory should lower the chances of bit flips, but this
+type of memory is not available in all cases. A memory test should be performed
+in case there&#8217;s a visible bit flip pattern, though this may not detect a faulty
+memory module because the actual load of the system could be the factor making
+the problems appear. In recent years attacks on how the memory modules operate
+have been demonstrated (<em>rowhammer</em>) achieving specific bits to be flipped.
+While these were targeted, this shows that a series of reads or writes can
+affect unrelated parts of memory.</p>
+<p>Further reading:</p>
+<ul>
+<li>
+<p>
+https://en.wikipedia.org/wiki/Row_hammer
+</p>
+</li>
+</ul>
+<p>What to do:</p>
+<ul>
+<li>
+<p>
+run <em>memtest</em>, note that sometimes memory errors happen only when the system
+  is under heavy load that the default memtest cannot trigger
+</p>
+</li>
+<li>
+<p>
+memory errors may appear as filesystem going read-only due to "pre write"
+  check, that verify meta data before they get written but fail some basic
+  consistency checks
+</p>
+</li>
+</ul>
+===DIRECT MEMORY ACCESS (DMA)===
+
+<p>Another class of errors is related to DMA (direct memory access) performed
+by device drivers. While this could be considered a software error, the
+data transfers that happen without CPU assistance may accidentally corrupt
+other pages. Storage devices utilize DMA for performance reasons, the
+filesystem structures and data pages are passed back and forth, making
+errors possible in case page life time is not properly tracked.</p>
+<p>There are lots of quirks (device-specific workarounds) in Linux kernel
+drivers (regarding not only DMA) that are added when found. The quirks
+may avoid specific errors or disable some features to avoid worse problems.</p>
+<p>What to do:</p>
+<ul>
+<li>
+<p>
+use up-to-date kernel (recent releases or maintained long term support versions)
+</p>
+</li>
+<li>
+<p>
+as this may be caused by faulty drivers, keep the systems up-to-date
+</p>
+</li>
+</ul>
+===ROTATIONAL DISKS (HDD)===
+
+<p>Rotational HDDs typically fail at the level of individual sectors or small clusters.
+Read failures are caught on the levels below the filesystem and are returned to
+the user as <em>EIO - Input/output error</em>. Reading the blocks repeatedly may
+return the data eventually, but this is better done by specialized tools and
+filesystem takes the result of the lower layers. Rewriting the sectors may
+trigger internal remapping but this inevitably leads to data loss.</p>
+<p>Disk firmware is technically software but from the filesystem perspective is
+part of the hardware. IO requests are processed, and caching or various
+other optimizations are performed, which may lead to bugs under high load or
+unexpected physical conditions or unsupported use cases.</p>
+<p>Disks are connected by cables with two ends, both of which can cause problems
+when not attached properly. Data transfers are protected by checksums and the
+lower layers try hard to transfer the data correctly or not at all. The errors
+from badly-connecting cables may manifest as large amount of failed read or
+write requests, or as short error bursts depending on physical conditions.</p>
+<p>What to do:</p>
+<ul>
+<li>
+<p>
+check <em>smartctl</em> for potential issues
+</p>
+</li>
+</ul>
+===SOLID STATE DRIVES (SSD)===
+
+<p>The mechanism of information storage is different from HDDs and this affects
+the failure mode as well. The data are stored in cells grouped in large blocks
+with limited number of resets and other write constraints. The firmware tries
+to avoid unnecessary resets and performs optimizations to maximize the storage
+media lifetime. The known techniques are deduplication (blocks with same
+fingerprint/hash are mapped to same physical block), compression or internal
+remapping and garbage collection of used memory cells. Due to the additional
+processing there are measures to verity the data e.g. by ECC codes.</p>
+<p>The observations of failing SSDs show that the whole electronic fails at once
+or affects a lot of data (eg. stored on one chip). Recovering such data
+may need specialized equipment and reading data repeatedly does not help as
+it&#8217;s possible with HDDs.</p>
+<p>There are several technologies of the memory cells with different
+characteristics and price. The lifetime is directly affected by the type and
+frequency of data written.  Writing "too much" distinct data (e.g. encrypted)
+may render the internal deduplication ineffective and lead to a lot of rewrites
+and increased wear of the memory cells.</p>
+<p>There are several technologies and manufacturers so it&#8217;s hard to describe them
+but there are some that exhibit similar behaviour:</p>
+<ul>
+<li>
+<p>
+expensive SSD will use more durable memory cells and is optimized
+for reliability and high load
+</p>
+</li>
+<li>
+<p>
+cheap SSD is projected for a lower load ("desktop user") and is optimized for
+cost, it may employ the optimizations and/or extended error reporting partially
+or not at all
+</p>
+</li>
+</ul>
+<p>It&#8217;s not possible to reliably determine the expected lifetime of an SSD due to
+lack of information about how it works or due to lack of reliable stats provided
+by the device.</p>
+<p>Metadata writes tend to be the biggest component of lifetime writes to a SSD,
+so there is some value in reducing them. Depending on the device class (high
+end/low end) the features like DUP block group profiles may affect the
+reliability in both ways:</p>
+<ul>
+<li>
+<p>
+<em>high end</em> are typically more reliable and using <em>single</em> for data and metadata
+could be suitable to reduce device wear
+</p>
+</li>
+<li>
+<p>
+<em>low end</em> could lack ability to identify errors so an additional
+redundancy at the filesystem level (checksums, <em>DUP</em>) could help
+</p>
+</li>
+</ul>
+<p>Only users who consume 50 to 100% of the SSD&#8217;s actual lifetime writes need to be
+concerned by the write amplification of btrfs DUP metadata. Most users will be
+far below 50% of the actual lifetime, or will write the drive to death and
+discover how many writes 100% of the actual lifetime was. SSD firmware often
+adds its own write multipliers that can be arbitrary and unpredictable and
+dependent on application behavior, and these will typically have far greater
+effect on SSD lifespan than DUP metadata. It&#8217;s more or less impossible to
+predict when a SSD will run out of lifetime writes to within a factor of two, so
+it&#8217;s hard to justify wear reduction as a benefit.</p>
+<p>Further reading:</p>
+<ul>
+<li>
+<p>
+https://www.snia.org/educational-library/ssd-and-deduplication-end-spinning-disk-2012
+</p>
+</li>
+<li>
+<p>
+https://www.snia.org/educational-library/realities-solid-state-storage-2013-2013
+</p>
+</li>
+<li>
+<p>
+https://www.snia.org/educational-library/ssd-performance-primer-2013
+</p>
+</li>
+<li>
+<p>
+https://www.snia.org/educational-library/how-controllers-maximize-ssd-life-2013
+</p>
+</li>
+</ul>
+<p>What to do:</p>
+<ul>
+<li>
+<p>
+run <em>smartctl</em> or self-tests to look for potential issues
+</p>
+</li>
+<li>
+<p>
+keep the firmware up-to-date
+</p>
+</li>
+</ul>
+===NVM EXPRESS, NON-VOLATILE MEMORY (NVMe)===
+
+<p>NVMe is a type of persistent memory usually connected over a system bus (PCIe)
+or similar interface and the speeds are an order of magnitude faster than SSD.
+It is also a non-rotating type of storage, and is not typically connected by a
+cable. It&#8217;s not a SCSI type device either but rather a complete specification
+for logical device interface.</p>
+<p>In a way the errors could be compared to a combination of SSD class and regular
+memory. Errors may exhibit as random bit flips or IO failures. There are tools
+to access the internal log (<em>nvme log</em> and <em>nvme-cli</em>) for a more detailed
+analysis.</p>
+<p>There are separate error detection and correction steps performed e.g. on the
+bus level and in most cases never making in to the filesystem level. Once this
+happens it could mean there&#8217;s some systematic error like overheating or bad
+physical connection of the device. You may want to run self-tests (using
+<em>smartctl</em>).</p>
+<ul>
+<li>
+<p>
+https://en.wikipedia.org/wiki/NVM_Express
+</p>
+</li>
+<li>
+<p>
+https://www.smartmontools.org/wiki/NVMe_Support
+</p>
+</li>
+</ul>
+===DRIVE FIRMWARE===
+
+<p>Firmware is technically still software but embedded into the hardware. As all
+software has bugs, so does firmware. Storage devices can update the firmware
+and fix known bugs. In some cases the it&#8217;s possible to avoid certain bugs by
+quirks (device-specific workarounds) in Linux kernel.</p>
+<p>A faulty firmware can cause wide range of corruptions from small and localized
+to large affecting lots of data. Self-repair capabilities may not be sufficient.</p>
+<p>What to do:</p>
+<ul>
+<li>
+<p>
+check for firmware updates in case there are known problems, note that
+  updating firmware can be risky on itself
+</p>
+</li>
+<li>
+<p>
+use up-to-date kernel (recent releases or maintained long term support versions)
+</p>
+</li>
+</ul>
+===SD FLASH CARDS===
+
+<p>There are a lot of devices with low power consumption and thus using storage
+media based on low power consumption too, typically flash memory stored on
+a chip enclosed in a detachable card package. An improperly inserted card may be
+damaged by electrical spikes when the device is turned on or off. The chips
+storing data in turn may be damaged permanently. All types of flash memory
+have a limited number of rewrites, so the data are internally translated by FTL
+(flash translation layer). This is implemented in firmware (technically a
+software) and prone to bugs that manifest as hardware errors.</p>
+<p>Adding redundancy like using DUP profiles for both data and metadata can help
+in some cases but a full backup might be the best option once problems appear
+and replacing the card could be required as well.</p>
+===HARDWARE AS THE MAIN SOURCE OF FILESYSTEM CORRUPTIONS===
+
+<p><b>If you use unreliable hardware and don&#8217;t know about that, don&#8217;t blame the
+filesystem when it tells you.</b></p>
 ==SEE ALSO==
 
 <p>[http://man7.org/linux/man-pages/man5/acl.5.html acl(5)],

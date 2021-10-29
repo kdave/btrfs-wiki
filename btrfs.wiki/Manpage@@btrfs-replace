@@ -22,7 +22,7 @@ Cancel a running device replace operation.
 </p>
 
 <dt>
-<b>start</b> [-Bfr] <em>&lt;srcdev&gt;</em>|<em>&lt;devid&gt;</em> <em>&lt;targetdev&gt;</em> <em>&lt;path&gt;</em>
+<b>start</b> [options] <em>&lt;srcdev&gt;</em>|<em>&lt;devid&gt;</em> <em>&lt;targetdev&gt;</em> <em>&lt;path&gt;</em>
 <dd>
 <p>
 Replace device of a btrfs filesystem.
@@ -71,6 +71,22 @@ never allowed to be used as the <em>&lt;targetdev&gt;</em>.</p>
 no background replace.
 </p>
 
+<dt>
+--enqueue
+<dd>
+<p>
+wait if there&#8217;s another exclusive operation running, otherwise continue
+</p>
+
+<dt>
+-K|--nodiscard
+<dd>
+<p>
+Do not perform whole device TRIM operation on devices that are capable of that.
+This does not affect discard/trim operation when the filesystem is mounted.
+Please see the mount option <em>discard</em> for that in [[Manpage/btrfs|btrfs(5)]].
+</p>
+
 </dl>
 
 <dt>
@@ -94,9 +110,9 @@ operation finishes (or is cancelled)
 </dl>
 ==EXAMPLES==
 
-===Replacing an online drive with a bigger one===
-
-<p>Given the filesystem:</p>
+<table frame="void" width="100%" cellpadding="4">
+<tr><td style="border-left: 2px solid silver;">
+<p>Given the following filesystem mounted at <tt>/mnt/my-vault</tt></p>
 <pre>Label: 'MyVault'  uuid: ae20903e-b72d-49ba-b944-901fc6d888a1
         Total devices 2 FS bytes used 1TiB
         devid    1 size 1TiB used 500.00GiB path /dev/sda
@@ -108,7 +124,7 @@ by Lorenzo Bettini
 http://www.lorenzobettini.it
 http://www.gnu.org/software/src-highlite -->
 <pre><tt>btrfs replace start <font color="#993399">1</font> /dev/sdc /mnt/my-vault<font color="#990000">/</font></tt></pre></td></tr></table>
-<p>You can monitor progress by:</p>
+<p>You can monitor progress via:</p>
 <table border="0" bgcolor="#e8e8e8" width="100%" cellpadding="10"><tr><td><!-- Generator: GNU source-highlight
 by Lorenzo Bettini
 http://www.lorenzobettini.it
@@ -121,6 +137,8 @@ by Lorenzo Bettini
 http://www.lorenzobettini.it
 http://www.gnu.org/software/src-highlite -->
 <pre><tt>btrfs filesystem resize <font color="#993399">1</font><font color="#990000">:</font>max /mnt/my-vault<font color="#990000">/</font></tt></pre></td></tr></table>
+</td></tr></table>
+<p><b>Example 1. </b>Replacing an online drive with a bigger one</p>
 ==EXIT STATUS==
 
 <p><b>btrfs replace</b> returns a zero exit status if it succeeds. Non zero is

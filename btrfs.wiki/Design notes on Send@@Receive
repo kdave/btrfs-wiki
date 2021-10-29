@@ -142,8 +142,10 @@ Missing from v1:
 * send file flags
 ** (FS_IOC_GETFLAGS/FS_IOC_SETFLAGS), the receiving side misses NOCOW and the other attributes like append-only, immutable etc.
 ** setting the flags on receiving side is tricky as the flags affects if/how the data are stored
-* optionally send owner/group as strings
+* optionally send owner/group as strings (mapping not available in kernel?)
 * block device is not sent over the stream, undecided if we want that or not
+* send progress
+* send encoded data (compressed, encrypted)
 
 Other:
 * stream version recognition

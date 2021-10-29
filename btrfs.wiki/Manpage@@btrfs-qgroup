@@ -118,7 +118,26 @@ Remove the relationship between child qgroup <em>&lt;src&gt;</em> and parent qgr
 the btrfs filesystem identified by <em>&lt;path&gt;</em>.
 </p>
 <p><tt>Options</tt></p>
-<p>The same as <b>assign</b> subcommand.</p>
+<dl>
+<dt>
+--rescan
+<dd>
+<p>
+(default since: 4.19) Automatically schedule quota rescan if the removed qgroup
+relation would lead to quota inconsistency. See <em>QUOTA RESCAN</em> for more
+information.
+</p>
+
+<dt>
+--no-rescan
+<dd>
+<p>
+Explicitly ask not to do a rescan, even if the removal will make the quotas
+inconsistent. This may be useful for repeated calls where the rescan would add
+unnecessary overhead.
+</p>
+
+</dl>
 
 <dt>
 <b>show</b> [options] <em>&lt;path&gt;</em>
@@ -260,6 +279,50 @@ change and qgroup numbers are no longer consistent unless we do a full rescan.</
 <em>rfer</em> number equals its <em>excl</em> number, which means all bytes are exclusively
 owned, then assigning/removing this subvolume only needs to add/subtract <em>rfer</em>
 number from its parent qgroup. This can speed up the rescan.</p>
+==EXAMPLES==
+
+<table frame="void" width="100%" cellpadding="4">
+<tr><td style="border-left: 2px solid silver;">
+<p>Given the following filesystem mounted at <tt>/mnt/my-vault</tt></p>
+<pre>Label: none  uuid: 60d2ab3b-941a-4f22-8d1a-315f329797b2
+       Total devices 1 FS bytes used 128.00KiB
+       devid    1 size 5.00GiB used 536.00MiB path /dev/vdb</pre>
+<p>Enable quota and create subvolumes.  Check subvolume ids.</p>
+<table border="0" bgcolor="#e8e8e8" width="100%" cellpadding="10"><tr><td><!-- Generator: GNU source-highlight
+by Lorenzo Bettini
+http://www.lorenzobettini.it
+http://www.gnu.org/software/src-highlite -->
+<pre><tt>$ cd /mnt/my-vault
+$ btrfs quota <b><font color="#0000FF">enable</font></b> <font color="#990000">.</font>
+$ btrfs subvolume create a
+$ btrfs subvolume create b
+$ btrfs subvolume list <font color="#990000">.</font>
+
+ID <font color="#993399">261</font> gen <font color="#993399">61</font> top level <font color="#993399">5</font> path a
+ID <font color="#993399">262</font> gen <font color="#993399">62</font> top level <font color="#993399">5</font> path b</tt></pre></td></tr></table>
+<p>Create qgroup and set limit to 10MiB.</p>
+<table border="0" bgcolor="#e8e8e8" width="100%" cellpadding="10"><tr><td><!-- Generator: GNU source-highlight
+by Lorenzo Bettini
+http://www.lorenzobettini.it
+http://www.gnu.org/software/src-highlite -->
+<pre><tt>$ btrfs qgroup create <font color="#993399">1</font><font color="#990000">/</font><font color="#993399">100</font> <font color="#990000">.</font>
+$ btrfs qgroup limit 10M <font color="#993399">1</font><font color="#990000">/</font><font color="#993399">100</font> <font color="#990000">.</font>
+$ btrfs qgroup assign <font color="#993399">0</font><font color="#990000">/</font><font color="#993399">261</font> <font color="#993399">1</font><font color="#990000">/</font><font color="#993399">100</font> <font color="#990000">.</font>
+$ btrfs qgroup assign <font color="#993399">0</font><font color="#990000">/</font><font color="#993399">262</font> <font color="#993399">1</font><font color="#990000">/</font><font color="#993399">100</font> <font color="#990000">.</font></tt></pre></td></tr></table>
+<p>And check qgroups.</p>
+<table border="0" bgcolor="#e8e8e8" width="100%" cellpadding="10"><tr><td><!-- Generator: GNU source-highlight
+by Lorenzo Bettini
+http://www.lorenzobettini.it
+http://www.gnu.org/software/src-highlite -->
+<pre><tt>$ btrfs qgroup show <font color="#990000">.</font>
+
+qgroupid         rfer         excl
+<font color="#993399">0</font><font color="#990000">/</font><font color="#993399">5</font>          <font color="#993399">16</font><font color="#990000">.</font>00KiB     <font color="#993399">16</font><font color="#990000">.</font>00KiB
+<font color="#993399">0</font><font color="#990000">/</font><font color="#993399">261</font>        <font color="#993399">16</font><font color="#990000">.</font>00KiB     <font color="#993399">16</font><font color="#990000">.</font>00KiB
+<font color="#993399">0</font><font color="#990000">/</font><font color="#993399">262</font>        <font color="#993399">16</font><font color="#990000">.</font>00KiB     <font color="#993399">16</font><font color="#990000">.</font>00KiB
+<font color="#993399">1</font><font color="#990000">/</font><font color="#993399">100</font>        <font color="#993399">32</font><font color="#990000">.</font>00KiB     <font color="#993399">32</font><font color="#990000">.</font>00KiB</tt></pre></td></tr></table>
+</td></tr></table>
+<p><b>Example 1. </b>Make a parent group that has two quota group children</p>
 ==EXIT STATUS==
 
 <p><b>btrfs qgroup</b> returns a zero exit status if it succeeds. Non zero is

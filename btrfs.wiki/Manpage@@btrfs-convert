@@ -44,9 +44,16 @@ free space layout.</p>
 have a supported data block size (ie. the same that would be valid for
 <em>mkfs.btrfs</em>). This is typically the system page size (4KiB on x86_64
 machines).</p>
-<blockquote><b>Note:</b>
-The source filesystem should be clean, you are encouraged to run the
-<em>fsck</em> tool if you&#8217;re not sure.</blockquote>
+<p><b>BEFORE YOU START</b></p>
+<p>The source filesystem must be clean, eg. no journal to replay or no repairs
+needed. The respective <em>fsck</em> utility must be run on the source filesytem prior
+to conversion. Please refer to the manual pages in case you encounter problems.</p>
+<p>For ext2/3/4:</p>
+<pre># e2fsck -fvy /dev/sdx</pre>
+<p>For reiserfs:</p>
+<pre># reiserfsck -fy /dev/sdx</pre>
+<p>Skipping that step could lead to incorrect results on the target filesystem,
+but it may work.</p>
 <p><b>REMOVE THE ORIGINAL FILESYSTEM METADATA</b></p>
 <p>By removing the subvolume named like <em>ext2_saved</em> or <em>reiserfs_saved</em>, all
 metadata of the original filesystem will be removed:</p>
@@ -163,6 +170,30 @@ processed), on by default
 <p>
 disable progress and show only the main phases of conversion
 </p>
+
+<dt>
+--uuid <em>&lt;SPEC&gt;</em>
+<dd>
+<p>
+set the FSID of the new filesystem based on <em>SPEC</em>:
+</p>
+<ul>
+<li>
+<p>
+<em>new</em> - (default) generate UUID for the FSID of btrfs
+</p>
+</li>
+<li>
+<p>
+<em>copy</em> - copy UUID from the source filesystem
+</p>
+</li>
+<li>
+<p>
+<em>UUID</em> - a conforming UUID value, the 36 byte string representation
+</p>
+</li>
+</ul>
 
 </dl>
 ==EXIT STATUS==

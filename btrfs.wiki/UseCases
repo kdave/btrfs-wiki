@@ -220,7 +220,7 @@ The label on a filesystem can be set:
 
 == How do I resize a partition? (shrink/grow) ==
 
-In order to demonstrate and test the back references, Btrfs devel team has added an online resizer, which can both grow and shrink the filesystem via the [[Btrfs(command)|btrfs]] commands.
+In order to demonstrate and test the back references, Btrfs devel team has added an online resizer, which can both grow and shrink the filesystem via the [[Manpage/btrfs|btrfs]] commands.
 
 First, ensure that your filesystem is mounted. See elsewhere for the full list of btrfs-specific [[Getting_started#Mount Options|mount options]]
  

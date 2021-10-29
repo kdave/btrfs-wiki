@@ -60,13 +60,6 @@ restore symbolic links as well as normal files
 </p>
 
 <dt>
--v|--verbose
-<dd>
-<p>
-be verbose and print what is being restored
-</p>
-
-<dt>
 -i|--ignore-errors
 <dd>
 <p>
@@ -146,6 +139,23 @@ hierarchy.</p>
 <dd>
 <p>
 ignore case (--path-regex only)
+</p>
+
+<dt>
+-v|--verbose
+<dd>
+<p>
+(deprecated) alias for global <em>-v</em> option
+</p>
+
+</dl>
+<p><tt>Global options</tt></p>
+<dl>
+<dt>
+-v|--verbose
+<dd>
+<p>
+be verbose and print what is being restored
 </p>
 
 </dl>

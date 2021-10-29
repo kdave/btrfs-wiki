@@ -39,20 +39,6 @@ default subvolume has changed or you didn&#8217;t mount the filesystem at the to
 <p><tt>Options</tt></p>
 <dl>
 <dt>
--v
-<dd>
-<p>
-increase verbosity about performed actions, print details about each operation
-</p>
-
-<dt>
--q|--quiet
-<dd>
-<p>
-suppress all messages except errors
-</p>
-
-<dt>
 -f <em>&lt;FILE&gt;</em>
 <dd>
 <p>
@@ -101,6 +87,37 @@ tell us where this filesystem is mounted.</p>
 dump the stream metadata, one line per operation
 </p>
 <p>Does not require the <em>path</em> parameter. The filesystem remains unchanged.</p>
+
+<dt>
+-q|--quiet
+<dd>
+<p>
+(deprecated) alias for global <em>-q</em> option
+</p>
+
+<dt>
+-v
+<dd>
+<p>
+(deprecated) alias for global <em>-v</em> option
+</p>
+
+</dl>
+<p><tt>Global options</tt></p>
+<dl>
+<dt>
+-v|--verbose
+<dd>
+<p>
+increase verbosity about performed actions, print details about each operation
+</p>
+
+<dt>
+-q|--quiet
+<dd>
+<p>
+suppress all messages except errors
+</p>
 
 </dl>
 ==BUGS==

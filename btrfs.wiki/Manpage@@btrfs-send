@@ -28,7 +28,8 @@ given, in which case <b>btrfs send</b> will determine a suitable parent from amo
 the clone sources.</p>
 <p>You must not specify clone sources unless you guarantee that these snapshots
 are exactly in the same state on both sides&#8212;both for the sender and the
-receiver.</p>
+receiver. For implications of changed read-write status of a received snapshot
+please see section <em>SUBVOLUME FLAGS</em> in [[Manpage/btrfs-subvolume|btrfs-subvolume(8)]].</p>
 <p><tt>Options</tt></p>
 <dl>
 <dt>
@@ -69,21 +70,27 @@ send in <em>NO_FILE_DATA</em> mode
 </p>
 <p>The output stream does not contain any file
 data and thus cannot be used to transfer changes. This mode is faster and
-is useful to show the differences in metadata.</p>
+is useful to show the differences in metadata.
+-q|--quiet::::
+(deprecated) alias for global <em>-q</em> option
+-v|--verbose::
+(deprecated) alias for global <em>-v</em> option</p>
 
-<dt>
--v|--verbose
-<dd>
-<p>
-enable verbose output, print generated commands in a readable form, (each
-occurrence of this option increases the verbosity level)
-</p>
-
+</dl>
+<p><tt>Global options</tt></p>
+<dl>
 <dt>
 -q|--quiet
 <dd>
 <p>
 suppress all messages except errors
+</p>
+
+<dt>
+-v|--verbose
+<dd>
+<p>
+increase output verbosity, print generated commands in a readable form
 </p>
 
 </dl>
@@ -99,5 +106,6 @@ further details.</p>
 ==SEE ALSO==
 
 <p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
-[[Manpage/btrfs-receive|btrfs-receive(8)]]</p>
+[[Manpage/btrfs-receive|btrfs-receive(8)]],
+[[Manpage/btrfs-subvolume|btrfs-subvolume(8)]]</p>
 [[Category:Manpage]]

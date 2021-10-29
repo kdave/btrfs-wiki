@@ -47,8 +47,8 @@ use the first valid set of backup roots stored in the superblock
 <p>
 verify checksums of data blocks
 </p>
-<p>This expects that the filesystem is otherwise OK, and is basically and offline
-<em>scrub</em> but does not repair data from spare copies.</p>
+<p>This expects that the filesystem is otherwise OK, and is basically an offline
+<em>scrub</em> that does not repair data from spare copies.</p>
 
 <dt>
 --chunk-root <em>&lt;bytenr&gt;</em>
@@ -118,6 +118,13 @@ to actually clear the entire free space cache.</p>
 the entire free space cache. This option, with <em>v2</em> provides an alternative
 method of clearing the free space cache that doesn&#8217;t require mounting the
 filesystem.</p>
+
+<dt>
+--clear-ino-cache
+<dd>
+<p>
+remove leftover items pertaining to the deprecated inode map feature
+</p>
 
 </dl>
 ==DANGEROUS OPTIONS==

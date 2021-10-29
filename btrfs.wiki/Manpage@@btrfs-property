@@ -42,7 +42,8 @@ the following:</p>
 ro
 <dd>
 <p>
-read-only flag of subvolume: true or false
+read-only flag of subvolume: true or false. Please also see section <em>SUBVOLUME FLAGS</em>
+in [[Manpage/btrfs-subvolume|btrfs-subvolume(8)]] for possible implications regarding incremental send.
 </p>
 
 <dt>
@@ -72,12 +73,23 @@ Lists available properties with their descriptions for the given object.
 <p>See the description of <b>get</b> subcommand for the meaning of each option.</p>
 
 <dt>
-<b>set</b> [-t <em>&lt;type&gt;</em>] <em>&lt;object&gt;</em> <em>&lt;name&gt;</em> <em>&lt;value&gt;</em>
+<b>set</b> [-f] [-t <em>&lt;type&gt;</em>] <em>&lt;object&gt;</em> <em>&lt;name&gt;</em> <em>&lt;value&gt;</em>
 <dd>
 <p>
 Sets a property on a btrfs object.
 </p>
 <p>See the description of <b>get</b> subcommand for the meaning of each option.</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+-f
+<dd>
+<p>
+Force the change. Changing some properties may involve safety checks or
+additional changes that depend on the properties semantics.
+</p>
+
+</dl>
 
 </dl>
 ==EXIT STATUS==

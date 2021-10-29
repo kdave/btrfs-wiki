@@ -87,3 +87,5 @@ The zoned mode has been released in 5.12 and there are still some rough edges an
 * https://hddscan.com/blog/2020/hdd-wd-smr.html -- some details about exact device types
 * https://lwn.net/Articles/853308/ -- ''Btrfs on zoned block devices''
 * https://www.usenix.org/conference/vault20/presentation/bjorling -- Zone Append: A New Way of Writing to Zoned Storage
+
+[[Category:Features]]

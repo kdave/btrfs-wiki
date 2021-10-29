@@ -69,13 +69,17 @@ times.
 </dl>
 
 <dt>
-<b>delete</b> [options] <em>&lt;subvolume&gt;</em> [<em>&lt;subvolume&gt;</em>&#8230;]
+<b>delete</b> [options] <em>&lt;[&lt;subvolume&gt;</em> [<em>&lt;subvolume&gt;</em>&#8230;]]
+<dt>
+<b>delete</b> -i|--subvolid <em>&lt;subvolid&gt;</em> <em>&lt;path&gt;</em>&gt;
 <dd>
 <p>
 Delete the subvolume(s) from the filesystem.
 </p>
 <p>If <em>&lt;subvolume&gt;</em> is not a subvolume, btrfs returns an error but continues if
 there are more arguments to process.</p>
+<p>If --subvolid is used, <em>&lt;path&gt;</em> must point to a btrfs filesystem. See <tt>btrfs
+subvolume list</tt> or <tt>btrfs inspect-internal rootid</tt> how to get the subvolume id.</p>
 <p>The corresponding directory is removed instantly but the data blocks are
 removed later in the background. The command returns immediately. See <tt>btrfs
 subvolume sync</tt> how to wait until the subvolume gets completely removed.</p>
@@ -83,6 +87,10 @@ subvolume sync</tt> how to wait until the subvolume gets completely removed.</p>
 performance reasons.  As a consequence, the subvolume may appear again after a
 crash.  Use one of the <em>--commit</em> options to wait until the operation is
 safely stored on the device.</p>
+<p>The default subvolume (see <b>btrfs subvolume set-default</b>) cannot be deleted and
+returns error (EPERM) and this is logged to the system log. A subvolume that&#8217;s
+currently involved in send (see <b>btrfs send</b>) also cannot be deleted until the
+send is finished. This is also logged in the system log.</p>
 <p><tt>Options</tt></p>
 <dl>
 <dt>
@@ -100,10 +108,18 @@ wait for transaction commit after deleting each subvolume.
 </p>
 
 <dt>
+-i|--subvolid <em>&lt;subvolid&gt;</em>
+<dd>
+<p>
+subvolume id to be removed instead of the <em>&lt;path&gt;</em> that should point to the
+filesystem with the subvolume
+</p>
+
+<dt>
 -v|--verbose
 <dd>
 <p>
-verbose output of operations.
+(deprecated) alias for global <em>-v</em> option
 </p>
 
 </dl>
@@ -306,8 +322,8 @@ The id can be obtained from <b>btrfs subvolume list</b>, <b>btrfs subvolume show
 <b>show</b> [options] <em>&lt;path&gt;</em>
 <dd>
 <p>
-Show more information about subvolume <em>&lt;path&gt;</em> regarding UUIDs, times,
-generations, flags and related snapshots.
+Show more information about a subvolume (UUIDs, generations, times, flags,
+related snapshots).
 </p>
 <pre>/mnt/btrfs/subvolume
         Name:                   subvolume
@@ -325,23 +341,23 @@ generations, flags and related snapshots.
 <p><tt>Options</tt></p>
 <dl>
 <dt>
--r|--rootid
+-r|--rootid <em>&lt;ID&gt;</em>
 <dd>
 <p>
-rootid of the subvolume.
+show details about subvolume with root <em>&lt;ID&gt;</em>, looked up in <em>&lt;path&gt;</em>
 </p>
 
 <dt>
--u|--uuid
+-u|--uuid UUID
 <dd>
 <p>
-UUID of the subvolume.
+show details about subvolume with the given <em>&lt;UUID&gt;</em>, looked up in <em>&lt;path&gt;</em>
 </p>
 
 </dl>
 
 <dt>
-<b>snapshot</b> [-r|-i <em>&lt;qgroupid&gt;</em>] <em>&lt;source&gt;</em> <em>&lt;dest&gt;</em>|[&lt;dest&gt;/]<em>&lt;name&gt;</em>
+<b>snapshot</b> [-r] [-i <em>&lt;qgroupid&gt;</em>] <em>&lt;source&gt;</em> <em>&lt;dest&gt;</em>|[&lt;dest&gt;/]<em>&lt;name&gt;</em>
 <dd>
 <p>
 Create a snapshot of the subvolume <em>&lt;source&gt;</em> with the
@@ -388,6 +404,44 @@ sleep N seconds between checks (default: 1)
 </dl>
 
 </dl>
+==SUBVOLUME FLAGS==
+
+<p>The subvolume flag currently implemented is the <em>ro</em> property. Read-write
+subvolumes have that set to <em>false</em>, snapshots as <em>true</em>. In addition to that,
+a plain snapshot will also have last change generation and creation generation
+equal.</p>
+<p>Read-only snapshots are building blocks fo incremental send (see
+[[Manpage/btrfs-send|btrfs-send(8)]]) and the whole use case relies on unmodified snapshots where the
+relative changes are generated from. Thus, changing the subvolume flags from
+read-only to read-write will break the assumptions and may lead to unexpected changes
+in the resulting incremental stream.</p>
+<p>A snapshot that was created by send/receive will be read-only, with different
+last change generation, read-only and with set <em>received_uuid</em> which identifies
+the subvolume on the filesystem that produced the stream. The usecase relies
+on matching data on both sides. Changing the subvolume to read-write after it
+has been received requires to reset the <em>received_uuid</em>. As this is a notable
+change and could potentially break the incremental send use case, performing
+it by <b>btrfs property set</b> requires force if that is really desired by user.</p>
+<blockquote><b>Note:</b>
+The safety checks have been implemented in 5.14.2, any subvolumes
+previously received (with a valid <em>received_uuid</em>) and read-write status may
+exist and could still lead to problems with send/receive. You can use <b>btrfs
+subvolume show</b> to identify them. Flipping the flags to read-only and back to
+read-write will reset the <em>received_uuid</em> manually.  There may exist a
+convenience tool in the future.</blockquote>
+==EXAMPLES==
+
+<table frame="void" width="100%" cellpadding="4">
+<tr><td style="border-left: 2px solid silver;">
+<p>If we want to delete a subvolume called <tt>foo</tt> from a btrfs volume mounted at
+<tt>/mnt/bar</tt> we could run the following:</p>
+<table border="0" bgcolor="#e8e8e8" width="100%" cellpadding="10"><tr><td><!-- Generator: GNU source-highlight
+by Lorenzo Bettini
+http://www.lorenzobettini.it
+http://www.gnu.org/software/src-highlite -->
+<pre><tt>btrfs subvolume delete /mnt/bar/foo</tt></pre></td></tr></table>
+</td></tr></table>
+<p><b>Example 1. </b>Deleting a subvolume</p>
 ==EXIT STATUS==
 
 <p><b>btrfs subvolume</b> returns a zero exit status if it succeeds. A non-zero value is
@@ -402,5 +456,6 @@ further details.</p>
 <p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],
 [http://man7.org/linux/man-pages/man8/mount.8.html mount(8)],
 [[Manpage/btrfs-quota|btrfs-quota(8)]],
-[[Manpage/btrfs-qgroup|btrfs-qgroup(8)]],</p>
+[[Manpage/btrfs-qgroup|btrfs-qgroup(8)]],
+[[Manpage/btrfs-send|btrfs-send(8)]]</p>
 [[Category:Manpage]]

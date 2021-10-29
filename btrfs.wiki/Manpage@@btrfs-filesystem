@@ -158,7 +158,7 @@ show sizes in TiB, or TB with --si
 Defragment file data on a mounted filesystem. Requires kernel 2.6.33 and newer.
 </p>
 <p>If <em>-r</em> is passed, files in dir will be defragmented recursively (not
-descending to subvolumes and mount points).
+descending to subvolumes, mount points and directory symlinks).
 The start position and the number of bytes to defragment can be specified by
 start and length using <em>-s</em> and <em>-l</em> options below.
 Extents bigger than value given by <em>-t</em> will be skipped, otherwise this value
@@ -182,13 +182,6 @@ units designator: 'K', 'M', 'G', 'T', 'P', or 'E', which represent
 KiB, MiB, GiB, TiB, PiB, or EiB, respectively (case does not matter).</p>
 <p><tt>Options</tt></p>
 <dl>
-<dt>
--v
-<dd>
-<p>
-be verbose, print file names as they&#8217;re submitted for defragmentation
-</p>
-
 <dt>
 -c[<em>&lt;algo&gt;</em>]
 <dd>
@@ -240,6 +233,13 @@ target extent size, do not touch extents bigger than <em>size</em>, default: 32M
 <p>The value is only advisory and the final size of the extents may differ,
 depending on the state of the free space and fragmentation or other internal
 logic. Reasonable values are from tens to hundreds of megabytes.</p>
+
+<dt>
+-v
+<dd>
+<p>
+(deprecated) alias for global <em>-v</em> option
+</p>
 
 </dl>
 
@@ -342,7 +342,7 @@ a newline. The trailing newline is stripped automatically.</blockquote>
 </dl>
 <dl>
 <dt>
-<b>resize</b> [<em>&lt;devid&gt;</em>:][+/-]<em>&lt;size&gt;</em>[kKmMgGtTpPeE]|[<em>&lt;devid&gt;</em>:]max <em>&lt;path&gt;</em>
+<b>resize</b> [options] [<em>&lt;devid&gt;</em>:][+/-]<em>&lt;size&gt;</em>[kKmMgGtTpPeE]|[<em>&lt;devid&gt;</em>:]max <em>&lt;path&gt;</em>
 <dd>
 <p>
 Resize a mounted filesystem identified by <em>path</em>. A particular device
@@ -374,6 +374,16 @@ the same starting partition offset as before.</p>
 take a long time if there are data in the device area that&#8217;s beyond the new
 end. Relocation of the data takes time.</p>
 <p>See also section <em>EXAMPLES</em>.</p>
+<p><tt>Options</tt></p>
+<dl>
+<dt>
+--enqueue
+<dd>
+<p>
+wait if there&#8217;s another exclusive operation running, otherwise continue
+</p>
+
+</dl>
 
 <dt>
 <b>show</b> [options] [<em>&lt;path&gt;</em>|<em>&lt;uuid&gt;</em>|<em>&lt;device&gt;</em>|<em>&lt;label&gt;</em>]
@@ -464,9 +474,9 @@ show sizes in TiB, or TB with --si
 <b>sync</b> <em>&lt;path&gt;</em>
 <dd>
 <p>
-Force a sync of the filesystem at <em>path</em>. This is done via a special ioctl and
-will also trigger cleaning of deleted subvolumes. Besides that it&#8217;s equivalent
-to the [http://man7.org/linux/man-pages/man1/sync.1.html sync(1)] command.
+Force a sync of the filesystem at <em>path</em>, similar to the [http://man7.org/linux/man-pages/man1/sync.1.html sync(1)] command. In
+addition, it starts cleaning of deleted subvolumes. To wait for the subvolume
+deletion to complete use the <b>btrfs subvolume sync</b> command.
 </p>
 
 <dt>
@@ -488,21 +498,119 @@ Overall:
     Device missing:                  0.00B
     Used:                          1.14TiB
     Free (estimated):            692.57GiB      (min: 692.57GiB)
+    Free (statfs, df)            692.57GiB
     Data ratio:                       1.00
     Metadata ratio:                   1.00
-    Global reserve:              512.00MiB      (used: 0.00B)</pre>
+    Global reserve:              512.00MiB      (used: 0.00B)
+    Multiple profiles:                  no</pre>
+<div>
+<ul>
+<li>
+<p>
+<em>Device size</em>&#8201;&#8212;&#8201;sum of raw device capacity available to the filesystem
+</p>
+</li>
+<li>
+<p>
+<em>Device allocated</em>&#8201;&#8212;&#8201;sum of total space allocated for data/metadata/system
+profiles, this also accounts space reserved but not yet used for extents
+</p>
+</li>
+<li>
+<p>
+<em>Device unallocated</em>&#8201;&#8212;&#8201;the remaining unallocated space for future
+allocations (difference of the above two numbers)
+</p>
+</li>
+<li>
+<p>
+<em>Device missing</em>&#8201;&#8212;&#8201;sum of capacity of all missing devices
+</p>
+</li>
+<li>
+<p>
+<em>Used</em>&#8201;&#8212;&#8201;sum of the used space of data/metadata/system profiles, not
+including the reserved space
+</p>
+</li>
+<li>
+<p>
+<em>Free (estimated)</em>&#8201;&#8212;&#8201;approximate size of the remaining free space usable for
+data, including currently allocated space and estimating the usage of the
+unallocated space based on the block group profiles, the <em>min</em> is the lower bound
+of the estimate in case multiple profiles are present
+</p>
+</li>
+<li>
+<p>
+<em>Free (statfs, df)</em>&#8201;&#8212;&#8201;the amount of space available for data as reported by the
+<tt>statfs</tt> syscall, also returned as <em>Avail</em> in the output of <em>df</em>. The value is
+calculated in a different way and may not match the estimate in some cases (eg.
+multiple profiles).
+</p>
+</li>
+<li>
+<p>
+<em>Data ratio</em>&#8201;&#8212;&#8201;ratio of total space for data including redundancy or parity to
+the effectively usable data space, eg. single is 1.0, RAID1 is 2.0 and for RAID5/6
+it depends on the number of devices
+</p>
+</li>
+<li>
+<p>
+<em>Metadata ratio</em>&#8201;&#8212;&#8201;dtto, for metadata
+</p>
+</li>
+<li>
+<p>
+<em>Global reserve</em>&#8201;&#8212;&#8201;portion of metadata currently used for global block
+reserve, used for emergency purposes (like deletion on a full filesystem)
+</p>
+</li>
+<li>
+<p>
+<em>Multiple profiles</em>&#8201;&#8212;&#8201;what block group types (data, metadata) have more than
+one profile (single, raid1, &#8230;), see [[Manpage/btrfs|btrfs(5)]]
+section <em>FILESYSTEMS WITH MULTIPLE BLOCK GROUP PROFILES</em>.
+</p>
+</li>
+</ul>
+</div>
+<p>And on a zoned filesystem there are two more lines in the <em>Device</em> section:</p>
+<pre>    Device zone unusable:          5.13GiB
+    Device zone size:            256.00MiB</pre>
+<div>
+<ul>
+<li>
+<p>
+<em>Device zone unusable</em>&#8201;&#8212;&#8201;sum of of space that&#8217;s been used in the past
+but now is not due to COW and not referenced anymory, the chunks have to
+be reclaimed and zones reset to make it usable again
+</p>
+</li>
+<li>
+<p>
+<em>Device zone size</em>&#8201;&#8212;&#8201;the reported zone size of the host-managed device, same
+for all devices
+</p>
+</li>
+</ul>
+</div>
 <p>The root user will also see stats broken down by block group types:</p>
-<pre>Data,single: Size:1.15TiB, Used:1.13TiB
+<pre>Data,single: Size:1.15TiB, Used:1.13TiB (98.26%)
    /dev/sdb        1.15TiB
 
-Metadata,single: Size:12.00GiB, Used:6.45GiB
+Metadata,single: Size:12.00GiB, Used:6.45GiB (53.75%)
    /dev/sdb       12.00GiB
 
-System,single: Size:32.00MiB, Used:144.00KiB
+System,single: Size:32.00MiB, Used:144.00KiB (0.44%)
    /dev/sdb       32.00MiB
 
 Unallocated:
    /dev/sdb      669.99GiB</pre>
+<p><em>Data</em> is block group type, <em>single</em> is block group profile, <em>Size</em> is total
+size occupied by this type, <em>Used</em> is the actually used space, the percent is
+ratio of <em>Used/Size</em>. The <em>Unallocated</em> is remaining space.</p>
 <p><tt>Options</tt></p>
 <dl>
 <dt>
@@ -624,5 +732,6 @@ Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
 further details.</p>
 ==SEE ALSO==
 
-<p>[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],</p>
+<p>[[Manpage/btrfs-subvolume|btrfs-subvolume(8)]],
+[[Manpage/mkfs.btrfs|mkfs.btrfs(8)]],</p>
 [[Category:Manpage]]

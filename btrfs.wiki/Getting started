@@ -107,7 +107,7 @@ btrfs allows to create RAID consisting of multiple partitions or disks. See [[Us
 
 = btrfs (command) =
 
-[[Btrfs(command)|btrfs]] is the control program for managing btrfs filesystems. It's most commonly used for operations like creating snapshots, creating subvolumes and scanning devices.
+[[Manpage/btrfs|btrfs]] is the control program for managing btrfs filesystems. It's most commonly used for operations like creating snapshots, creating subvolumes and scanning devices.
 
 Examples:
 

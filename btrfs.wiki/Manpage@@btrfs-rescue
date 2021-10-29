@@ -30,17 +30,17 @@ assume an answer of <em>yes</em> to all questions.
 </p>
 
 <dt>
--v
-<dd>
-<p>
-verbose mode.
-</p>
-
-<dt>
 -h
 <dd>
 <p>
 help.
+</p>
+
+<dt>
+-v
+<dd>
+<p>
+(deprecated) alias for global <em>-v</em> option
 </p>
 
 </dl>
@@ -84,7 +84,7 @@ assume an answer of <em>yes</em> to all questions.
 -v
 <dd>
 <p>
-verbose mode.
+(deprecated) alias for global <em>-v</em> option
 </p>
 
 </dl>

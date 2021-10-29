@@ -103,12 +103,9 @@ As part of the changelog you can also review
 Links to Btrfs documentation of various Linux distributions:
 
 * "[https://docs.oracle.com/cd/E37670_01/E37355/html/ol_btrfs.html The Btrfs File System]" chapter in the [https://docs.oracle.com/cd/E37670_01/E37355/html/index.html Oracle Linux 6 Administrator's Solutions Guide]
-* Oracle Linux [https://wikis.oracle.com/display/oraclelinux/Hands-on+lab+-+Storage+Management+with+Btrfs Hands-on lab - Storage Management with Btrfs]
 * [https://documentation.suse.com/sles/15-GA/single-html/SLES-storage/#sec-filesystems-major-btrfs Major File Systems in Linux] chapter in the [https://documentation.suse.com/en-us/sles/15-GA/single-html/SLES-storage/ SLES 15 Storage Administration Guide]
-* [https://access.redhat.com/site/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Storage_Administration_Guide/ch-btrfs.html Btrfs] chapter in the [https://access.redhat.com/site/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Storage_Administration_Guide/ Red Hat Enterprise Linux 6 Storage Administration Guide]
 * [https://help.ubuntu.com/community/btrfs Btrfs Wiki page] on the [https://help.ubuntu.com/community Ubuntu Community Help Wiki]
 * [https://wiki.archlinux.org/index.php/Btrfs Btrfs Wiki page] on the [https://wiki.archlinux.org/ Arch Linux Wiki]
-* [http://www.funtoo.org/BTRFS_Fun BTRFS Fun Wiki page] on the [http://www.funtoo.org/ Funtoo Wiki]
 * [http://marc.merlins.org/perso/btrfs/post_2014-05-21_My-Btrfs-Talk-at-Linuxcon-JP-2014.html Marc MERLIN's Btrfs talk at Linuxcon JP 2014] which gives an overview of Btrfs, best practices, and its more interesting features.
 
 === Manual pages ===

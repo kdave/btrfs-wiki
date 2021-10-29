@@ -16,6 +16,11 @@ as well. Multiple devices are grouped by UUID of the filesystem.</p>
 <p>Before mounting such filesystem, the kernel module must know all the devices
 either via preceding execution of <b>btrfs device scan</b> or using the <b>device</b>
 mount option. See section <b>MULTIPLE DEVICES</b> for more details.</p>
+<p>The default block group profiles for data and metadata depend on number of
+devices and possibly other factors. It&#8217;s recommended to use specific profiles
+but the defaults should be OK and allowing future conversions to other profiles.
+Please see options <em>-d</em> and <em>-m</em> for further detals and [[Manpage/btrfs-balance|btrfs-balance(8)]] for
+the profile conversion post mkfs.</p>
 ==OPTIONS==
 
 <dl>
@@ -43,25 +48,41 @@ checksums as well. See <em>CHECKSUM ALGORITHMS</em> in [[Manpage/btrfs|btrfs(5)]
 <dd>
 <p>
 Specify the profile for the data block groups.  Valid values are <em>raid0</em>,
-<em>raid1</em>, <em>raid5</em>, <em>raid6</em>, <em>raid10</em> or <em>single</em> or <em>dup</em> (case does not matter).
+<em>raid1</em>, <em>raid1c3</em>, <em>raid1c4</em>, <em>raid5</em>, <em>raid6</em>, <em>raid10</em> or <em>single</em> or <em>dup</em>
+(case does not matter).
 </p>
 <p>See <em>DUP PROFILES ON A SINGLE DEVICE</em> for more details.</p>
+<p>On multiple devices, the default was <em>raid0</em> until version 5.7, while it is
+<em>single</em> since version 5.8. You can still select raid0 manually, but it was not
+suitable as default.</p>
 
 <dt>
 <b>-m|--metadata <em>&lt;profile&gt;</em></b>
 <dd>
 <p>
 Specify the profile for the metadata block groups.
-Valid values are <em>raid0</em>, <em>raid1</em>, <em>raid5</em>, <em>raid6</em>, <em>raid10</em>, <em>single</em> or
-<em>dup</em> (case does not matter).
+Valid values are <em>raid0</em>, <em>raid1</em>, <em>raid1c3</em>, <em>raid1c4</em>, <em>raid5</em>, <em>raid6</em>,
+<em>raid10</em>, <em>single</em> or <em>dup</em> (case does not matter).
 </p>
-<p>A single device filesystem will default to <em>DUP</em>, unless an SSD is detected, in which
-case it will default to <em>single</em>. The detection is based on the value of
-<tt>/sys/block/DEV/queue/rotational</tt>, where <em>DEV</em> is the short name of the device.</p>
+<p>Default on a single device filesystem is <em>DUP</em> and is recommended for metadata
+in general. The duplication might not be necessary in some use cases and it&#8217;s
+up to the user to changed that at mkfs time or later. This depends on hardware
+that could potentially deduplicate the blocks again but this cannot be detected
+at mkfs time.</p>
+<blockquote><b>Note:</b>
+
+<p>Up to version 5.14 there was a detection of a SSD device (more precisely
+if it&#8217;s a rotational device, determined by the contents of file
+<tt>/sys/block/DEV/queue/rotational</tt>) that used to select <em>single</em>. This has
+changed in version 5.15 to be always <em>dup</em>.</p>
 <p>Note that the rotational status can be arbitrarily set by the underlying block
 device driver and may not reflect the true status (network block device, memory-backed
-SCSI devices etc). Use the options <em>--data/--metadata</em> to avoid confusion.</p>
+SCSI devices, real block device behind some additonal device mapper layer,
+etc). It&#8217;s recommended to always set the options <em>--data/--metadata</em> to avoid
+confusion and unexpected results.</p>
 <p>See <em>DUP PROFILES ON A SINGLE DEVICE</em> for more details.</p>
+</blockquote>
+<p>On multiple devices the default is <em>raid1</em>.</p>
 
 <dt>
 <b>-M|--mixed</b>
@@ -115,8 +136,8 @@ Specify the sectorsize, the minimum data block allocation unit.
 </p>
 <p>The default value is the page size and is autodetected. If the sectorsize
 differs from the page size, the created filesystem may not be mountable by the
-kernel. Therefore it is not recommended to use this option unless you are going
-to mount it on a system with the appropriate page size.</p>
+running kernel. Therefore it is not recommended to use this option unless you
+are going to mount it on a system with the appropriate page size.</p>
 
 <dt>
 <b>-L|--label <em>&lt;string&gt;</em></b>
@@ -153,10 +174,10 @@ not minimized. Please see option <em>--shrink</em> if you need that functionalit
 <p>
 Shrink the filesystem to its minimal size, only works with <em>--rootdir</em> option.
 </p>
-<p>If the destination is a regular file, this option will also truncate the
-file to the minimal size. Otherwise it will reduce the filesystem available
-space.  Extra space will not be usable unless the filesystem is mounted and
-resized using <em>btrfs filesystem resize</em>.</p>
+<p>If the destination block device is a regular file, this option will also
+truncate the file to the minimal size. Otherwise it will reduce the filesystem
+available space.  Extra space will not be usable unless the filesystem is
+mounted and resized using <em>btrfs filesystem resize</em>.</p>
 <blockquote><b>Note:</b>
 prior to version 4.14.1, the shrinking was done automatically.</blockquote>
 
@@ -170,6 +191,19 @@ supported by old kernels. To disable a feature, prefix it with <em>^</em>.
 <p>See section <b>FILESYSTEM FEATURES</b> for more details.  To see all available
 features that mkfs.btrfs supports run:</p>
 <p><tt>mkfs.btrfs -O list-all</tt></p>
+
+<dt>
+<b>-R|--runtime-features <em>&lt;feature1&gt;</em>[,<em>&lt;feature2&gt;</em>&#8230;]</b>
+<dd>
+<p>
+A list of features that be can enabled at mkfs time, otherwise would have
+to be turned on a mounted filesystem.
+Although no runtime feature is enabled by default,
+to disable a feature, prefix it with <em>^</em>.
+</p>
+<p>See section <b>RUNTIME FEATURES</b> for more details.  To see all available
+runtime features that mkfs.btrfs supports run:</p>
+<p><tt>mkfs.btrfs -R list-all</tt></p>
 
 <dt>
 <b>-f|--force</b>
@@ -186,6 +220,7 @@ to clear the devices.
 <dd>
 <p>
 Print only error or warning messages. Options --features or --help are unaffected.
+Resets any previous effects of <em>--verbose</em>.
 </p>
 
 <dt>
@@ -194,6 +229,13 @@ Print only error or warning messages. Options --features or --help are unaffecte
 <p>
 Create the filesystem with the given <em>UUID</em>. The UUID must not exist on any
 filesystem currently present.
+</p>
+
+<dt>
+<b>-v|--verbose</b>
+<dd>
+<p>
+Increase verbosity level, default is 1.
 </p>
 
 <dt>
@@ -208,16 +250,6 @@ Print the <b>mkfs.btrfs</b> version and exit.
 <dd>
 <p>
 Print help.
-</p>
-
-<dt>
-<b>-A|--alloc-start <em>&lt;offset&gt;</em></b>
-<dd>
-<p>
-<b>deprecated, will be removed</b>
-(An option to help debugging chunk allocator.)
-Specify the (physical) offset from the start of the device at which allocations
-start.  The default value is zero.
 </p>
 
 </dl>
@@ -245,8 +277,7 @@ mount will fail anyway. This can happen on systems without initramfs/initrd and
 root partition created with RAID1/10/5/6 profiles. The mount action can happen
 before all block devices are discovered. The waiting is usually done on the
 initramfs/initrd systems.</blockquote>
-<p>As of kernel 4.14, RAID5/6 is still considered experimental and shouldn&#8217;t be
-employed for production use.</p>
+<p>RAID5/6 has known problems and should not be used in production.</p>
 ==FILESYSTEM FEATURES==
 
 <p>Features that can be enabled during creation time. See also [[Manpage/btrfs|btrfs(5)]] section
@@ -291,10 +322,46 @@ are selected</p>
 <b>no-holes</b>
 <dd>
 <p>
-(kernel support since 3.14)
+(default since btrfs-progs 5.15, kernel support since 3.14)
 </p>
 <p>improved representation of file extents where holes are not explicitly
 stored as an extent, saves a few percent of metadata if sparse files are used</p>
+
+<dt>
+<b>zoned</b>
+<dd>
+<p>
+(kernel support since 5.12)
+</p>
+<p>zoned mode, data allocation and write friendly to zoned/SMR/ZBC/ZNS devices,
+see <em>ZONED MODE</em> in [[Manpage/btrfs|btrfs(5)]], the mode is automatically selected when
+a zoned device is detected</p>
+
+</dl>
+==RUNTIME FEATURES==
+
+<p>Features that are typically enabled on a mounted filesystem, eg. by a mount
+option or by an ioctl. Some of them can be enabled early, at mkfs time.  This
+applies to features that need to be enabled once and then the status is
+permanent, this does not replace mount options.</p>
+<dl>
+<dt>
+<b>quota</b>
+<dd>
+<p>
+(kernel support since 3.4)
+</p>
+<p>Enable quota support (qgroups). The qgroup accounting will be consistent,
+can be used together with <em>--rootdir</em>.  See also [[Manpage/btrfs-quota|btrfs-quota(8)]].</p>
+
+<dt>
+<b>free-space-tree</b>
+<dd>
+<p>
+(default since btrfs-progs 5.15, kernel support since 4.5)
+</p>
+<p>Enable the free space tree (mount option space_cache=v2) for persisting the
+free space cache.</p>
 
 </dl>
 ==BLOCK GROUPS, CHUNKS, RAID==
@@ -400,7 +467,7 @@ cellspacing="0" cellpadding="4">
 <td align="center" width="16%" valign="top"><p></p></td>
 <td align="center" width="16%" valign="top"><p>1 to N</p></td>
 <td align="right" width="16%" valign="top"><p>100%</p></td>
-<td align="center" width="16%" valign="top"><p>2/any</p></td>
+<td align="center" width="16%" valign="top"><p>1/any <sup>(see note 5)</sup></p></td>
 </tr>
 <tr>
 <td align="left" width="16%" valign="top"><p>RAID1</p></td>
@@ -432,7 +499,7 @@ cellspacing="0" cellpadding="4">
 <td align="center" width="16%" valign="top"><p></p></td>
 <td align="center" width="16%" valign="top"><p>1 to N</p></td>
 <td align="right" width="16%" valign="top"><p>50%</p></td>
-<td align="center" width="16%" valign="top"><p>4/any</p></td>
+<td align="center" width="16%" valign="top"><p>2/any <sup>(see note 5)</sup></p></td>
 </tr>
 <tr>
 <td align="left" width="16%" valign="top"><p>RAID5</p></td>
@@ -467,6 +534,8 @@ degraded to RAID1 with more overhead.</p>
 want to get effectively 3 copies in a RAID1-like manner (but not exactly that).</p>
 <p><em>Note 4:</em> Since kernel 5.5 it&#8217;s possible to use RAID1C3 as replacement for
 RAID6, higher space cost but reliable.</p>
+<p><em>Note 5:</em> Since kernel 5.15 it&#8217;s possible to use (mount, convert profiles)
+RAID0 on one device and RAID10 on two devices.</p>
 ===PROFILE LAYOUT===
 
 <p>For the following examples, assume devices numbered by 1, 2, 3 and 4, data or
@@ -755,5 +824,6 @@ further details.</p>
 
 <p>[[Manpage/btrfs|btrfs(5)]],
 [[Manpage/btrfs|btrfs(8)]],
+[[Manpage/btrfs-balance|btrfs-balance(8)]],
 [http://man7.org/linux/man-pages/man8/wipefs.8.html wipefs(8)]</p>
 [[Category:Manpage]]

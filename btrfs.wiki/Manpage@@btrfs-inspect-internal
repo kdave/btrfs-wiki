@@ -159,17 +159,79 @@ use with <em>-b</em>, print all children tree blocks of <em><em>&lt;block_num&gt
 (default up to 5.2)
 </p>
 <p>use depth-first search to print trees, the nodes and leaves are
-intermixed in the output
---bfs::::
-(default since 5.3)</p>
+intermixed in the output</p>
+
+<dt>
+--bfs
+<dd>
+<p>
+(default since 5.3)
+</p>
 <p>use breadth-first search to print trees, the nodes are printed before all
-leaves
---noscan::::
+leaves</p>
+
+<dt>
+--hide-names
+<dd>
+<p>
+print a placeholder <em>HIDDEN</em> instead of various names, useful for developers to
+inspect the dump while keeping potentially sensitive information hidden
+</p>
+<p>This is:</p>
+<ul>
+<li>
+<p>
+directory entries (files, directories, subvolumes)
+</p>
+</li>
+<li>
+<p>
+default subvolume
+</p>
+</li>
+<li>
+<p>
+extended attributes (name, value)
+</p>
+</li>
+<li>
+<p>
+hardlink names (if stored inside another item or as extended references in standalone items)
+</p>
+<blockquote><b>Note:</b>
+lengths are not hidden because they can be calculated from the item size anyway.</blockquote>
+</li>
+</ul>
+
+<dt>
+--csum-headers
+<dd>
+<p>
+print b-tree node checksums stored in headers (metadata)
+</p>
+
+<dt>
+--csum-items
+<dd>
+<p>
+print checksums stored in checksum items (data)
+</p>
+
+<dt>
+--noscan
+<dd>
+<p>
 do not automatically scan the system for other devices from the same
 filesystem, only use the devices provided as the arguments
--t <em>&lt;tree_id&gt;</em>::::
+</p>
+
+<dt>
+-t <em>&lt;tree_id&gt;</em>
+<dd>
+<p>
 print only the tree with the specified ID, where the ID can be numerical or
-common name in a flexible human readable form</p>
+common name in a flexible human readable form
+</p>
 <p>The tree id name recognition rules:</p>
 <ul>
 <li>
@@ -215,7 +277,7 @@ at <em>path</em>, ie. all hardlinks</p>
 -v
 <dd>
 <p>
-verbose mode, print count of returned paths and ioctl() return value
+(deprecated) alias for global <em>-v</em> option
 </p>
 
 </dl>
@@ -237,13 +299,6 @@ skip the path resolving and print the inodes instead
 </p>
 
 <dt>
--v
-<dd>
-<p>
-verbose mode, print count of returned paths and all ioctl() return values
-</p>
-
-<dt>
 -o
 <dd>
 <p>
@@ -260,6 +315,13 @@ to be obtained by other means.
 set internal buffer for storing the file names to <em>bufsize</em>, default is 64k,
 maximum 16m.  Buffer sizes over 64K require kernel support for the V2 ioctl
 (added in 4.15).
+</p>
+
+<dt>
+-v
+<dd>
+<p>
+(deprecated) alias for global <em>-v</em> option
 </p>
 
 </dl>
