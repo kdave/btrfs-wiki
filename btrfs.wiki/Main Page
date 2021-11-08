@@ -159,43 +159,50 @@ Links to Btrfs documentation of various Linux distributions:
 
 The #btrfs channel is at [https://libera.chat libera.chat], matrix.org bridge works (persistent room #btrfs:matrix.org).
 
-''' btrfs-progs v5.14.2 (Oct 2021) '''
+''' btrfs-progs v5.15 (Nov 2021) '''
+* mkfs: new defaults!
+** no-holes
+** free-space-tree
+** DUP for metadata unconditionally
+* libbtrfsutil: add missing profile defines
+* libbtrfs: minimize its impact on the other code, refactor and separate implementation where needed, cleanup afterwards, reduced header exports
+* documentation: introduce sphinx build and RST versions of manual pages, will become the new format and replace asciidoc
+* fixes: fix warning regarding v1 space cache when only v2 (free space tree) is enabled
 
-* fixes
-** zoned mode
-**** properly detect non-zoned devices in emulation mode
-**** properly create quota tree
-**** raid1c3/4 also excluded from unsupported profiles
-** use sysfs-based detection of device discard capability, fix mkfs-time trim for non-standard devices
-** mkfs: fix creation of populated filesystem with free space tree
-** detect multipath devices (needs libudev)
-* replace start: add option -K/--nodiscard, similar to what mkfs or device add has
-* dump-tree: print complete root_item
-* mkfs: add option --verbose
-* sb-mod: better help, no checksum calculation on read-only actions
-* subvol show:
-** print more information (regarding send and receive)
-** print warning if read-write subvolume has received_uuid set
-* property set:
-** add parameter -f to force changes
-** changing ro->rw switch now needs -f if subvolume has received_uuid set, (see documentation)
-* build: optional libudev (on by default)
-* other
-** remove deprecated support for CREATE_ASYNC bit for subvolume ioctl
-** CI updates
-** new and updated tests
+''' linux v5.15 (Nov 2021) '''
 
-''' linux v5.14 (Aug 2021) '''
+Features:
 
-Hilights
-* new sysfs knob to limit scrub IO bandwidth per device
-* device stats are also available in /sys/fs/btrfs/FSID/devinfo/DEVID/error_stats
-* support cancellable resize and device delete ioctls
-* change how the empty value is interpreted when setting a property, so far we have only 'btrfs.compression' and we need to distinguish a reset to defaults and setting "do not compress", in general the empty value will always mean 'reset to defaults' for any other property, for compression it's either 'no' or 'none' to forbid compression
-* performance improvements (xattrs, truncate)
-* space handling improvements, preemptive flushing
-* more subpage support preparation
-* for other changes see the [https://git.kernel.org/linus/122fa8c588316aacafe7e5a393bb3e875eaf5b25 pull request]
+* fs-verity support, using standard ioctls, backward compatible with read-only limitation on inodes with previously enabled fs-verity
+* idmapped mount support
+* make mount with rescue=ibadroots more tolerant to partially damaged trees
+* allow raid0 on a single device and raid10 on two devices, degenerate cases but might be useful as an intermediate step during conversion to other profiles
+* zoned mode block group auto reclaim can be disabled via sysfs knob
+
+Performance improvements:
+
+* continue readahead of node siblings even if target node is in memory, could speed up full send (on sample test +11%)
+* batching of delayed items can speed up creating many files
+* fsync/tree-log speedups
+** avoid unnecessary work (gains +2% throughput, -2% run time on sample load)
+** reduced lock contention on renames (on dbench +4% throughput, up to -30% latency)
+
+Fixes:
+
+* various zoned mode fixes
+* preemptive flushing threshold tuning, avoid excessive work on almost full filesystems
+
+Core:
+
+* continued subpage support, preparation for implementing remaining features like compression and defragmentation; with some limitations, write is now enabled on 64K page systems with 4K sectors, still considered experimental
+** no readahead on compressed reads
+** inline extents disabled
+** disabled raid56 profile conversion and mount
+* improved flushing logic, fixing early ENOSPC on some workloads
+* inode flags have been internally split to read-only and read-write incompat bit parts, used by fs-verity
+* new tree items for fs-verity: descriptor item, Merkle tree item
+* inode operations extended to be namespace-aware
+* cleanups and refactoring
 
 </div>
 

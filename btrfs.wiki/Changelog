@@ -129,6 +129,7 @@ Major features or significant feature enhancements by kernel version. For more i
 |name=no-holes
 |version=3.14
 |text=No extent representation for file holes (format change), may reduce overall metadata consumption
+|note=Default since btrfs-progs 5.15
 }}
 {{FeatureMerged
 |name=feature bits in sysfs
@@ -187,7 +188,7 @@ Major features or significant feature enhancements by kernel version. For more i
 |name=free space tree
 |version=4.5
 |text=Improved implementation of free space cache (aka v2), using b-trees.
-|note=Kernel 4.9 fixes endianity bugs on big-endian machines, x86* is ok
+|note=Default since btrfs-progs 5.15, Kernel 4.9 fixes endianity bugs on big-endian machines, x86* is ok
 }}
 {{FeatureMerged
 |name=balance filter updates
@@ -484,6 +485,17 @@ INO_LOOKUP ioctl.
 = By version (btrfs-progs) =
 
 Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/
+
+== btrfs-progs v5.15 (Nov 2021) ==
+
+* mkfs: new defaults!
+** no-holes
+** free-space-tree
+** DUP for metadata unconditionally
+* libbtrfsutil: add missing profile defines
+* libbtrfs: minimize its impact on the other code, refactor and separate implementation where needed, cleanup afterwards, reduced header exports
+* documentation: introduce sphinx build and RST versions of manual pages, will become the new format and replace asciidoc
+* fixes: fix warning regarding v1 space cache when only v2 (free space tree) is enabled
 
 ==  btrfs-progs v5.14 (Sep 2021) ==
 
@@ -1790,6 +1802,41 @@ Bugfixes:
 * first release after 0.19 (2009/06) with a lot of changes
 
 = By version (linux kernel) =
+
+=== v5.15 (Nov 2021) ===
+
+Features:
+
+* fs-verity support, using standard ioctls, backward compatible with read-only limitation on inodes with previously enabled fs-verity
+* idmapped mount support
+* make mount with rescue=ibadroots more tolerant to partially damaged trees
+* allow raid0 on a single device and raid10 on two devices, degenerate cases but might be useful as an intermediate step during conversion to other profiles
+* zoned mode block group auto reclaim can be disabled via sysfs knob
+
+Performance improvements:
+
+* continue readahead of node siblings even if target node is in memory, could speed up full send (on sample test +11%)
+* batching of delayed items can speed up creating many files
+* fsync/tree-log speedups
+** avoid unnecessary work (gains +2% throughput, -2% run time on sample load)
+** reduced lock contention on renames (on dbench +4% throughput, up to -30% latency)
+
+Fixes:
+
+* various zoned mode fixes
+* preemptive flushing threshold tuning, avoid excessive work on almost full filesystems
+
+Core:
+
+* continued subpage support, preparation for implementing remaining features like compression and defragmentation; with some limitations, write is now enabled on 64K page systems with 4K sectors, still considered experimental
+** no readahead on compressed reads
+** inline extents disabled
+** disabled raid56 profile conversion and mount
+* improved flushing logic, fixing early ENOSPC on some workloads
+* inode flags have been internally split to read-only and read-write incompat bit parts, used by fs-verity
+* new tree items for fs-verity: descriptor item, Merkle tree item
+* inode operations extended to be namespace-aware
+* cleanups and refactoring
 
 === v5.14 (Aug 2021) ===
 Hilights:
