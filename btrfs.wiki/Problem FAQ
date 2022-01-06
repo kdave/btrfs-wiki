@@ -6,8 +6,6 @@ Please '''report bugs on [https://bugzilla.kernel.org/ Bugzilla on kernel.org]''
 
 Please use '''btrfs-progs''' somewhere in the bug subject if you're reporting a bug for the userspace tools.
 
-''Never'' use the Bugzilla on "original" Btrfs project page at Oracle.
-
 If you include kernel log backtraces in bug reports sent to the mailing list, please ''disable word wrapping'' in your mail user agent to keep the kernel log in a readable format.
 
 Please attach files (like logs or dumps) directly to the bug and don't use pastebin-like services.
@@ -15,7 +13,6 @@ Please attach files (like logs or dumps) directly to the bug and don't use paste
 * [https://bugzilla.kernel.org/enter_bug.cgi?product=File%20System&component=btrfs Report a bug]
 * [https://bugzilla.kernel.org/buglist.cgi?component=btrfs&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED List open Bugzilla issues]
 * [https://bugzilla.kernel.org/buglist.cgi?component=btrfs List all Bugzilla issues]
-* [http://marc.info/?l=linux-btrfs&m=136733749808576&w=2 Josef's request to use bugzilla.kernel.org]
 
 = Mount/unmount problems =
 
@@ -34,7 +31,7 @@ Finally, '''if and only if''' the kernel oops in your logs has something like th
  ? btree_read_extent_buffer_pages+0x76/0xbc [btrfs]
  ? open_ctree+0xff6/0x132c [btrfs]
 
-then you should try using [[Btrfs-zero-log]].
+then you should try using <tt>btrfs rescure zero-log</tt> (see [[Manpage/btrfs-rescue]]).
 
 == Filesystem can't be mounted by label ==
 

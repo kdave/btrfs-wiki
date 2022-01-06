@@ -95,24 +95,22 @@ Btrfs does not force all dirty data to disk on every fsync or O_SYNC operation, 
 
 == What are the crash guarantees of overwrite-by-rename? ==
 
-Overwriting an existing file using a rename is atomic. That means that either the old content of the file is there or the new content. A sequence like this:
+As of August 2014 ([https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=8d875f95da43c6a8f18f77869f2ef26e9594fecc v3.17]), btrfs requires an explicit fsync after writing the new content and before moving it to overwrite the old data. This behaviour is the same as most other Linux filesystems.
 
- echo "oldcontent" &gt; file
- 
- # make sure oldcontent is on disk
- sync
- 
- echo "newcontent" &gt; file.tmp
- mv -f file.tmp file
- 
- # *crash*
+Overwriting an existing file using a rename is atomic, but the new data must be reliably on the disk before the old data is overwritten. Thus, the correct sequence to replace a file named <code>data_file</code> should be:
 
+* Open a new file, <code>data_file.tmp</code>
+* Write data to the new file
+* Call fsync on it
+* Close it
+* Rename <code>data_file.tmp</code> as <code>data_file</code>
 
-Will give either
+If a crash occurs at any point during this sequence, it will result in either
 
-# file contains "newcontent"; file.tmp does not exist
-# file contains "oldcontent"; file.tmp may contain "newcontent", be zero-length or not exists at all.
+# <code>data_file</code> contains the new content; <code>data_file.tmp</code> does not exist, or
+# <code>data_file</code> contains the old content; <code>data_file.tmp</code> may contain the new content, be zero-length, or not exist at all.
 
+The fsync can be safely omitted ''only'' if the FS is mounted with <code>-o flushoncommit</code>.
 
 == Why I experience poor performance during file access on filesystem?  ==
 
@@ -496,13 +494,14 @@ In general usage, no. A full unfiltered balance typically takes a long time, and
 
 == How do I undelete a file? ==
 
-There are three possible approaches to this:
+There is no reliable way of doing this, other than '''restoring from backups'''.
 
-# Restore from your backups (by far the easiest and most reliable method).
+However, there are two possible approaches that ''may'' work (but probably won't):
+
 # Unmount the filesystem ''as soon as possible'', and use [[Restore|btrfs-find-root and btrfs restore]] to find an earlier metadata root and restore the files.
 # Unmount the filesystem ''as soon as possible'', and use a file-carving tool (say, PhotoRec or some other [http://forensicswiki.org/wiki/Tools:Data_Recovery#Carving carving tool]) to find data that looks like the file you deleted.
 
-There is no simple undelete tool for btrfs, and it is likely there never will be. The second and third approaches are unreliable at best. It is far better to ensure that you have good working backups in the first place.
+There is no simple undelete tool for btrfs, and it is likely there never will be. The approaches listed above are unreliable at best. It is far better to ensure that you have good working backups in the first place.
 
 == What is the difference between mount -o ssd and mount -o ssd_spread? ==
 
@@ -686,7 +685,7 @@ No:
 
 == Btrfs has subvolumes, does this mean I don't need a logical volume manager and I can create a big Btrfs filesystem on a raw partition? ==
 
-There is not a single answer to this question.  Here are the issues to think about when you choose raw partitions or LVM:
+There is no single answer to this question.  Here are the issues to think about when you choose raw partitions or LVM:
 
 * Performance
 ** raw partitions are slightly faster than logical volumes

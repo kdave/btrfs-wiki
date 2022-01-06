@@ -18,7 +18,7 @@ or multiple disks. When blocks are read in, checksums are verified. If there
 are any errors, Btrfs tries to read from an alternate copy and will repair the
 broken copy if the alternative copy succeeds.
 
-See the [[Gotchas]] page for some current issues when using btrfs with multiple volumes of differing sizes in a RAID 1 style setup.
+See the [[Gotchas]] page for some current issues when using btrfs with multiple volumes.
 
 The RAID 1 profile also allows for 2, 3, or 4 copies of redundant data copies, called RAID 1, RAID 1C3, and RAID 1C4 respectively. See [[Manpage/mkfs.btrfs]] for more details on this and other RAID profiles.
 

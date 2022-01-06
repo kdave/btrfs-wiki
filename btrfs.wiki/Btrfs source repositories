@@ -52,7 +52,6 @@ Development git repositories:
 
 * git://github.com/kdave/btrfs-progs.git ([https://github.com/kdave/btrfs-progs web access])
 * git://gitlab.com/kdave/btrfs-progs.git ([https://gitlab.com/kdave/btrfs-progs web access])
-* <strike>git://repo.or.cz/btrfs-progs-unstable/devel.git ([http://repo.or.cz/w/btrfs-progs-unstable/devel.git web access])</strike> -- not used anymore
 
 For build dependencies and installation instructions please see [https://github.com/kdave/btrfs-progs/blob/master/INSTALL]
 
@@ -61,22 +60,6 @@ For build dependencies and installation instructions please see [https://github.
 The latest '''development branch''' is called '''devel'''. Contains patches that are reviewed or tested and on the way to the next release. When a patch is added to the branch, a mail notification is sent as a reply to the patch.
 
 The git repositories on ''kernel.org'' are not used for development or integration branches.
-
-== Integration branches ==
-
-'''Integration branches''' collect patches that may need public testing and are provided for convenience to developers or users willing to test unstable version. The patches in these branches are not guaranteed to be merged. The branches are assembled from scratch and serve more like a snapshots than stable bases for other development.
-
- git://github.com/kdave//btrfs-progs.git integration-''YYYYMMDD''
-
-where ''YYYYMMDD'' is the date of the branch.
-
-To check out this repository, and select the latest branch, use:
-
- git clone git://github.com/kdave//btrfs-progs.git
- cd btrfs-progs
- git checkout integration-''YYYYMMDD''
-
-Note that this branch can be rebased when there's good reason for that (adding Reported-by/Reviewed-by tags to the middle of the patch series) or if there's a change needed down the patch stack in general. The point is to keep the git history clean.
 
 == Note to GitHub users ==
 

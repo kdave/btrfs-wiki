@@ -62,13 +62,6 @@ if cmp -s file1 file2; then
 fi
 </pre>
 
-== Historical resources ==
-
-Over the years, the deduplication tools emerged and then went unmaintained or haven't kept up with kernel updates. They may be still useful for research purposed but be aware that they're '''not recommended''' to be used today.
-
-* [https://github.com/wellbehavedsoftware/btrfs-dedupe btrfs-dedupe] -- (last update 2017) written in rust, maintains state with metadata
-* [https://github.com/g2p/bedup bedup] -- (last update 2016) uses the clone ioctl due to concerns regarding kernel crashes with the latter as of kernel 4.2, appears to be unmaintained and is [https://github.com/g2p/bedup/issues/101 broken on 5.x kernels]
-
 = In-band deduplication =
 
 Inband / synchronous / inline deduplication is deduplication done in the write path, so it happens as data is written to the filesystem. This typically requires large amounts of RAM to store the lookup table of known block hashes and adds IO overhead to store the hashes. The feature is not actively developed, some [https://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg82003.html patches] patches have been posted. See the [[User notes on dedupe]] page for more details.

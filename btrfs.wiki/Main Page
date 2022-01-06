@@ -155,9 +155,17 @@ Links to Btrfs documentation of various Linux distributions:
 <div style="margin:0; margin-top:10px; border:1px solid #dfdfdf; padding: 0em 1em 1em 1em; background-color:#f0e0d0; align:left;">
 == News ==
 
+''' New location for documentation '''
+
+The new place for documentation will be at https://btrfs.readthedocs.org or https://btrfs.rtfd.io , will contents is going to be migrated
+
 ''' IRC channel at libera.chat '''
 
 The #btrfs channel is at [https://libera.chat libera.chat], matrix.org bridge works (persistent room #btrfs:matrix.org).
+
+''' zstd (Nov 15) '''
+
+The zstd implementation 1.4.10 in kernel has been [https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=c8c109546a19613d323a319d0c921cb1f317e629 merged] to 5.15-rc1, speedups and sync with upstream version
 
 ''' btrfs-progs v5.15 (Nov 2021) '''
 * mkfs: new defaults!
