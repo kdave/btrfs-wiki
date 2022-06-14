@@ -308,8 +308,6 @@ As of Linux kernel 3.2, it is now considered safe to have Btrfs on top of dmcryp
 
 With multi-device setups, [https://github.com/gebi/keyctl_keyscript decrypt_keyctl] may be used to unlock all disks at once. You can also look at this [http://marc.merlins.org/perso/btrfs/post_2014-04-27_Btrfs-Multi-Device-Dmcrypt.html start-btrfs-dmcrypt from Marc MERLIN] that shows you how to manually bring up a Btrfs dmcrypted array.
 
-The following page shows benchmarks of Btrfs vs ext4 on top of dmcrypt or with ecryptfs: http://www.mayrhofer.eu.org/ssd-linux-benchmark . The summary is that Btrfs with lzo compression enabled on top top of dmcrypt is either slightly faster or slightly slower than ext4 and encryption only creates a slowdown in the 5% range on an SSD (likely even less on a spinning drive).
-
  # cryptsetup -c aes-xts-plain -s 256 luksFormat /dev/sda3
  # cryptsetup luksOpen /dev/sda3 luksroot
  # mkfs.btrfs /dev/mapper/luksroot

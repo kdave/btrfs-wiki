@@ -4,9 +4,7 @@ A Btrfs filesystem can be created on top of many devices, and more devices can b
 
 By default, metadata will be mirrored across two devices and data will be striped across all of the devices present. This is equivalent to <code>mkfs.btrfs -m raid1 -d raid0</code>.
 
-If only one device is present, metadata will be duplicated on that one device.
-For HDD <code>mkfs.btrfs -m dup -d single</code>, for SSD (or non-rotational
-device) <code>mkfs.btrfs -m single -d single</code>.
+If only one device is present, metadata will be duplicated on that one device <code>mkfs.btrfs -m dup -d single</code>. If using multiple devices <code>dup</code> should be avoided and metadata should be stored using raid1 <code>mkfs.btrfs -m raid1 -d single</code>.
 
 === Current status ===
 

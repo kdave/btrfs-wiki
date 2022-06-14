@@ -222,16 +222,6 @@ This means that a conversion has been attempted from profile <tt>raid1</tt> to <
 
 == <tt>parent transid verify failed</tt> ==
 
-Example:
-
- parent transid verify failed on 4316004352 wanted 289 found 283
-
-* '''4316004352''' is the byte offset of the metadata block
-* '''289''' expected generation of the block
-* '''283''' generation found in the block
-
-Under normal circumstances the generation numbers must match. A mismatch can be caused by a
-lost write after a crash (ie. a dangling block "pointer"; software bug, hardware bug), 
-misdirected write (the block was never written to that location; software bug, hardware bug).
+https://btrfs.readthedocs.io/en/latest/trouble-index.html#error-parent-transid-verify-error
 
 [[Category:UserDoc]]

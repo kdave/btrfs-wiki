@@ -10,7 +10,7 @@ mean that its useful, for example in meeting your performance expectations for
 your specific workload. Combination of features can vary in performance, the
 table does not cover all possibilities.
 
-'''The table is based on the latest released linux kernel: 5.13'''
+'''The table is based on the latest released linux kernel: 5.18'''
 
 The columns for each feature reflrect the status of the implementation in following ways:
 
@@ -211,7 +211,6 @@ The columns for each feature reflrect the status of the implementation in follow
 | style="background: lightgreen;"   | OK
 | 
 | style="background: lightgreen;"   | OK
-| needs to be better documented
 |-
 | [[Quota_support|Quotas, qgroups]]
 | style="background: orange;"       | mostly OK
@@ -251,13 +250,25 @@ The columns for each feature reflrect the status of the implementation in follow
 | style="background: lightgreen;"   | OK
 |
 |-
+| fsverity
+| style="background: lightgreen;"   | OK
+| 
+| style="background: lightgreen;"   | OK
+|
+|-
+| idmapped mount
+| style="background: lightgreen;"   | OK
+| 
+| style="background: lightgreen;"   | OK
+|
+|-
 |colspan="5" | '''Features'''
 |-
 | [[#Free_space_tree|Free space tree]]
 | style="background: lightgreen;"   | OK
 | 4.9
 | style="background: lightgreen;"   | OK
-| ''[[Status#Free_space_tree|(see below)]]''
+|
 |-
 | [[Manpage/mkfs.btrfs#FILESYSTEM_FEATURES|no-holes]]
 | style="background: lightgreen;"   | OK
@@ -279,7 +290,7 @@ The columns for each feature reflrect the status of the implementation in follow
 |-
 | [[Zoned|zoned mode]]
 | style="background: orange;"       | mostly OK
-| 5.13
+| 5.18
 | style="background: orange;"       | mostly OK
 | there are known bugs, use only for testing
 |}
@@ -300,28 +311,6 @@ Suggest edits if:
 
 The data affected by the defragmentation process will be newly written and will consume new space, the links to the original extents will not be kept. See also [[Manpage/btrfs-filesystem]]. Though autodefrag affects newly written data, it can read a few adjacent blocks (up to 64k) and write the contiguous extent to a new location. The adjacent blocks will be unshared. This happens on a smaller scale than the on-demand defrag and doesn't have the same impact.
 
-=== Free space tree ===
-
-* btrfs-progs support is read-only, ie. fsck can check the filesystem but is not able to keep the FST consistent and thus cannot run in repair mode
-* the free space tree can be cleared using 'btrfs check --clear-space-cache v2' and will be rebuilt at next mount
-
-Compatibility and historical references:
-* btrfs-progs versions before v4.7.3 might accidentally do writes to the filesystem, but since there's no way to invalidate the FST, this causes inconsistency and possible corruption (using a piece of space twice). ''If'' you have made changes (btrfstune, repair, ...) to a FST enabled filesystem with btrfs progs, then mount with clear_cache,space_cache=v2 and hope the space written to was not reused yet. (see [https://www.spinics.net/lists/linux-btrfs/msg59110.html Status of free-space-tree feature])
-* (fixed in linux 4.9) runtime support: fine on little-endian machines (x86*), known to be broken on big-endian (sparc64), see [https://bugzilla.kernel.org/show_bug.cgi?id=152111 sparc64: btrfs module fails to load on big-endian machines]
-
-=== Out of band dedupe ===
-
-File extents can be shared either due to snapshotting or reflink. As the
-number of owners of an extent grows, the time to process or modify the extent
-will also grow.
-
-The deduplication increases the level of sharing and reduces data usage.
-
-=== File range cloning ===
-
-See the intro paragraph in Out of band dedupe. The range cloning increases
-the extent sharing.
-
 === RAID1, RAID10 ===
 
 The simple redundancy RAID levels utilize different mirrors in a way that does
@@ -330,17 +319,13 @@ will spread over the mirrors evenly or based on device congestion.
 
 === RAID56 ===
 
-Some fixes went to 4.12, namely scrub and auto-repair fixes. Feature marked as ''mostly OK'' for now.
-
-Further fixes to raid56 related code are applied each release. The ''write hole'' is the last missing part, preliminary patches have been posted but needed to be reworked. The ''parity not checksummed'' note has been removed.
+Please see https://btrfs.readthedocs.io/en/latest/btrfs-man5.html#raid56-status-and-recommended-practices .
 
 === Device replace ===
 
 Device ''replace'' and device ''delete'' insist on being able to read or reconstruct all data.  If any read fails due to an IO error, the delete/replace operation is aborted and the administrator must remove or replace the damaged data before trying again.
 
-= Other =
-
-== On-disk format ==
+= On-disk format =
 
 The filesystem disk format is stable. This means it is not expected to change
 unless there are very strong reasons to do so. If there is a format change,

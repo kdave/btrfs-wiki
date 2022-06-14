@@ -10,7 +10,6 @@ Btrfs source repositories
 Btrfsck
 Btrfstune
 Changelog
-Code documentation
 Compression
 Contributors
 Conversion from Ext3
@@ -23,9 +22,7 @@ Design notes on dedupe
 Developer's FAQ
 Development notes
 Development setup
-ENOSPC
 FAQ
-Feature:Skinny Metadata
 Getting started
 Glossary
 Gotchas
@@ -71,12 +68,8 @@ RAID56
 Resolving Extent Backrefs
 Restore
 Scrub corruption cases
-Seed-device
-SnapBtr
 Status
-SyncTest
 SysadminGuide
-Tree-checker
 Trees
 UseCases
 User notes on dedupe

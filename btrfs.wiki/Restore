@@ -1,3 +1,5 @@
+{{Deprecated|This page is obsolete and may contain out-of-date information. The contents needs to be moved to new location.}}
+
 The btrfs restore utility is a non-destructive method for attempting to recover data from an unmountable filesystem.  It makes no attempt to repair the filesystem, which means that you cannot cause further damage by running it.  It is available as part of btrfs-progs.
 
 Before v0.20-rc1-179-g1b1e071 (Feb 2013), it was a separate command, named btrfs-restore.

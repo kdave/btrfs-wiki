@@ -425,6 +425,13 @@ The "free" value is an estimate of the amount of data that can still be written 
 
 Below the "overall" section, information is shown for each of the types type of allocation, summarised and then broken down by device. In this section, you are seeing the values after the data or metadata ratio is accounted for, so we can see the 14.65 GiB of actual data used, and the 15 GiB of allocated space it lives in. (The small discrepancy with the value we worked out previously can be accounted for by rounding errors).
 
+=== Understanding free space, using third-party tools ===
+
+* [https://github.com/CyberShadow/btdu btdu] shows an overview of disk usage by taking random samples.
+* [https://github.com/knorrie/btrfs-heatmap btrfs-heatmap] creates visualizations of how a btrfs filesystem is using the underlying disk space.
+* [https://github.com/rkapl/btsdu btsdu] measures changed data between two snapshots.
+* [https://github.com/kilobyte/compsize compsize] measures used compression types and effective compression ratio of specified directories.
+
 == Why is free space so complicated? ==
 
 You might think, "My whole disk is RAID-1, so why can't you just divide everything by 2 and give me a sensible value in <code>df</code>?".

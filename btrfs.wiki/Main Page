@@ -42,35 +42,35 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 === Major Features Currently Implemented ===
 * Extent based file storage
 * 2^64 byte == 16 EiB maximum file size (practical limit is 8 EiB due to Linux VFS)
-* Space-efficient packing of small files
+* [https://btrfs.readthedocs.io/en/latest/Inline-files.html Space-efficient packing of small files]
 * Space-efficient indexed directories
 * Dynamic inode allocation
 * Writable snapshots, read-only snapshots
-* Subvolumes (separate internal filesystem roots)
-* Checksums on data and metadata (crc32c, xxhash, sha256, blake2b)
-* [[Compression]] (ZLIB, LZO, ZSTD), heuristics
+* [https://btrfs.readthedocs.io/en/latest/Subvolumes.html Subvolumes] (separate internal filesystem roots)
+* [https://btrfs.readthedocs.io/en/latest/Checksumming.html Checksums on data and metadata] (crc32c, xxhash, sha256, blake2b)
+* [https://btrfs.readthedocs.io/en/latest/Compression.html Compression] (ZLIB, LZO, ZSTD), heuristics
 * Integrated [[Multiple_Device_Support|multiple device support]]
 ** File Striping
 ** File Mirroring
 ** File Striping+Mirroring
 ** Single and Dual Parity implementations (experimental, not production-ready)
-* SSD (flash storage) awareness (TRIM/Discard for reporting free blocks for reuse) and optimizations (e.g. avoiding unnecessary seek optimizations, sending writes in clusters, even if they are from unrelated files. This results in larger write operations and faster write throughput)
-* Efficient [[Incremental_Backup|incremental backup]]
-* Background scrub process for finding and repairing errors of files with redundant copies
-* Online filesystem defragmentation
-* [[btrfsck|Offline filesystem check]]
+* SSD (flash storage) awareness
+** [https://btrfs.readthedocs.io/en/latest/Trim.html TRIM/Discard] for reporting free blocks for reuse
+** Optimizations (e.g. avoiding unnecessary seek optimizations, sending writes in clusters, even if they are from unrelated files. This results in larger write operations and faster write throughput)
+* Background [https://btrfs.readthedocs.io/en/latest/Scrub.html scrub] process for finding and repairing errors of files with redundant copies
+* Online filesystem [https://btrfs.readthedocs.io/en/latest/Defragmentation.html defragmentation]
+* [https://btrfs.readthedocs.io/en/latest/btrfs-check.html Offline filesystem check]
 * In-place [[Conversion_from_Ext3|conversion]] of existing ext2/3/4 and reiserfs file systems
-* [[Seed-device|Seed devices]]. Create a (readonly) filesystem that acts as a template to seed other Btrfs filesystems. The original filesystem and devices are included as a readonly starting point for the new filesystem. Using copy on write, all modifications are stored on different devices; the original is unchanged.
-* Subvolume-aware [[quota support]]
-* Send/receive of subvolume changes
-** Efficient incremental filesystem mirroring
+* [https://btrfs.readthedocs.io/en/latest/Seeding-device.html Seeding devices]. Create a (readonly) filesystem that acts as a template to seed other Btrfs filesystems. The original filesystem and devices are included as a readonly starting point for the new filesystem. Using copy on write, all modifications are stored on different devices; the original is unchanged.
+* Subvolume-aware [https://btrfs.readthedocs.io/en/latest/Qgroups.html quota support]
+* [https://btrfs.readthedocs.io/en/latest/Send-receive.html Send/receive] of subvolume changes, efficient incremental filesystem mirroring and [[Incremental_Backup|backup]]
 * Batch, or out-of-band [[deduplication]] (happens after writes, not during)
-* Swapfile support
-* [[Tree-checker]], post-read and pre-write metadata verification
+* [https://btrfs.readthedocs.io/en/latest/Swapfile.html Swapfile] support
+* [https://btrfs.readthedocs.io/en/latest/Tree-checker.html Tree-checker], post-read and pre-write metadata verification
 * [[Zoned]] mode support (SMR/ZBC/ZNS friendly allocation)
+* fsverity integration
 
 === Features by kernel version ===
-As part of the changelog you can also review
 
 * [[Changelog#By_feature|features by kernel version]]
 
@@ -78,7 +78,12 @@ As part of the changelog you can also review
 
 * DAX/persistent memory support
 * The file/directory -level encryption support (fscrypt)
-* fsverity integration
+
+=== Documentation ===
+
+* https://btrfs.readthedocs.org or https://btrfs.rtfd.io
+* the #btrfs channel is at [https://libera.chat libera.chat], matrix.org bridge works (persistent room #btrfs:matrix.org).
+
 </div>
 
 <!-- Documentation Block -->
@@ -98,23 +103,13 @@ As part of the changelog you can also review
 * [[Problem FAQ]] — Commonly-encountered problems and solutions.
 ** [[Gotchas]] — lists known bugs and issues, but not necessarily solutions.
 
-=== External Btrfs Documentation / Guides ===
-
-Links to Btrfs documentation of various Linux distributions:
-
-* "[https://docs.oracle.com/cd/E37670_01/E37355/html/ol_btrfs.html The Btrfs File System]" chapter in the [https://docs.oracle.com/cd/E37670_01/E37355/html/index.html Oracle Linux 6 Administrator's Solutions Guide]
-* [https://documentation.suse.com/sles/15-GA/single-html/SLES-storage/#sec-filesystems-major-btrfs Major File Systems in Linux] chapter in the [https://documentation.suse.com/en-us/sles/15-GA/single-html/SLES-storage/ SLES 15 Storage Administration Guide]
-* [https://help.ubuntu.com/community/btrfs Btrfs Wiki page] on the [https://help.ubuntu.com/community Ubuntu Community Help Wiki]
-* [https://wiki.archlinux.org/index.php/Btrfs Btrfs Wiki page] on the [https://wiki.archlinux.org/ Arch Linux Wiki]
-* [http://marc.merlins.org/perso/btrfs/post_2014-05-21_My-Btrfs-Talk-at-Linuxcon-JP-2014.html Marc MERLIN's Btrfs talk at Linuxcon JP 2014] which gives an overview of Btrfs, best practices, and its more interesting features.
-
 === Manual pages ===
 
-* Manual pages generated from git ([[:Category:Manpage|complete list]]):
-** [[Manpage/btrfs|btrfs]] — main administration tool
-** [[Manpage/mkfs.btrfs|mkfs.btrfs]] — creating the filesystem
-** [[Manpage/btrfs-check|btrfs check]] — repairing file systems
-** [[Manpage/btrfs-convert|btrfs-convert]] — tool to convert in-place from ext2/3/4 filesystems to btrfs. For a greater detail of how the algorithm works, please see the [[Conversion from Ext3]] page.
+* Manual pages generated from git ([https://btrfs.readthedocs.io/en/latest/man-index.html complete list]):
+** [https://btrfs.readthedocs.io/en/latest/btrfs.html btrfs] — main administration tool
+** [https://btrfs.readthedocs.io/en/latest/mkfs.btrfs.html mkfs.btrfs] — creating the filesystem
+** [https://btrfs.readthedocs.io/en/latest/btrfs-check.html btrfs check] — repairing file systems
+** [https://btrfs.readthedocs.io/en/latest/btrfs-convert.html btrfs-convert] — tool to convert in-place from ext2/3/4 filesystems to btrfs. For a greater detail of how the algorithm works, please see the [[Conversion from Ext3]] page.
 
 * Original wiki documentation (obsolete, will be removed)
 ** [[Restore|restore and find-root]] — utilities to find and restore data from an unmountable filesystem
@@ -126,14 +121,12 @@ Links to Btrfs documentation of various Linux distributions:
 * [https://github.com/btrfs/btrfs-dev-docs Developer documentation on Github] - collection of documents describing internals of BTRFS
 * [[Developer's FAQ]] — hints and answers for contributors and developers, general information about patch formatting
 * [[Development notes]] — notes, hints, checklists for specific implementation tasks (eg. adding new ioctls)
-* [[Code documentation]] — trees, source files, sample code for manipulating trees
 * [[Data Structures]] — detailed on-disk data structures
 * [[On-disk_Format | On-disk Format]] - Details of data structures written on disk
 * [[Trees]] — detailed in-tree representation of files and directories
 
 * [[Btrfs design]] — design notes (possibly out of date in places)
 * [[Multiple Device Support]] — design notes
-* [[ENOSPC]] — Current ENOSPC design issues
 * [[Design_notes_on_Send/Receive]] — notes from initial impelentation, protocol V2 updates draft
 * [[Qgroups status quo]] - notes on some qgroups observations/pain points
 
@@ -153,64 +146,38 @@ Links to Btrfs documentation of various Linux distributions:
 
 <!-- News Block -->
 <div style="margin:0; margin-top:10px; border:1px solid #dfdfdf; padding: 0em 1em 1em 1em; background-color:#f0e0d0; align:left;">
+
 == News ==
 
-''' New location for documentation '''
+''' btrfs-progs v5.18.1 (June 2022) '''
+* Please see the release notes at [https://btrfs.readthedocs.io/en/latest/CHANGES.html#btrfs-progs-5-18-1-2022-06-06 readthedocs.io]
 
-The new place for documentation will be at https://btrfs.readthedocs.org or https://btrfs.rtfd.io , will contents is going to be migrated
+''' util-linux v2.38 (Apr 2022) '''
 
-''' IRC channel at libera.chat '''
+blk* utilities and libraries finally recognize btrfs formatted with zoned mode 
 
-The #btrfs channel is at [https://libera.chat libera.chat], matrix.org bridge works (persistent room #btrfs:matrix.org).
-
-''' zstd (Nov 15) '''
-
-The zstd implementation 1.4.10 in kernel has been [https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=c8c109546a19613d323a319d0c921cb1f317e629 merged] to 5.15-rc1, speedups and sync with upstream version
-
-''' btrfs-progs v5.15 (Nov 2021) '''
-* mkfs: new defaults!
-** no-holes
-** free-space-tree
-** DUP for metadata unconditionally
-* libbtrfsutil: add missing profile defines
-* libbtrfs: minimize its impact on the other code, refactor and separate implementation where needed, cleanup afterwards, reduced header exports
-* documentation: introduce sphinx build and RST versions of manual pages, will become the new format and replace asciidoc
-* fixes: fix warning regarding v1 space cache when only v2 (free space tree) is enabled
-
-''' linux v5.15 (Nov 2021) '''
+''' linux v5.17 (Mar 2022) '''
 
 Features:
+* make send work with concurrent block group relocation
+* new exclusive operation 'balance paused' to allow adding a device to filesystem with paused balance
+* new sysfs file for fsid stored in the per-device directory to help distinguish devices when seeding is enabled
 
-* fs-verity support, using standard ioctls, backward compatible with read-only limitation on inodes with previously enabled fs-verity
-* idmapped mount support
-* make mount with rescue=ibadroots more tolerant to partially damaged trees
-* allow raid0 on a single device and raid10 on two devices, degenerate cases but might be useful as an intermediate step during conversion to other profiles
-* zoned mode block group auto reclaim can be disabled via sysfs knob
-
-Performance improvements:
-
-* continue readahead of node siblings even if target node is in memory, could speed up full send (on sample test +11%)
-* batching of delayed items can speed up creating many files
-* fsync/tree-log speedups
-** avoid unnecessary work (gains +2% throughput, -2% run time on sample load)
-** reduced lock contention on renames (on dbench +4% throughput, up to -30% latency)
+Performance:
+* less metadata needed for directory logging, directory deletion is 20-40% faster
+* in zoned mode, cache zone information during mount to speed up repeated queries (about 50% speedup)
+* free space tree entries get indexed and searched by size (latency -30%, search run time -30%)
+* less contention in tree node locking when inserting a key and no splits are needed (files/sec in fsmark improves by 1-20%)
 
 Fixes:
-
-* various zoned mode fixes
-* preemptive flushing threshold tuning, avoid excessive work on almost full filesystems
+* defrag rewrite from 5.16 fixed
+* get rid of warning when mounted with flushoncommit
 
 Core:
-
-* continued subpage support, preparation for implementing remaining features like compression and defragmentation; with some limitations, write is now enabled on 64K page systems with 4K sectors, still considered experimental
-** no readahead on compressed reads
-** inline extents disabled
-** disabled raid56 profile conversion and mount
-* improved flushing logic, fixing early ENOSPC on some workloads
-* inode flags have been internally split to read-only and read-write incompat bit parts, used by fs-verity
-* new tree items for fs-verity: descriptor item, Merkle tree item
-* inode operations extended to be namespace-aware
-* cleanups and refactoring
+* global reserve stealing got simplified and cleaned up in evict
+* more preparatory work for extent tree v2
+* remove readahead framework
+* error handling improvements
 
 </div>
 
@@ -223,11 +190,12 @@ Read about past releases in the separate [[Changelog]] page
 
 * [[Changelog#By_feature|features by kernel version]]
 * [[Changelog#By_version_.28linux_kernel.29|kernel changes for each release]]
-* [[Changelog#By_version_.28btrfs-progs.29|btrfs-progs changes for each release]]
+* <s>[[Changelog#By_version_.28btrfs-progs.29|btrfs-progs changes for each release (wiki)]]</s> btrfs-progs changes for each release https://btrfs.readthedocs.io/en/latest/CHANGES.html
 </div>
 
 <!-- Source code Block -->
 <div style="margin:0; margin-top:10px; border:1px solid #dfdfdf; padding: 0em 1em 1em 1em; background-color:#dfefdf; align:left; margin-top:10px">
+
 == Source code download ==
 
 [[Btrfs source repositories]] describes purpose and contents, here are a few quick links:
@@ -265,6 +233,7 @@ Links to old or obsolete documentation, articles. Kept for historical reasons. S
 
 === Articles, presentations, podcasts ===
 
+* [http://marc.merlins.org/perso/btrfs/post_2014-05-21_My-Btrfs-Talk-at-Linuxcon-JP-2014.html Marc MERLIN's Btrfs talk at Linuxcon JP 2014] which gives an overview of Btrfs, best practices, and its more interesting features.
 * '''Article:''' [http://www.howtoforge.com/a-beginners-guide-to-btrfs A Beginner's Guide To Btrfs] (2012-11-26)
 * '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/advanced-btrfs-1734952.html How I Use the Advanced Capabilities of Btrfs] by Margaret Bierman with Lenz Grimmer (2012-08-11)
 * '''Article:''' [http://www.oracle.com/technetwork/articles/servers-storage-admin/gettingstarted-btrfs-1695246.html How I Got Started with the Btrfs File System for Oracle Linux] by Margaret Bierman with Lenz Grimmer (2012-07-11)
@@ -281,19 +250,18 @@ Links to old or obsolete documentation, articles. Kept for historical reasons. S
 
 <!-- Project Block -->
 <div style="margin:0; margin-top:10px; border:1px solid #dfdfdf; padding: 0em 1em 1em 1em; background-color:#dfefdf; align:left; margin-top:10px">
+
 == Project information/Contact ==
 
-* [[Changelog]] — history of changes in linux kernel wrt btrfs
-** [[Changelog#By_feature | features added by release]]
 * [[Contributors#Statistics_for_5.x_series|Development statistics]] — contributors, commits, lines
-* [[Glossary]]
+* [https://btrfs.readthedocs.io/en/latest/Glossary.html Glossary]
 * Contact information:
 ** [[Btrfs mailing list]]
 ** [http://en.wikipedia.org/wiki/Internet_Relay_Chat IRC] on [https://libera.chat libera.chat] in the channel [irc://irc.libera.chat:6667/btrfs #btrfs]
 ** Reporting bugs:
 *** for kernel code see [[Problem_FAQ#How_do_I_report_bugs_and_issues.3F | the Bugzilla FAQ]], quick tip: use product ''File System'' and component ''btrfs''.
-*** for btrfs-progs it's either bugzilla or [https://github.com/kdave/btrfs-progs/issues/ github issues]
-*** for read-only documentation exported on wiki eg. manual pages as [https://github.com/kdave/btrfs-progs/issues/ github issues]
+*** for btrfs-progs please use [https://github.com/kdave/btrfs-progs/issues/ github issues] (and not kernel.org bugzilla anymore)
+*** for documentation please use [https://github.com/kdave/btrfs-progs/issues/ github issues]
 * [[Project ideas]]
 * [[Project_ideas#Cleanup_projects|Cleanup ideas]]
 * [[Project_ideas#Userspace_tools_projects|Userspace tools projects]]
@@ -304,7 +272,9 @@ Links to old or obsolete documentation, articles. Kept for historical reasons. S
 
 == Wiki accounts, editing ==
 
-The wiki contributions are welcome! Please create an account and wait for approval (this is a necessary spam protection and we cannot remove it). You can try to catch some of the wiki admins on [[#Project_information.2FContact|IRC]] (or ping user 'kdave' in a query) to expedite the account creation.
+The wiki is still in use, however the main portion of documenation is being migrated to https://btrfs.readthedocs.io.
+
+Wiki edits and fixups are welcome and may be copied to the RTD documentation eventually. Please create an account and wait for approval (this is a necessary spam protection and we cannot remove it). You can try to catch some of the wiki admins on [[#Project_information.2FContact|IRC]] (or ping user 'kdave' in a query) to expedite the account creation.
 
 The registration requires full name for account but it's not mandatory from our perspective. The wiki User and User talk pages are created automatically but removed after account is approved. If you want to use the pages, create them manually, they won't be deleted.
 </div>

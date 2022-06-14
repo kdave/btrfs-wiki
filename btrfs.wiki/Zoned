@@ -14,7 +14,7 @@ The above is really incompatible because it expects an in-place write at some po
 * only 'single' profile works, TBD: synchronize zone write pointers among the block groups
 * fitrim, TBD: do not depend on free space cache
 
-Creating a zoned filesystem needs ''btrfs-progs'' 5.12. '''Proper detection of zoned devices with btrfs needs ''util-linux'' 2.38+ (not yet released, we tried, ETA September?).'''
+Creating a zoned filesystem needs ''btrfs-progs'' 5.12. '''Proper detection of zoned devices with btrfs needs ''util-linux'' 2.38+'''
 
 Status:
 

@@ -1,6 +1,5 @@
 == Introduction ==
-This page is for documentation related to btrfs send/receive.<br/>
-Btrfs send/receive is currently stable. It was merged in the main Linux repository in 3.6. The initial version of send/receive was posted to the list [http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg17512.html here] (btrfs-progs part [http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg17519.html here]).<br/>
+This page is for documentation related to btrfs send/receive.
 
 == Btrfs send/receive design ==
 Only the send side is happening in-kernel. Receive is happening in user-space. The kernel generates a stream of instructions meant to be replayed 1:1 on the receiving side. These instructions cover the most important calls found for the vfs. Examples are create, mkdir, link, symlink, rename, unlink, write, and so on.
@@ -109,27 +108,13 @@ Offset are only offset inside the structure.
 ==== Command Example ====
 [[File:Send_subvol_command.png]]
 
-== TODOs ==
-Here is a list of things that need to be done:
-=== Functionality related ===
-* Fix handling of very long path names in btrfs receive (user space). We do syscalls (e.g. open/link/symlink, ...) with the receive target + the path found in the stream. The path from the stream alone can already be very long, so we definitely need special handling here. Arne suggested to implement a helper function that cd's into the target directory so that we can use relative path names. The link call needs more extra handling here as we may have 2 very long pathes. We could use some rename magic to put the new hardlink into place.
-* Fix NULL checks in btrfs-progs. There are many places where we don't check for NULL after malloc/calloc/strdup in btrfs-progs send/receive.
-* Delete partially received subvolumes on error. Also add an option to disable deletion so that we have something to debug in case of error.
-* User space uses dump_thread to read from kernel and write it to the output fd. Currently we give the kernel a pipe to write to user space. We could instead just give the kernel the output fd and not use a pipe at all.
-* Better error message in case of error when sending. Especially "ERROR: find_mount_root failed on %s:" is not of any help.
-* Add a feature flags field to btrfs_stream_header for v2 of the stream. We probably need this to indicate if for example clones are used in the stream.
+== Ideas ==
 
-=== Optimization ===
 * Currently, incremental sends where large directories get deleted are extremely slow. The reason is, that we can't rmdir the directory until all its items are deleted. In most cases, these items get deleted after we process the directory inode, so we need to check if a rmdir is possible for every deleted directory item that we encounter later. To check this, we currently iterate the whole dir and check if the items found there were already processed. If we detect that all have been processed, we know that we can do a rmdir now. This is extremely slow on large directories. A possible solution would be to have a "rmdir cache" which holds a "pending unlink count" for each directory that is pending for rmdir. We then decrement the count every time we encounter an inode that gets deleted from the pending dir. If it reaches 0, we can safely send a rmdir instruction.
 * The same as for deleted directories could be done for newly created directories. In case we encounter an inode with an inum smaller than the inum of the parent, we need to iterate the parent dir to find out if the parent was already created out of order. We could speed this up with a cache.
 * For the full send case, we could optimize sending of preallocated extents and dummy extents (disknr=0) by simply skipping them. Following writes/truncates will then create the same preallocated extents on the receiving side. We could probably do the same for incremental sends, but I don't know if there is a syscall to zero out the middle of a file and replace the extents with preallocated extents.
-* Add caches for btrfs_path and fs_path objects. The allocation functions are already prepared to receive a send_ctx object so that it should be easy to implement caches.
-* Currently we send utimes every time a dir item is added/removed from a directory. This results in many unnecessary utime updates. This could be optimized with the help of "delayed utime updates". Instead of calling send_utimes, we would then queue the update into a list and let later utime updates only update the queue entry. If the queue size reaches a threshold, we then send the oldest utime updates to user space and remove them from the list.
-
-== Ideas ==
 * [http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg17564.html Sendshots]
 * More output formats? An idea was for example to add a [http://en.wikipedia.org/wiki/Shar shar] like output format.
-* A paranoid mode. Let btrfs send do a parallel temporary receive in the background and later compare the results to find out if we got a good stream. Probably only needed at the beginning while send/receive is experimental. Not sure if this is worth the extra work.
 
 == Send stream v2 draft ==
 
@@ -138,17 +123,21 @@ Missing from v1:
 * send extent holes in files efficiently, use hole punching (was not available during v1 time)
 * send preallocated extents properly
 * extent clones within one file
+
+Implemented in v2, scheduled for merge:
+
+* extend ioctl to produce v1 or v2 formats
+* stream version recognition
 * send otime for inodes
+* send encoded data (compressed, encrypted)
 * send file flags
 ** (FS_IOC_GETFLAGS/FS_IOC_SETFLAGS), the receiving side misses NOCOW and the other attributes like append-only, immutable etc.
 ** setting the flags on receiving side is tricky as the flags affects if/how the data are stored
-* optionally send owner/group as strings (mapping not available in kernel?)
-* block device is not sent over the stream, undecided if we want that or not
 * send progress
-* send encoded data (compressed, encrypted)
 
-Other:
-* stream version recognition
-* extend ioctl to produce v1 or v2 formats
+Unreleated to protocol:
+
+* optionally generate uid/gid number:string mappings and provide them on receiving side to apply
+* Currently we send utimes every time a dir item is added/removed from a directory. This results in many unnecessary utime updates. This could be optimized with the help of "delayed utime updates". Instead of calling send_utimes, we would then queue the update into a list and let later utime updates only update the queue entry. If the queue size reaches a threshold, we then send the oldest utime updates to user space and remove them from the list. 
 
 [[Category:CodeDoc]]
