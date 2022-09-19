@@ -64,7 +64,9 @@ Not directly, but this is possible from a userspace tool without any special ker
 Yes. The utility [http://en.wikipedia.org/wiki/Chattr chattr] supports setting file attribute ''c'' that  marks the inode to compress newly written data. Setting the compression property on a file using <code>btrfs property set <file> compression <zlib|lzo|zstd></code> will '''force''' compression to be used on that file using the specified algorithm.
 
 = Can I disable compression on a file? =
-It is possible to disable compression of new extents on a file using the <code>btrfs property set <file> compression ""</code> command. This will set the "no compression" flag on the file and newly written extents will not be compressed until the flag is cleared either by <code>chattr +c</code> or by using the compression property to specify an algorithm. The flag can be removed with <code>chattr -c</code>. Already written extents will not be rewritten.
+It is possible to disable compression of new extents on a file using the <code>btrfs property set <file> compression none</code> command. This will set the "no compression" flag on the file and newly written extents will not be compressed until the flag is cleared either by <code>chattr +c</code> or by using the compression property to specify an algorithm. The flag can be removed with <code>chattr -c</code>. Already written extents will not be rewritten.
+
+Note, in kernel versions before v5.14 you could disable compression by passing an empty string instead of explicitly mentioning <code>none</code> or <code>no</code>. Since kernel version 5.14, an empty string resets to default behavior.
 
 = Can I set compression per-subvolume? =
 Currently no, this is planned. You can simulate this by enabling compression on the subvolume directory and the files/directories will inherit the compression flag.

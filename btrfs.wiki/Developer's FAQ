@@ -321,11 +321,39 @@ on-demand.
 
 == Copyright notices in files, SPDX ==
 
-The copyright notices in source files (near the top) have been in wide use but don't and cannot comprise the entire information regarding copyright holders and all contributors that modified the code. The complete information with '''history''' is recorded in '''git''' using '''Signed-off-by''' tags that are documented and widely understood. An initiative started in 2017 [https://lwn.net/Articles/739183/] aims to unify licensing information in all files using '''SPDX''' tags, this is driven by the Linux Foundation.
+'''License information in files is using the SPDX standard.'''
 
-Given all the above, there's no need to put the copyright notices in individual files that are new, renamed or split. This applies to all new changes.
+Quoting https://spdx.dev/about/:
 
-Note that removing the copyright from existing files is not trivial and would require asking the original authors or current copyright holders. The status will be inconsistent but at least new contributions won't continue adding new ones. The current licensing practices are believed to be sufficient.
+<blockquote>
+SPDX is an open standard for communicating software bill of material information, including provenance, license, security, and other related information. SPDX reduces redundant work by providing common formats for organizations and communities to share important data, thereby streamlining and improving compliance, security, and dependability. The SPDX specification is recognized as the international open standard for security, license compliance, and other software supply chain artifacts as ISO/IEC 5962:2021.
+</blockquote>
+
+The initiative started in 2017 [https://lwn.net/Articles/739183/] aims to unify licensing information in all files using '''SPDX''' tags, this is driven by the Linux Foundation. Therefore it's not necessary to repeat the license header (GPL) in each file, the licensing rules are documented in 
+https://docs.kernel.org/process/license-rules.html (also available in linux git tree in Documentation/process/license-rules.rst which is the source file of the linked document).
+
+Complete information with history about contributors of changes in a particular file is recorded in '''git''' using '''Signed-off-by''' tags that are documented and widely understood (Developer's certificate of origin). For more information please see https://docs.kernel.org/process/submitting-patches.html#sign-your-work-the-developer-s-certificate-of-origin .
+
+'''Copyright notices in files.''' This delves into the legal territory and there's no easy answer about the recommended practice. This paragraph could help you to answer some questions regarding that but is not by any means complete and refers to known and documented practices:
+
+* All code merged into the mainline kernel retains its original ownership (https://docs.kernel.org/process/1.Intro.html#licensing)
+* Removing the copyright from existing files is not trivial and would require asking the original authors or current copyright holders.
+* In btrfs code, adding copyright notices is not mandatory
+* In btrfs code, there are some copyright notices present from years before 2017
+* In btrfs code, the copyright notices are inconsistent and incomplete (please refer to git history to look up the cod change authors)
+* If not sure, please consult your lawyers
+
+'''Btrfs developer community perspective, not legally binding.'''
+
+The copyright notices are not required and are discouraged for reasons that are practical rather than legal. The files do not track all individual contributors nor companies (this can be found in git), so the inaccurate and incomplete information gives a very skewed if not completely wrong idea about the copyright holders of changes in a given file. The code is usually heavily changed over time in smaller portions, slowly morphing into something that does not resemble the original code anymore though it shares a lot of the core ideas and implemented logic. A copyright notice by a company that does not exist anymore from 10 years ago is a clear example of uselessnes for the developers.
+
+When code is moved verbatim from a file to another file, in the new file it appears to be contributed by a single author while it is in most cases code resulting from many previous contributions from other people. This is most obvious when splitting code from big files to new ones, because this is considered a good development practice, but somehow goes against the meaning of the copyright notices, unless a complete list of original code authors and copyright holders is also copied.
+
+The current copyright notices will not be removed but at least new contributions won't continue adding new ones. The change history is recorded in git using Signed-off-by tags that are documented (https://docs.kernel.org/process/submitting-patches.html#sign-your-work-the-developer-s-certificate-of-origin) and widely understood. Unless there's a blessed practice regarding the copyright notices that significantly improves the situation, the current way is considered sufficient for practical development purposes.
+
+Given all the above, we don't want the copyright notices in individual files that are new, renamed or split. This applies to all new changes in all btrfs related code changes. Obviously lawyers may disagree and/or may require additional refinements to the process, which is fine but beyond the scope of this section.
+
+You may also read a perspective from Linux Foundation that shares a similar view: https://www.linuxfoundation.org/blog/copyright-notices-in-open-source-software-projects/
 
 = Development schedule =
 

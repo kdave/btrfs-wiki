@@ -11,7 +11,7 @@ __NOTOC__
 
 Development of Btrfs started in 2007. Since that time, Btrfs is a part of the Linux kernel and is under active development.
 
-Jointly developed at [[Contributors|multiple companies]], Btrfs is licensed under the GPL and open for contribution from anyone.
+Jointly developed by multiple companies (https://btrfs.readthedocs.io/en/latest/Contributors.html, Btrfs is licensed under the GPL and open for contribution from anyone.
 
 [[Production_Users|List of companies using btrfs in production]].
 </div>
@@ -76,8 +76,8 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 === Features Currently in Development or Planned for Future Implementation ===
 
-* DAX/persistent memory support
 * The file/directory -level encryption support (fscrypt)
+* DAX/persistent memory support
 
 === Documentation ===
 
@@ -149,35 +149,19 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 == News ==
 
-''' btrfs-progs v5.18.1 (June 2022) '''
-* Please see the release notes at [https://btrfs.readthedocs.io/en/latest/CHANGES.html#btrfs-progs-5-18-1-2022-06-06 readthedocs.io]
+''' btrfs-progs v5.19.1 (Sep 2022) '''
+* Please see the release notes at [https://btrfs.readthedocs.io/en/latest/CHANGES.html#btrfs-progs-5-19-1-2022-09-12 readthedocs.io]
+
+''' btrfs-progs v5.19 (Aug 2022) '''
+* Please see the release notes at [https://btrfs.readthedocs.io/en/latest/CHANGES.html#btrfs-progs-5-19-2022-08-16 readthedocs.io]
+
+''' linux v5.19 (Aug 2022) '''
+
+''' linux v5.18 (Jun 2022) '''
 
 ''' util-linux v2.38 (Apr 2022) '''
 
 blk* utilities and libraries finally recognize btrfs formatted with zoned mode 
-
-''' linux v5.17 (Mar 2022) '''
-
-Features:
-* make send work with concurrent block group relocation
-* new exclusive operation 'balance paused' to allow adding a device to filesystem with paused balance
-* new sysfs file for fsid stored in the per-device directory to help distinguish devices when seeding is enabled
-
-Performance:
-* less metadata needed for directory logging, directory deletion is 20-40% faster
-* in zoned mode, cache zone information during mount to speed up repeated queries (about 50% speedup)
-* free space tree entries get indexed and searched by size (latency -30%, search run time -30%)
-* less contention in tree node locking when inserting a key and no splits are needed (files/sec in fsmark improves by 1-20%)
-
-Fixes:
-* defrag rewrite from 5.16 fixed
-* get rid of warning when mounted with flushoncommit
-
-Core:
-* global reserve stealing got simplified and cleaned up in evict
-* more preparatory work for extent tree v2
-* remove readahead framework
-* error handling improvements
 
 </div>
 
@@ -253,7 +237,7 @@ Links to old or obsolete documentation, articles. Kept for historical reasons. S
 
 == Project information/Contact ==
 
-* [[Contributors#Statistics_for_5.x_series|Development statistics]] — contributors, commits, lines
+* Development statistics, contributors, commits — https://btrfs.readthedocs.io/en/latest/Contributors.html#statistics-for-5-x-series
 * [https://btrfs.readthedocs.io/en/latest/Glossary.html Glossary]
 * Contact information:
 ** [[Btrfs mailing list]]

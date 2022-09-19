@@ -102,47 +102,6 @@ You are missing the /dev/btrfs-control device node. This is usually set up by ud
 
 You might also want to report to your distribution that their configuration without udev is missing this device.
 
-== How to clean up old superblock ? ==
-
-The preferred way is to use the ''wipefs'' utility that is part of the ''util-linux'' package. Running the command with the device will not destroy the data, just list the detected filesystems:
-
- # wipefs /dev/sda
- offset               type
- ----------------------------------------------------------------
- 0x10040              btrfs   [filesystem]
-                      UUID:  7760469b-1704-487e-9b96-7d7a57d218a5
-
-To actually remove the filesystem use:
-
- # wipefs -o 0x10040 /dev/sda
- 8 bytes [5f 42 48 52 66 53 5f 4d] erased at offset 0x10040 (btrfs)
-
-ie. copy the offset number to the commandline parameter.
-
-{{note|The process is reversible, if the 8 bytes are written back, the device is recognized again.}}
-{{note|wipefs clears only the first superblock. If the first superblock is further invalidated the other ones could "resurrect" the filesystem.
-}}
-
-Related problem:
-
-'''Long time ago I created btrfs on /dev/sda. After some changes btrfs moved to /dev/sda1.'''
-
-Use ''wipefs'' as well, it deletes only a small portion of ''sda'' that will not interfere with the next partition data.
-
-=== What if I don't have wipefs at hand? ===
-
-There are three superblocks: the first one is located at 64K, the second one at 64M, the third one at 256GB. The following lines reset the '''magic string''' on all the three superblocks
-
- # dd if=/dev/zero bs=1 count=8 of=/dev/sda seek=$((64*1024+64))
- # dd if=/dev/zero bs=1 count=8 of=/dev/sda seek=$((64*1024*1024+64))
- # dd if=/dev/zero bs=1 count=8 of=/dev/sda seek=$((256*1024*1024*1024+64))
-
-If you want to restore the superblocks '''magic string''', 
-
- # echo "_BHRfS_M" | dd bs=1 count=8 of=/dev/sda seek=$((64*1024+64))
- # echo "_BHRfS_M" | dd bs=1 count=8 of=/dev/sda seek=$((64*1024*1024+64))
- # echo "_BHRfS_M" | dd bs=1 count=8 of=/dev/sda seek=$((256*1024*1024*1024+64))
-
 == I get "No space left on device" errors, but df says I've got lots of space ==
 
 First, check how much space has been allocated on your filesystem:
@@ -209,19 +168,5 @@ You will get a similar output (excerpt):
 Such errors should be fixable with "btrfs check --repair" provided you run a recent enough version of [[Changelog#By_version_.28btrfs-progs.29|btrfs-progs]].
 
 ''Note that "btrfs check --repair" should not be used lightly as in some cases it can make a problem worse instead of fixing anything.''
-
-= Deciphering error messages from syslog =
-
-== <tt>balance will reduce metadata integrity, use force if you want this</tt> ==
-
-This means that conversion will remove a degree of metadata redundancy, for example when going from profile <tt>raid1</tt> or <tt>dup</tt> to <tt>single</tt>
-
-== <tt>unable to start balance with target metadata profile 32</tt> ==
-
-This means that a conversion has been attempted from profile <tt>raid1</tt> to <tt>dup</tt> with <tt>btrfs-progs</tt> earlier than version 4.7.
-
-== <tt>parent transid verify failed</tt> ==
-
-https://btrfs.readthedocs.io/en/latest/trouble-index.html#error-parent-transid-verify-error
 
 [[Category:UserDoc]]
