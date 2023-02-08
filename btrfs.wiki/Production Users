@@ -29,5 +29,5 @@ The most of Linux distributions offer btrfs as an option.
 
 The following distributions offer btrfs by default:
 
-* [https://getfedora.org/ Fedora] ([https://fedoraproject.org/wiki/Changes/BtrfsByDefault since 33])
-* [https://www.opensuse.org/ openSUSE] ([http://www.phoronix.com/scan.php?page=news_item&px=MTYzNjA since 13.2])
+* [https://getfedora.org/ Fedora] ([https://fedoraproject.org/wiki/Changes/BtrfsByDefault since 33], since 2020)
+* [https://www.opensuse.org/ openSUSE] ([http://www.phoronix.com/scan.php?page=news_item&px=MTYzNjA since 13.2], since 2017)

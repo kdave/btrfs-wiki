@@ -43,7 +43,6 @@ implementation.
 
 === Better data balancing over multiple devices for raid1/10 (read) ===
 {{project
-|who=[[User:Michal Rostecki|Michal Rostecki]]
 |patch=[https://patchwork.kernel.org/project/linux-btrfs/list/?series=430965 RFC v1]
 |text=Currently (5.11) the mirrors are selected based on process id of the ''endio-metadata'' worker threads, this may lead to a pathological case when only one mirror is always used (with more common case of uneven mirror use, not that bad in practice).
 <br>[http://www.spinics.net/lists/linux-btrfs/msg12745.html First attempt] with random mirror selection proved to be very wrong, the heuristic has to be improved ([http://article.gmane.org/gmane.comp.file-systems.btrfs/17985 more comments]), possibly in connection with readahead infrastructure within btrfs.
@@ -164,7 +163,6 @@ It is possible to fix the allocation logic so it is more even while (almost almo
 
 === RBtree lock contention ===
 {{project
-|who=Liu Bo
 |text=Btrfs uses a number of rbtrees to index in-memory data structures. Some of these are dominated by reads, and the lock contention from searching them is showing up in profiles. We need to look into an RCU and sequence counter combination to allow lockless reads.
 }}
 
@@ -190,12 +188,6 @@ useful for and should be enhanced, eg.
 * switch all error case messages from test_msg to test_err that will also print the line and stack (use WARN_ON)
 * enhance messages with the values of last failed condition
 * drop ifdefs from generic code that's used only from tests/*.c and move it there
-}}
-
-=== Get rid of buffer_head usage in superblock writing/reading ===
-{{project
-|who=Johannes Thumshirn
-|text=The structure buffer_head is used for reading and writing the superblocks, the interface is easy to use to just stay 'read/write this offset and give me back the data'. The rest of btrfs uses the more modern 'bio' structures, that are also used to implement the buffer_heads. So this is merely lifting up the bio calls to the superblock IO. There's some page and mapping involved, but oterwise should be easy to convert.
 }}
 
 === Replace remaining radix tree usage by xarray ===
@@ -593,7 +585,7 @@ If the updatedb tool were aware of the snapshots (also whether or not they are r
 
 === Make bootloaders aware of incompat bits and features ===
 {{project
-|text=Bootloaders (grub2, syslinux) that support btrfs do not check the incompatibility bits and boot may fail due to lack of support, eg. compression, skinny metadata, no-extent-hole, etc. The bootloader should verify that there are no unknown bits and at least issue a warning.
+|text=Bootloaders (grub2, u-boot) that support btrfs do not check the incompatibility bits and boot may fail due to lack of support, eg. compression, skinny metadata, no-extent-hole, etc. The bootloader should verify that there are no unknown bits and at least issue a warning.
 }}
 
 === Audit btrfs code in bootloaders ===
@@ -602,7 +594,6 @@ If the updatedb tool were aware of the snapshots (also whether or not they are r
 
 The bootloaders in question:
 * grub2
-* SYSLINUX
 * U-Boot
 
 Things to audit/fix:
@@ -613,7 +604,6 @@ Things to audit/fix:
 
 === Send notifications about important events ===
 {{project
-|who=Marcos Paulo de Souza
 |text=Use kobject_uevents to notify userspace about some important events to userspace. The uevents is what udev uses so there's an established way and easier (extra data passed a-la shell variables) than raw netlink with custom protocol. The events are something like:
 * state changes
 ** filesystem size changed
@@ -634,49 +624,9 @@ The environment of the event would contain filesystem UUID, subvolume, path to f
 
 Collection of ideas or small tasks for btrfsprogs or other relevant utilites.
 
-=== btrfs ===
-* merge functionality of ''btrfstune''
-** for the reasons stated under [https://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg36259.html], the functionality should be implemented with the ''properties'' rather than a separate subcommand
-* audit code for use of backup superblocks and change it to read only the first unless told otherwise by a command-line option
-* write a ''mount.btrfs'' helper to scan devices on the fly (and use libblkid and libmount for that)
-* ('''claimed''') introduce subcommand ''debug'' and move there functionality from separate debugging utilities
-** map-logical (not sure if this is not for inspect-internal)
-** dump-image from btrfs-image
-* improve error handling
-** start with the easy ones that are not in the code shared with kernel
-** similar to what's done in kernel code, but beware of differences
-* subvolume listing: overhaul, see Hugo's mail
-* check: make more verbose about the phases, more verbosity levels
-* balance: allow to run it in background (fork) and report status periodically
-
-=== Provide a library covering 'btrfs' functionality ===
-{{project
-|who=Omar Sandoval
-|text=It would be nice to have a library for manipulating btrfs filesystem in a way that the ''btrfs'' tool does and make it available to other programs, or via language bindings.
-
-For python, there's [https://github.com/knorrie/python-btrfs python-btrfs], a python library to to inspect the internals of an existing filesystem. This library only works with filesystems that are online and mounted, and consists of helper functions to call the IOCTL kernel API and wrapper classes to easily work with the data that is returned.
-
-[[Deduplication|bedup]] has [https://github.com/g2p/bedup/blob/master/bedup/platform/btrfs.py a module] exposing some of the core btrfs functionality to Python.
-
-There is also a [https://hackage.haskell.org/package/btrfs btrfs library] for haskell.
-}}
-
-=== Time slider ===
-{{project
-|text=
-Auto snapshot and its management tool.
-
-A tool partly covering this idea is [http://en.opensuse.org/Portal:Snapper snapper]. Earlier work from Anand Jain on this is available at [https://github.com/asj/timeslider GitHub].
-}}
-
 === Audit tools for usecases with security implications ===
 
 Some tools have to run under root but still may need some level of restrictions or confinement. An example is ''receive'' that could use ''chroot'' at some points. Search for more.
-
-=== Documentation ===
-
-* this very wiki needs updates and removal of obsolete information, work here is highly appreciated as this is one of the frequently consulted sources of information about btrfs
-* document send stream format, RFC, validator, dumper; see far-progs
 
 === strace ===
 {{project
@@ -699,27 +649,11 @@ Examples:
 * typos in comments: spelling fixes, typos in variable names referenced in comments
 * typos in error messages, or other wording changes that make things more readable and understandable
 
-=== Helpers for tree enumeration ===
-
-{{project
-|text=Writing tree enumeration code requires deep knowledge of the underlying functions and makes some assumption about possible results. Build some generic helpers or enumeration functions instead, to make the code shorter and more readable, and easier to write.
-}}
-
 === Use the kernel code in user mode ===
 
 {{project
 |text=The user mode utilities have a local copy of the kernel code, with some small adjustments for running in user mode. The fork of the sources was quite a while ago, so many kernel features are now missing in user mode. Also maintaining two copies is burdensome. Expand the wrappers instead so the true kernel code can be used.
 These helpers could also generically make use of the upcoming readahead API.
-}}
-
-=== Remove unused parameters (in general) ===
-
-{{project
-|text=Eg. like this [http://git.kernel.org/linus/b3b4aa74b58bded92 [1]] or [http://git.kernel.org/linus/ba14419264684b [2]] . To find more, enable -Wunused-parameter in scripts/Makefile.extrawarn and run
-
- make W=1 fs/btrfs/
-
-The output is noisy, you can comment out the other warnings or grep is your friend.
 }}
 
 === Make fewer functions inline to help identifying them on the stack ===
@@ -739,7 +673,6 @@ The functions should be tagged with <code>noinline_for_stack</code>.
 
 === Move rcu_string out of btrfs to lib/ ===
 {{project
-|who=Omar Sandoval
 |patch=patch in development
 |text=rcu-string.h implements helpers and wrappers around RCU-friendly strings. This is a generic piece of code and should live in the generic library (linux.git/lib/). The task involves documenting API and pushing through lkml and updating according to the feedback.
 }}
@@ -1055,4 +988,32 @@ It seems that the link count can be tracked like the other filesystems do. This 
 * a mkdir/rmdir/move/snapshot will update the link count accordingly iff the current link count is not 1
 
 '''Rejected''': implementing that brings backward compatibility issues that are not easy to resolve compared to the overall benefit of the link tracking.
+}}
+
+=== Helpers for tree enumeration ===
+{{project
+|who=Gabriel Niebler
+|upstream=5.18
+|text=Writing tree enumeration code requires deep knowledge of the underlying functions and makes some assumption about possible results. Build some generic helpers or enumeration functions instead, to make the code shorter and more readable, and easier to write.
+}}
+
+=== Get rid of buffer_head usage in superblock writing/reading ===
+{{project
+|who=Johannes Thumshirn
+|upstream=5.6
+|text=The structure buffer_head is used for reading and writing the superblocks, the interface is easy to use to just stay 'read/write this offset and give me back the data'. The rest of btrfs uses the more modern 'bio' structures, that are also used to implement the buffer_heads. So this is merely lifting up the bio calls to the superblock IO. There's some page and mapping involved, but oterwise should be easy to convert.
+}}
+
+=== Provide a library covering 'btrfs' functionality (btrfs-progs) ===
+{{project
+|who=Omar Sandoval
+|text=It would be nice to have a library for manipulating btrfs filesystem in a way that the ''btrfs'' tool does and make it available to other programs, or via language bindings.
+
+For python, there's [https://github.com/knorrie/python-btrfs python-btrfs], a python library to to inspect the internals of an existing filesystem. This library only works with filesystems that are online and mounted, and consists of helper functions to call the IOCTL kernel API and wrapper classes to easily work with the data that is returned.
+
+[[Deduplication|bedup]] has [https://github.com/g2p/bedup/blob/master/bedup/platform/btrfs.py a module] exposing some of the core btrfs functionality to Python.
+
+There is also a [https://hackage.haskell.org/package/btrfs btrfs library] for haskell.
+
+Final: libbtrfsutil
 }}

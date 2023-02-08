@@ -46,7 +46,7 @@ While it's technically possible to have block device copies around as long as yo
 
 * Files with a lot of random writes can become heavily fragmented (10000+ extents) causing thrashing on HDDs and excessive multi-second spikes of CPU load on systems with an SSD or large amount a RAM.
 ** On servers and workstations this affects databases and virtual machine images.
-*** The nodatacow [[Mount_options|mount option]] may be of use here, with associated gotchas.
+*** The <tt>nodatacow</tt> may be of use here, with associated gotchas. (https://btrfs.readthedocs.io/en/latest/Administration.html#mount-options)
 ** On desktops this primarily affects application databases (including Firefox and Chromium profiles, GNOME Zeitgeist, Ubuntu Desktop Couch, Banshee, and Evolution's datastore.)
 *** Workarounds include manually defragmenting your home directory using btrfs fi defragment. Auto-defragment (mount option autodefrag) should solve this problem in 3.0.
 ** Symptoms include btrfs-transacti and btrfs-endio-wri taking up a lot of CPU time (in spikes, possibly triggered by syncs). You can use filefrag to locate heavily fragmented files (may not work correctly with compression).
@@ -63,16 +63,8 @@ It is also possible on 32-bit systems the limited address space per-process mean
 == Parity RAID ==
 
 * Currently <tt>raid5</tt> and <tt>raid6</tt> profiles have flaws that make it strongly not recommended as per the [[Status]] page.
-** In less recent releases the parity of resynchronized blocks was not calculated correctly, this has been fixed in recent releases (TBD).
 ** If a crash happens while a <tt>raid5</tt>/<tt>raid6</tt> volume is being written this can result in a "transid" mismatch as in <tt>transid verify failed</tt>.
 ** The resulting corruption cannot be currently fixed.
-
-== Some kernels had problems with "snapshot-aware defrag" ==
-
-* There were problems found with the ''snapshot-aware defrag'' that has been turned off in the following kernels:
-** '''3.10.31''', '''3.12.12''', '''3.13.4'''
-** all newer than 3.14
-
 
 = For stable kernel versions 4.14.x, 4.9.x, 4.4.x =
 
@@ -131,12 +123,5 @@ Details of affected versions TBD.
 
 * In kernels '''4.0+''': the empty block groups are reclaimed automatically that can affect the following:
 ** a converted filesystem may not be able to do a rollback because of the removed block groups
-
-== ssd mount option ==
-
-Using the <tt>ssd</tt> mount option with older kernels than 4.14 has a negative impact on usability and lifetime of modern SSDs.
-This is fixed in '''4.14''', see this commit for more information: [https://github.com/torvalds/linux/commit/583b723151794e2ff1691f1510b4e43710293875]
-
-With '''4.14+''' it is safe and recommended again to use the <tt>ssd</tt> mount option for non-rotational storage.
 
 [[Category:UserDoc]]

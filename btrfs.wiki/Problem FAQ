@@ -124,7 +124,7 @@ Next, check how much of your metadata allocation has been used up:
 
 Note that the '''Metadata used''' value is fairly close (75% or more) to the '''Metadata total''' value, but there's lots of '''Data''' space left. What has happened is that the filesystem has allocated all of the available space to either data or metadata, and then one of those has filled up (usually, it's the metadata space that does this). For now, a workaround is to run a partial balance:
 
- $ sudo btrfs fi balance start -dusage=5 /mount/point
+ $ sudo btrfs balance start -dusage=5 /mount/point
 
 Note that there should be no space between the '''-d''' and the '''usage'''. This command will attempt to relocate data in empty or near-empty data chunks (at most 5% used, in this example), allowing the space to be reclaimed and reassigned to metadata.
 

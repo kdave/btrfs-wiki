@@ -10,7 +10,7 @@ mean that its useful, for example in meeting your performance expectations for
 your specific workload. Combination of features can vary in performance, the
 table does not cover all possibilities.
 
-'''The table is based on the latest released linux kernel: 5.19'''
+'''The table is based on the latest released linux kernel: 6.0'''
 
 The columns for each feature reflrect the status of the implementation in following ways:
 

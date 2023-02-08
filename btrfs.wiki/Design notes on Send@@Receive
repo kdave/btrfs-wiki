@@ -116,28 +116,23 @@ Offset are only offset inside the structure.
 * [http://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg17564.html Sendshots]
 * More output formats? An idea was for example to add a [http://en.wikipedia.org/wiki/Shar shar] like output format.
 
-== Send stream v2 draft ==
+== Send stream v3 draft ==
 
-Missing from v1:
+Send version 2 has been implemented in 6.1. https://github.com/btrfs/linux/issues/550
+
+Missing from v2:
 
 * send extent holes in files efficiently, use hole punching (was not available during v1 time)
 * send preallocated extents properly
 * extent clones within one file
-
-Implemented in v2, scheduled for merge:
-
-* extend ioctl to produce v1 or v2 formats
-* stream version recognition
-* send otime for inodes
-* send encoded data (compressed, encrypted)
-* send file flags
-** (FS_IOC_GETFLAGS/FS_IOC_SETFLAGS), the receiving side misses NOCOW and the other attributes like append-only, immutable etc.
-** setting the flags on receiving side is tricky as the flags affects if/how the data are stored
 * send progress
+
+Implemented in v3, scheduled for merge:
+
+* fsverity support
 
 Unreleated to protocol:
 
 * optionally generate uid/gid number:string mappings and provide them on receiving side to apply
-* Currently we send utimes every time a dir item is added/removed from a directory. This results in many unnecessary utime updates. This could be optimized with the help of "delayed utime updates". Instead of calling send_utimes, we would then queue the update into a list and let later utime updates only update the queue entry. If the queue size reaches a threshold, we then send the oldest utime updates to user space and remove them from the list. 
 
 [[Category:CodeDoc]]

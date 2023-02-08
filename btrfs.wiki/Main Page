@@ -3,13 +3,13 @@ __NOTOC__
 <div style="margin:0; margin-top:10px; margin-right:10px; border:1px solid #dfdfdf; padding:0 1em 1em 1em; align:right; ">
 [[File:Btrfs_logo_small.png|200px|left|btrfs]]
 
-'''btrfs''' is a modern copy on write (CoW) filesystem for Linux aimed at implementing advanced features while also focusing on fault tolerance, repair and easy administration. Its main features and benefits are:
+'''Btrfs''' is a modern copy on write (COW) filesystem for Linux aimed at implementing advanced features while also focusing on fault tolerance, repair and easy administration. Its main features and benefits are:
 
 * '''Snapshots''' which do not make the full copy of files
-* '''RAID''' - support for software-based RAID 0, RAID 1, RAID 10
+* '''RAID''' - support for software-based RAID 0, RAID 1, RAID 10, ...
 * '''Self-healing''' - checksums for data and metadata, automatic detection of silent data corruptions
 
-Development of Btrfs started in 2007. Since that time, Btrfs is a part of the Linux kernel and is under active development.
+Development of Btrfs started in 2007. Since that time it's been part of the Linux kernel and is under active development.
 
 Jointly developed by multiple companies (https://btrfs.readthedocs.io/en/latest/Contributors.html, Btrfs is licensed under the GPL and open for contribution from anyone.
 
@@ -28,7 +28,7 @@ Jointly developed by multiple companies (https://btrfs.readthedocs.io/en/latest/
 
 The Btrfs code base is stable. However, new features are still under development. Every effort is made to ensure that it remains stable and fast at each and every commit. This rapid pace of development means that the filesystem improves ''noticeably'' with every new Linux release so it's ''highly'' recommended that users run the most modern kernel possible.
 
-For benchmarks, it's recommended to test the latest stable Linux version, and not any older, as well as the latest Linux development versions. Also, it's recommended to test the various [[Manpage/btrfs(5)#MOUNT_OPTIONS|mount options]] such as different [[compression]] options.
+For benchmarks, it's recommended to test the latest stable Linux version, and not any older, as well as the latest Linux development versions. Also, it's recommended to test the various [https://btrfs.readthedocs.io/en/latest/Administration.html#mount-options mount options] such as different [https://btrfs.readthedocs.io/en/latest/Compression.html compression] options.
 
 If you find any behavior you suspect to be caused by a bug, performance issues, or have any questions about using Btrfs, please email the [[Btrfs mailing list]] (no subscription required). Please report bugs on [[Problem_FAQ#How_do_I_report_bugs_and_issues.3F|Bugzilla]].
 </div>
@@ -72,12 +72,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 === Features by kernel version ===
 
-* [[Changelog#By_feature|features by kernel version]]
-
-=== Features Currently in Development or Planned for Future Implementation ===
-
-* The file/directory -level encryption support (fscrypt)
-* DAX/persistent memory support
+* features by kernel version https://btrfs.readthedocs.io/en/latest/Feature-by-version.html
 
 === Documentation ===
 
@@ -94,7 +89,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 === Guides and usage information ===
 
 * [[Getting started]] — first steps, distributions with btrfs support
-** [[Manpage/btrfs(5)#MOUNT_OPTIONS|Mount options]]
+** [https://btrfs.readthedocs.io/en/latest/btrfs-man5.html#mount-options Mount options]
 * [[FAQ]] — About the btrfs project and filesystem
 * [[UseCases]] — Recipes for how to do stuff with btrfs
 * [[SysadminGuide]] — A more in-depth guide to btrfs's concepts and a bit of its internals, to answer all those "but what ''is'' a subvolume?" kind of questions.
@@ -137,9 +132,7 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 * Original COW B-tree: Source code in C that implements the COW B-tree algorithms [https://github.com/orodeh/bt repository]. Written by Ohad Rodeh at IBM Research in 2006, and released under a BSD license. This is a reference implementation, that works in user space.
 
-* Unmerged features
-** In-band (write) time deduplication
-*** [[User notes on dedupe]] — User/tester notes for using in-band deduplication feature
+* [[User notes on dedupe]] — User/tester notes for using in-band deduplication feature
 </div>
 
 | width="50%" style="vertical-align:top" |
@@ -149,19 +142,11 @@ Linux has a wealth of filesystems from which to choose, but we are facing a numb
 
 == News ==
 
-''' btrfs-progs v5.19.1 (Sep 2022) '''
-* Please see the release notes at [https://btrfs.readthedocs.io/en/latest/CHANGES.html#btrfs-progs-5-19-1-2022-09-12 readthedocs.io]
+''' btrfs-progs v6.1.3 (Jan 2023) '''
+* Please see the release notes at [https://btrfs.readthedocs.io/en/latest/CHANGES.html readthedocs.io]
 
-''' btrfs-progs v5.19 (Aug 2022) '''
-* Please see the release notes at [https://btrfs.readthedocs.io/en/latest/CHANGES.html#btrfs-progs-5-19-2022-08-16 readthedocs.io]
-
-''' linux v5.19 (Aug 2022) '''
-
-''' linux v5.18 (Jun 2022) '''
-
-''' util-linux v2.38 (Apr 2022) '''
-
-blk* utilities and libraries finally recognize btrfs formatted with zoned mode 
+''' linux v6.1 (Jan 2023) '''
+* Please see the release notes at [https://btrfs.readthedocs.io/en/latest/CHANGES.html readthedocs.io]
 
 </div>
 
@@ -170,11 +155,11 @@ blk* utilities and libraries finally recognize btrfs formatted with zoned mode
 
 == Changelog ==
 
-Read about past releases in the separate [[Changelog]] page
+Changelogs and other related information are also tracked at https://btrfs.readthedocs.io:
 
-* [[Changelog#By_feature|features by kernel version]]
+* features by kernel version https://btrfs.readthedocs.io/en/latest/Feature-by-version.html
 * [[Changelog#By_version_.28linux_kernel.29|kernel changes for each release]]
-* <s>[[Changelog#By_version_.28btrfs-progs.29|btrfs-progs changes for each release (wiki)]]</s> btrfs-progs changes for each release https://btrfs.readthedocs.io/en/latest/CHANGES.html
+* btrfs-progs changes for each release https://btrfs.readthedocs.io/en/latest/CHANGES.html
 </div>
 
 <!-- Source code Block -->
@@ -241,11 +226,11 @@ Links to old or obsolete documentation, articles. Kept for historical reasons. S
 * [https://btrfs.readthedocs.io/en/latest/Glossary.html Glossary]
 * Contact information:
 ** [[Btrfs mailing list]]
-** [http://en.wikipedia.org/wiki/Internet_Relay_Chat IRC] on [https://libera.chat libera.chat] in the channel [irc://irc.libera.chat:6667/btrfs #btrfs]
+** [http://en.wikipedia.org/wiki/Internet_Relay_Chat IRC] on [https://libera.chat libera.chat] in the channel [irc://irc.libera.chat:6667/btrfs #btrfs], matrix.org bridge works (persistent room #btrfs:matrix.org)
 ** Reporting bugs:
 *** for kernel code see [[Problem_FAQ#How_do_I_report_bugs_and_issues.3F | the Bugzilla FAQ]], quick tip: use product ''File System'' and component ''btrfs''.
 *** for btrfs-progs please use [https://github.com/kdave/btrfs-progs/issues/ github issues] (and not kernel.org bugzilla anymore)
-*** for documentation please use [https://github.com/kdave/btrfs-progs/issues/ github issues]
+*** for documentation please use [https://github.com/kdave/btrfs-progs/issues/ github issues] -- report unclear wording, typos, suggest examples, formatting
 * [[Project ideas]]
 * [[Project_ideas#Cleanup_projects|Cleanup ideas]]
 * [[Project_ideas#Userspace_tools_projects|Userspace tools projects]]

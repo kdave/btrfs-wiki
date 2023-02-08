@@ -39,7 +39,7 @@ Data extents are always allocated from within block group extents, and represent
 Contains the address of the other root tree used by btrfs, as device tree, checksum tree and extent tree. 
 
 = Chunk tree =
-
+Maps logical addresses to physical addresses. To support RAID1 and similar, each chunk references one or more stripes of that chunk's data, and the stripes in a chunk may exist on different devices.
 
 = Checksum tree =
 

@@ -698,6 +698,16 @@ When there is more than one entry for a single hash value, the offset of each en
 
 For more details, please see: <code>[[Data_Structures#btrfs_dir_item|struct btrfs_dir_item]]</code> and <code>[[#DIR_ITEM|DIR_ITEM]]</code>.
 
+=== VERITY_DESC (24) ===
+
+====Location====
+<code>VERITY_DESC</code> items are located in the [[On-disk_Format#FS_TREE|FS_TREE]]. TODO
+
+=== VERITY_MERKLE (25) ===
+
+====Location====
+<code>VERITY_MERKLE</code> items are located in the [[On-disk_Format#FS_TREE|FS_TREE]]. TODO
+
 === ORPHAN_ITEM (30) ===
 
 (-5, objid of orphan inode) TODO

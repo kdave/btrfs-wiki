@@ -1,12 +1,4 @@
-= By feature =
-
-Features by version have been moved to https://btrfs.readthedocs.io/en/latest/Feature-by-version.html
-
-= By version (btrfs-progs) =
-
-Tarballs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/
-
-Version changelogs have been moved to https://btrfs.readthedocs.io/en/latest/CHANGES.html
+Changes are partially listed on this page and the rest has been moved to https://btrfs.readthedocs.io
 
 = By version (linux kernel) =
 

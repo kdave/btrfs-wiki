@@ -1,2 +1,2 @@
-{{Deprecated|This page has been obsoleted by [[Manpage/btrfs(5)#MOUNT_OPTIONS]].}}
-<!-- this page is linked from the outside world and should not be removed -->
+{{Deprecated|This page has been obsoleted by https://btrfs.readthedocs.io/en/latest/Administration.html#mount-options .}}
+<!-- This page is linked from the outside world and should not be removed. -->

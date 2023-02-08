@@ -262,6 +262,10 @@ Please refer to the option documentation for further details.
 * tracing
 ** CONFIG_TRACING etc
 
+== BUG: MAX_LOCKDEP_CHAIN_HLOCKS too low! ==
+
+Not a bug. Increase the config value of LOCKDEP_CHAINS_BITS, default is 16, 18 tends to work.
+
 = (x)fstests =
 
 The fstests suite has very few "hard" requirements and will succeed without actually running many tests.  In order to ensure full test coverage, your test environment should provide the settings from the following sections. Please note that newly added tests silently add new dependencies, so you should always review results after an update.
